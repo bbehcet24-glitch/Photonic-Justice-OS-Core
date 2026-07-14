@@ -1,0 +1,180 @@
+# ibm-integration-test.yml
+# ═══════════════════════════════════════════════════════════════════
+# PhotonNet — IBM Quantum Network / ETSI GS QKD 014 mTLS entegrasyon
+# testi boru hattı. Gerçek mantığın TAMAMI bb84/ci/run_integration_tests.sh
+# içindedir — bu YAML yalnızca İNCE bir GitHub Actions kabuğudur (bkz. o
+# script'in dosya-üstü notu, "üretim sınıfı" derken kastedilen budur).
+#
+# NE TEST EDİLİYOR: bb84/mock_ibm_client.js'in 19 testi — sertifika
+# zinciri/geçerlilik/EKU/CRL/OCSP doğrulaması + gerçek mTLS bağlantısı +
+# tam bir ETSI 014 enc_keys/dec_keys protokol akışı + 5 olumsuz güvenlik
+# senaryosu (replay, aralık-dışı istek, bilinmeyen key_ID, sahte
+# sertifika reddi, iptal edilmiş sertifika reddi).
+#
+# VARSAYILAN ÇALIŞMA MODU: "ephemeral" — bu iş KENDİ geçici test CA'sını
+# ve sertifikalarını üretir, yerel bir KME sunucusu başlatır, test eder,
+# temizler. GERÇEK üretim CA'sına veya gerçek IBM sertifikalarına
+# İHTİYAÇ DUYMAZ — bu yüzden fork'lardan gelen PR'larda bile GÜVENLE
+# çalışabilir (secret sızıntısı riski yok, çünkü hiçbir secret KULLANILMAZ).
+#
+# GERÇEK IBM SERTİFİKALARIYLA (external mod) ÇALIŞTIRMAK İÇİN: repository
+# secrets olarak IBM_INTEGRATION_CA_CERT / IBM_INTEGRATION_IBM_CERT /
+# IBM_INTEGRATION_IBM_KEY / IBM_INTEGRATION_PEER_CERT / IBM_INTEGRATION_PEER_KEY
+# / IBM_INTEGRATION_KME_URL tanımlayın VE aşağıdaki "external-mode" işini
+# (varsayılan olarak KAPALI, yalnızca manuel tetiklemede/workflow_dispatch
+# input'uyla açılır) etkinleştirin. CA ÖZEL ANAHTARI ASLA secret olarak
+# BURAYA KONULMAMALIDIR — yalnızca CA'nın GENEL sertifikası (CA_CERT) ve
+# İSTEMCİ (SAE) sertifika/anahtar çiftleri.
+# ═══════════════════════════════════════════════════════════════════
+name: IBM Network Integration Test (ETSI QKD 014 / mTLS)
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "bb84/**"
+      - ".github/workflows/ibm-integration-test.yml"
+  pull_request:
+    paths:
+      - "bb84/**"
+      - ".github/workflows/ibm-integration-test.yml"
+  workflow_dispatch:
+    inputs:
+      kme_mode:
+        description: "Test modu"
+        type: choice
+        options: [ephemeral, external]
+        default: ephemeral
+  schedule:
+    # gece boyu düzenli sağlık kontrolü — sertifikaların/protokolün
+    # zaman içinde (ör. openssl sürüm güncellemesi, işletim sistemi
+    # değişikliği) SESSİZCE bozulmadığından emin olmak için.
+    - cron: "17 3 * * *"
+
+# Aynı PR/branch için üst üste binen çalıştırmaları iptal eder — CI
+# kaynaklarını (ve KME/OCSP port çakışması riskini) israf etmeyi önler.
+concurrency:
+  group: ibm-integration-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ephemeral-integration-test:
+    name: Ephemeral mTLS Integration Test (self-contained)
+    # workflow_dispatch ile açıkça 'external' seçilmediği SÜRECE bu iş
+    # HER ZAMAN çalışır (push/PR/schedule dahil) — varsayılan/asıl test yolu.
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.kme_mode == 'ephemeral' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: openssl sürümünü doğrula (ubuntu-latest'te önceden yüklü olmalı)
+        run: openssl version
+
+      - name: bb84/ script'lerinin çalıştırılabilir olduğunu garanti et
+        run: chmod +x bb84/pki_tools/*.sh bb84/ci/*.sh bb84/mock_ibm_client.js
+
+      - name: Entegrasyon testlerini çalıştır (ephemeral PKI + yerel KME sunucusu)
+        working-directory: .
+        run: ./bb84/ci/run_integration_tests.sh
+        env:
+          KME_MODE: ephemeral
+          REPORTS_DIR: ${{ github.workspace }}/ci-reports
+
+      # Test BAŞARISIZ olsa BİLE (if: always()) log'ları/JUnit raporunu
+      # her zaman artifact olarak yükle — CI arayüzünden indirilip
+      # incelenebilsin diye (KME/OCSP sunucu logları dahil).
+      - name: Test raporlarını/log'ları artifact olarak yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ibm-integration-ci-reports
+          path: ci-reports/
+          retention-days: 14
+
+      # JUnit XML'i GitHub'ın Checks sekmesinde satır satır (hangi test
+      # geçti/kaldı) görüntüler — CI logunu elle kazmaya gerek KALMAZ.
+      - name: JUnit sonuçlarını GitHub Checks'e yayınla
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: "ci-reports/mock-ibm-client-junit.xml"
+          check_name: "Mock IBM Client — ETSI 014 / mTLS Sonuçları"
+          fail_on_failure: false # gerçek başarı/başarısızlık kararı zaten önceki adımın exit code'undan gelir; bu yalnızca GÖRSELLEŞTİRME
+
+  external-integration-test:
+    name: External (Real Cert) mTLS Integration Test
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.kme_mode == 'external' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: openssl sürümünü doğrula
+        run: openssl version
+
+      - name: bb84/ script'lerinin çalıştırılabilir olduğunu garanti et
+        run: chmod +x bb84/ci/*.sh bb84/mock_ibm_client.js
+
+      # Secret'lar geçici dosyalara yazılır (yalnızca bu runner'ın ömrü
+      # boyunca var olur, iş bitince runner'la BİRLİKTE yok olur) — CA
+      # ÖZEL ANAHTARI burada YOKTUR, yalnızca CA_CERT (genel) + istemci
+      # sertifika/anahtar ÇİFTLERİ (IBM ve peer SAE'lerin KENDİ anahtarları).
+      - name: Secret'ları geçici sertifika dosyalarına yaz
+        run: |
+          mkdir -p "$RUNNER_TEMP/ibm-certs"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_CA_CERT }}"   > "$RUNNER_TEMP/ibm-certs/ca-cert.pem"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_IBM_CERT }}"  > "$RUNNER_TEMP/ibm-certs/ibm-cert.pem"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_IBM_KEY }}"   > "$RUNNER_TEMP/ibm-certs/ibm-key.pem"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_PEER_CERT }}" > "$RUNNER_TEMP/ibm-certs/peer-cert.pem"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_PEER_KEY }}"  > "$RUNNER_TEMP/ibm-certs/peer-key.pem"
+          chmod 600 "$RUNNER_TEMP"/ibm-certs/*-key.pem
+
+      - name: Entegrasyon testlerini çalıştır (GERÇEK sertifikalar, GERÇEK KME uç noktası)
+        run: ./bb84/ci/run_integration_tests.sh
+        env:
+          KME_MODE: external
+          KME_URL: ${{ secrets.IBM_INTEGRATION_KME_URL }}
+          CA_CERT: ${{ runner.temp }}/ibm-certs/ca-cert.pem
+          IBM_CERT: ${{ runner.temp }}/ibm-certs/ibm-cert.pem
+          IBM_KEY: ${{ runner.temp }}/ibm-certs/ibm-key.pem
+          PEER_CERT: ${{ runner.temp }}/ibm-certs/peer-cert.pem
+          PEER_KEY: ${{ runner.temp }}/ibm-certs/peer-key.pem
+          REPORTS_DIR: ${{ github.workspace }}/ci-reports
+          # external moddaki gerçek üretim/staging KME'sinde sahte-sertifika
+          # ve iptal-red testleri o ortamın KENDİ politikasına bağlıdır —
+          # varsayılan olarak sahte-sertifika testi burada da AÇIK bırakılır
+          # (her mTLS sunucusunun CA-dışı sertifikaları reddetmesi GEREKİR),
+          # ama iptal-red testi yalnızca REVOKED_CERT/REVOKED_KEY secret'ı
+          # AYRICA tanımlanmışsa çalışır (bkz. run_integration_tests.sh).
+
+      - name: Test raporlarını/log'ları artifact olarak yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ibm-integration-external-reports
+          path: ci-reports/
+          retention-days: 14
+
+      - name: JUnit sonuçlarını GitHub Checks'e yayınla
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: "ci-reports/mock-ibm-client-junit.xml"
+          check_name: "Mock IBM Client (External/Gerçek KME) — Sonuçlar"
+          fail_on_failure: false

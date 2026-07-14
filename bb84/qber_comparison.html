@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PhotonNet QBER vs IBM Qiskit-eşdeğeri Doğrulama</title>
+<style>
+  .viz-root {
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --axis:           #c3c2b7;
+    --series-1:       #2a78d6; /* PhotonNet */
+    --series-2:       #1baf7a; /* Qiskit-eşdeğeri */
+    --border:         rgba(11,11,11,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    .viz-root {
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --axis:           #383835;
+      --series-1:       #3987e5;
+      --series-2:       #199e70;
+      --border:         rgba(255,255,255,0.10);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background: var(--page); }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text-primary); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 20px 48px; }
+  h1 { font-size: 19px; font-weight: 700; margin: 0 0 6px; letter-spacing: -.01em; }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin: 0 0 22px; line-height: 1.5; max-width: 760px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px 14px; margin-bottom: 18px; }
+  .panels { display: flex; gap: 16px; flex-wrap: wrap; }
+  .panel { flex: 1 1 460px; min-width: 320px; }
+  .panel h2 { font-size: 12.5px; font-weight: 700; color: var(--text-primary); margin: 0 0 2px; letter-spacing: .01em; }
+  .panel .desc { font-size: 11px; color: var(--text-muted); margin: 0 0 10px; }
+  svg { width: 100%; height: auto; display: block; overflow: visible; }
+  .gridline { stroke: var(--grid); stroke-width: 1; }
+  .axis-line { stroke: var(--axis); stroke-width: 1; }
+  .tick-label { font-size: 9.5px; fill: var(--text-muted); font-variant-numeric: tabular-nums; }
+  .series-line { fill: none; stroke-width: 2; }
+  .s1 { stroke: var(--series-1); }
+  .s2 { stroke: var(--series-2); stroke-dasharray: 5 3; }
+  .marker { stroke: var(--surface-1); stroke-width: 1.5; }
+  .m1 { fill: var(--series-1); }
+  .m2 { fill: var(--series-2); }
+  .end-label { font-size: 10px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .legend { display: flex; gap: 18px; margin: 14px 2px 0; flex-wrap: wrap; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text-secondary); }
+  .swatch { width: 14px; height: 3px; border-radius: 2px; flex-shrink:0; }
+  .swatch.dash { background: repeating-linear-gradient(90deg, var(--series-2) 0 5px, transparent 5px 8px); }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 4px; }
+  th, td { text-align: right; padding: 7px 10px; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-muted); font-weight: 600; font-size: 10.5px; letter-spacing: .03em; border-bottom: 1px solid var(--grid); }
+  td { border-bottom: 1px solid var(--grid); color: var(--text-primary); }
+  tr:last-child td { border-bottom: none; }
+  .diff { color: var(--text-muted); font-size: 11px; }
+  .note { font-size: 11.5px; color: var(--text-secondary); line-height: 1.6; margin: 4px 0; }
+  .note b { color: var(--text-primary); }
+  .badge { display:inline-block; font-size:10px; font-weight:700; padding:2px 7px; border-radius:5px; letter-spacing:.02em; }
+  .badge.pass { background:#0ca30c22; color:#0ca30c; }
+  code { background: var(--grid); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="viz-root wrap">
+
+  <h1>PhotonNet QBER vs IBM Qiskit-eşdeğeri Kuantum Durum-Vektörü Doğrulaması</h1>
+  <p class="subtitle">
+    PhotonNet'in <code>deriveSiftedKey()</code> fonksiyonunun ürettiği BB84 QBER değerleri,
+    bağımsız bir kuantum-mekaniksel referansla (Hadamard-kapı + Born-kuralı durum-vektörü
+    hesabı — gerçek bir Qiskit devresinin hesaplayacağı matematiğin birebir aynısı) karşılaştırıldı.
+    Aynı mesafeler, aynı faz-kayması (decoherence) gürültü modeli ve aynı intercept-resend
+    saldırı fiziği her iki motorda da ayrı ayrı hesaplandı.
+  </p>
+
+  <div class="card">
+    <div class="panels">
+      <div class="panel">
+        <h2>Eve YOK — temel kanal gürültüsü</h2>
+        <p class="desc">Yalnızca faz-kayması (decoherence) gürültüsü. Teorik alt sınır: %0 (gürültüsüz kanal)</p>
+        <svg viewBox="0 0 460 300">
+          <!-- gridlines y: 0,1,2,3,4,5% -->
+          <g>
+            <line class="gridline" x1="50" y1="260" x2="430" y2="260"/>
+            <line class="gridline" x1="50" y1="212" x2="430" y2="212"/>
+            <line class="gridline" x1="50" y1="164" x2="430" y2="164"/>
+            <line class="gridline" x1="50" y1="116" x2="430" y2="116"/>
+            <line class="gridline" x1="50" y1="68"  x2="430" y2="68"/>
+            <line class="axis-line" x1="50" y1="20" x2="50" y2="260"/>
+            <text class="tick-label" x="44" y="263" text-anchor="end">0%</text>
+            <text class="tick-label" x="44" y="215" text-anchor="end">1%</text>
+            <text class="tick-label" x="44" y="167" text-anchor="end">2%</text>
+            <text class="tick-label" x="44" y="119" text-anchor="end">3%</text>
+            <text class="tick-label" x="44" y="71"  text-anchor="end">4%</text>
+            <text class="tick-label" x="44" y="24"  text-anchor="end">5%</text>
+          </g>
+          <!-- x ticks -->
+          <g>
+            <text class="tick-label" x="50"  y="276" text-anchor="middle">1km</text>
+            <text class="tick-label" x="126" y="276" text-anchor="middle">5km</text>
+            <text class="tick-label" x="202" y="276" text-anchor="middle">10km</text>
+            <text class="tick-label" x="278" y="276" text-anchor="middle">20km</text>
+            <text class="tick-label" x="354" y="276" text-anchor="middle">50km</text>
+            <text class="tick-label" x="430" y="276" text-anchor="middle">100km</text>
+          </g>
+          <!-- PhotonNet line -->
+          <path class="series-line s1" d="M 50.00,201.25 L 126.00,197.55 L 202.00,190.69 L 278.00,184.26 L 354.00,145.23 L 430.00,66.27"/>
+          <!-- Qiskit-eşdeğeri line -->
+          <path class="series-line s2" d="M 50.00,201.30 L 126.00,195.92 L 202.00,189.44 L 278.00,178.21 L 354.00,142.45 L 430.00,82.78"/>
+          <!-- markers PhotonNet -->
+          <circle class="marker m1" cx="50" cy="201.25" r="3.2"/>
+          <circle class="marker m1" cx="126" cy="197.55" r="3.2"/>
+          <circle class="marker m1" cx="202" cy="190.69" r="3.2"/>
+          <circle class="marker m1" cx="278" cy="184.26" r="3.2"/>
+          <circle class="marker m1" cx="354" cy="145.23" r="3.2"/>
+          <circle class="marker m1" cx="430" cy="66.27" r="3.2"/>
+          <!-- markers Qiskit -->
+          <circle class="marker m2" cx="50" cy="201.30" r="3.2"/>
+          <circle class="marker m2" cx="126" cy="195.92" r="3.2"/>
+          <circle class="marker m2" cx="202" cy="189.44" r="3.2"/>
+          <circle class="marker m2" cx="278" cy="178.21" r="3.2"/>
+          <circle class="marker m2" cx="354" cy="142.45" r="3.2"/>
+          <circle class="marker m2" cx="430" cy="82.78" r="3.2"/>
+          <!-- end labels -->
+          <text class="end-label" x="436" y="63" fill="var(--series-1)">4.04%</text>
+          <text class="end-label" x="436" y="93" fill="var(--series-2)">3.69%</text>
+        </svg>
+      </div>
+
+      <div class="panel">
+        <h2>Eve VAR — intercept-resend saldırısı</h2>
+        <p class="desc">Aynı gürültü + gerçek intercept-resend fiziği. Teorik hedef: %25 (ders kitabı BB84 imzası)</p>
+        <svg viewBox="0 0 460 300">
+          <g>
+            <line class="gridline" x1="50" y1="260" x2="430" y2="260"/>
+            <line class="gridline" x1="50" y1="200" x2="430" y2="200"/>
+            <line class="gridline" x1="50" y1="140" x2="430" y2="140"/>
+            <line class="gridline" x1="50" y1="80"  x2="430" y2="80"/>
+            <line class="gridline" x1="50" y1="20"  x2="430" y2="20"/>
+            <line class="axis-line" x1="50" y1="20" x2="50" y2="260"/>
+            <text class="tick-label" x="44" y="263" text-anchor="end">24%</text>
+            <text class="tick-label" x="44" y="203" text-anchor="end">25%</text>
+            <text class="tick-label" x="44" y="143" text-anchor="end">26%</text>
+            <text class="tick-label" x="44" y="83"  text-anchor="end">27%</text>
+            <text class="tick-label" x="44" y="24"  text-anchor="end">28%</text>
+          </g>
+          <g>
+            <text class="tick-label" x="50"  y="276" text-anchor="middle">1km</text>
+            <text class="tick-label" x="126" y="276" text-anchor="middle">5km</text>
+            <text class="tick-label" x="202" y="276" text-anchor="middle">10km</text>
+            <text class="tick-label" x="278" y="276" text-anchor="middle">20km</text>
+            <text class="tick-label" x="354" y="276" text-anchor="middle">50km</text>
+            <text class="tick-label" x="430" y="276" text-anchor="middle">100km</text>
+          </g>
+          <path class="series-line s1" d="M 50.00,156.56 L 126.00,158.06 L 202.00,155.54 L 278.00,151.70 L 354.00,139.40 L 430.00,170.48"/>
+          <path class="series-line s2" d="M 50.00,164.96 L 126.00,154.88 L 202.00,156.62 L 278.00,146.54 L 354.00,128.78 L 430.00,89.24"/>
+          <circle class="marker m1" cx="50" cy="156.56" r="3.2"/>
+          <circle class="marker m1" cx="126" cy="158.06" r="3.2"/>
+          <circle class="marker m1" cx="202" cy="155.54" r="3.2"/>
+          <circle class="marker m1" cx="278" cy="151.70" r="3.2"/>
+          <circle class="marker m1" cx="354" cy="139.40" r="3.2"/>
+          <circle class="marker m1" cx="430" cy="170.48" r="3.2"/>
+          <circle class="marker m2" cx="50" cy="164.96" r="3.2"/>
+          <circle class="marker m2" cx="126" cy="154.88" r="3.2"/>
+          <circle class="marker m2" cx="202" cy="156.62" r="3.2"/>
+          <circle class="marker m2" cx="278" cy="146.54" r="3.2"/>
+          <circle class="marker m2" cx="354" cy="128.78" r="3.2"/>
+          <circle class="marker m2" cx="430" cy="89.24" r="3.2"/>
+          <text class="end-label" x="436" y="174" fill="var(--series-1)">25.49%</text>
+          <text class="end-label" x="436" y="93" fill="var(--series-2)">26.85%</text>
+        </svg>
+      </div>
+    </div>
+    <div class="legend">
+      <div class="legend-item"><span class="swatch" style="background:var(--series-1)"></span> PhotonNet (deriveSiftedKey)</div>
+      <div class="legend-item"><span class="swatch dash"></span> Qiskit-eşdeğeri (durum-vektörü, Born kuralı)</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:13px;margin:0 0 10px;">Sayısal karşılaştırma <span class="badge pass">TÜM DEĞERLER ÖRNEKLEME GÜRÜLTÜSÜ İÇİNDE ÖRTÜŞÜYOR</span></h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Mesafe</th>
+          <th>PhotonNet QBER<br/>(Eve yok)</th>
+          <th>Qiskit-eşd. QBER<br/>(Eve yok)</th>
+          <th>Fark</th>
+          <th>PhotonNet QBER<br/>(Eve var)</th>
+          <th>Qiskit-eşd. QBER<br/>(Eve var)</th>
+          <th>Fark</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>1 km</td><td>1.224%</td><td>1.223%</td><td class="diff">+0.001pp</td><td>25.724%</td><td>25.584%</td><td class="diff">+0.14pp</td></tr>
+        <tr><td>5 km</td><td>1.301%</td><td>1.335%</td><td class="diff">-0.034pp</td><td>25.699%</td><td>25.752%</td><td class="diff">-0.05pp</td></tr>
+        <tr><td>10 km</td><td>1.444%</td><td>1.470%</td><td class="diff">-0.026pp</td><td>25.741%</td><td>25.723%</td><td class="diff">+0.02pp</td></tr>
+        <tr><td>20 km</td><td>1.578%</td><td>1.704%</td><td class="diff">-0.126pp</td><td>25.805%</td><td>25.891%</td><td class="diff">-0.09pp</td></tr>
+        <tr><td>50 km</td><td>2.391%</td><td>2.449%</td><td class="diff">-0.058pp</td><td>26.010%</td><td>26.187%</td><td class="diff">-0.18pp</td></tr>
+        <tr><td>100 km <span style="color:var(--text-muted);font-weight:400;">(N≈1.8k, gürültülü)</span></td><td>4.036%</td><td>3.692%</td><td class="diff">+0.34pp</td><td>25.492%</td><td>26.846%</td><td class="diff">-1.35pp</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:13px;margin:0 0 10px;">Yöntem ve dürüst kısıtlar</h2>
+    <p class="note"><b>Neden gerçek Qiskit değil:</b> Bu sandbox'ta pip ile yeni paket kurulamıyor (yalnızca <code>qiskit</code> değil — test edilen her paket, örn. <code>cowsay</code>, aynı şekilde reddedildi: "No matching distribution found"). Bunun yerine, tek-kübitlik BB84 durumlarının dolaşık OLMAMASI sayesinde (her foton bağımsız bir ürün durumu), Qiskit'in bir devrede hesaplayacağı Hadamard-kapı + Born-kuralı matematiği hem <b>tam karmaşık genlik simülasyonu</b> hem de ondan türetilen <b>vektörleştirilmiş kapalı-form</b> versiyonuyla uygulandı; ikisi N=20.000'de çapraz doğrulandı (Eve yok: %0.000 / %0.000, Eve var: %25.383 / %25.353 — örtüşüyor) ve büyük-N koşumlarında hızlı versiyon kullanıldı.</p>
+    <p class="note"><b>Gürültü modeli eşleştirmesi:</b> PhotonNet'in <code>propPhoton()</code> fonksiyonu faz-kaymasını (decoherence) klasik bir bit-flip olasılığı olarak modelliyor: <code>phaseProb = 0.012 + km/4000</code>. Qiskit-eşdeğeri motor da AYNI formülü Bob'un ölçüm sonucuna uyguladı — bu, adil (aynı varsayımlarla) bir karşılaştırma sağlıyor. İdeal/gürültüsüz kanalda her iki motor da teorik %0 (Eve yok) / %25 (Eve var) değerlerine N=2.000.000'de 4 ondalık basamağa kadar yakınsıyor.</p>
+    <p class="note"><b>100km'deki büyük fark:</b> PhotonNet'te bu mesafede yalnızca ~1.8bin foton gerçekten "algılanıyor" (400bin ham bitten — geri kalanı fiber kaybıyla kayboluyor ve QBER hesabına hiç girmiyor, bkz. DÜZELTME 6). Küçük örneklem, daha büyük istatistiksel gürültü demektir (±1.3pp mertebesinde standart hata) — fark teorik bir sapma değil, örnekleme varyansı.</p>
+    <p class="note"><b>300km / 550km — neden tek-atış test edilemedi:</b> Bu mesafelerde 1550nm fiberde foton hayatta kalma olasılığı ~10⁻⁶ ve altına düşüyor — 400bin ham bitlik bir denemede beklenen algılanan foton sayısı sıfıra yakın (gerçek fizik: doğrudan tek-fotonlu bir kuantum anahtar hattı, tekrarlayıcı/uydu olmadan bu mesafelerde gerçekten ÇALIŞMAZ). Aşağıda bu iki mesafe, gerçekçi bir <b>güvenilir-düğüm röle zinciri</b> ile yeniden test edildi.</p>
+    <p class="note"><b>Sonuç:</b> PhotonNet'in QBER motoru, bağımsız bir kuantum-mekaniksel referansla (teorik BB84 + eşleştirilmiş gürültü modeli) test edilen tüm mesafelerde örnekleme gürültüsü içinde örtüşüyor. Bu, önceki oturumdaki DÜZELTME 6/7 (kayıp-foton dışlama + gerçek intercept-resend fiziği) düzeltmelerinin doğru uygulandığını bağımsız olarak doğruluyor.</p>
+  </div>
+
+  <div class="card">
+    <h2 style="font-size:13px;margin:0 0 4px;">300km / 550km — Güvenilir-Düğüm Röle Zinciri (Trusted-Node Relay)</h2>
+    <p class="note" style="margin-top:0;">
+      Tek fotonu klasik bir amplifikatörle "güçlendirmek" no-cloning teoremini ihlal eder (ölçmeden
+      kopyalanamaz) — bu yüzden mesaj kanalında kullanılan dinamik-FEC/foton-çoğullama hilesi
+      (bkz. önceki rapor) BİLEREK BB84 anahtar kanalına uygulanmadı. Bunun yerine, gerçek dünyada
+      uzun-mesafe QKD hatlarının kullandığı yöntem eklendi: hat, her biri TAMAMEN BAĞIMSIZ bir BB84
+      oturumu çalıştıran ~60km'lik güvenilir-düğüm hop'larına bölünüyor (<code>deriveSiftedKeyChain()</code>,
+      PhotonNet2.jsx) — anahtar, ardışık düğümler arasında tek-kullanımlık-şablon (OTP) röle ile taşınıyor.
+      <b>Dürüst kısıt:</b> bu, gerçek bir kuantum tekrarlayıcı (dolanıklık takası, ara düğüme güven
+      gerektirmez) DEĞİL — ara düğümlerin ele geçirilmediği varsayımına dayanıyor (tıpkı gerçek
+      ticari trusted-node QKD ağları gibi, örn. çok-hoplu fiber omurgalar).
+    </p>
+    <table style="margin-bottom:18px;">
+      <thead>
+        <tr>
+          <th>Mesafe / hop sayısı</th>
+          <th>PhotonNet<br/>ort. QBER (Eve yok)</th>
+          <th>Qiskit-eşd.<br/>ort. QBER (Eve yok)</th>
+          <th>PhotonNet<br/>en-kötü-hop QBER</th>
+          <th>Qiskit-eşd.<br/>en-kötü-hop QBER</th>
+          <th>PhotonNet<br/>ort. QBER (Eve var)</th>
+          <th>Qiskit-eşd.<br/>ort. QBER (Eve var)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>300km — 5×60km hop</td><td>2.721%</td><td>2.716%</td><td>2.942%</td><td>2.745%</td><td>26.173%</td><td>26.334%</td></tr>
+        <tr><td>550km — 10×55km hop</td><td>2.637%</td><td>2.575%</td><td>2.801%</td><td>2.632%</td><td>26.430%</td><td>26.264%</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Her iki mesafede de: (a) Eve yokken ortalama/en-kötü-hop QBER makul bir güvenlik marjıyla
+      %11 tespit eşiğinin çok altında kalıyor (anahtar üretimi GÜVENLİ), (b) Eve tüm hoplara saldırdığında
+      en-kötü-hop QBER %11'i açıkça aşıyor ve zincir <code>eavesdropDetected=true</code> döndürüyor — sistem
+      dinlemeyi doğru tespit ediyor. 550km'de PhotonNet 400bin ham bitten 149.165 foton algılıyor
+      (bottleneck anahtar uzunluğu 14.835 bit) — 300km/550km'nin tek-atış denemesindeki "sıfır algılama"
+      sorunu artık yok.</p>
+
+    <h3 style="font-size:11.5px;margin:14px 0 2px;color:var(--text-primary);">550km zincirinin hop-hop QBER'i (10 hop, Eve yok)</h3>
+    <p class="desc" style="margin:0 0 8px;">Her hop bağımsız bir BB84 oturumu — iki motor da hop'lar arasında aynı ~2.5-2.8% bandında dalgalanıyor</p>
+    <svg viewBox="0 0 460 300" style="max-width:520px;">
+      <g>
+        <line class="gridline" x1="50" y1="260" x2="430" y2="260"/>
+        <line class="gridline" x1="50" y1="197" x2="430" y2="197"/>
+        <line class="gridline" x1="50" y1="133" x2="430" y2="133"/>
+        <line class="gridline" x1="50" y1="70"  x2="430" y2="70"/>
+        <line class="axis-line" x1="50" y1="20" x2="50" y2="260"/>
+        <text class="tick-label" x="44" y="263" text-anchor="end">2.0%</text>
+        <text class="tick-label" x="44" y="200" text-anchor="end">2.4%</text>
+        <text class="tick-label" x="44" y="136" text-anchor="end">2.8%</text>
+        <text class="tick-label" x="44" y="73"  text-anchor="end">3.2%</text>
+      </g>
+      <g>
+        <text class="tick-label" x="50"  y="276" text-anchor="middle">h0</text>
+        <text class="tick-label" x="92"  y="276" text-anchor="middle">h1</text>
+        <text class="tick-label" x="134" y="276" text-anchor="middle">h2</text>
+        <text class="tick-label" x="177" y="276" text-anchor="middle">h3</text>
+        <text class="tick-label" x="219" y="276" text-anchor="middle">h4</text>
+        <text class="tick-label" x="261" y="276" text-anchor="middle">h5</text>
+        <text class="tick-label" x="303" y="276" text-anchor="middle">h6</text>
+        <text class="tick-label" x="346" y="276" text-anchor="middle">h7</text>
+        <text class="tick-label" x="388" y="276" text-anchor="middle">h8</text>
+        <text class="tick-label" x="430" y="276" text-anchor="middle">h9</text>
+      </g>
+      <path class="series-line s1" d="M 50.00,103.20 L 92.22,99.80 L 134.44,167.00 L 176.67,138.00 L 218.89,149.20 L 261.11,132.00 L 303.33,156.80 L 345.56,101.80 L 387.78,134.60 L 430.00,143.60"/>
+      <path class="series-line s2" d="M 50.00,145.60 L 92.22,149.60 L 134.44,148.80 L 176.67,147.80 L 218.89,148.20 L 261.11,156.40 L 303.33,133.60 L 345.56,134.40 L 387.78,136.00 L 430.00,150.40"/>
+      <g class="m1">
+        <circle class="marker m1" cx="50" cy="103.20" r="3"/><circle class="marker m1" cx="92.22" cy="99.80" r="3"/>
+        <circle class="marker m1" cx="134.44" cy="167.00" r="3"/><circle class="marker m1" cx="176.67" cy="138.00" r="3"/>
+        <circle class="marker m1" cx="218.89" cy="149.20" r="3"/><circle class="marker m1" cx="261.11" cy="132.00" r="3"/>
+        <circle class="marker m1" cx="303.33" cy="156.80" r="3"/><circle class="marker m1" cx="345.56" cy="101.80" r="3"/>
+        <circle class="marker m1" cx="387.78" cy="134.60" r="3"/><circle class="marker m1" cx="430.00" cy="143.60" r="3"/>
+      </g>
+      <g class="m2">
+        <circle class="marker m2" cx="50" cy="145.60" r="3"/><circle class="marker m2" cx="92.22" cy="149.60" r="3"/>
+        <circle class="marker m2" cx="134.44" cy="148.80" r="3"/><circle class="marker m2" cx="176.67" cy="147.80" r="3"/>
+        <circle class="marker m2" cx="218.89" cy="148.20" r="3"/><circle class="marker m2" cx="261.11" cy="156.40" r="3"/>
+        <circle class="marker m2" cx="303.33" cy="133.60" r="3"/><circle class="marker m2" cx="345.56" cy="134.40" r="3"/>
+        <circle class="marker m2" cx="387.78" cy="136.00" r="3"/><circle class="marker m2" cx="430.00" cy="150.40" r="3"/>
+      </g>
+    </svg>
+    <div class="legend">
+      <div class="legend-item"><span class="swatch" style="background:var(--series-1)"></span> PhotonNet (deriveSiftedKeyChain)</div>
+      <div class="legend-item"><span class="swatch dash"></span> Qiskit-eşdeğeri (10× bağımsız durum-vektörü oturumu)</div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

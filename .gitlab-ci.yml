@@ -1,0 +1,97 @@
+# .gitlab-ci.yml
+# ═══════════════════════════════════════════════════════════════════
+# PhotonNet — IBM Quantum Network / ETSI GS QKD 014 mTLS entegrasyon
+# testi boru hattı (GitLab CI sürümü). Gerçek mantığın TAMAMI
+# bb84/ci/run_integration_tests.sh içindedir — bu YAML yalnızca İNCE
+# bir GitLab CI kabuğudur; .github/workflows/ibm-integration-test.yml
+# (GitHub Actions sürümü) ile AYNI script'i çağırır, böylece iki CI
+# sisteminde de davranış SAPMAZ.
+#
+# VARSAYILAN MOD: "ephemeral" — kendi geçici test CA'sını/sertifikalarını
+# üretir, gerçek üretim CA'sına veya IBM sertifikalarına İHTİYAÇ DUYMAZ.
+# GERÇEK sertifikalarla (external mod) çalıştırmak için Settings → CI/CD →
+# Variables altında şunları tanımlayıp "external-real-certs" işini elle
+# tetikleyin (bkz. aşağıdaki `when: manual` işi):
+#   • Type: File, Masked+Protected → IBM_INTEGRATION_CA_CERT / IBM_INTEGRATION_IBM_CERT
+#     / IBM_INTEGRATION_IBM_KEY / IBM_INTEGRATION_PEER_CERT / IBM_INTEGRATION_PEER_KEY
+#   • Type: Variable (File DEĞİL), Masked+Protected → IBM_INTEGRATION_KME_URL
+#     (düz bir URL metnidir, bkz. aşağıdaki DİKKAT notu)
+# CA ÖZEL ANAHTARI ASLA bir CI/CD değişkeni olarak GİRİLMEMELİDİR — yalnızca
+# CA'nın GENEL sertifikası ve İSTEMCİ (SAE) sertifika/anahtar ÇİFTLERİ.
+# ═══════════════════════════════════════════════════════════════════
+stages:
+  - test
+
+variables:
+  GIT_DEPTH: "1"
+
+# ── Değişmeyen ortak kurulum: Node.js + openssl mevcudiyeti + script izinleri ──
+.ibm_integration_base:
+  image: node:20-bookworm
+  before_script:
+    - openssl version || (apt-get update -qq && apt-get install -y -qq openssl)
+    - chmod +x bb84/pki_tools/*.sh bb84/ci/*.sh bb84/mock_ibm_client.js
+  artifacts:
+    when: always
+    expire_in: 14 days
+    paths:
+      - ci-reports/
+    reports:
+      # GitLab'ın YERLEŞİK JUnit test raporu entegrasyonu — MR'da
+      # "Tests" sekmesinde satır satır geçti/kaldı gösterir, önceki
+      # çalıştırmalarla karşılaştırır. CI logunu elle kazmaya GEREK KALMAZ.
+      junit: ci-reports/mock-ibm-client-junit.xml
+
+# ── VARSAYILAN İŞ: ephemeral mod, otomatik (her MR/push'ta) ──
+ibm-integration-test:ephemeral:
+  extends: .ibm_integration_base
+  stage: test
+  rules:
+    # main/master'a push VEYA bir merge request'te otomatik çalışır —
+    # "tek tıkla" entegre olsun diye herhangi bir manuel adım GEREKMEZ.
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+    - if: '$CI_PIPELINE_SOURCE == "schedule"'
+    - if: '$CI_PIPELINE_SOURCE == "web"' # GitLab arayüzünden "Run pipeline" ile manuel/tek-tıkla tetikleme
+  variables:
+    KME_MODE: "ephemeral"
+    REPORTS_DIR: "$CI_PROJECT_DIR/ci-reports"
+  script:
+    - ./bb84/ci/run_integration_tests.sh
+
+# ── OPSİYONEL İŞ: GERÇEK IBM sertifikaları + GERÇEK KME uç noktasına
+# karşı, yalnızca elle tetiklendiğinde çalışır (secret'ları GEREKTİRDİĞİ
+# için varsayılan olarak her pipeline'da OTOMATİK çalışmaz — IBM
+# mühendisleri "Run pipeline" ekranından bu işi seçip Play'e basarak
+# tek tıkla tetikleyebilir). ──
+ibm-integration-test:external-real-certs:
+  extends: .ibm_integration_base
+  stage: test
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "web" || $CI_PIPELINE_SOURCE == "trigger"'
+      when: manual
+      allow_failure: true
+  variables:
+    KME_MODE: "external"
+    REPORTS_DIR: "$CI_PROJECT_DIR/ci-reports"
+    # DİKKAT — İKİ FARKLI DEĞİŞKEN TÜRÜ KARIŞTIRILMAMALIDIR:
+    #   • IBM_INTEGRATION_CA_CERT / IBM_INTEGRATION_IBM_CERT / IBM_INTEGRATION_IBM_KEY /
+    #     IBM_INTEGRATION_PEER_CERT / IBM_INTEGRATION_PEER_KEY → GitLab'ın "File" TİPİ
+    #     CI/CD değişkenleri olarak tanımlanmalıdır (Settings → CI/CD → Variables →
+    #     Type: File). Bu durumda GitLab değişkenin İÇERİĞİNİ otomatik olarak geçici
+    #     bir dosyaya yazar ve değişken DEĞERİ o dosyanın YOLUNU tutar; bu yüzden
+    #     burada doğrudan $IBM_INTEGRATION_CA_CERT vb. kullanmak YETERLİDİR.
+    #   • IBM_INTEGRATION_KME_URL → BUNU "File" tipi YAPMAYIN. Bu bir dosya İÇERİĞİ
+    #     değil, düz bir URL metnidir (ör. "https://kme.example.com:8443"). Normal
+    #     ("Variable" tipi, istenirse Masked+Protected) bir CI/CD değişkeni olarak
+    #     tanımlayın — File tipi seçilirse $IBM_INTEGRATION_KME_URL bir dosya YOLUNA
+    #     çözümlenir ve mock_ibm_client.js'e --kme-url olarak YANLIŞLIKLA bir dosya
+    #     yolu geçilmiş olur, bu da bağlantıyı BOZAR.
+    KME_URL: "$IBM_INTEGRATION_KME_URL"
+    CA_CERT: "$IBM_INTEGRATION_CA_CERT"
+    IBM_CERT: "$IBM_INTEGRATION_IBM_CERT"
+    IBM_KEY: "$IBM_INTEGRATION_IBM_KEY"
+    PEER_CERT: "$IBM_INTEGRATION_PEER_CERT"
+    PEER_KEY: "$IBM_INTEGRATION_PEER_KEY"
+  script:
+    - ./bb84/ci/run_integration_tests.sh

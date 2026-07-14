@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PhotonNet — Fiziksel Sabitler Doğrulama Raporu</title>
+<style>
+  .viz-root {
+    --surface-1:      #fcfcfb;
+    --page:           #f9f9f7;
+    --text-primary:   #0b0b0b;
+    --text-secondary: #52514e;
+    --text-muted:     #898781;
+    --grid:           #e1e0d9;
+    --axis:           #c3c2b7;
+    --series-1:       #2a78d6;
+    --series-2:       #1baf7a;
+    --border:         rgba(11,11,11,0.10);
+  }
+  @media (prefers-color-scheme: dark) {
+    .viz-root {
+      --surface-1:      #1a1a19;
+      --page:           #0d0d0d;
+      --text-primary:   #ffffff;
+      --text-secondary: #c3c2b7;
+      --text-muted:     #898781;
+      --grid:           #2c2c2a;
+      --axis:           #383835;
+      --series-1:       #3987e5;
+      --series-2:       #199e70;
+      --border:         rgba(255,255,255,0.10);
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; padding:0; background: var(--page); }
+  body { font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color: var(--text-primary); }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 28px 20px 48px; }
+  h1 { font-size: 19px; font-weight: 700; margin: 0 0 6px; letter-spacing: -.01em; }
+  h2.card-title { font-size: 14px; font-weight: 700; margin: 0 0 4px; }
+  .subtitle { font-size: 13px; color: var(--text-secondary); margin: 0 0 22px; line-height: 1.5; max-width: 760px; }
+  .card { background: var(--surface-1); border: 1px solid var(--border); border-radius: 12px; padding: 18px 20px 16px; margin-bottom: 18px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 8px; }
+  th, td { text-align: right; padding: 7px 10px; font-variant-numeric: tabular-nums; }
+  th:first-child, td:first-child { text-align: left; }
+  th { color: var(--text-muted); font-weight: 600; font-size: 10.5px; letter-spacing: .03em; border-bottom: 1px solid var(--grid); }
+  td { border-bottom: 1px solid var(--grid); color: var(--text-primary); }
+  tr:last-child td { border-bottom: none; }
+  .note { font-size: 11.5px; color: var(--text-secondary); line-height: 1.65; margin: 6px 0; }
+  .note b { color: var(--text-primary); }
+  .badge { display:inline-block; font-size:10px; font-weight:700; padding:2px 8px; border-radius:5px; letter-spacing:.02em; margin-left: 8px; }
+  .badge.pass { background:#0ca30c22; color:#0ca30c; }
+  .badge.warn { background:#e0951022; color:#c17300; }
+  .badge.flag { background:#d6394622; color:#c62839; }
+  code { background: var(--grid); padding: 1px 5px; border-radius: 4px; font-size: 11px; }
+  .src { font-size: 10.5px; color: var(--text-muted); margin-top: 4px; }
+  .src a { color: var(--series-1); text-decoration: none; }
+  ul.srclist { margin: 6px 0 0; padding-left: 18px; font-size: 11px; color: var(--text-muted); }
+  ul.srclist li { margin-bottom: 3px; }
+  ul.srclist a { color: var(--series-1); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="viz-root wrap">
+
+  <h1>PhotonNet — Fiziksel Sabitler Doğrulama Raporu (Faz: SNSPD / EDFA / QBER-mesafe)</h1>
+  <p class="subtitle">
+    Fiber kayıp katsayılarından (633nm düzeltmesi, bkz. önceki rapor) sonra, sistemin geri kalan
+    "didaktik" işaretli sabitleri gerçek yayınlanmış donanım verisi ve saha deneyleriyle
+    çapraz kontrol edildi. Her madde: PhotonNet'in kullandığı değer → gerçek kaynak → sonuç.
+  </p>
+
+  <div class="card">
+    <h2 class="card-title">1) SNSPD karanlık sayım oranı <span class="badge pass">GERÇEKÇİ — DOĞRULANDI</span></h2>
+    <p class="note">
+      PhotonNet: <code>DETECTOR_DARK_RATE_HZ = 50</code> Hz.
+    </p>
+    <table>
+      <thead><tr><th>Kaynak</th><th>Koşul</th><th>Karanlık sayım oranı</th></tr></thead>
+      <tbody>
+        <tr><td>arXiv 1507.01743 (Ultimate low system DCR)</td><td>Filtresiz (baseline sistem)</td><td>~10 Hz – 1 kHz</td></tr>
+        <tr><td>arXiv 1507.01743</td><td>Bulk band-pass filtre (20nm)</td><td>~1000 Hz (optimal bias)</td></tr>
+        <tr><td>arXiv 1507.01743</td><td>Bulk + DWDM filtre (en iyi durum)</td><td>0.0001–0.001 Hz</td></tr>
+        <tr><td>NIST Quantum Networks sayfası</td><td>En iyi laboratuvar rekoru olarak anılan</td><td>&lt;0.001 Hz</td></tr>
+      </tbody>
+    </table>
+    <p class="note">
+      <b>Sonuç:</b> 50Hz, filtresiz bir SNSPD'nin (10Hz-1kHz) alt-orta bandında, yani "orta düzeyde
+      spektral filtrelemeye sahip pratik bir saha sistemi" için gerçekçi bir değer. NIST'in andığı
+      &lt;0.001Hz rakamı en agresif soğuk-filtreli laboratuvar rekorunu temsil ediyor — tipik/pratik
+      bir sistem için değil. <b>Değişiklik yapılmadı, mevcut değer olduğu gibi bırakıldı.</b>
+    </p>
+    <ul class="srclist">
+      <li><a href="https://arxiv.org/pdf/1507.01743">Ultimate low system dark count rate for SNSPD (arXiv:1507.01743)</a></li>
+      <li><a href="https://www.nist.gov/pml/quantum-networks-nist/technologies-quantum-networks/single-photon-detectors">NIST — Single-Photon Detectors</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">2) BB84 QBER'in mesafeyle artışı <span class="badge pass">MERTEBE OLARAK TUTARLI</span></h2>
+    <p class="note">
+      PhotonNet <code>propPhoton()</code>: <code>phaseProb = 0.012 + km/4000</code> (zaten Qiskit-eşdeğeri
+      referansla iç-tutarlılığı doğrulanmıştı, bkz. önceki rapor). Burada gerçek bir saha deneyiyle
+      mertebe karşılaştırması yapıldı.
+    </p>
+    <table>
+      <thead><tr><th>Mesafe</th><th>PhotonNet QBER</th><th>Gerçek saha deneyi (122km telekom fiber, arXiv:quant-ph/0412171)</th></tr></thead>
+      <tbody>
+        <tr><td>~50-65km</td><td>~2.4%</td><td>~3.3% (65km'ye kadar "pratik olarak sabit")</td></tr>
+        <tr><td>~100-122km</td><td>~4.0%</td><td>~8.9% (122km, dedektör karanlık-sayımı baskın hale geliyor)</td></tr>
+      </tbody>
+    </table>
+    <p class="note">
+      <b>Sonuç:</b> İki eğri de aynı mertebede (birkaç yüzde) ve aynı yönde (mesafeyle artan) —
+      ama gerçek deneyde 122km'deki sıçrama daha keskin, çünkü yazarlar bunu açıkça "dedektör
+      karanlık sayımı ve başıboş ışığın baskın hale gelmesi"ne bağlıyor. PhotonNet bu etkiyi AYRI
+      bir katmanda (<code>NoiseGateMiddleware</code>/<code>DetectorNoiseModel</code>) modelliyor,
+      <code>phaseProb</code>'un içine karıştırmıyor — mimari olarak doğru ayrım, ama iki katman
+      birlikte gerçek deneydeki kadar keskin bir 100km-sonrası sıçrama üretmiyor. Bu, saha
+      deneyinin KENDİ donanımına (SPAD, o dönemin dedektörleri) özgü mutlak bir taban seviyesi
+      farkı olabileceğinden, hesap hatası değil — <b>bilgi amaçlı not olarak kaydedildi, kod
+      değişikliği yapılmadı.</b>
+    </p>
+    <ul class="srclist">
+      <li><a href="https://arxiv.org/pdf/quant-ph/0412171">Quantum key distribution over 122 km of standard telecom fiber (arXiv:quant-ph/0412171)</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">3) EDFA tekrarlayıcı aralığı ve telafi tavanı <span class="badge flag">GERÇEK BİR SAPMA BULUNDU — KOD DEĞİŞTİRİLMEDİ</span></h2>
+    <p class="note">
+      PhotonNet <code>computeRepeaterGain()</code>: bir linkin <code>reps</code> sayısı, o linki
+      <code>reps+1</code> eşit parçaya böler (<code>sk = km/(reps+1)</code>) ve telafi oranı
+      <code>min(0.95, 0.5+reps×0.15)</code> ile reps=3'te mimari tavana (%95) ulaşır.
+    </p>
+    <table>
+      <thead><tr><th>Parametre</th><th>PhotonNet (bu oturumda kalibre edilen reps=3 düğümler)</th><th>Gerçek denizaltı/karasal EDFA mühendisliği</th></tr></thead>
+      <tbody>
+        <tr><td>Tekrarlayıcı aralığı</td><td>~140-186km (örn. GAZ-BAG 560km / 4 = 140km)</td><td>tipik 70-80km (aralık 50-100km)</td></tr>
+        <tr><td>Amplifikatör kazancı/span</td><td>telafi oranı %95'te tavanlanıyor (kalıcı %5 kayıp)</td><td>10-15dB/span — bir 70km span'ın ~14dB kaybını neredeyse TAMAMEN geri kazandırır</td></tr>
+      </tbody>
+    </table>
+    <p class="note">
+      <b>Bulgu:</b> Gerçek denizaltı/karasal fiber omurgaları tekrarlayıcıları çok daha sık aralıklarla
+      (70-80km) yerleştirir ve her biri neredeyse TAM güç geri kazanımı sağlar (asıl sınırlayıcı, kalan
+      %5'lik bir "kayıp tabanı" değil, biriken ASE gürültüsüdür). PhotonNet'in <code>reps</code> soyutlaması
+      bunun yerine "bir linke birkaç tekrarlayıcı düğümü" atayıp aralarında çok daha uzun mesafeler
+      bırakıyor — 560km'lik bir hat gerçekte ~7-8 tekrarlayıcı gerektirirken PhotonNet 3 kullanıyor.
+      <b>Bu KOD DEĞİŞTİRİLMEDİ</b> çünkü <code>computeRepeaterGain</code>'in tavanı, bu oturumda IST-BAG
+      koridorundaki 11 düğümün reps değerleri bu FORMÜLE göre (reps=3 → %95 tavan) kalibre edildi;
+      tavanı/eğimi değiştirmek bu kalibrasyonun tamamının yeniden doğrulanmasını gerektirir — bu,
+      "sabit düzeltme" kapsamının ötesinde, ayrı bir onay gerektiren mimari bir değişikliktir.
+    </p>
+    <ul class="srclist">
+      <li><a href="https://mapyourtech.com/undersea-repeatereverything-about-it/">Undersea Repeater: Everything About It (MapYourTech)</a></li>
+      <li><a href="https://www.rp-photonics.com/erbium_doped_fiber_amplifiers.html">Erbium-doped Fiber Amplifiers (RP Photonics Encyclopedia)</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">4) Güvenilir-düğüm röle zinciri aralığı (MSG_RELAY_HOP_KM) <span class="badge flag">GERÇEK BİR SAPMA BULUNDU — KOD DEĞİŞTİRİLMEDİ</span></h2>
+    <p class="note">
+      PhotonNet: &gt;1000km linkler için mesaj kanalı <code>MSG_RELAY_HOP_KM = 600</code> km'lik
+      güvenilir-düğüm hop'larına bölünüyor (dijital ölç-ve-yeniden-gönder, %99.9 tavanlı).
+    </p>
+    <p class="note">
+      <b>Bulgu:</b> Gerçek dünyadaki trusted-node QKD omurgaları (örn. Çin'in Pekin-Şangay ~2000km
+      kuantum omurgası) güvenilir düğümleri çok daha sık aralıklarla yerleştirir — tipik olarak
+      50-100km, çünkü tek-foton seviyesindeki BB84'ün pratik menzili (madde 2'deki 122km saha
+      deneyinin de gösterdiği gibi, güvenlik sınırı ~130km civarında) buna izin vermez.
+      PhotonNet'in 600km'lik hop mesafesi bu gerçek pratikten ~6-12× daha seyrek.
+      <b>Bu da KOD DEĞİŞTİRİLMEDİ</b> — aynı gerekçeyle: bu oturumda test edilen tüm uzun-mesafe
+      senaryolar (300km/550km QBER karşılaştırması dahil) mevcut 600km/60km hop parametreleriyle
+      doğrulandı; bunu gerçek ~75km'lik trusted-node aralığına çekmek difüzyon zincirindeki hop
+      sayısını ~10 kat artırır ve tüm o senaryoların yeniden koşulmasını gerektirir.
+    </p>
+    <ul class="srclist">
+      <li><a href="https://arxiv.org/pdf/quant-ph/0412171">Quantum key distribution over 122 km of standard telecom fiber (arXiv:quant-ph/0412171)</a></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2 class="card-title">Özet</h2>
+    <table>
+      <thead><tr><th>Sabit</th><th>Durum</th></tr></thead>
+      <tbody>
+        <tr><td>Fiber kayıp katsayıları (1550/1310/850nm)</td><td class="badge pass">gerçekçi, doğrulandı (önceki rapor)</td></tr>
+        <tr><td>Fiber kayıp katsayısı (633nm)</td><td class="badge pass">düzeltildi: 3.00→9.00dB/km (önceki oturum)</td></tr>
+        <tr><td>SNSPD karanlık sayım oranı (50Hz)</td><td class="badge pass">gerçekçi, doğrulandı</td></tr>
+        <tr><td>QBER-mesafe eğilimi (phaseProb)</td><td class="badge pass">mertebe olarak tutarlı</td></tr>
+        <tr><td>EDFA tekrarlayıcı yoğunluğu/tavanı</td><td class="badge flag">gerçek sapma — bilinen sınırlama olarak belgelendi</td></tr>
+        <tr><td>Güvenilir-düğüm röle aralığı (600km)</td><td class="badge flag">gerçek sapma — bilinen sınırlama olarak belgelendi</td></tr>
+      </tbody>
+    </table>
+    <p class="note">
+      İki "gerçek sapma" bulgusu KOD'a uygulanmadı çünkü ikisi de bu oturumda saatler süren, çok
+      sayıda rota/senaryo üzerinde doğrulanmış kalibrasyonun (IST-BAG koridoru, 300/550km QBER
+      zinciri) temelini oluşturuyor — değiştirmek, o doğrulamaların TAMAMININ yeniden yapılmasını
+      gerektirir. Bu, ayrı ve açık bir onay gerektiren bir sonraki adım olarak öneriliyor.
+    </p>
+  </div>
+
+</div>
+</body>
+</html>

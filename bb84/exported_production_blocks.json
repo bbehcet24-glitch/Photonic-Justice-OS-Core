@@ -1,0 +1,3228 @@
+[
+  {
+    "routeKey": "ANK-IST",
+    "blockIndex": 1,
+    "n": 3202,
+    "sentPulses": 156000,
+    "test": {
+      "records": [
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": true
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        },
+        {
+          "bit": 0,
+          "isError": false
+        },
+        {
+          "bit": 1,
+          "isError": false
+        }
+      ]
+    },
+    "audit": {
+      "routeKey": "ANK-IST",
+      "blockIndex": 1,
+      "n": 3202,
+      "k": 798,
+      "sentPulses": 156000,
+      "qberTest": 0.03132832080200501,
+      "testErrors": 25,
+      "gain": 0.02564102564102564,
+      "mu": 0.18997553425857222,
+      "qPhUpper": 0.22130385506057723,
+      "leakEC": 746.6161871068032,
+      "ell": 0,
+      "secure": false,
+      "reason": "sonlu-boyut istatistiksel düzeltmeleri + EC/PA maliyeti mevcut anahtar örneklemini tamamen tüketti",
+      "compressionRatio": 0,
+      "epsilon": {
+        "PE": 1e-10,
+        "cor": 1e-15,
+        "PA": 1e-10,
+        "total": 2.00001e-10
+      },
+      "formulaVersion": "GLLP+Serfling(n,k) v1 — Scarani et al. RMP 81,1301(2009); Serfling 1974"
+    }
+  }
+]
