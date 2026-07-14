@@ -1,0 +1,7 @@
+# bb84/build_production_server.js'in ürettiği derleme çıktısı — kaynak
+# değil, her build'de yeniden üretilir (bkz. production-pipeline.yml,
+# "production-build-strip" işi). Depoda TUTULMAZ ki "hangisi gerçek kaynak"
+# belirsizleşmesin.
+bb84/dist/
+
+node_modules/

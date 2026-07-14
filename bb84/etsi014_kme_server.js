@@ -64,10 +64,17 @@
  * Subject CN alanından okunur (bkz. authenticate(), aşağıda) — HTTP
  * header'ından DEĞİL. Demo/test PKI'sını (kök CA + KME sunucu sertifikası
  * + her SAE için istemci sertifikası) üretmek için bkz.
- * generate_demo_pki.sh. `--ca` VERİLMEZSE (yalnızca `--cert`/`--key` veya
- * hiçbiri), sistem `X-SAE-ID` + `Authorization: Bearer <token>`
- * header'larını mTLS'in YERİNE GEÇEN bir demo temsilcisine düşer —
- * ÜRETİMDE BU YETERLİ DEĞİLDİR, yalnızca --ca olmadan hızlı yerel test içindir.
+ * generate_demo_pki.sh.
+ * // PROD-STRIP-BEGIN: demo-auth-doc-fallback-explainer
+ * `--ca` VERİLMEZSE (yalnızca `--cert`/`--key` veya hiçbiri), sistem
+ * header-tabanlı bir demo kimlik doğrulama temsilcisine düşer — ÜRETİMDE
+ * BU YETERLİ DEĞİLDİR, yalnızca --ca olmadan hızlı yerel test içindir.
+ * // PROD-STRIP-END: demo-auth-doc-fallback-explainer
+ * // PROD-REPLACE-TEXT-BEGIN: demo-auth-doc-fallback-explainer
+ * Bu ÜRETİM DERLEMESİNDE header-tabanlı geri düşüş modu FİZİKSEL OLARAK
+ * YOKTUR — `--ca` verilmezse sunucu hiç BAŞLAMAZ (mTLS zorunludur, bkz.
+ * build_production_server.js).
+ * // PROD-REPLACE-TEXT-END: demo-auth-doc-fallback-explainer
  *
  * ÜRETİM-SINIFI PKI (HSM/hava-boşluğu + KISA ÖMÜR + İPTAL): CA anahtarı
  * artık BU sunucu dosyasının/demo script'inin İÇİNDE ÜRETİLMİYOR. bb84/
@@ -108,7 +115,7 @@
  *   node etsi014_kme_server.js --seed-demo
  *
  * ÖRNEK ÇAĞRILAR — GERÇEK mTLS modu (istemci kendi sertifikasını sunar,
- * X-SAE-ID/Authorization header'larına GEREK YOKTUR — kimlik sertifikadan gelir):
+ * hiçbir kimlik doğrulama header'ına GEREK YOKTUR — kimlik sertifikadan gelir):
  *   curl --cert ./pki/SAE-ANK-cert.pem --key ./pki/SAE-ANK-key.pem --cacert ./pki/ca-cert.pem \
  *        https://localhost:8443/api/v1/keys/SAE-IST/status
  *   curl -X POST --cert ./pki/SAE-ANK-cert.pem --key ./pki/SAE-ANK-key.pem --cacert ./pki/ca-cert.pem \
@@ -118,9 +125,11 @@
  *        -H "Content-Type: application/json" -d '{"key_IDs":[{"key_ID":"<enc_keys_ten_gelen_id>"}]}' \
  *        https://localhost:8443/api/v1/keys/SAE-ANK/dec_keys
  *
+ * // PROD-STRIP-BEGIN: demo-auth-doc-curl-example
  * ÖRNEK ÇAĞRILAR — geri düşüş demo modu (--ca verilmeden, header-tabanlı):
  *   curl -H "X-SAE-ID: SAE-IST" -H "Authorization: Bearer demo-token" \
  *        http://localhost:8443/api/v1/keys/SAE-ANK/status
+ * // PROD-STRIP-END: demo-auth-doc-curl-example
  * ═══════════════════════════════════════════════════════════════════
  */
 "use strict";
@@ -142,7 +151,9 @@ function parseArgs(argv) {
 }
 const args = parseArgs(process.argv.slice(2));
 const PORT = parseInt(args.port || "8443", 10);
+// PROD-STRIP-BEGIN: demo-auth-token
 const AUTH_TOKEN = args["sae-token"] || "demo-token"; // İKAZ: gerçek üretimde mTLS kullanın, bu bir demo temsilcisidir
+// PROD-STRIP-END: demo-auth-token
 const DEFAULT_KEY_SIZE_BITS = 256; // ETSI 014 varsayılan anahtar boyutu alanı (status.key_size) — demo değeri
 let MTLS_ENABLED = false; // --cert/--key/--ca üçü birlikte verildiğinde true olur (bkz. sunucu başlatma bloğu, aşağıda)
 
@@ -290,9 +301,15 @@ function readBody(req) {
 // öngördüğü GERÇEK model: HTTP header'ı DEĞİL, TLS istemci sertifikası SAE
 // kimliğinin kaynağıdır).
 //
-// GERİ DÜŞÜŞ MODU (MTLS_ENABLED=false — --ca verilmediğinde): X-SAE-ID +
-// Authorization header'ları mTLS'in YERİNE GEÇEN bir demo temsilcisidir —
-// ÜRETİMDE KULLANILMAMALIDIR (bkz. dosya-üstü ve başlangıç log'undaki İKAZ).
+// PROD-STRIP-BEGIN: demo-auth-doc-fallback-comment
+// GERİ DÜŞÜŞ MODU (MTLS_ENABLED=false — --ca verilmediğinde): header-tabanlı
+// bir demo temsilcisi mTLS'in YERİNE GEÇER — ÜRETİMDE KULLANILMAMALIDIR
+// (bkz. dosya-üstü ve başlangıç log'undaki İKAZ).
+// PROD-STRIP-END: demo-auth-doc-fallback-comment
+// PROD-REPLACE-TEXT-BEGIN: demo-auth-doc-fallback-comment
+// Bu ÜRETİM DERLEMESİNDE MTLS_ENABLED her zaman true'dur — header-tabanlı
+// geri düşüş modu fiziksel olarak YOKTUR.
+// PROD-REPLACE-TEXT-END: demo-auth-doc-fallback-comment
 //
 // ── OCSP (İKİNCİ, CANLI İPTAL KATMANI) ──────────────────────────────
 // --ocsp-responder=<url> verildiğinde, mTLS ile doğrulanmış her istemci
@@ -360,12 +377,19 @@ async function authenticate(req) {
     }
     return cn;
   }
+  // PROD-STRIP-BEGIN: demo-auth-fallback
   // ── Geri düşüş: header-tabanlı demo kimlik doğrulaması ──
   const auth = req.headers["authorization"] || "";
   const saeId = req.headers["x-sae-id"];
   if (!saeId) throw new KMEError(401, "X-SAE-ID header eksik — çağıran SAE kimliği belirtilmedi");
   if (auth !== `Bearer ${AUTH_TOKEN}`) throw new KMEError(401, "Authorization header geçersiz — bkz. --sae-token (İKAZ: bu demo kimlik doğrulaması mTLS'in YERİNE GEÇMEZ, yalnızca yerel test içindir — gerçek mTLS için --cert/--key/--ca üçünü birlikte verin, bkz. pki_tools/)");
   return saeId;
+  // PROD-STRIP-END: demo-auth-fallback
+  // PROD-REPLACE-BEGIN: demo-auth-fallback
+  /*
+  throw new KMEError(401, "Üretim derlemesi: mTLS ZORUNLUDUR — header-tabanlı kimlik doğrulama bu derlemede fiziksel olarak SÖKÜLMÜŞTÜR (bkz. bb84/build_production_server.js).");
+  */
+  // PROD-REPLACE-END: demo-auth-fallback
 }
 
 // ── ETSI 014 uç noktaları ──────────────────────────────────────────
@@ -510,7 +534,9 @@ if (args.cert && args.key && args.ca) {
       }
     });
   }
-} else if (args.cert && args.key) {
+}
+// PROD-STRIP-BEGIN: demo-server-modes
+else if (args.cert && args.key) {
   server = https.createServer({ cert: fs.readFileSync(args.cert), key: fs.readFileSync(args.key) }, server_handler);
   modeDesc = "https (yalnızca SUNUCU kimliği doğrulanıyor — istemci mTLS'i KAPALI, --ca verilmedi)";
   console.log("[KME] İKAZ: --ca verilmedi — mTLS (istemci sertifikası doğrulaması) DEVRE DIŞI. SAE kimliği hâlâ X-SAE-ID header'ından okunuyor (demo). Gerçek mTLS için --ca=<CA sertifikası> da verin (bkz. pki_tools/).");
@@ -519,11 +545,21 @@ if (args.cert && args.key && args.ca) {
   modeDesc = "http (İKAZ: TLS YOK — yalnızca yerel demo)";
   console.log("[KME] İKAZ: --cert/--key verilmedi — düz HTTP ile başlatılıyor. ETSI GS QKD 014 ÜRETİMDE (S)TLS + karşılıklı istemci sertifikası doğrulaması ZORUNLU KILAR. Bu mod SADECE yerel demo/entegrasyon testi içindir.");
 }
+// PROD-STRIP-END: demo-server-modes
+// PROD-REPLACE-BEGIN: demo-server-modes
+/*
+else {
+  throw new Error("Üretim derlemesi: --cert/--key/--ca üçü BİRLİKTE verilmelidir (mTLS zorunlu) — header-tabanlı/TLS'siz geri düşüş modları bu derlemede fiziksel olarak SÖKÜLMÜŞTÜR (bkz. bb84/build_production_server.js). Sunucu BAŞLATILMIYOR.");
+}
+*/
+// PROD-REPLACE-END: demo-server-modes
 
 if (require.main === module) {
   server.listen(PORT, () => {
     console.log(`[KME] ETSI GS QKD 014 referans sunucusu dinliyor: ${args.cert ? "https" : "http"}://localhost:${PORT} — mod: ${modeDesc}`);
+    // PROD-STRIP-BEGIN: demo-auth-token-log
     if (!MTLS_ENABLED) console.log(`[KME] Kimlik doğrulama token'ı (demo, yalnızca header-modunda kullanılır): ${AUTH_TOKEN}`);
+    // PROD-STRIP-END: demo-auth-token-log
   });
 }
 

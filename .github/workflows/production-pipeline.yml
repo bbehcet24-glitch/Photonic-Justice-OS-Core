@@ -388,13 +388,83 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
+  # ── KAPI 3d: Üretim derlemesi — demo/bypass kimlik doğrulama kodunun
+  # FİZİKSEL OLARAK SÖKÜLDÜĞÜNÜ kanıtlar ("Demo Kodlarının İçeride Kalması"
+  # sertifikasyon bulgusuna yanıt). bb84/build_production_server.js,
+  # Bearer/X-SAE-ID header modunu ve TLS'siz/istemci-sertifikasız sunucu
+  # modlarını kaynaktan SİLİP bb84/dist/etsi014_kme_server.production.js'i
+  # üretir; bu iş hem üretilen dosyada yasaklı örüntü KALMADIĞINI hem
+  # --ca olmadan BAŞLAMADIĞINI hem de 19 IBM entegrasyon testinin TAMAMININ
+  # bu sökülmüş derlemeye karşı da geçtiğini kanıtlar.
+  production-build-strip:
+    name: "Kapı 3d — Üretim Derlemesi: Demo/Bypass Kodu Fiziksel Sökme"
+    needs: [ca-key-secret-guard, extract-core-check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: script'lerin çalıştırılabilir olduğunu garanti et
+        run: chmod +x bb84/pki_tools/*.sh bb84/ci/*.sh bb84/mock_ibm_client.js bb84/build_production_server.js
+
+      - name: Üretim derlemesini üret (demo/bypass kod SÖKÜLÜR — build script kendi doğrulamalarını da çalıştırır)
+        run: node bb84/build_production_server.js
+
+      - name: CI'nın KENDİ bağımsız taraması — üretim derlemesinde yasaklı örüntü KALMADI mı? (güven değil doğrula)
+        run: |
+          if grep -riE "bearer|x-sae-id|demo-token|sae-token|PROD-STRIP-|PROD-REPLACE-" bb84/dist/etsi014_kme_server.production.js; then
+            echo "::error::Üretim derlemesinde HÂLÂ demo/bypass izleri var — build script'in kendi kontrolü bunu YAKALAMALIYDI, bu ikinci/bağımsız bir kontrol."
+            exit 1
+          fi
+          echo "✓ CI'nın bağımsız taraması da temiz."
+
+      - name: --ca OLMADAN başlatmayı REDDETTİĞİNİ doğrula (negatif test — bypass yolu gerçekten kapalı mı)
+        run: |
+          set +e
+          node bb84/dist/etsi014_kme_server.production.js --port=19999 2>/tmp/prod_start_err.log
+          RC=$?
+          set -e
+          if [ "$RC" -eq 0 ]; then
+            echo "::error::Üretim derlemesi --ca OLMADAN BAŞLADI — bu bir GÜVENLİK REGRESYONUDUR."
+            exit 1
+          fi
+          if ! grep -qi "zorunlu\|BİRLİKTE verilmelidir" /tmp/prod_start_err.log; then
+            echo "::error::Beklenen 'mTLS zorunlu' hata mesajı bulunamadı:"
+            cat /tmp/prod_start_err.log
+            exit 1
+          fi
+          echo "✓ --ca olmadan başlatma doğru şekilde ve doğru gerekçeyle reddedildi."
+
+      - name: 19 IBM entegrasyon testinin TAMAMINI, sökülmüş üretim derlemesine karşı çalıştır
+        run: ./bb84/ci/run_integration_tests.sh
+        env:
+          KME_MODE: ephemeral
+          KME_SERVER_SCRIPT: ${{ github.workspace }}/bb84/dist/etsi014_kme_server.production.js
+          REPORTS_DIR: ${{ github.workspace }}/ci-reports/production-build
+
+      - name: Üretim derlemesini + test raporlarını artifact olarak yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-build-stripped
+          path: |
+            bb84/dist/etsi014_kme_server.production.js
+            ci-reports/production-build/
+          retention-days: 30
+
   # ── KAPI 4: Üretim kilometre taşını mühürle (git tag + GitHub Release) ─
   # SADECE elle workflow_dispatch → seal_production_milestone=true VE
   # yukarıdaki HER "her-zaman-çalışan" kapı yeşilse çalışır. Normal push/
   # PR/schedule tetiklemelerinde bu iş HİÇ değerlendirilmez bile.
   production-milestone:
     name: "Kapı 4 — Üretim Kilometre Taşını Mühürle"
-    needs: [ca-key-secret-guard, extract-core-check, mtls-kme-scenarios, ibm-integration-test-ephemeral, software-hsm-pkcs11]
+    needs: [ca-key-secret-guard, extract-core-check, mtls-kme-scenarios, ibm-integration-test-ephemeral, software-hsm-pkcs11, production-build-strip]
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.seal_production_milestone == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -451,6 +521,7 @@ jobs:
             echo "- ✅ mTLS/KME sertifika rotasyon+iptal senaryoları (S1-S6, bkz. ekli rapor)"
             echo "- ✅ IBM ETSI GS QKD 014 mTLS entegrasyon testleri (19 test, mock_ibm_client.js)"
             echo "- ✅ Yazılımsal HSM (SoftHSM2) + Node-PKCS11 köprüsü — CA özel anahtarı token içinde üretildi/imzaladı, dosyaya hiç inmedi"
+            echo "- ✅ Üretim derlemesi — demo/bypass kimlik doğrulama kodu FİZİKSEL OLARAK SÖKÜLDÜ, 19 test sökülmüş derlemeye karşı da geçti"
             echo
             echo "**Commit:** \`${{ github.sha }}\`"
             echo "**Mühürleyen çalıştırma:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

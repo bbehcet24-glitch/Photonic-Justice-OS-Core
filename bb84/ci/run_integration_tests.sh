@@ -41,6 +41,13 @@
 # dahi yalnızca İSTEMCİ (SAE) sertifikaları/anahtarları secret olarak
 # verilir — CA özel anahtarı asla CI'ya girmemelidir.
 #
+# KME_SERVER_SCRIPT (opsiyonel, yalnızca "ephemeral" modda): hangi KME
+# sunucu dosyasının çalıştırılacağını override eder — varsayılan
+# etsi014_kme_server.js (dev dosyası) YERİNE, ör.
+# bb84/dist/etsi014_kme_server.production.js (bkz. build_production_server.js)
+# verilerek 19 testin TAMAMININ, demo/geri-düşüş kodu FİZİKSEL OLARAK
+# SÖKÜLMÜŞ üretim derlemesine karşı da geçtiği doğrulanabilir.
+#
 # ORTAM DEĞİŞKENLERİ (hepsi opsiyonel, mantıklı varsayılanları var):
 #   KME_MODE              ephemeral|external            (varsayılan: ephemeral)
 #   REPORTS_DIR           JUnit XML + logların yazılacağı dizin (varsayılan: ./ci-reports)
@@ -175,7 +182,7 @@ if [ "$KME_MODE" = "ephemeral" ]; then
   "$BB84_DIR/pki_tools/run_ocsp_responder.sh" "$PKI_DIR" "$OCSP_PORT" > "$REPORTS_DIR/ocsp_responder.log" 2>&1 &
   BG_PIDS+=("$!")
 
-  node "$BB84_DIR/etsi014_kme_server.js" \
+  node "${KME_SERVER_SCRIPT:-$BB84_DIR/etsi014_kme_server.js}" \
     --port="$KME_PORT" \
     --cert="$PKI_DIR/reqs/localhost-cert.pem" --key="$PKI_DIR/reqs/localhost-key.pem" --ca="$PKI_DIR/ca-cert.pem" \
     --crl="$PKI_DIR/crl/ca-crl.pem" --ocsp-responder="http://localhost:${OCSP_PORT}" \

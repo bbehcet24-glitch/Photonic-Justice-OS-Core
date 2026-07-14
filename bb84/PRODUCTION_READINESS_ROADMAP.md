@@ -24,7 +24,7 @@ DEĞİLDİR.*
 | 1 | Referans OCSP yanıtlayıcısını üretim sınıfı bir çözümle değiştir | P0 | S5: kalıcı bağlantıda azami kilitlenme ~60sn ölçüldü | Orta (1-2 hafta) |
 | 2 | HSM/PKCS#11: yazılımsal soyutlama (SoftHSM2+Node-PKCS11) YAZILDI, CI'da doğrulanıyor; GERÇEK donanımla test hâlâ bekliyor | P0 | `ca_init.sh --pkcs11-uri`/`sign_csr.sh --engine pkcs11` artık gerçek kod (stub değil) — ama sandbox'ta hiç çalıştırılamadı, ilk doğrulama CI'da | Orta (donanım erişimine bağlı; yazılımsal katman tamam) |
 | 3 | Bağımsız güvenlik denetimi / sızma testi | P0 | Şimdiye kadarki tüm doğrulama İÇ testlerdir | Yüksek (3. taraf gerekir) |
-| 4 | Demo/header-tabanlı kimlik doğrulama geri-düşüşünün üretimde KAPALI olduğunu garanti eden dağıtım kontrolü | P0 | `etsi014_kme_server.js`'in kendi notu: bu mod "ÜRETİMDE KULLANILMAMALIDIR" | Düşük (1-2 gün) |
+| 4 | ✅ ÇÖZÜLDÜ — demo/header-tabanlı kimlik doğrulama kodu derleme anında fiziksel sökülüyor (`build_production_server.js`) | P0 | Sökülmüş derleme burada gerçekten test edildi: --ca'sız başlamıyor, 19/19 test sökülmüş derlemeye karşı da geçti | Kalan: konteyner/dağıtım imajı doğrulaması (P1) |
 | 5 | OCSP yanıtlayıcısı için yüksek erişilebilirlik (HA) + izleme/alarm | P1 | S4: OCSP çökerse TÜM geçerli istemciler reddedilir (kasıtlı fail-closed, ama SPOF) | Orta (altyapıya bağlı) |
 | 6 | PKI yönetişim dokümantasyonu (CP/CPS) | P1 | Şu an yalnızca kod yorumlarında dağınık kurallar var, resmî politika dokümanı yok | Orta (1 hafta, hukuki/uyum girdisi gerekebilir) |
 | 7 | Operasyonel olay müdahale runbook'u | P1 | Sızıntı/OCSP kesintisi/CRL bozulması için adım adım prosedür yok | Düşük-Orta (3-5 gün) |
@@ -98,14 +98,40 @@ kodu üzerinde üçüncü taraf bir güvenlik değerlendirmesi/pentest
 tamamlanmalı, bulunan KRİTİK/YÜKSEK bulgular kapatılmalı.
 
 ### 4. Demo kimlik doğrulama geri-düşüşünün üretimde kapalı olduğunun garantisi
-**Mevcut durum:** `--ca` verilmediğinde sunucu, X-SAE-ID header +
-statik bir Bearer token ile çalışan bir "demo modu"na düşüyor (kod
-içinde "ÜRETİMDE KULLANILMAMALIDIR" diye işaretli). Bu şu an yalnızca
-bir YORUM/dokümantasyon uyarısı — dağıtım sırasında bunu ZORUNLU
-KILAN bir teknik kontrol (ör. `NODE_ENV=production` iken `--ca`
-verilmezse süreç başlamayı REDDETSİN) yok.
-**Kabul kriteri:** Üretim dağıtım script'i/konteyner imajı, mTLS
-parametreleri eksikse KME sürecinin BAŞLAMAMASINI garanti etmeli.
+**ÇÖZÜLDÜ (14 Temmuz).** Önceki durum: `--ca` verilmediğinde sunucu,
+X-SAE-ID header + statik bir Bearer token ile çalışan bir "demo
+modu"na düşüyordu — bu yalnızca bir YORUM/dokümantasyon uyarısıydı,
+güvenli mTLS modu ile AYNI dosyada yan yana duruyordu, dağıtım
+sırasında bunu ZORUNLU KILAN bir teknik kontrol yoktu. Sertifikasyon
+geri bildirimi netti: bu kodun derleme anında FİZİKSEL OLARAK SÖKÜLMÜŞ
+olması gerekiyordu — bir CLI bayrağıyla gizlemek yeterli değildi.
+
+**Çözüm:** `bb84/build_production_server.js`, kaynaktaki (`etsi014_
+kme_server.js`) demo/bypass koduna ait blokları (Bearer token, X-SAE-ID
+header modu, TLS'siz/istemci-sertifikasız sunucu modları, ilgili
+dokümantasyon) `// PROD-STRIP-BEGIN/END` işaretçileriyle bulup TAMAMEN
+SİLER ve `bb84/dist/etsi014_kme_server.production.js`'i üretir. Build,
+kendi üzerinde dört bağımsız güvence çalıştırır: (1) kaynaktaki her
+strip bloğu manifestoda tanımlı mı, (2) manifestodaki her id kaynakta
+bulundu mu, (3) çıktıda "Bearer"/"X-SAE-ID"/"demo-token"/"sae-token"
+gibi yasaklı örüntülerden HİÇBİRİ kalmadı mı (pozitif grep taraması),
+(4) çıktı hâlâ geçerli JavaScript mi. CI'da (`production-pipeline.yml`,
+"production-build-strip" işi) AYRICA bağımsız bir ikinci tarama +
+"--ca olmadan başlatma REDDEDİLİYOR mu" negatif testi + **19 IBM
+entegrasyon testinin TAMAMININ bu sökülmüş derlemeye karşı da geçtiğinin**
+kanıtı çalıştırılır.
+
+**Doğrulama durumu:** Bu ortamda gerçekten test edildi (diğer HSM/
+PKCS#11 maddesinden farklı olarak — burada ağ erişimi gerekmiyordu):
+üretim derlemesi `--ca` olmadan başlatılamadığı, `--cert/--key` ile
+`--ca` olmadan da başlatılamadığı, 19 testin sökülmüş derlemeye karşı
+19/19 geçtiği, ve dev dosyasının (demo modu dahil) hiç regresyona
+uğramadığı bizzat çalıştırılıp doğrulandı.
+**Kalan kapsam:** Bu, KME uygulama sürecinin kendisini kapatıyor — konteyner
+imajı/dağıtım script'i seviyesinde (ör. yalnızca `dist/etsi014_kme_server.
+production.js`'in paketlendiği, dev dosyasının imaja hiç girmediği bir
+Dockerfile) ayrı bir doğrulama hâlâ yapılmadı; bu P1 kapsamına daha
+uygun bir "son adım" olarak eklenebilir.
 
 ---
 
@@ -180,6 +206,10 @@ gerçek, canlı testlerle doğrulandı:
 - **mTLS + ETSI GS QKD 014 protokol uyumluluğu** — `mock_ibm_client.js`
   ile 19/19 test (sertifika doğrulama + tam enc_keys/dec_keys akışı +
   5 olumsuz güvenlik senaryosu) BAŞARILI.
+- **Demo/bypass kodunun derleme anında fiziksel sökülmesi** —
+  `build_production_server.js` ile üretilen derleme hem --ca olmadan
+  başlamayı REDDETTİĞİ hem de 19 testin TAMAMINI sökülmüş hâliyle de
+  geçtiği CANLI doğrulandı (madde 4).
 - **CI/CD entegrasyonu** — GitHub Actions ve GitLab CI için, aynı
   paylaşılan script'i (`run_integration_tests.sh`) çağıran, ephemeral
   (secret gerektirmeyen) modda otomatik çalışan boru hatları hazır ve
