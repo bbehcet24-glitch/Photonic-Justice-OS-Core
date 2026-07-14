@@ -3,7 +3,7 @@
 # PhotonNet — IBM Quantum Network / ETSI GS QKD 014 mTLS entegrasyon
 # testi boru hattı (GitLab CI sürümü). Gerçek mantığın TAMAMI
 # bb84/ci/run_integration_tests.sh içindedir — bu YAML yalnızca İNCE
-# bir GitLab CI kabuğudur; .github/workflows/ibm-integration-test.yml
+# bir GitLab CI kabuğudur; .github/workflows/production-pipeline.yml
 # (GitHub Actions sürümü) ile AYNI script'i çağırır, böylece iki CI
 # sisteminde de davranış SAPMAZ.
 #

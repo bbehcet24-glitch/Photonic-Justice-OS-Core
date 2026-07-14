@@ -110,7 +110,7 @@ yorumlarında (doğru ama dağınık) mevcut.
 CronJob entegrasyonu henüz yazılmadı.
 
 ### 9. CI/CD "external" modunun gerçek IBM ortamına karşı koşulması
-`.github/workflows/ibm-integration-test.yml` ve `.gitlab-ci.yml`
+`.github/workflows/production-pipeline.yml` ve `.gitlab-ci.yml`
 içindeki "external-real-certs" işi, YAML söz dizimi ve
 `run_integration_tests.sh`'in ortam değişkeni sözleşmesiyle
 TUTARLILIK açısından doğrulandı — ama gerçek bir `KME_URL` + gerçek
@@ -178,5 +178,5 @@ gerçek, canlı testlerle doğrulandı:
 ---
 *Bu doküman, `bb84/pki_tools/cert_rotation_revocation_scenarios.js`
 senaryo analizi, `bb84/mock_ibm_client.js` entegrasyon testleri ve
-`.github/workflows/ibm-integration-test.yml` / `.gitlab-ci.yml`
+`.github/workflows/production-pipeline.yml` / `.gitlab-ci.yml`
 CI/CD boru hatları temel alınarak hazırlanmıştır.*

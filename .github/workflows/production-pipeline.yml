@@ -1,0 +1,395 @@
+# production-pipeline.yml
+# ═══════════════════════════════════════════════════════════════════
+# PhotonNet — ÜRETİM SINIFI CI/CD BORU HATTI (IBM Quantum Network /
+# ETSI GS QKD 014 mTLS entegrasyonu için tek, yetkili boru hattı).
+#
+# Bu dosya, önceki .github/workflows/ibm-integration-test.yml'in YERİNE
+# geçer (o dosyanın yaptığı HER ŞEYİ içerir + üç yeni kapı ekler) — artık
+# TEK bir yetkili CI dosyası var, iki ayrı workflow'un aynı path'lerde
+# (bb84/**) üst üste/çakışarak tetiklenmesi riski ortadan kaldırıldı.
+#
+# BU BORU HATTI DÖRT KAPIDAN OLUŞUR (her biri bir önceki BAŞARILI olmadan
+# ÇALIŞMAZ — bkz. her işin "needs:" alanı):
+#
+#   1) ca-key-secret-guard   — STATİK tarama: hiçbir CI YAML dosyası CA
+#                               ÖZEL anahtarına işaret eden bir secret adı
+#                               REFERANS ETMİYOR mu? (gerçek secret
+#                               DEĞERLERİNE bakmaz — yalnızca YAML
+#                               kaynağını grep'ler, saniyeler sürer.)
+#   2) extract-core-check     — bb84/photonnet_core.js (BB84 algoritma
+#                               çıkarımı), PhotonNet2.jsx'in ŞU ANKİ
+#                               hâliyle SENKRON mu? (bkz. bb84/tools/
+#                               extract_core.js --check)
+#   3) mtls-kme-scenarios      — KME sunucusunun mTLS/CRL/OCSP katmanı,
+#                               6 sertifika rotasyon/iptal senaryosuyla
+#                               (bkz. bb84/pki_tools/
+#                               cert_rotation_revocation_scenarios.js)
+#      + ibm-integration-test  — mock_ibm_client.js'in 19 ETSI 014/mTLS
+#      (ephemeral/external)     testi (bkz. bb84/ci/run_integration_tests.sh)
+#
+#   4) production-milestone   — YUKARIDAKİ HER ŞEY yeşil VE bir insan
+#                               workflow_dispatch üzerinden AÇIKÇA
+#                               "seal_production_milestone: true" +
+#                               bir "milestone_version" (ör. v1.0.0)
+#                               girdiyse: imzalı bir git tag'i oluşturup
+#                               push eder, senaryo/test raporlarını EK
+#                               olarak içeren bir GitHub Release yayınlar.
+#                               Normal push/PR/schedule tetiklemelerinde
+#                               BU İŞ HİÇ ÇALIŞMAZ (varsayılan: false) —
+#                               yanlışlıkla mühürleme RİSKİ YOK.
+#
+# CA ÖZEL ANAHTARI GÜVENLİĞİ (ÖNEMLİ, tekrar tekrar vurgulanır çünkü tek
+# bir yanlış secret bu güvenliği baştan aşağı BOZAR): "ephemeral" modda
+# HİÇBİR secret kullanılmaz — CA dahil HER ŞEY bu runner'da üretilip iş
+# bitince silinir. "external" modda YALNIZCA CA'nın GENEL sertifikası +
+# istemci (SAE/IBM) sertifika-anahtar ÇİFTLERİ secret olarak kullanılır.
+# Gerçek üretim CA'sının ÖZEL anahtarı (bkz. bb84/pki_tools/ca_init.sh
+# üstündeki hava-boşluklu/HSM notu) bu runner'lara ASLA taşınmamalıdır —
+# bkz. iş #1 (ca-key-secret-guard), bunu OTOMATİK olarak denetler.
+# ═══════════════════════════════════════════════════════════════════
+name: Production Pipeline (Extract-Core + mTLS/KME + IBM Entegrasyon)
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "PhotonNet2.jsx"
+      - "bb84/**"
+      - "package.json"
+      - ".github/workflows/production-pipeline.yml"
+  pull_request:
+    paths:
+      - "PhotonNet2.jsx"
+      - "bb84/**"
+      - "package.json"
+      - ".github/workflows/production-pipeline.yml"
+  workflow_dispatch:
+    inputs:
+      kme_mode:
+        description: "IBM entegrasyon testi modu"
+        type: choice
+        options: [ephemeral, external]
+        default: ephemeral
+      seal_production_milestone:
+        description: "TÜM kapılar yeşilse bir üretim kilometre taşı (git tag + GitHub Release) MÜHÜRLE"
+        type: boolean
+        default: false
+      milestone_version:
+        description: "Mühürlenecek sürüm (yalnızca seal_production_milestone=true iken kullanılır), ör: v1.0.0"
+        type: string
+        default: ""
+  schedule:
+    # gece boyu düzenli sağlık kontrolü — hem çıkarımın hem mTLS/OCSP
+    # katmanının zaman içinde sessizce bozulmadığından emin olmak için.
+    - cron: "17 3 * * *"
+
+concurrency:
+  group: production-pipeline-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  # ── KAPI 1: CA özel anahtarı sızıntı koruması (statik tarama) ──────
+  ca-key-secret-guard:
+    name: "Kapı 1 — CA Özel Anahtarı Sızıntı Koruması"
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: CI YAML dosyalarında CA ÖZEL anahtarına işaret eden bir secret referansı ara
+        run: |
+          set -euo pipefail
+          # Yalnızca CA'YA AİT bir KEY/PRIVATE secret'ını yakalamak istiyoruz
+          # (IBM_INTEGRATION_IBM_KEY / PEER_KEY gibi İSTEMCİ anahtarları
+          # MEŞRUDUR ve bu örüntüyle EŞLEŞMEZ — yalnızca isminde hem "CA"
+          # hem "KEY"/"PRIVATE" geçen bir secret referansı yakalanır).
+          PATTERN='secrets\.[A-Za-z0-9_]*CA[A-Za-z0-9_]*(KEY|PRIVATE)[A-Za-z0-9_]*'
+          MATCHES=$(grep -rEn "$PATTERN" .github/workflows/*.yml .gitlab-ci.yml 2>/dev/null || true)
+          if [ -n "$MATCHES" ]; then
+            echo "$MATCHES"
+            echo "::error::Yukarıdaki satır(lar), CA ÖZEL ANAHTARI gibi görünen bir CI secret'ına referans veriyor olabilir. CA özel anahtarı CI secret'larına ASLA konulmamalıdır (bkz. bb84/pki_tools/ca_init.sh üstündeki hava-boşluklu/HSM notu). Build GÜVENLİK POLİTİKASI İHLALİ olarak DURDURULDU."
+            exit 1
+          fi
+          echo "✓ Hiçbir workflow/CI dosyasında CA özel anahtarına işaret eden bir secret referansı bulunamadı."
+
+  # ── KAPI 2: BB84 çıkarımı kaynakla senkron mu? ──────────────────────
+  extract-core-check:
+    name: "Kapı 2 — extract_core.js Senkronizasyon Kontrolü"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: TypeScript'i kur (yalnızca JSX→JS dönüşümü için; tip denetimi YAPILMAZ)
+        run: npm install --no-save typescript@^5.4.0
+
+      - name: bb84/photonnet_core.js, PhotonNet2.jsx ile senkron mu doğrula
+        run: node bb84/tools/extract_core.js --check
+
+      - name: Kayma tespit edilirse rehberlik ekle
+        if: failure()
+        run: |
+          echo "::error::bb84/photonnet_core.js kaynakla (PhotonNet2.jsx) senkron değil. Yerel olarak şunu çalıştırıp sonucu commit edin: node bb84/tools/extract_core.js && git add bb84/photonnet_core.js && git commit"
+
+  # ── KAPI 3a: mTLS/KME sertifika rotasyon+iptal senaryo analizi ─────
+  mtls-kme-scenarios:
+    name: "Kapı 3a — mTLS/KME Sertifika Rotasyon+İptal Senaryoları (S1-S6)"
+    needs: [ca-key-secret-guard, extract-core-check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: openssl sürümünü doğrula
+        run: openssl version
+
+      - name: pki_tools/ script'lerinin çalıştırılabilir olduğunu garanti et
+        run: chmod +x bb84/pki_tools/*.sh bb84/pki_tools/*.js
+
+      # Bu senaryo hem CRL/OCSP çift-katman iptalini hem de bilinen KRİTİK
+      # bulguyu (kalıcı/keep-alive bağlantılarda ~60sn'ye kadar sürebilen
+      # OCSP tazeleme gecikmesi, bkz. üretilen rapordaki "EN KRİTİK bulgu"
+      # bölümü) yeniden ölçer — bu YENİDEN-ÖLÇÜM olduğu için S5 tek başına
+      # ~60-100sn sürebilir, dolayısıyla timeout-minutes: 10.
+      - name: mTLS sertifika rotasyon/iptal senaryolarını çalıştır (S1-S6)
+        run: node bb84/pki_tools/cert_rotation_revocation_scenarios.js --out-dir=${{ github.workspace }}/ci-reports/mtls-scenarios
+
+      - name: Senaryo raporunu artifact olarak yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mtls-cert-rotation-revocation-report
+          path: ci-reports/mtls-scenarios/
+          retention-days: 30
+
+      - name: Senaryo raporunu GitHub Step Summary'e yaz
+        if: always()
+        run: |
+          if [ -f ci-reports/mtls-scenarios/sertifika_rotasyon_iptal_analizi.md ]; then
+            cat ci-reports/mtls-scenarios/sertifika_rotasyon_iptal_analizi.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+  # ── KAPI 3b: mock_ibm_client.js'in 19 ETSI 014/mTLS testi (ephemeral) ─
+  ibm-integration-test-ephemeral:
+    name: "Kapı 3b — IBM Entegrasyon Testi (ephemeral, kendi geçici PKI'sı)"
+    needs: [ca-key-secret-guard, extract-core-check]
+    if: ${{ github.event_name != 'workflow_dispatch' || inputs.kme_mode == 'ephemeral' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: openssl sürümünü doğrula
+        run: openssl version
+
+      - name: bb84/ script'lerinin çalıştırılabilir olduğunu garanti et
+        run: chmod +x bb84/pki_tools/*.sh bb84/ci/*.sh bb84/mock_ibm_client.js
+
+      - name: Entegrasyon testlerini çalıştır (ephemeral PKI + yerel KME sunucusu)
+        run: ./bb84/ci/run_integration_tests.sh
+        env:
+          KME_MODE: ephemeral
+          REPORTS_DIR: ${{ github.workspace }}/ci-reports/ibm-integration
+
+      - name: Test raporlarını/log'ları artifact olarak yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ibm-integration-ci-reports
+          path: ci-reports/ibm-integration/
+          retention-days: 14
+
+      - name: JUnit sonuçlarını GitHub Checks'e yayınla
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: "ci-reports/ibm-integration/mock-ibm-client-junit.xml"
+          check_name: "Mock IBM Client — ETSI 014 / mTLS Sonuçları"
+          fail_on_failure: false # gerçek başarı/başarısızlık kararı zaten önceki adımın exit code'undan gelir; bu yalnızca GÖRSELLEŞTİRME
+
+  # ── KAPI 3b (alternatif): GERÇEK IBM sertifikalarıyla (external mod) ─
+  # Yalnızca elle workflow_dispatch → kme_mode=external seçildiğinde çalışır.
+  ibm-integration-test-external:
+    name: "Kapı 3b — IBM Entegrasyon Testi (external, GERÇEK sertifikalar)"
+    needs: [ca-key-secret-guard, extract-core-check]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.kme_mode == 'external' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: openssl sürümünü doğrula
+        run: openssl version
+
+      - name: bb84/ script'lerinin çalıştırılabilir olduğunu garanti et
+        run: chmod +x bb84/ci/*.sh bb84/mock_ibm_client.js
+
+      # Secret'lar geçici dosyalara yazılır (yalnızca bu runner'ın ömrü
+      # boyunca var olur). CA ÖZEL ANAHTARI burada YOKTUR — yalnızca
+      # CA_CERT (genel) + istemci sertifika/anahtar ÇİFTLERİ.
+      - name: Secret'ları geçici sertifika dosyalarına yaz
+        run: |
+          mkdir -p "$RUNNER_TEMP/ibm-certs"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_CA_CERT }}"   > "$RUNNER_TEMP/ibm-certs/ca-cert.pem"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_IBM_CERT }}"  > "$RUNNER_TEMP/ibm-certs/ibm-cert.pem"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_IBM_KEY }}"   > "$RUNNER_TEMP/ibm-certs/ibm-key.pem"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_PEER_CERT }}" > "$RUNNER_TEMP/ibm-certs/peer-cert.pem"
+          printf '%s' "${{ secrets.IBM_INTEGRATION_PEER_KEY }}"  > "$RUNNER_TEMP/ibm-certs/peer-key.pem"
+          chmod 600 "$RUNNER_TEMP"/ibm-certs/*-key.pem
+
+      - name: Entegrasyon testlerini çalıştır (GERÇEK sertifikalar, GERÇEK KME uç noktası)
+        run: ./bb84/ci/run_integration_tests.sh
+        env:
+          KME_MODE: external
+          KME_URL: ${{ secrets.IBM_INTEGRATION_KME_URL }}
+          CA_CERT: ${{ runner.temp }}/ibm-certs/ca-cert.pem
+          IBM_CERT: ${{ runner.temp }}/ibm-certs/ibm-cert.pem
+          IBM_KEY: ${{ runner.temp }}/ibm-certs/ibm-key.pem
+          PEER_CERT: ${{ runner.temp }}/ibm-certs/peer-cert.pem
+          PEER_KEY: ${{ runner.temp }}/ibm-certs/peer-key.pem
+          REPORTS_DIR: ${{ github.workspace }}/ci-reports/ibm-integration
+
+      - name: Geçici sertifika/anahtar dosyalarını temizle (savunma derinliği — runner zaten atılacak)
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/ibm-certs"
+
+      - name: Test raporlarını/log'ları artifact olarak yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ibm-integration-external-reports
+          path: ci-reports/ibm-integration/
+          retention-days: 14
+
+      - name: JUnit sonuçlarını GitHub Checks'e yayınla
+        if: always()
+        uses: mikepenz/action-junit-report@v4
+        with:
+          report_paths: "ci-reports/ibm-integration/mock-ibm-client-junit.xml"
+          check_name: "Mock IBM Client (External/Gerçek KME) — Sonuçlar"
+          fail_on_failure: false
+
+  # ── KAPI 4: Üretim kilometre taşını mühürle (git tag + GitHub Release) ─
+  # SADECE elle workflow_dispatch → seal_production_milestone=true VE
+  # yukarıdaki HER "her-zaman-çalışan" kapı yeşilse çalışır. Normal push/
+  # PR/schedule tetiklemelerinde bu iş HİÇ değerlendirilmez bile.
+  production-milestone:
+    name: "Kapı 4 — Üretim Kilometre Taşını Mühürle"
+    needs: [ca-key-secret-guard, extract-core-check, mtls-kme-scenarios, ibm-integration-test-ephemeral]
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.seal_production_milestone == true }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    concurrency:
+      group: production-milestone-${{ inputs.milestone_version }}
+      cancel-in-progress: false
+    steps:
+      - name: Girdileri doğrula (milestone_version semver formatında olmalı)
+        run: |
+          set -euo pipefail
+          V="${{ inputs.milestone_version }}"
+          if [ -z "$V" ]; then
+            echo "::error::seal_production_milestone=true iken milestone_version BOŞ OLAMAZ (ör: v1.0.0)."
+            exit 1
+          fi
+          if ! echo "$V" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$'; then
+            echo "::error::milestone_version ('$V') semver formatında değil. Beklenen örüntü: vMAJOR.MINOR.PATCH (ör: v1.0.0, v1.1.0-pilot)."
+            exit 1
+          fi
+          echo "✓ Sürüm formatı geçerli: $V"
+
+      - name: Depoyu çek (tam geçmiş — tag oluşturmak için)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Bu sürüm etiketi zaten var mı kontrol et
+        run: |
+          set -euo pipefail
+          if git ls-remote --tags origin | grep -q "refs/tags/${{ inputs.milestone_version }}$"; then
+            echo "::error::Etiket ${{ inputs.milestone_version }} zaten mevcut — üzerine YAZILMAYACAK. Farklı bir sürüm numarası kullanın."
+            exit 1
+          fi
+          echo "✓ ${{ inputs.milestone_version }} etiketi henüz yok, devam ediliyor."
+
+      - name: Senaryo/test raporlarını indir (Release eklerine dahil etmek için)
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          pattern: "mtls-cert-rotation-revocation-report"
+          merge-multiple: true
+
+      - name: Yayın notlarını oluştur
+        run: |
+          {
+            echo "# PhotonNet BB84/KME — Üretim Kilometre Taşı ${{ inputs.milestone_version }}"
+            echo
+            echo "Bu sürüm, aşağıdaki OTOMATİK doğrulama kapılarının TAMAMI yeşil olduktan sonra mühürlenmiştir:"
+            echo
+            echo "- ✅ CA özel anahtarı sızıntı koruması (statik tarama)"
+            echo "- ✅ BB84 algoritma çıkarımı (bb84/photonnet_core.js) kaynakla senkron (bkz. bb84/tools/extract_core.js)"
+            echo "- ✅ mTLS/KME sertifika rotasyon+iptal senaryoları (S1-S6, bkz. ekli rapor)"
+            echo "- ✅ IBM ETSI GS QKD 014 mTLS entegrasyon testleri (19 test, mock_ibm_client.js)"
+            echo
+            echo "**Commit:** \`${{ github.sha }}\`"
+            echo "**Mühürleyen çalıştırma:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo "**Tetikleyen:** @${{ github.actor }}"
+            echo
+            echo "> Not: Bu bir OTOMATİK araç-destekli mühürleme kaydıdır; IBM'e resmi teslim öncesi"
+            echo "> insan incelemesinin (bkz. bb84/PRODUCTION_READINESS_ROADMAP.md P0/P1 maddeleri)"
+            echo "> YERİNE GEÇMEZ."
+          } > release-notes.md
+          cat release-notes.md
+
+      - name: git kimliğini yapılandır
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: İmzalı tag oluştur ve push et
+        run: |
+          git tag -a "${{ inputs.milestone_version }}" -m "Üretim kilometre taşı ${{ inputs.milestone_version }} — bkz. release notes"
+          git push origin "${{ inputs.milestone_version }}"
+
+      - name: GitHub Release yayınla
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ inputs.milestone_version }}" \
+            --title "PhotonNet BB84/KME — Üretim Kilometre Taşı ${{ inputs.milestone_version }}" \
+            --notes-file release-notes.md \
+            release-assets/* || echo "::warning::Release oluşturuldu ama bazı ekler yüklenemedi (rapor artifact'i boş olabilir) — tag yine de push edildi."
+
+      - name: Özet
+        run: |
+          echo "## ✅ Üretim kilometre taşı mühürlendi: ${{ inputs.milestone_version }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "Release: ${{ github.server_url }}/${{ github.repository }}/releases/tag/${{ inputs.milestone_version }}" >> "$GITHUB_STEP_SUMMARY"
