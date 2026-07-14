@@ -297,13 +297,104 @@ jobs:
           check_name: "Mock IBM Client (External/Gerçek KME) — Sonuçlar"
           fail_on_failure: false
 
+  # ── KAPI 3c: Yazılımsal HSM (SoftHSM2) + Node-PKCS11 köprüsü ────────
+  # ⚠ Bu iş, gerçek donanım HSM gelmeden önce CA özel anahtarının YEREL
+  # DİSKE HİÇ İNMEDEN standart bir PKCS#11 arayüzünden üretilip
+  # kullanılabildiğini KANITLAR (bkz. ca_init.sh/sign_csr.sh --pkcs11-uri/
+  # --engine pkcs11, bb84/pki_tools/hsm_init.sh, bb84/pki_tools/
+  # pkcs11_bridge.js). BU İŞ, bu kodun İLK GERÇEK çalıştırılıp
+  # doğrulandığı yerdir — geliştirme sandbox'ında ağ kısıtı yüzünden
+  # SoftHSM2/pkcs11js hiç kurulamadı (bkz. ilgili dosyaların üstündeki
+  # dürüstlük notları). Bu runner'ın gerçek internet erişimi var.
+  software-hsm-pkcs11:
+    name: "Kapı 3c — Yazılımsal HSM (SoftHSM2) + Node-PKCS11 Köprüsü"
+    needs: [ca-key-secret-guard, extract-core-check]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: SoftHSM2 + OpenSC (pkcs11-tool) + OpenSSL PKCS#11 engine kur
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y softhsm2 opensc libengine-pkcs11-openssl
+
+      - name: pkcs11js kur (Node ↔ PKCS#11 köprüsü için)
+        run: npm install --no-save pkcs11js
+
+      - name: script'lerin çalıştırılabilir olduğunu garanti et
+        run: chmod +x bb84/pki_tools/*.sh bb84/pki_tools/*.js
+
+      - name: openssl 'pkcs11' engine'inin yüklenebildiğini doğrula (erken tanılama)
+        run: |
+          export PKCS11_MODULE_PATH=/usr/lib/softhsm/libsofthsm2.so
+          openssl engine -t -c pkcs11 || {
+            echo "::error::openssl 'pkcs11' engine'i yüklenemedi — libengine-pkcs11-openssl kurulumunu/openssl sürümünü kontrol edin."
+            exit 1
+          }
+
+      - name: Yazılımsal HSM token'ını başlat (SoftHSM2)
+        run: bb84/pki_tools/hsm_init.sh "${{ github.workspace }}/hsm-work" photonnet-ci-ca 123456 654321 > "${{ github.workspace }}/hsm-env.sh"
+
+      - name: CA'yı HSM-arkalı anahtarla başlat (özel anahtar HİÇ diske inmemeli)
+        run: |
+          source "${{ github.workspace }}/hsm-env.sh"
+          bb84/pki_tools/ca_init.sh "${{ github.workspace }}/hsm-pki" --pkcs11-uri "pkcs11:token=photonnet-ci-ca;object=ca-key;type=private"
+          if [ -f "${{ github.workspace }}/hsm-pki/ca-key.pem" ]; then
+            echo "::error::ca-key.pem dosyası ÜRETİLMİŞ — HSM modu bir dosyaya sızdırmamalıydı!"
+            exit 1
+          fi
+          echo "✓ ca-key.pem dosyası oluşturulmadı — CA özel anahtarı yalnızca token içinde var."
+
+      - name: Test istemci CSR'ı üret ve HSM-arkalı CA ile imzala
+        run: |
+          source "${{ github.workspace }}/hsm-env.sh"
+          bb84/pki_tools/issue_cert.sh "${{ github.workspace }}/hsm-client" client SAE-HSM-TEST
+          bb84/pki_tools/sign_csr.sh "${{ github.workspace }}/hsm-pki" "${{ github.workspace }}/hsm-client/SAE-HSM-TEST.csr" client 7 --engine pkcs11 --key-uri "pkcs11:token=photonnet-ci-ca;object=ca-key;type=private"
+          openssl verify -CAfile "${{ github.workspace }}/hsm-pki/ca-cert.pem" "${{ github.workspace }}/hsm-client/SAE-HSM-TEST-cert.pem"
+          echo "✓ İstemci sertifikası, HSM İÇİNDEKİ CA özel anahtarıyla başarıyla imzalandı ve zincir doğrulandı."
+
+      - name: CA'nın GENEL anahtarını (yalnızca doğrulama için) token'dan dışa aktar
+        run: |
+          source "${{ github.workspace }}/hsm-env.sh"
+          pkcs11-tool --module "$PKCS11_MODULE_PATH" --read-object --type pubkey --label ca-key \
+            --output-file "${{ github.workspace }}/hsm-pki/ca-pub.der"
+          openssl rsa -pubin -inform DER -in "${{ github.workspace }}/hsm-pki/ca-pub.der" \
+            -outform PEM -out "${{ github.workspace }}/hsm-pki/ca-pub.pem"
+
+      - name: Node-PKCS11 köprüsü öz-testi (pkcs11js ile doğrudan token'a imzalatma)
+        run: |
+          source "${{ github.workspace }}/hsm-env.sh"
+          node bb84/pki_tools/pkcs11_bridge.js --self-test \
+            --module="$PKCS11_MODULE_PATH" --pin="$PKCS11_PIN" --label=ca-key \
+            --pubkey-pem="${{ github.workspace }}/hsm-pki/ca-pub.pem"
+
+      - name: HSM-arkalı PKI çıktısını artifact olarak yükle (denetlenebilirlik)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: software-hsm-pki-output
+          path: |
+            hsm-pki/ca-cert.pem
+            hsm-pki/ca-pub.pem
+            hsm-pki/ca-key.HSM_REFERENCE.txt
+            hsm-client/SAE-HSM-TEST-cert.pem
+          retention-days: 14
+          if-no-files-found: warn
+
   # ── KAPI 4: Üretim kilometre taşını mühürle (git tag + GitHub Release) ─
   # SADECE elle workflow_dispatch → seal_production_milestone=true VE
   # yukarıdaki HER "her-zaman-çalışan" kapı yeşilse çalışır. Normal push/
   # PR/schedule tetiklemelerinde bu iş HİÇ değerlendirilmez bile.
   production-milestone:
     name: "Kapı 4 — Üretim Kilometre Taşını Mühürle"
-    needs: [ca-key-secret-guard, extract-core-check, mtls-kme-scenarios, ibm-integration-test-ephemeral]
+    needs: [ca-key-secret-guard, extract-core-check, mtls-kme-scenarios, ibm-integration-test-ephemeral, software-hsm-pkcs11]
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.seal_production_milestone == true }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -359,6 +450,7 @@ jobs:
             echo "- ✅ BB84 algoritma çıkarımı (bb84/photonnet_core.js) kaynakla senkron (bkz. bb84/tools/extract_core.js)"
             echo "- ✅ mTLS/KME sertifika rotasyon+iptal senaryoları (S1-S6, bkz. ekli rapor)"
             echo "- ✅ IBM ETSI GS QKD 014 mTLS entegrasyon testleri (19 test, mock_ibm_client.js)"
+            echo "- ✅ Yazılımsal HSM (SoftHSM2) + Node-PKCS11 köprüsü — CA özel anahtarı token içinde üretildi/imzaladı, dosyaya hiç inmedi"
             echo
             echo "**Commit:** \`${{ github.sha }}\`"
             echo "**Mühürleyen çalıştırma:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

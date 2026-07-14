@@ -12,12 +12,16 @@
 # iptal listesine (CRL) hiç girmese bile kendiliğinden süresi dolar.
 # Kısa ömür otomatik ROTASYON gerektirir — bkz. rotate_cert.sh.
 #
-# GERÇEK HSM/PKCS#11: --engine pkcs11 --key-uri "pkcs11:..." verilirse,
+# YAZILIMSAL/GERÇEK HSM: --engine pkcs11 --key-uri "pkcs11:..." verilirse,
 # imzalama işlemi ca-key.pem YERİNE `-engine pkcs11 -keyform engine
-# -keyfile "<uri>"` ile HSM üzerinden yapılır (CA özel anahtarı YEREL
-# DİSKE HİÇ İNMEZ). Bu ortamda gerçek HSM olmadığından bu bayrak yalnızca
-# KOMUTU YAZDIRIR, ÇALIŞTIRMAZ — gerçek donanımda kullanılacak doğru
-# arayüzü göstermek içindir.
+# -keyfile "<uri>"` ile token üzerinden yapılır (CA özel anahtarı YEREL
+# DİSKE HİÇ İNMEZ). PKCS11_MODULE_PATH + PKCS11_PIN env değişkenlerini
+# GEREKTİRİR (bkz. hsm_init.sh, ca_init.sh --pkcs11-uri).
+#
+# ⚠ DÜRÜSTLÜK NOTU: bu kod yolu, ağ kısıtı yüzünden PKCS#11 araçlarının
+# hiç kurulamadığı bu sandbox'ta çalıştırılıp test EDİLEMEDİ — ilk
+# gerçek doğrulama GitHub Actions'ın "software-hsm-pkcs11" işinde olacak
+# (bkz. production-pipeline.yml).
 #
 # KULLANIM:
 #   ./sign_csr.sh <CA_pki_dizini> <csr_dosyası> server [gün_sayısı=7]
@@ -74,12 +78,21 @@ fi
 OUT_CERT="${OUT_CERT_DIR}/${CN}-cert.pem"
 
 if [ "$ENGINE_MODE" = "1" ]; then
-  echo "[SIGN] --engine pkcs11 istendi: '$KEY_URI'"
-  echo "[SIGN] BU ORTAMDA gerçek bir PKCS#11/HSM modülü YOK — komut ÇALIŞTIRILMIYOR, yalnızca referans amaçlı gösteriliyor:"
-  echo "  openssl ca -engine pkcs11 -keyform engine -keyfile \"$KEY_URI\" \\"
-  echo "    -config ca-db/openssl-ca.cnf -in \"$CSR_ABS\" -out \"$OUT_CERT\" \\"
-  echo "    -days $DAYS -md sha256 -batch -extfile \"$EXTFILE\""
+  : "${PKCS11_MODULE_PATH:?--engine pkcs11 verildi ama PKCS11_MODULE_PATH env değişkeni BOŞ (bkz. hsm_init.sh)}"
+  : "${PKCS11_PIN:?--engine pkcs11 verildi ama PKCS11_PIN env değişkeni BOŞ (bkz. hsm_init.sh)}"
+  if [ -z "$KEY_URI" ]; then
+    echo "HATA: --engine pkcs11 verildi ama --key-uri eksik" >&2
+    rm -f "$EXTFILE"
+    exit 1
+  fi
+  echo "[SIGN] --engine pkcs11 ile token üzerinden imzalanıyor: '$KEY_URI'"
+  openssl ca -engine pkcs11 -keyform engine -keyfile "${KEY_URI};pin-value=${PKCS11_PIN}" \
+    -config ca-db/openssl-ca.cnf -in "$CSR_ABS" -out "$OUT_CERT" \
+    -days "$DAYS" -md sha256 -batch -extfile "$EXTFILE" >/dev/null
   rm -f "$EXTFILE"
+  SERIAL=$(openssl x509 -in "$OUT_CERT" -noout -serial | cut -d= -f2)
+  echo "[SIGN] ✓ İmzalandı (HSM/token üzerinden): $OUT_CERT (CN=${CN}, rol=${ROLE}, geçerlilik=${DAYS} gün, serial=${SERIAL})"
+  echo "[SIGN] CA veritabanına kaydedildi (ca-db/index.txt) — bu sertifika artık revoke_cert.sh ile iptal edilebilir."
   exit 0
 fi
 

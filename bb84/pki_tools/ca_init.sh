@@ -31,20 +31,36 @@
 # kopyalanmasını GEREKTİRMEZ — gerçek hava-boşluklu/HSM dağıtımının
 # önkoşulu budur.
 #
-# GERÇEK HSM (PKCS#11) KULLANIMI: --pkcs11-uri "pkcs11:token=...;object=ca-key"
-# verilirse, ca-key.pem YEREL DOSYA OLARAK HİÇ ÜRETİLMEZ — bunun yerine
-# `openssl genpkey -engine pkcs11 -pkeyopt pkcs11_uri:<uri>` ile anahtar
-# DOĞRUDAN HSM İÇİNDE üretilir/saklanır ve asla dışarı çıkmaz; sonraki
-# imzalama işlemleri de `-engine pkcs11 -keyform engine` ile HSM'e
-# yönlendirilir (bkz. issue_cert.sh --engine seçeneği). BU ORTAMDA
-# GERÇEK bir HSM/PKCS#11 modülü (ör. SoftHSM2, YubiHSM, CloudHSM)
-# MEVCUT OLMADIĞINDAN varsayılan davranış YEREL dosya-tabanlı anahtar
-# üretimidir — --pkcs11-uri yalnızca gerçek donanımınız olduğunda
-# kullanılacak DOĞRU KANCA/arayüzdür, bu demo onu çalıştırıp test EDEMEZ.
+# YAZILIMSAL/GERÇEK HSM (PKCS#11) KULLANIMI: --pkcs11-uri
+# "pkcs11:token=...;object=ca-key;type=private" verilirse, ca-key.pem
+# YEREL DOSYA OLARAK HİÇ ÜRETİLMEZ — bunun yerine anahtar çifti
+# `pkcs11-tool --keypairgen` ile DOĞRUDAN token İÇİNDE üretilir/saklanır
+# ve ÖZEL kısmı ASLA dışarı çıkmaz; CA sertifikası da
+# `openssl req -engine pkcs11 -keyform engine` ile token'daki anahtarla
+# imzalanır. Bu mod şu env değişkenlerini GEREKTİRİR:
+#   PKCS11_MODULE_PATH — PKCS#11 modülünün (.so) yolu
+#   PKCS11_PIN          — token kullanıcı PIN'i
+# (bkz. hsm_init.sh — bir SoftHSM2 token'ını bu değişkenlerle birlikte
+# tek komutla kurar/başlatır.)
+#
+# GERÇEK DONANIMA GEÇİŞ: Bu kod SoftHSM2'ye ÖZEL HİÇBİR ŞEY içermez —
+# yalnızca standart PKCS#11/openssl-engine arayüzünü kullanır. Gerçek
+# bir donanım HSM'e (YubiHSM/CloudHSM/vb.) geçmek için tek değişen şey
+# PKCS11_MODULE_PATH'in o HSM'in KENDİ modülünü göstermesidir — bu
+# script'te veya sign_csr.sh'de TEK SATIR KOD DEĞİŞMEZ.
+#
+# ⚠ DÜRÜSTLÜK NOTU: --pkcs11-uri kod yolu, çalıştığı sandbox'ta ağ
+# kısıtı yüzünden PKCS#11 araçları (SoftHSM2/OpenSC) hiç kurulamadığından
+# BU ORTAMDA çalıştırılıp test EDİLEMEDİ. İlk gerçek doğrulama, GitHub
+# Actions'ın "software-hsm-pkcs11" işinde (gerçek internet erişimiyle
+# SoftHSM2 kurup çalıştırır) olacaktır — bkz. production-pipeline.yml.
+# Argüman yoksa (varsayılan) davranış DEĞİŞMEDİ: yerel dosya-tabanlı
+# anahtar üretimi, tıpkı önceden olduğu gibi.
 #
 # KULLANIM:
-#   ./ca_init.sh ./pki                                  (yerel dosya-tabanlı CA anahtarı — yalnızca demo/test)
-#   ./ca_init.sh ./pki --pkcs11-uri "pkcs11:token=..."   (GERÇEK HSM — bu ortamda test edilemez, üretim için)
+#   ./ca_init.sh ./pki                                  (yerel dosya-tabanlı CA anahtarı — demo/test)
+#   ./ca_init.sh ./pki --pkcs11-uri "pkcs11:token=photonnet-ca;object=ca-key;type=private"
+#     (YAZILIMSAL/GERÇEK HSM — PKCS11_MODULE_PATH + PKCS11_PIN env gerekir)
 # ═══════════════════════════════════════════════════════════════════
 set -euo pipefail
 
@@ -104,24 +120,60 @@ if [ -f ca-cert.pem ]; then
 fi
 
 if [ -n "$PKCS11_URI" ]; then
-  echo "[CA] --pkcs11-uri verildi: '$PKCS11_URI'"
-  echo "[CA] BU ORTAMDA gerçek bir PKCS#11/HSM modülü YÜKLÜ DEĞİL — bu yüzden BURADA çalıştırılamaz."
-  echo "[CA] GERÇEK bir HSM'e sahip bir makinede çalıştırılacak KOMUT ŞUDUR (referans):"
-  echo "     openssl genpkey -engine pkcs11 -algorithm RSA -pkeyopt pkcs11_uri:$PKCS11_URI -pkeyopt rsa_keygen_bits:4096 -out /dev/null"
-  echo "     openssl req -engine pkcs11 -keyform engine -key \"$PKCS11_URI\" -x509 -new -days 3650 -sha256 \\"
-  echo "       -subj \"/C=TR/O=PhotonNet Quantum Network/CN=PhotonNet Root CA\" -out ca-cert.pem"
-  echo "[CA] Bu ortamda demo/test amaçlı YEREL dosya-tabanlı anahtar ile devam ediliyor (ca-key.pem üretilecek)."
-fi
+  # ── YAZILIMSAL/GERÇEK HSM YOLU: anahtar DOĞRUDAN token içinde üretilir ──
+  : "${PKCS11_MODULE_PATH:?--pkcs11-uri verildi ama PKCS11_MODULE_PATH env değişkeni BOŞ (bkz. hsm_init.sh)}"
+  : "${PKCS11_PIN:?--pkcs11-uri verildi ama PKCS11_PIN env değişkeni BOŞ (bkz. hsm_init.sh)}"
 
-# CA'nın KENDİ ömrü UZUN olabilir (10 yıl, standart PKI hiyerarşi
-# pratiği) — asıl korunması gereken şey ca-key.pem'in KENDİSİ (bkz.
-# dosya-üstü hava-boşluğu/HSM notu), sertifikanın süresi DEĞİL.
-openssl genrsa -out ca-key.pem 4096 2>/dev/null
-chmod 600 ca-key.pem
-openssl req -x509 -new -nodes -key ca-key.pem -sha256 -days 3650 \
-  -subj "/C=TR/O=PhotonNet Quantum Network/CN=PhotonNet Root CA" \
-  -out ca-cert.pem
-echo "[CA] Kök CA üretildi: ca-cert.pem (10 yıl) / ca-key.pem (GİZLİ — chmod 600)."
+  # pkcs11 URI'sinden token/object etiketlerini çıkar (RFC 7512'nin tam
+  # bir ayrıştırıcısı DEĞİL — yalnızca bu script'in ihtiyaç duyduğu
+  # ';anahtar=değer' alanlarının pragmatik bir alt kümesi).
+  TOKEN_LABEL=$(echo "$PKCS11_URI" | grep -oE 'token=[^;]+' | cut -d= -f2)
+  OBJECT_LABEL=$(echo "$PKCS11_URI" | grep -oE 'object=[^;]+' | cut -d= -f2)
+  if [ -z "$TOKEN_LABEL" ] || [ -z "$OBJECT_LABEL" ]; then
+    echo "HATA: --pkcs11-uri içinde 'token=' ve 'object=' alanları bulunamadı: $PKCS11_URI" >&2
+    exit 1
+  fi
+
+  echo "[CA] --pkcs11-uri: token='$TOKEN_LABEL' object='$OBJECT_LABEL' modül='$PKCS11_MODULE_PATH'"
+  echo "[CA] CA anahtar çifti DOĞRUDAN token içinde üretiliyor (özel anahtar hiçbir zaman diske inmeyecek)..."
+  pkcs11-tool --module "$PKCS11_MODULE_PATH" --token-label "$TOKEN_LABEL" \
+    --login --pin "$PKCS11_PIN" \
+    --keypairgen --key-type rsa:4096 --label "$OBJECT_LABEL" --id 01
+  echo "[CA] ✓ Anahtar çifti token içinde üretildi (label=$OBJECT_LABEL) — ca-key.pem dosyası ÜRETİLMEYECEK."
+
+  echo "[CA] CA sertifikası, token'daki özel anahtarla (openssl -engine pkcs11) öz-imzalanıyor..."
+  openssl req -engine pkcs11 -keyform engine \
+    -key "${PKCS11_URI};pin-value=${PKCS11_PIN}" \
+    -x509 -new -days 3650 -sha256 \
+    -subj "/C=TR/O=PhotonNet Quantum Network/CN=PhotonNet Root CA" \
+    -out ca-cert.pem
+
+  # Yalnızca AÇIKLAYICI/OPERASYONEL bir referans dosyası — GİZLİ hiçbir
+  # şey içermez (yalnızca URI + modül yolu, PIN İÇERMEZ), yalnızca
+  # "bu CA'nın özel anahtarı hangi token'da/hangi etiketle" bilgisini
+  # insan-okunabilir şekilde kaydeder.
+  cat > ca-key.HSM_REFERENCE.txt <<EOF
+Bu CA'nın ÖZEL anahtarı bu dizinde bir DOSYA OLARAK YOKTUR.
+PKCS#11 token içinde saklanır:
+  token label : $TOKEN_LABEL
+  object label: $OBJECT_LABEL
+  modül       : $PKCS11_MODULE_PATH
+Kullanmak için (imzalama): sign_csr.sh ... --engine pkcs11 --key-uri "$PKCS11_URI"
+(PIN bu dosyada YOKTUR — PKCS11_PIN env değişkeni olarak ayrıca sağlanmalıdır.)
+EOF
+  echo "[CA] Kök CA üretildi: ca-cert.pem (10 yıl) / özel anahtar TOKEN İÇİNDE (bkz. ca-key.HSM_REFERENCE.txt)."
+else
+  # ── VARSAYILAN: yerel dosya-tabanlı CA anahtarı (demo/test) ──────────
+  # CA'nın KENDİ ömrü UZUN olabilir (10 yıl, standart PKI hiyerarşi
+  # pratiği) — asıl korunması gereken şey ca-key.pem'in KENDİSİ (bkz.
+  # dosya-üstü hava-boşluğu/HSM notu), sertifikanın süresi DEĞİL.
+  openssl genrsa -out ca-key.pem 4096 2>/dev/null
+  chmod 600 ca-key.pem
+  openssl req -x509 -new -nodes -key ca-key.pem -sha256 -days 3650 \
+    -subj "/C=TR/O=PhotonNet Quantum Network/CN=PhotonNet Root CA" \
+    -out ca-cert.pem
+  echo "[CA] Kök CA üretildi: ca-cert.pem (10 yıl) / ca-key.pem (GİZLİ — chmod 600)."
+fi
 
 # Başlangıç CRL'i (boş — henüz iptal edilen yok). Sunucunun --crl= ile
 # başından itibaren geçerli bir dosya bulabilmesi için üretiliyor.

@@ -22,7 +22,7 @@ DEĞİLDİR.*
 | # | Madde | Öncelik | Kanıt / gerekçe | Tahmini efor |
 |---|-------|---------|------------------|---------------|
 | 1 | Referans OCSP yanıtlayıcısını üretim sınıfı bir çözümle değiştir | P0 | S5: kalıcı bağlantıda azami kilitlenme ~60sn ölçüldü | Orta (1-2 hafta) |
-| 2 | HSM/PKCS#11 entegrasyonunu GERÇEK donanımla test et | P0 | `ca_init.sh --pkcs11-uri` bu ortamda hiç ÇALIŞTIRILMADI, yalnızca komut yazdırıyor | Orta-Yüksek (donanım erişimine bağlı) |
+| 2 | HSM/PKCS#11: yazılımsal soyutlama (SoftHSM2+Node-PKCS11) YAZILDI, CI'da doğrulanıyor; GERÇEK donanımla test hâlâ bekliyor | P0 | `ca_init.sh --pkcs11-uri`/`sign_csr.sh --engine pkcs11` artık gerçek kod (stub değil) — ama sandbox'ta hiç çalıştırılamadı, ilk doğrulama CI'da | Orta (donanım erişimine bağlı; yazılımsal katman tamam) |
 | 3 | Bağımsız güvenlik denetimi / sızma testi | P0 | Şimdiye kadarki tüm doğrulama İÇ testlerdir | Yüksek (3. taraf gerekir) |
 | 4 | Demo/header-tabanlı kimlik doğrulama geri-düşüşünün üretimde KAPALI olduğunu garanti eden dağıtım kontrolü | P0 | `etsi014_kme_server.js`'in kendi notu: bu mod "ÜRETİMDE KULLANILMAMALIDIR" | Düşük (1-2 gün) |
 | 5 | OCSP yanıtlayıcısı için yüksek erişilebilirlik (HA) + izleme/alarm | P1 | S4: OCSP çökerse TÜM geçerli istemciler reddedilir (kasıtlı fail-closed, ama SPOF) | Orta (altyapıya bağlı) |
@@ -53,14 +53,41 @@ az) AŞMAMALI.
 bulut sağlayıcısının yönetilen PKI/OCSP servisi.
 
 ### 2. HSM/PKCS#11 entegrasyonunun gerçek donanımla doğrulanması
-**Mevcut durum:** `ca_init.sh --pkcs11-uri` ve `sign_csr.sh --engine
-pkcs11` bayrakları kodda MEVCUT ama bu ortamda gerçek bir HSM/PKCS#11
-modülü olmadığı için yalnızca "referans komut" YAZDIRIYOR, hiç
-ÇALIŞTIRILMADI.
-**Kabul kriteri:** Gerçek bir HSM (ör. YubiHSM, CloudHSM, SoftHSM2
-staging amaçlı) ile uçtan uca bir CA anahtarı üretimi + imzalama
-işlemi başarıyla gerçekleştirilmeli ve CA özel anahtarının hiçbir
-noktada yerel diske İNMEDİĞİ doğrulanmalı.
+**Güncellendi (14 Temmuz):** `ca_init.sh --pkcs11-uri` ve `sign_csr.sh
+--engine pkcs11` artık GERÇEK, çalışan kod — önceki "yalnızca referans
+komut yazdırıyor" stub'ı kaldırıldı. Yeni `bb84/pki_tools/hsm_init.sh`
+bir SoftHSM2 (yazılımsal PKCS#11) token'ı kurar; CA anahtar çifti
+`pkcs11-tool --keypairgen` ile DOĞRUDAN token içinde üretilir (ca-key.pem
+dosyası hiç oluşmaz), CA sertifikası ve sonraki istemci sertifikaları
+`openssl -engine pkcs11` ile token'daki anahtarla imzalanır. Ayrıca
+`bb84/pki_tools/pkcs11_bridge.js` (pkcs11js), Node.js'in de AYNI token'a
+doğrudan konuşup imzalama yapabildiğini kanıtlıyor. Bu kod SoftHSM2'ye
+ÖZEL hiçbir şey içermez (yalnızca standart PKCS#11/openssl-engine
+arayüzü) — gerçek donanıma geçiş yalnızca modül yolu/PIN değişikliğidir.
+
+**Doğrulama durumu (dürüstlük notu):** Bu kod, geliştirme sandbox'ında
+ağ kısıtı yüzünden SoftHSM2/OpenSC/pkcs11js hiç KURULAMADIĞI için orada
+çalıştırılıp test EDİLEMEDİ — CI/CD'ye (`.github/workflows/
+production-pipeline.yml`, "software-hsm-pkcs11" işi) eklendi ve İLK
+GERÇEK doğrulaması, gerçek internet erişimi olan GitHub Actions
+runner'ında olacak. Bu, projedeki DİĞER her şeyden (ki hepsi teslimattan
+önce burada çalıştırılıp doğrulandı) farklı bir güvence seviyesidir —
+CI'daki ilk çalıştırma yeşil olana kadar bu madde "yazıldı ama
+doğrulanmadı" olarak ele alınmalıdır.
+
+**Kalan kapsam (bu iş henüz KAPATMIYOR):** (a) gerçek donanım bir HSM
+(YubiHSM/CloudHSM/vb.) ile doğrulama hâlâ yapılmadı — SoftHSM2 yazılımsal
+bir emülasyondur, donanımın kendi fiziksel/yan-kanal güvence özellikleri
+test edilmiş olmaz; (b) KME sunucusunun CANLI TLS dinleme soketi
+(`https.createServer`) HSM'e bağlı DEĞİLDİR — yalnızca CA imzalama
+operasyonları ve Node'un token'a genel bağlanabilirliği kanıtlandı, bu
+daha büyük ve ayrı bir mühendislik çalışması olarak kalıyor.
+**Kabul kriteri (güncellenmiş):** (1) production-pipeline.yml'in
+"software-hsm-pkcs11" işi CI'da yeşil olmalı [şu an: ilk çalıştırma
+bekleniyor], (2) gerçek bir donanım HSM ile aynı uçtan uca akış tekrar
+doğrulanmalı, (3) CA özel anahtarının hiçbir noktada yerel diske
+İNMEDİĞİ (yalnızca token içinde var olduğu) her iki ortamda da
+kanıtlanmalı.
 
 ### 3. Bağımsız güvenlik denetimi
 **Mevcut durum:** Tüm doğrulama bu proje ekibi tarafından yazılan
