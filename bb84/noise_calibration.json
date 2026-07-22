@@ -1,0 +1,55 @@
+{
+  "generatedFrom": "hal/noise_matrix.json (bkz. hal/noise_matrix_sweep.py)",
+  "sourceIsRealHardware": false,
+  "sourceNote": "SimulatedHardware üzerinden; propPhoton ile aynı kapalı-form formülün RNG-örneklenmiş portu. Gerçek donanım (SerialHardware/TCPHardware) bağlandığında bu dosya yeniden üretilmeli.",
+  "generatedAtSweepWallClockS": 6.59,
+  "wavelengthNm": 1550,
+  "attenuationDbPerKm": {
+    "measuredMean": 0.1994638885359946,
+    "staticReference": 0.2,
+    "sampleCount": 8
+  },
+  "darkRateHz": {
+    "measuredMean": 0,
+    "sampleCount": 48
+  },
+  "eavesdropDetection": {
+    "tpr": 1,
+    "fpr": 0,
+    "n": 48
+  },
+  "measuredRiskByDistanceKm": [
+    {
+      "km": 1,
+      "qberMean": 0.01210613690738693
+    },
+    {
+      "km": 5,
+      "qberMean": 0.01344142889780573
+    },
+    {
+      "km": 10,
+      "qberMean": 0.014178089171197674
+    },
+    {
+      "km": 20,
+      "qberMean": 0.015354855210468765
+    },
+    {
+      "km": 35,
+      "qberMean": 0.019982020086141607
+    },
+    {
+      "km": 50,
+      "qberMean": 0.023917421089326367
+    },
+    {
+      "km": 75,
+      "qberMean": 0.032634302388248035
+    },
+    {
+      "km": 100,
+      "qberMean": 0.039414407383196896
+    }
+  ]
+}

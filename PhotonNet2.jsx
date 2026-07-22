@@ -3299,6 +3299,96 @@ class LinkGradedEavesdropThresholdAlgorithm {
 const lega = new LinkGradedEavesdropThresholdAlgorithm();
 
 // ══════════════════════════════════════════════════════════════
+// EK: GÜRÜLTÜ MATRİSİ KALİBRASYONU — hal/ köprüsünden (bridge_server.py +
+// noise_matrix_sweep.py, GERÇEK HTTP çağrılarıyla) toplanan edinim
+// verisinden bb84/noise_matrix_validate.js'in türettiği kalibrasyon
+// parametrelerini taşır ve EdgeWeightPolicy (yönlendirme) gibi çekirdek
+// karar noktalarına "measuredRisk" sinyali olarak besler.
+//
+// ── DÜRÜSTLÜK NOTU (kalibrasyon kaynağı) ────────────────────────────
+// Aşağıdaki DEFAULT_CALIBRATION, bu depoda GERÇEKTEN çalıştırılmış bir
+// taramadan (72 edinim, hal/noise_matrix.json, bkz. bb84/
+// noise_matrix_validate.js çıktısı) elde edilmiş sayılardır — ama HAL
+// köprüsünün arkasındaki sürücü şu an `SimulatedHardware`dir (bkz.
+// hal/simulated_hardware.py başlığı): GERÇEK fiziksel fiber DEĞİL, kayıp/
+// faz formülleri propPhoton()'dan portlanmış, RNG ile örneklenmiş bir
+// taslaktır. Bu sınıfın/verinin değeri şurada: (1) ingestion biçimini VE
+// routing'e besleme yolunu şimdiden gerçek anlamda çalışır kılıyor — gerçek
+// SerialHardware/TCPHardware bağlandığında yalnızca hal/noise_matrix.json
+// yeniden üretilip loadFromJSON() ile yüklenir, bu dosyada TEK SATIR
+// değişmez; (2) LEGA'nın "deneysel doğrulanmamış" olarak işaretli sezgisel
+// katsayılarına, en azından ÖLÇÜLMÜŞ (şimdilik simüle) bir referans
+// noktası kazandırıyor.
+// ─────────────────────────────────────────────────────────────────
+class NoiseMatrixCalibration {
+  static DEFAULT_CALIBRATION = {
+    sourceIsRealHardware: false,
+    sourceNote: "hal/noise_matrix_sweep.py taraması (SimulatedHardware üzerinden, propPhoton ile aynı kapalı-form formül) — bkz. bb84/noise_calibration.json",
+    wavelengthNm: 1550,
+    attenuationDbPerKm: { measuredMean: 0.1995, staticReference: 0.20, sampleCount: 48 },
+    darkRateHz: { measuredMean: 0, sampleCount: 48 },
+    eavesdropDetection: { tpr: 1.0, fpr: 0.0, n: 48 },
+    measuredRiskByDistanceKm: [
+      { km: 1, qberMean: 0.01211 }, { km: 5, qberMean: 0.01344 },
+      { km: 10, qberMean: 0.01418 }, { km: 20, qberMean: 0.01535 },
+      { km: 35, qberMean: 0.01998 }, { km: 50, qberMean: 0.02392 },
+      { km: 75, qberMean: 0.03263 }, { km: 100, qberMean: 0.03941 },
+    ],
+  };
+
+  constructor(data) {
+    this.data = data || NoiseMatrixCalibration.DEFAULT_CALIBRATION;
+  }
+
+  /** hal/noise_matrix_sweep.py + bb84/noise_matrix_validate.js'in ürettiği
+   * bb84/noise_calibration.json içeriğiyle (veya HAL köprüsünden canlı
+   * çekilen eşdeğer bir nesneyle) kalibrasyonu değiştirir. Mevcut
+   * `noiseMatrixCalibration` tekil örneğini GÜNCELLEMEZ — çağıran taraf
+   * `noiseMatrixCalibration.data = NoiseMatrixCalibration.loadFromJSON(obj).data`
+   * ile veya yeni bir örnek atayarak canlı singleton'ı değiştirmelidir. */
+  static loadFromJSON(obj) {
+    return new NoiseMatrixCalibration(obj);
+  }
+
+  /**
+   * Verilen mesafe için [0,1] normalize edilmiş "ölçülen risk" skorunu
+   * döndürür — measuredRiskByDistanceKm tablosundan LİNEER ENTERPOLE eder
+   * (tablo dışı mesafeler en yakın uç değere sabitlenir/clamp edilir).
+   * Normalize: tablodaki min/max QBER [0,1] aralığına ölçeklenir — mutlak
+   * QBER değil, GÖRECELİ ("bu mesafe tabloya göre ne kadar riskli") bir
+   * sinyaldir; routing maliyetine çarpan olarak eklenmeye uygundur.
+   * @param {number} km
+   * @returns {number}
+   */
+  riskForDistance(km) {
+    const table = this.data.measuredRiskByDistanceKm;
+    if (!table || table.length === 0) return 0;
+    const qbers = table.map(t => t.qberMean);
+    const qMin = Math.min(...qbers), qMax = Math.max(...qbers);
+    const norm = (q) => (qMax > qMin ? (q - qMin) / (qMax - qMin) : 0);
+    if (km <= table[0].km) return norm(table[0].qberMean);
+    if (km >= table[table.length - 1].km) return norm(table[table.length - 1].qberMean);
+    for (let i = 0; i < table.length - 1; i++) {
+      const a = table[i], b = table[i + 1];
+      if (km >= a.km && km <= b.km) {
+        const f = (km - a.km) / (b.km - a.km);
+        const q = a.qberMean + f * (b.qberMean - a.qberMean);
+        return norm(q);
+      }
+    }
+    return 0;
+  }
+
+  getCalibratedLossDbPerKm(fallback) { return this.data.attenuationDbPerKm?.measuredMean ?? fallback; }
+  getCalibratedDarkRateHz(fallback) { return this.data.darkRateHz?.measuredMean ?? fallback; }
+  isRealHardware() { return !!this.data.sourceIsRealHardware; }
+}
+
+// Modül-seviyesi tekil — canlı sistemin "şu an kullandığı" kalibrasyon.
+// Varsayılan: DEFAULT_CALIBRATION (bkz. sınıf-üstü dürüstlük notu).
+const noiseMatrixCalibration = new NoiseMatrixCalibration();
+
+// ══════════════════════════════════════════════════════════════
 // NodeTransitGate — DÜĞÜM SEVİYESİ 3-AŞAMALI KARAR MOTORU
 //
 // KAVRAMSAL AYRIM: propPhoton() bir fotonun FİBER HATTI üzerindeki
@@ -6104,10 +6194,17 @@ class EdgeWeightPolicy {
    *   (TAHMİNLEME MOTORU) risk skorunun katkı ağırlığı — bkz. computeWeight.
    *   Varsayılan 0.5 — canlı yükten biraz daha hafif, çünkü bu bir TAHMİN
    *   (henüz gerçekleşmemiş), gerçek yük kadar kesin değildir.
+   *   measuredRiskFactor: NoiseMatrixCalibration'dan (HAL köprüsü taraması)
+   *   gelen "ölçülen risk" skorunun katkı ağırlığı — bkz. computeWeight.
+   *   Varsayılan 0.4 — predictiveFactor'dan (0.5) biraz daha hafif, çünkü
+   *   şu anki kalibrasyon kaynağı henüz GERÇEK donanım değil (bkz.
+   *   NoiseMatrixCalibration dürüstlük notu); gerçek donanım bağlandığında
+   *   bu ağırlık artırılabilir.
    */
   constructor(opts = {}) {
     this.loadFactor = opts.loadFactor ?? 0.6;
     this.predictiveFactor = opts.predictiveFactor ?? 0.5;
+    this.measuredRiskFactor = opts.measuredRiskFactor ?? 0.4;
   }
 
   /** İki yönlü link key'i normalize eder (a-b / b-a aynı kabul edilir). */
@@ -6175,6 +6272,25 @@ class EdgeWeightPolicy {
   }
 
   /**
+   * GÜRÜLTÜ MATRİSİ KALİBRASYONU (HAL köprüsü): bir linkin, NoiseMatrixCalibration
+   * tarafından (o linkin mesafesine göre enterpole edilerek) üretilen
+   * [0,1] "ölçülen risk" skorunu okur — predictiveRisk'in aksine bu, canlı
+   * telemetriden değil, GEÇMİŞTE toplanmış bir edinim/kalibrasyon taramasından
+   * gelir (bkz. hal/noise_matrix_sweep.py, bb84/noise_matrix_validate.js).
+   * ctx.measuredRisk verilmezse (varsayılan, mevcut TÜM eski çağrı yerleri)
+   * davranış BİREBİR ESKİSİ GİBİDİR.
+   * @param {LinkRecord} link
+   * @param {Record<string, number>} [measuredRisk]
+   * @returns {number}
+   */
+  readMeasuredRisk(link, measuredRisk) {
+    if (!measuredRisk) return 0;
+    const kAB = EdgeWeightPolicy.linkKey(link.a, link.b);
+    const kBA = EdgeWeightPolicy.linkKey(link.b, link.a);
+    return measuredRisk[kAB] ?? measuredRisk[kBA] ?? 0;
+  }
+
+  /**
    * NİHAİ AĞIRLIK FONKSİYONU — Dijkstra'nın kullandığı gerçek maliyet.
    * cost = physicalCost × (1 + loadFactor × load)
    * Yani: linkLoad=0 iken saf fiziksel maliyet; linkLoad=1 (tam dolu)
@@ -6201,7 +6317,11 @@ class EdgeWeightPolicy {
     // KADEMELİ olarak alternatiflere kayar — ani/reaktif değil, PROAKTİF.
     // ctx.predictiveRisk verilmezse (varsayılan) davranış BİREBİR ESKİSİ GİBİDİR.
     const risk = this.readPredictiveRisk(link, ctx.predictiveRisk);
-    return base * (1 + this.loadFactor * load) * (1 + this.predictiveFactor * risk);
+    // GÜRÜLTÜ MATRİSİ KALİBRASYONU: HAL köprüsü taramasından türetilen
+    // ölçülen-risk sinyali de aynı "opsiyonel çarpan" desenini izler —
+    // ctx.measuredRisk verilmezse davranış BİREBİR ESKİSİ GİBİDİR.
+    const measured = this.readMeasuredRisk(link, ctx.measuredRisk);
+    return base * (1 + this.loadFactor * load) * (1 + this.predictiveFactor * risk) * (1 + this.measuredRiskFactor * measured);
   }
 }
 
@@ -6378,8 +6498,12 @@ const networkTopology = new NetworkTopology([], []);
  *   (TAHMİNLEME MOTORU) tarafından üretilen, henüz gerçekleşmemiş ama
  *   öngörülen darboğaz risk skorları (bkz. PredictiveTelemetryEngine).
  *   Verilmezse (mevcut TÜM eski çağrı yerleri) davranış BİREBİR ESKİSİ GİBİDİR.
+ * @param {Record<string, number>} [measuredRisk] - opsiyonel: GÜRÜLTÜ MATRİSİ
+ *   KALİBRASYONU (HAL köprüsü taraması) tarafından üretilen, mesafeye göre
+ *   enterpole edilmiş ölçülen-risk skorları (bkz. NoiseMatrixCalibration).
+ *   Verilmezse (mevcut TÜM eski çağrı yerleri) davranış BİREBİR ESKİSİ GİBİDİR.
  */
-function dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk) {
+function dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk, measuredRisk) {
   // Topolojiyi (yapısal olarak) güncel tut — ucuz bir referans eşitliği
   // kontrolü ile gereksiz rebuild'i engelliyoruz.
   if (networkTopology._lastNodes !== nodes || networkTopology._lastLinks !== links) {
@@ -6388,7 +6512,7 @@ function dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk) {
     networkTopology._lastLinks = links;
   }
   const liveIds = new Set(nodes.filter(n => n.on).map(n => n.id));
-  const weightCtx = (linkLoad || linkDown || predictiveRisk) ? { linkLoad, linkDown, predictiveRisk } : undefined;
+  const weightCtx = (linkLoad || linkDown || predictiveRisk || measuredRisk) ? { linkLoad, linkDown, predictiveRisk, measuredRisk } : undefined;
   return networkTopology.shortestPath(src, dst, (id) => liveIds.has(id), weightCtx);
 }
 
@@ -7757,10 +7881,11 @@ function explainEcc(corrected) {
  * @param {(id:string)=>NetNode|null} getNode
  * @param {Record<string,boolean>} [linkDown] - bkz. dijkstra()'nın aynı adlı parametresi
  * @param {Record<string,number>} [predictiveRisk] - bkz. dijkstra()'nın aynı adlı parametresi (FAZ 4)
+ * @param {Record<string,number>} [measuredRisk] - bkz. dijkstra()'nın aynı adlı parametresi (GÜRÜLTÜ MATRİSİ KALİBRASYONU)
  * @returns {{path: PathStep[], segs: NetLink[], totalKm: number, geoKm: number, health: Object} | null}
  */
-function routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk) {
-  const path = dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk);
+function routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk) {
+  const path = dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk, measuredRisk);
   if (!path) return null;
 
   const segs = path.slice(1).map(x => x.link).filter(Boolean);
@@ -10045,7 +10170,16 @@ function PhotonNet() {
     // predictiveRisk 8. parametre olarak geçirilir — henüz gerçekleşmemiş
     // ama öngörülen darboğaz riski taşıyan linkler EdgeWeightPolicy
     // tarafından "biraz daha pahalı" görülür, trafik PROAKTİF olarak kayar.
-    const route = routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk);
+    // GÜRÜLTÜ MATRİSİ KALİBRASYONU: measuredRisk 9. parametre — HAL köprüsü
+    // taramasından (NoiseMatrixCalibration) her linkin mesafesine göre
+    // enterpole edilerek HER ROTA HESABINDA yeniden üretilir (linkler
+    // arasında değişmiyorsa ucuzdur, topoloji küçük). ctx.measuredRisk
+    // EdgeWeightPolicy.computeWeight içinde predictiveRisk ile AYNI
+    // "opsiyonel çarpan" desenini izler — bu blok eklenmeden önceki TÜM
+    // davranış (measuredRisk her zaman 0 gibi) BİREBİR KORUNUR.
+    const measuredRisk = {};
+    for (const l of links) measuredRisk[`${l.a}-${l.b}`] = noiseMatrixCalibration.riskForDistance(l.km);
+    const route = routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk);
     if(!route){
       const quarantined = Object.keys(activeAnomalies);
       if (activeCrisis) {

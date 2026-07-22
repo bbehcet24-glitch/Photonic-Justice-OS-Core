@@ -117,6 +117,8 @@ const EXPORT_MANIFEST = [
   "deriveOtpKeyBits", "otpEncryptBits", "otpDecryptBits",
   // ── Dinleme/güvenlik eşiği modelleri ──
   "LinkGradedEavesdropThresholdAlgorithm", "eavesdropProbability",
+  // ── GÜRÜLTÜ MATRİSİ KALİBRASYONU (HAL köprüsü taraması → routing'e besleme) ──
+  "NoiseMatrixCalibration", "noiseMatrixCalibration", "EdgeWeightPolicy", "defaultWeightPolicy",
   // ── Atmosferik/uydu/FSO fiziksel modeller ──
   "ScintillationModel", "ScintillationEngine", "scintillationEngine", "PointingBudget",
   "DetectorNoiseModel", "AtmosphericWindowModel", "satQ", "physicalSimulation",
