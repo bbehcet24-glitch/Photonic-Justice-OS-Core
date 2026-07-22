@@ -3312,6 +3312,47 @@ const lega = new LinkGradedEavesdropThresholdAlgorithm();
 //   3) MANTIKSIZLIK SINIRI: km/QBER/atenüasyon/karanlık-sayım için fiziksel
 //      olarak MAKUL aralıklar tanımlı — aralık dışı satırlar (imzalı olsa
 //      BİLE) tek tek reddedilir, sessizce yutulmaz.
+//
+// ── PROJECT RAGNAROK (OMEGA) BULGULARI SONRASI EKLENEN İKİNCİ TUR
+// SERTLEŞTİRME (bkz. bb84/god_mode_ragnarok_attack_omega.js) ──────────
+// Yukarıdaki üç sertleştirme imza/kimlik/sınır katmanını kapattı, ama
+// _interpolate()'in "aynı mesafede TEKRARLANAN ölçüm" durumunu ele alış
+// biçiminde ayrı, bağımsız bir kök-neden bulundu — üç farklı görünen
+// açık (Ω1 tek-örnek körlüğü, Ω2 sıraya-bağlı çakışma çözümü, Ω3 genel-
+// eğri kaskadı) AYNI iki mekanizmadan kaynaklanıyordu:
+//   a) Tabloda qMin===qMax olduğunda (tek örnek VEYA birden fazla örnek
+//      ama hepsi aynı QBER) göreli min-max normalizasyonu HER ZAMAN 0
+//      dönüyordu — QBER %49 bile olsa fark etmiyordu. → DÜZELTME: bu
+//      durumda MUTLAK eşik tabanlı bir risk hesaplanıyor (bkz.
+//      ABSOLUTE_QBER_ALERT_THRESHOLD, _absoluteRisk()).
+//   b) Aynı km değerinde BİRDEN FAZLA satır varsa, JS'in KARARLI (stable)
+//      sort'u orijinal DİZİ SIRASINI koruyordu — yani hangi satırın
+//      "geçerli" sayılacağı saldırganın satırları hangi sırayla dizdiğine
+//      bağlıydı (sabotajı gizleme, masum hattı suçlama, bilinen-kötü
+//      hattı aklama — hepsi bu tek mekanizmayla mümkündü, hem link-özgü
+//      hem de linkKey'siz "genel" satırlarda). → DÜZELTME: aynı km'deki
+//      çakışan satırlar artık DİZİ SIRASINA göre değil, açık bir kurala
+//      göre TEK bir satıra indirgeniyor (bkz. _resolveTies()): (i) eğer
+//      satırlarda observedAt zaman damgası varsa bilgi amaçlı taşınır
+//      (riskForLink() sonucunda newestObservedAt olarak görünür) AMA bu
+//      damga GÜVENLİK karar mekanizmasının parçası DEĞİLDİR — çünkü bu
+//      depodaki imzalama anahtarı KASITLI OLARAK açık/demo anahtarıdır
+//      (bkz. noise_calibration_signing_key.json başlığı) ve anahtarı
+//      elinde bulunduran biri "ne zaman ölçüldüğü" alanını da dilediği
+//      gibi uydurabilir — kendi bildirdiği zaman damgasına güvenmek
+//      güvenlik sınırı OLAMAZ; (ii) bunun yerine çakışma HER ZAMAN EN
+//      KÖTÜ (en yüksek) QBER'e göre çözülür — belirsizlik her zaman
+//      "daha dikkatli ol" yönünde çözülür, asla "daha temiz görün"
+//      yönünde değil. Bunun kasıtlı, dokümante edilmiş bir yan etkisi:
+//      bir saldırgan artık masum bir hattı SAHTE-YÜKSEK bir QBER
+//      satırıyla "suçlayabilir" (routing onu gereksiz yere pahalı
+//      görür — bu bir KULLANILABİLİRLİK/verimlilik sorunu) ama GERÇEK
+//      bir sabotajı asla gizleyemez ve bilinen-kötü bir hattı asla
+//      "aklayamaz" (bu bir GÜVENLİK sorunu olurdu) — yani asimetri
+//      kasıtlı: yanlış-pozitif (gereksiz temkin) tolere edilebilir,
+//      yanlış-negatif (gizlenmiş tehlike) tolere EDİLEMEZ. Bu, anahtar
+//      gizliliği/QKDSecurityProof katmanını hiçbir zaman etkilemez —
+//      o katman zaten bu sınıftan tamamen bağımsızdır (bkz. Ω4 testi).
 class NoiseMatrixCalibration {
     constructor(data, meta = {}) {
         var _a, _b;
@@ -3437,13 +3478,21 @@ class NoiseMatrixCalibration {
         const reverseKey = b !== undefined ? `${b}-${a}` : null;
         const linkRows = table.filter(r => r.linkKey === linkKey || (reverseKey && r.linkKey === reverseKey));
         if (linkRows.length > 0) {
-            return { risk: NoiseMatrixCalibration._interpolate(linkRows, km), attribution: "link-specific", sampleCount: linkRows.length };
+            const resolved = NoiseMatrixCalibration._resolveTies(linkRows);
+            return {
+                risk: NoiseMatrixCalibration._interpolate(resolved, km),
+                attribution: "link-specific",
+                sampleCount: linkRows.length,
+                newestObservedAt: NoiseMatrixCalibration._newestObservedAt(linkRows),
+            };
         }
         const genericRows = table.filter(r => !r.linkKey);
+        const resolvedGeneric = NoiseMatrixCalibration._resolveTies(genericRows);
         return {
-            risk: NoiseMatrixCalibration._interpolate(genericRows, km),
+            risk: NoiseMatrixCalibration._interpolate(resolvedGeneric, km),
             attribution: genericRows.length ? "network-fallback" : "none",
             sampleCount: genericRows.length,
+            newestObservedAt: NoiseMatrixCalibration._newestObservedAt(genericRows),
         };
     }
     /** Geriye dönük uyumluluk: mevcut çağrı yerleri/testler yalnızca bir
@@ -3452,7 +3501,50 @@ class NoiseMatrixCalibration {
      * riskForLink() kullanmalıdır. */
     riskForDistance(km) {
         const genericRows = (this.data.measuredRiskByDistanceKm || []).filter(r => !r.linkKey);
-        return NoiseMatrixCalibration._interpolate(genericRows, km);
+        return NoiseMatrixCalibration._interpolate(NoiseMatrixCalibration._resolveTies(genericRows), km);
+    }
+    /** Yalnızca bilgi/denetim amaçlı — bkz. sınıf başlığındaki OMEGA notu:
+     * kendi-bildirilen observedAt bir GÜVENLİK sınırı değildir, sadece
+     * "bu veri en son ne zaman güncellendi iddia ediliyor" görünürlüğüdür. */
+    static _newestObservedAt(rows) {
+        let best = null;
+        for (const r of rows || []) {
+            if (typeof r.observedAt === "number" && Number.isFinite(r.observedAt)) {
+                if (best === null || r.observedAt > best)
+                    best = r.observedAt;
+            }
+        }
+        return best;
+    }
+    /** Aynı km değerine sahip birden fazla satırı DİZİ SIRASINA göre değil,
+     * açık ve saldırgan-tarafından-manipüle-edilemeyecek bir kurala göre TEK
+     * satıra indirger: EN KÖTÜ (en yüksek) qberMean kazanır. Bkz. sınıf
+     * başlığındaki OMEGA notu — bu, hem link-özgü hem de linkKey'siz "genel"
+     * (network-fallback) satırlar için AYNI fonksiyondan geçtiği için Ω2
+     * (sıraya-bağlı çakışma) ve Ω3 (genel-eğri kaskadı) bulgularının İKİSİNİ
+     * de tek bir mekanizmayla kapatır. */
+    static _resolveTies(rows) {
+        const byKm = new Map();
+        for (const r of (rows || [])) {
+            if (!r || typeof r.km !== "number")
+                continue;
+            const prev = byKm.get(r.km);
+            if (!prev || r.qberMean > prev.qberMean)
+                byKm.set(r.km, r);
+        }
+        return [...byKm.values()];
+    }
+    /** qMin===qMax olduğunda (tek örnek, veya birden fazla ama hepsi aynı
+     * QBER) göreli min-max normalizasyonunun ürettiği "her zaman 0" sinyalini
+     * MUTLAK bir eşikle değiştirir — bkz. Ω1/tek-örnek-körlüğü notu.
+     * ABSOLUTE_QBER_ALERT_THRESHOLD'de veya üzerinde risk 1.0'a doyar; altında
+     * orantılı (0..1) bir değer döner — yani QBER %0.001 ile %49 arasındaki
+     * fark artık ASLA görünmez olmuyor. */
+    static _absoluteRisk(q) {
+        if (typeof q !== "number" || !Number.isFinite(q))
+            return 0;
+        const t = NoiseMatrixCalibration.ABSOLUTE_QBER_ALERT_THRESHOLD;
+        return Math.max(0, Math.min(1, q / t));
     }
     static _interpolate(table, km) {
         if (!table || table.length === 0)
@@ -3460,7 +3552,7 @@ class NoiseMatrixCalibration {
         const sorted = [...table].sort((x, y) => x.km - y.km);
         const qbers = sorted.map(t => t.qberMean);
         const qMin = Math.min(...qbers), qMax = Math.max(...qbers);
-        const norm = (q) => (qMax > qMin ? (q - qMin) / (qMax - qMin) : 0);
+        const norm = (q) => (qMax > qMin ? (q - qMin) / (qMax - qMin) : NoiseMatrixCalibration._absoluteRisk(q));
         if (km <= sorted[0].km)
             return norm(sorted[0].qberMean);
         if (km >= sorted[sorted.length - 1].km)
@@ -3516,9 +3608,225 @@ NoiseMatrixCalibration.VALID_KM_RANGE = [0, 20000]; // kıtalar arası denizalt�
 NoiseMatrixCalibration.VALID_QBER_RANGE = [0, 0.5]; // BB84'te QBER kavramsal olarak %50'yi aşamaz
 NoiseMatrixCalibration.VALID_ATTEN_DB_PER_KM_RANGE = [0, 50]; // gerçek telekom fiberi ~0.15-0.5dB/km; 50 bile aşırı cömert
 NoiseMatrixCalibration.VALID_DARK_RATE_HZ_RANGE = [0, 1e7]; // en gürültülü SPAD'lerde bile birkaç MHz'i geçmez
+// ── MUTLAK ALARM EŞİĞİ (Ω1/tek-örnek-körlüğü sertleştirmesi) ────────
+// BB84 literatüründeki tipik dinleme eşiğiyle AYNI değer (bkz. satır
+// ~973, TimeTagCorrelator eşdeğeri) — göreli min-max normalizasyonunun
+// sinyal üretemediği (qMin===qMax) durumlarda MUTLAK bir referans olarak
+// kullanılır. Bu, kripto katmanının güvenlik kararı DEĞİLDİR (o tamamen
+// ayrı ve bağımsızdır, bkz. QKDSecurityProof) — yalnızca routing'in
+// "bu hat ne kadar riskli görünsün" sinyali için bir referans noktasıdır.
+NoiseMatrixCalibration.ABSOLUTE_QBER_ALERT_THRESHOLD = 0.11;
 // Modül-seviyesi tekil — canlı sistemin "şu an kullandığı" kalibrasyon.
 // Varsayılan: DEFAULT_CALIBRATION (bkz. sınıf-üstü dürüstlük notu).
 const noiseMatrixCalibration = new NoiseMatrixCalibration();
+// ══════════════════════════════════════════════════════════════
+// EK: LİNK İTİBAR MOTORU (LinkRiskReputationEngine) — ÜÇÜNCÜ TUR
+// SERTLEŞTİRME (bkz. bb84/god_mode_ragnarok_attack_omega.js v3'e karşı
+// tekrar test). NoiseMatrixCalibration/riskForLink YUKARIDA hâlâ duruyor
+// (geriye dönük uyumluluk + saf FİZİKSEL mesafe-kayıp eğrisi/riskForDistance
+// ve getCalibratedLossDbPerKm/getCalibratedDarkRateHz İÇİN) ama artık
+// ÜRETİM ROUTING KARARI (transmit()'teki measuredRisk) BU motor üzerinden
+// veriliyor — çünkü OMEGA v2'nin worst-case-tie-break yaklaşımı Ω2a/Ω2c'yi
+// kapattı ama TEK bir imzalı toplu-gönderimde bile "hangi değer kazanır"
+// sorusunu HÂLÂ o TEK gönderimin içeriğine bakarak (anlık, durumsuz)
+// çözüyordu. Bu motor onun yerine KALICI, DURUMLU (stateful), zaman
+// sırasına duyarlı bir alternatif sunuyor:
+//   1) ZAMANSAL SÜRÜMLEME: her satır bir `version` (tercihen) veya
+//      `observedAt` (yoksa) taşımak ZORUNDADIR — YOKSA satır MISSING_VERSION
+//      ile reddedilir. Bir hat için önceden kabul edilmiş sürümden ESKİ/EŞİT
+//      bir sürüm gelirse STALE_DATA_REJECTED ile anında reddedilir — yani
+//      "geçmişi olan bir hattı sahte-eski bir 'temiz' okumayla geçersiz
+//      kılma" artık mümkün değil (rejected, state DEĞİŞMEZ).
+//   2) EMA (ÜSTEL HAREKETLİ ORTALAMA): kabul edilen her yeni ölçüm, önceki
+//      itibarla ANINDA DEĞİŞTİRİLMEZ, EMA_ALPHA ağırlığıyla HARMANLANIR —
+//      yani TEK bir sahte "temiz" okuma, kronik-kötü bir geçmişi bir anda
+//      silemez (yalnızca kademeli olarak etkiler, tıpkı gerçek bir
+//      iyileşmenin de zaman alması gibi — bu simetrik ve dürüst bir
+//      davranış: gerçek iyileşme de gerçek kötüleşme de aynı hızda
+//      "inanılır" hâle gelir).
+//   3) KARANTİNA/PROBLAMA MODU: bir hat hakkında MIN_SAMPLES_FOR_TRUST'tan
+//      AZ kabul edilmiş örnek varsa (hiç yoksa DAHİL), o hattın riski asla
+//      "0 (tam güven)" ya da ham tek-örnek değeri değil, NÖTR
+//      QUARANTINE_RISK (0.5) olarak raporlanır ve UNCALIBRATED_QUARANTINE
+//      bayrağı taşınır — bu, Ω1'in "yeni hat = görünmez" kör noktasını,
+//      "yeni hat = ne güvenli NE tehlikeli sayılır, temkinli-nötr" ile
+//      değiştirir.
+//   4) KATI LİNK-ANAHTARI HARİTASI: her hat SADECE kendi (yön-normalize
+//      edilmiş, "A-B"≡"B-A") hücresinde yaşar — Map<linkKey, cell>. Km
+//      tabanlı enterpolasyon veya linkKey'siz "genel eğri" bu motorda HİÇ
+//      YOK; bir hat hakkında veri olmadan başka bir hattın (aynı mesafedeki
+//      veya değil) verisinden hiçbir şekilde etkilenmez — coğrafi/dizi
+//      bulaşması yapısal olarak İMKANSIZ (Ω3'ün kökten kapanması).
+//
+// ── DÖRDÜNCÜ TUR SERTLEŞTİRME: HIZ SINIRLAMASI (bkz. CalibrationRateLimiter
+// hemen altta) — bir Link_ID (veya submitterNodeId verilmişse bir DÜĞÜM) kısa
+// sürede ANORMAL sayıda kalibrasyon güncellemesi göndermeye çalışırsa (imza
+// geçerli olsa BİLE — bu bir hacim/DoS denetimidir, içerik denetimi DEĞİL),
+// o kaynağın kalibrasyon yetkisi geçici olarak ASKIYA ALINIR. Bu, imzalama
+// anahtarını ele geçirmiş ama gerçek zamanlı olarak sınırsız istek gönderme
+// kapasitesi olmayan bir saldırganın (Ω2b'deki "N_min kadar sahte örnek
+// gönder" stratejisinin) maliyetini ARTIRIR — engellenemez ama YAVAŞLATILIR.
+// ── KALİBRASYON HIZ SINIRLAMASI / DÜĞÜM THROTTLING ──────────────────
+// GERÇEK duvar-saati (varsayılan Date.now(), test edilebilirlik için
+// opsiyonel `now` parametresiyle override edilebilir) kullanır — saldırganın
+// payload İÇİNE yazdığı version/observedAt DEĞİL. Bunun nedeni: sürüm/zaman
+// damgası alanları kendi-bildirilen (self-reported) ve dolayısıyla anahtar
+// sahibi tarafından İSTENİLEN DEĞERE ayarlanabilir (bkz. NoiseMatrixCalibration
+// sınıf başlığındaki ilgili not) — ama hız sınırlamasının amacı "bu kaynak
+// motoru GERÇEKTE ne sıklıkla çağırıyor"yu ölçmek; bu asla sahte-beyan
+// edilemez, çünkü çağrı GERÇEKTEN o an, o sırayla gerçekleşmek ZORUNDADIR.
+class CalibrationRateLimiter {
+    constructor() {
+        // key (canonicalLinkKey veya submitterNodeId) -> { timestamps: number[], suspendedUntil: number|null }
+        this.buckets = new Map();
+    }
+    /** Bu kaynaktan YENİ bir kalibrasyon girişimi kabul edilebilir mi?
+     * Kabul edilirse zaman damgasını KAYDEDER (yan etkili — her GERÇEK
+     * girişimde bir kez çağrılmalıdır, yalnızca durum sorgusu için status()
+     * kullanın). */
+    checkAndRecord(key, now = Date.now()) {
+        let bucket = this.buckets.get(key);
+        if (!bucket) {
+            bucket = { timestamps: [], suspendedUntil: null };
+            this.buckets.set(key, bucket);
+        }
+        if (bucket.suspendedUntil !== null) {
+            if (now < bucket.suspendedUntil) {
+                return { allowed: false, reason: "SOURCE_SUSPENDED", suspendedUntil: bucket.suspendedUntil, retryAfterMs: bucket.suspendedUntil - now };
+            }
+            // askı süresi doldu — temiz sayfa
+            bucket.suspendedUntil = null;
+            bucket.timestamps = [];
+        }
+        const windowStart = now - CalibrationRateLimiter.WINDOW_MS;
+        bucket.timestamps = bucket.timestamps.filter(t => t > windowStart);
+        if (bucket.timestamps.length >= CalibrationRateLimiter.MAX_UPDATES_PER_WINDOW) {
+            bucket.suspendedUntil = now + CalibrationRateLimiter.SUSPENSION_MS;
+            return { allowed: false, reason: "RATE_LIMIT_EXCEEDED_SUSPENDED", suspendedUntil: bucket.suspendedUntil, retryAfterMs: CalibrationRateLimiter.SUSPENSION_MS };
+        }
+        bucket.timestamps.push(now);
+        return { allowed: true, updatesInWindow: bucket.timestamps.length };
+    }
+    /** Yan etkisiz durum sorgusu — kayıt EKLEMEZ. */
+    status(key, now = Date.now()) {
+        const bucket = this.buckets.get(key);
+        if (!bucket)
+            return { suspended: false, updatesInWindow: 0, suspendedUntil: null };
+        const suspended = bucket.suspendedUntil !== null && now < bucket.suspendedUntil;
+        const windowStart = now - CalibrationRateLimiter.WINDOW_MS;
+        const updatesInWindow = bucket.timestamps.filter(t => t > windowStart).length;
+        return { suspended, updatesInWindow, suspendedUntil: bucket.suspendedUntil };
+    }
+}
+CalibrationRateLimiter.WINDOW_MS = 1000; // hız sınırı penceresi (1 saniye)
+CalibrationRateLimiter.MAX_UPDATES_PER_WINDOW = 5; // pencere başına izin verilen GİRİŞİM sayısı (kabul/red FARK ETMEZ)
+CalibrationRateLimiter.SUSPENSION_MS = 30000; // aşım sonrası yetki askıya alma süresi
+class LinkRiskReputationEngine {
+    constructor() {
+        // canonicalLinkKey -> { sampleCount, emaRisk, lastVersion, lastQberMean, staleRejectedCount }
+        this.cells = new Map();
+        this.linkRateLimiter = new CalibrationRateLimiter(); // Link_ID başına hız sınırı
+        this.nodeRateLimiter = new CalibrationRateLimiter(); // (opsiyonel) submitterNodeId başına hız sınırı
+    }
+    /** "A-B" ve "B-A" AYNI fiziksel hattı temsil eder — ikisini de TEK bir
+     * kanonik anahtara (alfabetik sıralı) normalize eder, böylece yön
+     * belirsizliği ayrı hücrelere BÖLÜNMEZ (bu da bir tür yapay veri
+     * seyrekleştirmesi/bulaşma kapısı olurdu). */
+    static _canonicalLinkKey(linkKey) {
+        const parts = String(linkKey).split("-");
+        return parts.length === 2 ? [...parts].sort().join("-") : String(linkKey);
+    }
+    static _versionOf(row) {
+        if (typeof row.version === "number" && Number.isFinite(row.version))
+            return row.version;
+        if (typeof row.observedAt === "number" && Number.isFinite(row.observedAt))
+            return row.observedAt;
+        return undefined;
+    }
+    /** Tek bir (zaten km/QBER sınırları içinde olduğu doğrulanmış) satırı bu
+     * hattın KENDİ hücresine işler. Dizinin GERİ KALANINDAN tamamen bağımsız
+     * çalışır — sıralama/komşu satırlar bu fonksiyonun sonucunu ETKİLEMEZ.
+     * `now` opsiyoneldir — verilmezse GERÇEK duvar-saati (Date.now()) kullanılır;
+     * testlerde/saldırı simülasyonlarında hız-sınırlama davranışını
+     * deterministik biçimde tetiklemek/atlatmak için override edilebilir. */
+    ingest(row, now = Date.now()) {
+        const canonical = LinkRiskReputationEngine._canonicalLinkKey(row.linkKey);
+        const rl = this.linkRateLimiter.checkAndRecord(canonical, now);
+        if (!rl.allowed) {
+            return { accepted: false, reason: rl.reason, canonicalLinkKey: canonical, retryAfterMs: rl.retryAfterMs };
+        }
+        const v = LinkRiskReputationEngine._versionOf(row);
+        if (v === undefined) {
+            return { accepted: false, reason: "MISSING_VERSION", canonicalLinkKey: canonical };
+        }
+        let cell = this.cells.get(canonical);
+        if (!cell) {
+            cell = { sampleCount: 0, emaRisk: null, lastVersion: -Infinity, lastQberMean: null, staleRejectedCount: 0 };
+            this.cells.set(canonical, cell);
+        }
+        if (v <= cell.lastVersion) {
+            cell.staleRejectedCount++;
+            return { accepted: false, reason: "STALE_DATA_REJECTED", canonicalLinkKey: canonical, incomingVersion: v, lastVersion: cell.lastVersion };
+        }
+        const instant = NoiseMatrixCalibration._absoluteRisk(row.qberMean);
+        cell.emaRisk = cell.emaRisk === null
+            ? instant
+            : (LinkRiskReputationEngine.EMA_ALPHA * instant + (1 - LinkRiskReputationEngine.EMA_ALPHA) * cell.emaRisk);
+        cell.sampleCount++;
+        cell.lastVersion = v;
+        cell.lastQberMean = row.qberMean;
+        return { accepted: true, canonicalLinkKey: canonical, sampleCount: cell.sampleCount, emaRisk: cell.emaRisk };
+    }
+    /** İMZA DOĞRULAMASINI (NoiseMatrixCalibration.verifyAndLoad — fail-closed
+     * HMAC-SHA256) VE mantıksızlık/inandırıcılık sınır denetimini yeniden
+     * yazmak yerine YENİDEN KULLANIR, sonra bounds-temiz satırları KENDİ
+     * sürüm/zaman sırasına göre (dizideki YAZILIŞ sırasına GÖRE DEĞİL)
+     * tek tek ingest() eder. Kabul edilen (imzası geçerli) her toplu-gönderim,
+     * isteğe bağlı `payload.submitterNodeId` verilmişse DÜĞÜM seviyesinde de
+     * hız sınırına tabidir — bu, tek bir hattı değil, kaynağın TÜMÜNÜ (o
+     * düğümün gönderdiği TÜM hatları) askıya alabilir (bkz. sınıf başlığı). */
+    async ingestVerifiedBatch(payload, signatureHex, cryptoKey, opts = {}, now = Date.now()) {
+        const calib = await NoiseMatrixCalibration.verifyAndLoad(payload, signatureHex, cryptoKey, opts);
+        if (payload && payload.submitterNodeId) {
+            const rl = this.nodeRateLimiter.checkAndRecord(String(payload.submitterNodeId), now);
+            if (!rl.allowed) {
+                return { authenticated: calib.meta.authenticated, results: [], nodeThrottled: true, reason: rl.reason, retryAfterMs: rl.retryAfterMs };
+            }
+        }
+        const rows = (calib.data.measuredRiskByDistanceKm || []).filter(r => r && r.linkKey);
+        const ordered = rows
+            .map(row => ({ row, v: LinkRiskReputationEngine._versionOf(row) }))
+            .sort((x, y) => (x.v === undefined ? -Infinity : x.v) - (y.v === undefined ? -Infinity : y.v));
+        const results = ordered.map(({ row }) => ({ linkKey: row.linkKey, ...this.ingest(row, now) }));
+        return { authenticated: calib.meta.authenticated, results, nodeThrottled: false };
+    }
+    riskForLink(linkKey) {
+        const canonical = LinkRiskReputationEngine._canonicalLinkKey(linkKey);
+        const cell = this.cells.get(canonical);
+        if (!cell || cell.sampleCount < LinkRiskReputationEngine.MIN_SAMPLES_FOR_TRUST) {
+            return {
+                risk: LinkRiskReputationEngine.QUARANTINE_RISK,
+                flag: "UNCALIBRATED_QUARANTINE",
+                sampleCount: cell ? cell.sampleCount : 0,
+                attribution: cell ? "quarantine-insufficient-samples" : "quarantine-unseen",
+            };
+        }
+        return { risk: cell.emaRisk, flag: null, sampleCount: cell.sampleCount, attribution: "link-reputation-ema" };
+    }
+    /** Yan etkisiz throttle-durum sorgusu — UI/tanılama için. */
+    linkThrottleStatus(linkKey, now = Date.now()) {
+        return this.linkRateLimiter.status(LinkRiskReputationEngine._canonicalLinkKey(linkKey), now);
+    }
+    nodeThrottleStatus(nodeId, now = Date.now()) {
+        return this.nodeRateLimiter.status(String(nodeId), now);
+    }
+}
+LinkRiskReputationEngine.MIN_SAMPLES_FOR_TRUST = 3; // N_min — bu kadar KABUL EDİLMİŞ örnek birikmeden EMA'ya güvenilmez
+LinkRiskReputationEngine.QUARANTINE_RISK = 0.5; // n < N_min iken raporlanan nötr (ne güvenli ne tehlikeli) risk
+LinkRiskReputationEngine.EMA_ALPHA = 0.3; // yeni örneğin ağırlığı; küçük değer = daha yavaş/kararlı, büyük = daha çevik
+// Modül-seviyesi tekil — canlı sistemin routing kararlarında kullandığı,
+// KALICI (oturum boyunca birikimli) link itibar durumu.
+const linkRiskReputationEngine = new LinkRiskReputationEngine();
 // ══════════════════════════════════════════════════════════════
 // NodeTransitGate — DÜĞÜM SEVİYESİ 3-AŞAMALI KARAR MOTORU
 //
@@ -6465,8 +6773,14 @@ class NetworkTopology {
      * @param {(id: string) => boolean} [isNodeLive]
      * @param {WeightContext} [weightCtx] - örn. { linkLoad: {...} }
      * @param {EdgeWeightPolicy} [policy]
+     * @param {Set<string>} [excludeLinkKeys] - YEDEKLİ ÇOKLU YOL (bkz. sınıf
+     *   altındaki disjointPaths()): bu kenar-anahtarlarını (canonical "A-B",
+     *   alfabetik sıralı) taşıyan hiçbir kenar dolaşılmaz — birincil rotanın
+     *   kullandığı hatları HARİÇ TUTARAK gerçekten bağımsız bir ikincil rota
+     *   aramak için kullanılır. Verilmezse (mevcut TÜM eski çağrı yerleri)
+     *   davranış BİREBİR ESKİSİ GİBİDİR.
      */
-    shortestPath(src, dst, isNodeLive, weightCtx, policy) {
+    shortestPath(src, dst, isNodeLive, weightCtx, policy, excludeLinkKeys) {
         const wp = policy || defaultWeightPolicy;
         if (!this.hasNode(src) || !this.hasNode(dst))
             return null;
@@ -6488,6 +6802,8 @@ class NetworkTopology {
             for (const { to, link } of this.neighbors(u)) {
                 if (isNodeLive && !isNodeLive(to))
                     continue;
+                if (excludeLinkKeys && excludeLinkKeys.has(NetworkTopology.linkKey(link)))
+                    continue;
                 const cost = wp.computeWeight(link, weightCtx);
                 const nd = du + cost;
                 if (nd < (dist.has(to) ? dist.get(to) : Infinity)) {
@@ -6508,6 +6824,35 @@ class NetworkTopology {
         }
         path.unshift({ node: src, link: null });
         return path;
+    }
+    /** Yön-bağımsız kenar kimliği ("A-B"≡"B-A") — dışlama kümeleri ve
+     * çakışan-hat tespiti için kanonik anahtar. */
+    static linkKey(link) { return [link.a, link.b].sort().join("-"); }
+    // ── YEDEKLİ ÇOKLU YOL / DISJOINT ROUTING ────────────────────────
+    // src↔dst arasında K adet, BİRBİRİYLE HİÇBİR KENARI PAYLAŞMAYAN
+    // (edge-disjoint) yol arar: önce en ucuz (birincil) yol bulunur, sonra
+    // onun kullandığı TÜM kenarlar grafikten (yalnızca bu aramada) çıkarılıp
+    // bir sonraki en ucuz yol aranır — bu, "aynı fiziksel koridoru tekrar
+    // kullanmayan gerçekten bağımsız bir yedek" garantisi verir (yalnızca
+    // maliyeti artırıp AYNI Dijkstra'yı tekrar çalıştırmak, ucuzsa yine AYNI
+    // kenarları seçebilirdi — bu yüzden kenarlar KESİN OLARAK dışlanıyor).
+    // Topoloji gerçekten ayrık bir yol sunmuyorsa (örn. dar boğaz/tekil kesim
+    // noktası), sonuç dizisi K'dan KISA olur — bu dürüstçe "bağımsız yedek
+    // yok" anlamına gelir, sahte bir yol UYDURULMAZ.
+    disjointPaths(src, dst, isNodeLive, weightCtx, policy, k = 2) {
+        const results = [];
+        const excluded = new Set();
+        for (let i = 0; i < k; i++) {
+            const path = this.shortestPath(src, dst, isNodeLive, weightCtx, policy, excluded);
+            if (!path)
+                break;
+            results.push(path);
+            for (const step of path) {
+                if (step.link)
+                    excluded.add(NetworkTopology.linkKey(step.link));
+            }
+        }
+        return results;
     }
 }
 // Modül-seviyesi tekil örnek — React state (nodes/links) her değiştiğinde
@@ -6538,8 +6883,11 @@ const networkTopology = new NetworkTopology([], []);
  *   KALİBRASYONU (HAL köprüsü taraması) tarafından üretilen, mesafeye göre
  *   enterpole edilmiş ölçülen-risk skorları (bkz. NoiseMatrixCalibration).
  *   Verilmezse (mevcut TÜM eski çağrı yerleri) davranış BİREBİR ESKİSİ GİBİDİR.
+ * @param {Set<string>} [excludeLinkKeys] - opsiyonel: YEDEKLİ ÇOKLU YOL için
+ *   bkz. NetworkTopology.disjointPaths() — verilirse bu kenarlar Dijkstra'nın
+ *   HİÇ görmediği kenarlarmış gibi davranır. Verilmezse davranış BİREBİR ESKİSİ GİBİDİR.
  */
-function dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk, measuredRisk) {
+function dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk, measuredRisk, excludeLinkKeys) {
     // Topolojiyi (yapısal olarak) güncel tut — ucuz bir referans eşitliği
     // kontrolü ile gereksiz rebuild'i engelliyoruz.
     if (networkTopology._lastNodes !== nodes || networkTopology._lastLinks !== links) {
@@ -6549,7 +6897,7 @@ function dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk, me
     }
     const liveIds = new Set(nodes.filter(n => n.on).map(n => n.id));
     const weightCtx = (linkLoad || linkDown || predictiveRisk || measuredRisk) ? { linkLoad, linkDown, predictiveRisk, measuredRisk } : undefined;
-    return networkTopology.shortestPath(src, dst, (id) => liveIds.has(id), weightCtx);
+    return networkTopology.shortestPath(src, dst, (id) => liveIds.has(id), weightCtx, undefined, excludeLinkKeys);
 }
 // DÜZELTME 12 (FAZ 6 — HAT BAZLI SUÇLAMA/KARANTİNA testi sırasında bulundu):
 // BAG (Bağdat) topolojide yalnızca İKİ fiziksel hatla bağlıydı — GAZ-BAG ve
@@ -7941,10 +8289,11 @@ function explainEcc(corrected) {
  * @param {Record<string,boolean>} [linkDown] - bkz. dijkstra()'nın aynı adlı parametresi
  * @param {Record<string,number>} [predictiveRisk] - bkz. dijkstra()'nın aynı adlı parametresi (FAZ 4)
  * @param {Record<string,number>} [measuredRisk] - bkz. dijkstra()'nın aynı adlı parametresi (GÜRÜLTÜ MATRİSİ KALİBRASYONU)
+ * @param {Set<string>} [excludeLinkKeys] - bkz. dijkstra()'nın aynı adlı parametresi (YEDEKLİ ÇOKLU YOL)
  * @returns {{path: PathStep[], segs: NetLink[], totalKm: number, geoKm: number, health: Object} | null}
  */
-function routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk) {
-    const path = dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk, measuredRisk);
+function routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk, excludeLinkKeys) {
+    const path = dijkstra(nodes, links, src, dst, linkLoad, linkDown, predictiveRisk, measuredRisk, excludeLinkKeys);
     if (!path)
         return null;
     const segs = path.slice(1).map(x => x.link).filter(Boolean);
@@ -7984,6 +8333,59 @@ function routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, p
         healthy: hopCount <= MAX_HEALTHY_HOPS && cumulativeTransmittance >= MIN_HEALTHY_TRANSMITTANCE,
     };
     return { path, segs, totalKm, geoKm, health };
+}
+// ══════════════════════════════════════════════════════════════
+// YEDEKLİ ÇOKLU YOL / DISJOINT ROUTING (üçüncü tur sertleştirme —
+// bkz. bb84/god_mode_ragnarok_attack_omega_v3.js sonrası kullanıcı isteği).
+//
+// AMAÇ: tek bir hatta uygulanan DoS/zehirleme (LinkRiskReputationEngine'in
+// GERÇEKTEN doğruladığı, n≥MIN_SAMPLES_FOR_TRUST sonrası yüksek EMA riski —
+// yalnızca "henüz ölçülmedi" belirsizliği DEĞİL) tespit edildiğinde, trafiği
+// AYNI koridoru tekrar kullanmayan, kenar-ayrık (edge-disjoint) fiziksel
+// olarak bağımsız bir yedek hatta kaydırmak. "Fiziksel olarak farklı" burada
+// "hiçbir ortak kenarı olmayan" anlamına gelir (bkz. NetworkTopology.
+// disjointPaths) — ağın gerçekten böyle bir yol sunup sunmadığı topolojiye
+// bağlıdır; sunmuyorsa DÜRÜSTÇE birincil rotada kalınır, sahte bir "yedek"
+// UYDURULMAZ.
+const DOS_SUSPECT_RISK_THRESHOLD = 0.75; // LinkRiskReputationEngine.QUARANTINE_RISK'in (0.5) ÜSTÜNDE — yani salt "henüz ölçülmedi" belirsizliği DEĞİL, GERÇEKTEN doğrulanmış yüksek risk gerekiyor
+/** Bir rotanın ("routeCalculation" dönüşü) herhangi bir kenarı, verilen
+ * measuredRisk haritasında DOS_SUSPECT_RISK_THRESHOLD'i AŞIYOR mu? */
+function routeIsSuspect(route, measuredRisk, threshold = DOS_SUSPECT_RISK_THRESHOLD) {
+    var _a, _b;
+    if (!route || !measuredRisk)
+        return false;
+    for (const lk of route.segs) {
+        const r = (_b = (_a = measuredRisk[`${lk.a}-${lk.b}`]) !== null && _a !== void 0 ? _a : measuredRisk[`${lk.b}-${lk.a}`]) !== null && _b !== void 0 ? _b : 0;
+        if (r >= threshold)
+            return true;
+    }
+    return false;
+}
+/**
+ * routeCalculation()'ın DAYANIKLI (resilient) sürümü: önce her zamanki
+ * gibi birincil rotayı hesaplar. Birincil rota "şüpheli" (bkz.
+ * routeIsSuspect) İSE, birincil rotanın kullandığı TÜM kenarları dışlayıp
+ * KENAR-AYRIK bir yedek rota arar; yedek VARSA VE birincilden DAHA AZ
+ * şüpheliyse trafiği ORAYA kaydırır. Geriye dönük uyumluluk: measuredRisk
+ * verilmezse (veya hiçbir kenar eşiği aşmazsa) davranış routeCalculation()
+ * ile BİREBİR AYNIDIR — bu sarmalayıcı hiçbir eski çağrı yerini bozmaz.
+ * @returns {{ route: object, usedDisjointBackup: boolean, primarySuspect: boolean, backupAvailable: boolean } | null}
+ */
+function routeCalculationResilient(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk) {
+    const primary = routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk);
+    const primarySuspect = routeIsSuspect(primary, measuredRisk);
+    if (!primarySuspect) {
+        return primary ? { route: primary, usedDisjointBackup: false, primarySuspect: false, backupAvailable: false } : null;
+    }
+    const excludeLinkKeys = new Set(((primary === null || primary === void 0 ? void 0 : primary.segs) || []).map(lk => NetworkTopology.linkKey(lk)));
+    const backup = routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk, excludeLinkKeys);
+    const backupSuspect = routeIsSuspect(backup, measuredRisk);
+    if (backup && !backupSuspect) {
+        return { route: backup, usedDisjointBackup: true, primarySuspect: true, backupAvailable: true };
+    }
+    // Ya bağımsız bir yedek yok, ya da o da şüpheli — dürüstçe birincilde kal
+    // (varsa) ve DURUMU çağırana bildir (transmit() bunu loglayabilir).
+    return primary ? { route: primary, usedDisjointBackup: false, primarySuspect: true, backupAvailable: !!backup && !backupSuspect } : null;
 }
 // ── physicalSimulation: tüm segmentler boyunca foton yayılımı ─────
 /**
@@ -10092,14 +10494,24 @@ function PhotonNet() {
         // EdgeWeightPolicy.computeWeight içinde predictiveRisk ile AYNI
         // "opsiyonel çarpan" desenini izler — bu blok eklenmeden önceki TÜM
         // davranış (measuredRisk her zaman 0 gibi) BİREBİR KORUNUR.
-        // SALDIRI SİMÜLASYONU SERTLEŞTİRMESİ: artık riskForDistance (yalnızca
-        // mesafeye bakan, "kurban" hatları da bulaştıran eski davranış) değil,
-        // riskForLink (önce bu SPESİFİK hattın kendi ölçümünü arayan, yoksa
-        // ağ-çapında genel eğriye düşen) kullanılıyor.
+        // ÜÇÜNCÜ TUR SERTLEŞTİRME: artık NoiseMatrixCalibration.riskForLink
+        // (mesafe-enterpolasyonlu, tek-toplu-gönderim odaklı) DEĞİL,
+        // LinkRiskReputationEngine (kalıcı/durumlu, zaman-sıralı EMA, katı
+        // link-anahtarı izolasyonu, örnek-yetersizse nötr karantina) routing
+        // riskinin TEK kaynağı — bkz. sınıf başlığındaki üçüncü-tur notu.
+        // NoiseMatrixCalibration hâlâ yaşıyor ama artık yalnızca FİZİKSEL
+        // kalibrasyon sabitleri (getCalibratedLossDbPerKm/DarkRateHz) ve
+        // geriye-dönük-uyumlu riskForDistance() için kullanılıyor, routing
+        // riski için DEĞİL.
         const measuredRisk = {};
         for (const l of links)
-            measuredRisk[`${l.a}-${l.b}`] = noiseMatrixCalibration.riskForLink(`${l.a}-${l.b}`, l.km).risk;
-        const route = routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk);
+            measuredRisk[`${l.a}-${l.b}`] = linkRiskReputationEngine.riskForLink(`${l.a}-${l.b}`).risk;
+        // YEDEKLİ ÇOKLU YOL: birincil rota GERÇEKTEN doğrulanmış (n≥N_min,
+        // yalnızca "henüz ölçülmedi" belirsizliği DEĞİL) yüksek riskli bir hat
+        // içeriyorsa, kenar-ayrık/fiziksel-olarak-bağımsız bir yedek aranır ve
+        // varsa (ve o da şüpheli değilse) trafik OTOMATİK olarak oraya kaydırılır.
+        const resilient = routeCalculationResilient(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk);
+        const route = resilient ? resilient.route : null;
         if (!route) {
             const quarantined = Object.keys(activeAnomalies);
             if (activeCrisis) {
@@ -10114,6 +10526,12 @@ function PhotonNet() {
             setRunning(false);
             setPhase("HATA");
             return;
+        }
+        if (resilient.usedDisjointBackup) {
+            addLog(`🔀 ÇOKLU YOL: birincil rota şüpheli (doğrulanmış link-itibar riski ≥${DOS_SUSPECT_RISK_THRESHOLD}) — trafik, birincil hatla HİÇBİR kenarı paylaşmayan fiziksel olarak bağımsız bir yedek hatta kaydırıldı`, "WARN");
+        }
+        else if (resilient.primarySuspect) {
+            addLog(`⚠️ ÇOKLU YOL: birincil rota şüpheli ama bağımsız (kenar-ayrık) bir yedek YOK — topoloji bunu desteklemiyor, birincil rotada devam ediliyor`, "WARN");
         }
         const { path: p, segs, totalKm, geoKm, health } = route;
         setPath(p);
@@ -13147,5 +13565,5 @@ function PhotonNet() {
 }
 
 module.exports = {
-  propPhoton, propPhotonRelayChain, mulberry32, combineSeed, WL, fiberT, lega, poissonSample, QuantumKeyDistribution, bb84Reconcile, deriveOtpKeyBits, otpEncryptBits, otpDecryptBits, LinkGradedEavesdropThresholdAlgorithm, eavesdropProbability, NoiseMatrixCalibration, noiseMatrixCalibration, EdgeWeightPolicy, defaultWeightPolicy, ScintillationModel, ScintillationEngine, scintillationEngine, PointingBudget, DetectorNoiseModel, AtmosphericWindowModel, satQ, physicalSimulation, hEnc, hDec, t2b, b2t, bitsToBase64, computeRepeaterGain, estimateLinkSurvival, dynamicRedundancyFor, ParameterEstimationFilter, CascadeReconciliation, LDPCReconciliation, QKDSecurityProof, ProductionSecurityAudit, ToeplitzAsyncEngine, toeplitzParity32, toeplitzPackBits, toeplitzRowsFromPackedWords, KeyPoolBuffer, keyPoolBuffer, KeyDeliveryStore, keyDeliveryStore, deterministicKeyId, ClassicalAuthChannel, classicalAuthChannel, NodeWatchdog, nodeWatchdog, LinkOutageController, linkOutageController, MetricTrendInjector, metricTrendInjector, PredictiveTelemetryEngine, predictiveEngine, NoiseGateMiddleware, noiseGateMiddleware, CALIBRATION_EMA_ALPHA, CALIBRATION_WINDOW_S, GATE_MIN_RATIO, GATE_STEP, GATE_TARGET_MULTIPLIER, MSG_RELAY_COEFF_OVERRIDE, MSG_RELAY_COMPENSATION, MSG_RELAY_HOP_KM, MSG_RELAY_HOP_REPS, MSG_RELAY_THRESHOLD_KM, REAL_CLICK_MISS_AT_MIN_GATE, SNSPD_DARKRATE_TEMP_GAIN, SNSPD_TEMP_DRIFT_SIGMA, SNSPD_TEMP_MEAN_REVERSION, SNSPD_TEMP_TRIP_MK
+  propPhoton, propPhotonRelayChain, mulberry32, combineSeed, WL, fiberT, lega, poissonSample, QuantumKeyDistribution, bb84Reconcile, deriveOtpKeyBits, otpEncryptBits, otpDecryptBits, LinkGradedEavesdropThresholdAlgorithm, eavesdropProbability, NoiseMatrixCalibration, noiseMatrixCalibration, EdgeWeightPolicy, defaultWeightPolicy, LinkRiskReputationEngine, linkRiskReputationEngine, CalibrationRateLimiter, NetworkTopology, networkTopology, routeCalculation, routeCalculationResilient, routeIsSuspect, DOS_SUSPECT_RISK_THRESHOLD, ScintillationModel, ScintillationEngine, scintillationEngine, PointingBudget, DetectorNoiseModel, AtmosphericWindowModel, satQ, physicalSimulation, hEnc, hDec, t2b, b2t, bitsToBase64, computeRepeaterGain, estimateLinkSurvival, dynamicRedundancyFor, ParameterEstimationFilter, CascadeReconciliation, LDPCReconciliation, QKDSecurityProof, ProductionSecurityAudit, ToeplitzAsyncEngine, toeplitzParity32, toeplitzPackBits, toeplitzRowsFromPackedWords, KeyPoolBuffer, keyPoolBuffer, KeyDeliveryStore, keyDeliveryStore, deterministicKeyId, ClassicalAuthChannel, classicalAuthChannel, NodeWatchdog, nodeWatchdog, LinkOutageController, linkOutageController, MetricTrendInjector, metricTrendInjector, PredictiveTelemetryEngine, predictiveEngine, NoiseGateMiddleware, noiseGateMiddleware, CALIBRATION_EMA_ALPHA, CALIBRATION_WINDOW_S, GATE_MIN_RATIO, GATE_STEP, GATE_TARGET_MULTIPLIER, MSG_RELAY_COEFF_OVERRIDE, MSG_RELAY_COMPENSATION, MSG_RELAY_HOP_KM, MSG_RELAY_HOP_REPS, MSG_RELAY_THRESHOLD_KM, REAL_CLICK_MISS_AT_MIN_GATE, SNSPD_DARKRATE_TEMP_GAIN, SNSPD_TEMP_DRIFT_SIGMA, SNSPD_TEMP_MEAN_REVERSION, SNSPD_TEMP_TRIP_MK
 };

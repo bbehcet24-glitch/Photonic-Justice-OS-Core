@@ -119,6 +119,8 @@ const EXPORT_MANIFEST = [
   "LinkGradedEavesdropThresholdAlgorithm", "eavesdropProbability",
   // ── GÜRÜLTÜ MATRİSİ KALİBRASYONU (HAL köprüsü taraması → routing'e besleme) ──
   "NoiseMatrixCalibration", "noiseMatrixCalibration", "EdgeWeightPolicy", "defaultWeightPolicy",
+  "LinkRiskReputationEngine", "linkRiskReputationEngine", "CalibrationRateLimiter",
+  "NetworkTopology", "networkTopology", "routeCalculation", "routeCalculationResilient", "routeIsSuspect", "DOS_SUSPECT_RISK_THRESHOLD",
   // ── Atmosferik/uydu/FSO fiziksel modeller ──
   "ScintillationModel", "ScintillationEngine", "scintillationEngine", "PointingBudget",
   "DetectorNoiseModel", "AtmosphericWindowModel", "satQ", "physicalSimulation",
