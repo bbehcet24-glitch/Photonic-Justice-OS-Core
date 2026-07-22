@@ -1,0 +1,5 @@
+{
+  "_UYARI": "DEMO ANAHTARI — bu depoya AÇIK metin olarak commit edildi, GİZLİ DEĞİLDİR. Yalnızca imzalama/doğrulama mekanizmasını uçtan uca göstermek içindir. GERÇEK ÜRETİMDE bu anahtar asla kaynak koduna/depoya YAZILMAMALI — SoftHSM2/PKCS#11 yazılımsal HSM'de (bu depoda zaten entegre edilmiş, bkz. PRODUCTION_READINESS_ROADMAP.md) veya bir KMS'de saklanmalı, yalnızca imzalama tarafı (bb84/noise_matrix_validate.js'in çalıştığı CI/kalibrasyon hattı) erişebilmeli; tarayıcı/istemci tarafı yalnızca DOĞRULAMA (aynı simetrik anahtarla — HMAC simetrik olduğu için burada 'public key' ayrımı yok, bu da gerçek üretimde imzalama tarafını istemciden TAMAMEN AYRI tutmanın önemini artırır) yapmalı.",
+  "algorithm": "HMAC-SHA256",
+  "keyHex": "85898ae8e6c25a5f2fbfeb734d006f1aea08d752921d853fb35f1a2aaae73d5b"
+}

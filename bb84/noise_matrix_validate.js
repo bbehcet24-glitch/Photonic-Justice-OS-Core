@@ -22,8 +22,28 @@
 // ══════════════════════════════════════════════════════════════════
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const core = require("./photonnet_core.js");
 const { WL, lega, LinkGradedEavesdropThresholdAlgorithm } = core;
+
+// PhotonNet2.jsx'teki NoiseMatrixCalibration._canonicalize ile BİREBİR AYNI
+// algoritma — imzalayan (burası) ve doğrulayan (tarayıcı/Node SubtleCrypto)
+// taraf FARKLI kanonikleştirme kullanırsa imza asla eşleşmez. Bu fonksiyon
+// değiştirilirse KARŞI TARAFTAKİ de değiştirilmelidir.
+function canonicalize(obj) {
+  if (Array.isArray(obj)) return "[" + obj.map(canonicalize).join(",") + "]";
+  if (obj && typeof obj === "object") {
+    const keys = Object.keys(obj).sort();
+    return "{" + keys.map(k => JSON.stringify(k) + ":" + canonicalize(obj[k])).join(",") + "}";
+  }
+  return JSON.stringify(obj);
+}
+
+function signCalibration(payload, keyHex) {
+  const hmac = crypto.createHmac("sha256", Buffer.from(keyHex, "hex"));
+  hmac.update(canonicalize(payload));
+  return hmac.digest("hex");
+}
 
 const matrixPath = path.join(__dirname, "..", "hal", "noise_matrix.json");
 const matrix = JSON.parse(fs.readFileSync(matrixPath, "utf-8"));
@@ -152,13 +172,30 @@ console.log("\n=== D) Kalibrasyon parametreleri türetiliyor (bb84/noise_calibra
     // EdgeWeightPolicy.readMeasuredRisk() tarafından tüketilecek — mesafeye
     // göre ölçülen QBER eğrisini (0..1 normalize) bir "measuredRisk" tablosu
     // olarak taşır. Aradaki mesafeler lineer enterpole edilir (bkz.
-    // NoiseMatrixCalibration.riskForDistance, PhotonNet2.jsx).
+    // NoiseMatrixCalibration.riskForDistance, PhotonNet2.jsx). NOT: burada
+    // linkKey YOK — HAL taraması isimli bir topoloji hattına karşı değil,
+    // yalnızca mesafe parametresine karşı çalıştı; bu yüzden tüketici tarafta
+    // (riskForLink) bu veri doğru şekilde "network-fallback" sayılacak,
+    // belirli bir hatta yanlışlıkla "link-specific" olarak atanmayacak.
     measuredRiskByDistanceKm: matrix.summary_clean_channel.map(s => ({
       km: s.distance_km,
       qberMean: s.qber_mean,
     })),
   };
-  fs.writeFileSync(path.join(__dirname, "noise_calibration.json"), JSON.stringify(calibration, null, 2));
-  console.log("  bb84/noise_calibration.json yazıldı.");
+
+  // ── KAYNAK DOĞRULAMA: HMAC-SHA256 imzası ──────────────────────────
+  // Saldırı simülasyonunun AŞAMA 6 bulgusuna karşı: bu, kalibrasyon
+  // verisinin GERÇEKTEN bu hattan (güvenilir kalibrasyon üretim script'i)
+  // geldiğini kanıtlayan imzadır — NoiseMatrixCalibration.verifyAndLoad()
+  // bu imza olmadan (veya yanlışsa) veriyi REDDEDER. Demo anahtarı bkz.
+  // bb84/noise_calibration_signing_key.json (gerçek üretimde SoftHSM2/
+  // PKCS#11'de saklanmalı, bkz. o dosyanın uyarısı).
+  const signingKey = JSON.parse(fs.readFileSync(path.join(__dirname, "noise_calibration_signing_key.json"), "utf-8"));
+  const signatureHex = signCalibration(calibration, signingKey.keyHex);
+  const envelope = { payload: calibration, signatureHex, algorithm: "HMAC-SHA256" };
+
+  fs.writeFileSync(path.join(__dirname, "noise_calibration.json"), JSON.stringify(envelope, null, 2));
+  console.log("  bb84/noise_calibration.json yazıldı (imzalı zarf: {payload, signatureHex, algorithm}).");
   console.log(`  attenuationDbPerKm.measuredMean=${attenMean.toFixed(4)} darkRateHz.measuredMean=${darkMean.toFixed(3)}`);
+  console.log(`  signatureHex=${signatureHex.slice(0, 16)}... (HMAC-SHA256, ${signingKey.keyHex.length/2} baytlık anahtarla)`);
 }

@@ -3320,6 +3320,16 @@ const lega = new LinkGradedEavesdropThresholdAlgorithm();
 // katsayılarına, en azından ÖLÇÜLMÜŞ (şimdilik simüle) bir referans
 // noktası kazandırıyor.
 // ─────────────────────────────────────────────────────────────────
+// ── SALDIRI SİMÜLASYONU BULGULARI (bkz. bb84/attack_simulation_qber_
+// escalation.js) SONRASI EKLENEN ÜÇ SERTLEŞTİRME ──────────────────────
+//   1) KAYNAK DOĞRULAMA: dışarıdan gelen kalibrasyon artık HMAC-SHA256
+//      imzasız REDDEDİLİYOR (fail-closed) — bkz. verifyAndLoad().
+//   2) LİNK KİMLİĞİ: risk artık yalnızca mesafeye göre değil, mümkünse
+//      SPESİFİK hat kimliğine göre okunuyor — bkz. riskForLink() ve
+//      "kurban" (masum, aynı mesafedeki başka hat) bulaşması sorunu.
+//   3) MANTIKSIZLIK SINIRI: km/QBER/atenüasyon/karanlık-sayım için fiziksel
+//      olarak MAKUL aralıklar tanımlı — aralık dışı satırlar (imzalı olsa
+//      BİLE) tek tek reddedilir, sessizce yutulmaz.
 class NoiseMatrixCalibration {
   static DEFAULT_CALIBRATION = {
     sourceIsRealHardware: false,
@@ -3328,6 +3338,11 @@ class NoiseMatrixCalibration {
     attenuationDbPerKm: { measuredMean: 0.1995, staticReference: 0.20, sampleCount: 48 },
     darkRateHz: { measuredMean: 0, sampleCount: 48 },
     eavesdropDetection: { tpr: 1.0, fpr: 0.0, n: 48 },
+    // NOT: bu satırların HİÇBİRİNDE linkKey YOK — bu yüzden hepsi "genel/
+    // ağ-çapında" (network-fallback) veri sayılır, spesifik bir hatta
+    // ATANMAMIŞTIR (bkz. riskForLink). Gerçek HAL taraması zaten yalnızca
+    // mesafe parametresiyle çalışıyordu, isimli bir topoloji hattına karşı
+    // değil — bu yüzden bu varsayılan veri için "network-fallback" doğru sınıflandırmadır.
     measuredRiskByDistanceKm: [
       { km: 1, qberMean: 0.01211 }, { km: 5, qberMean: 0.01344 },
       { km: 10, qberMean: 0.01418 }, { km: 20, qberMean: 0.01535 },
@@ -3336,51 +3351,185 @@ class NoiseMatrixCalibration {
     ],
   };
 
-  constructor(data) {
+  // ── MANTIKSIZLIK/İNANDIRICILIK SINIRLARI ──────────────────────────
+  // Cömert ama fiziksel olarak anlamlı üst/alt sınırlar — imzalı bir
+  // kalibrasyon bile bu sınırların dışına çıkamaz (imza yalnızca "beklenen
+  // taraf üretti" der, "fiziksel olarak mümkün" demez).
+  static VALID_KM_RANGE = [0, 20000];            // kıtalar arası denizaltı kablosu mertebesi
+  static VALID_QBER_RANGE = [0, 0.5];            // BB84'te QBER kavramsal olarak %50'yi aşamaz
+  static VALID_ATTEN_DB_PER_KM_RANGE = [0, 50];  // gerçek telekom fiberi ~0.15-0.5dB/km; 50 bile aşırı cömert
+  static VALID_DARK_RATE_HZ_RANGE = [0, 1e7];    // en gürültülü SPAD'lerde bile birkaç MHz'i geçmez
+
+  constructor(data, meta = {}) {
     this.data = data || NoiseMatrixCalibration.DEFAULT_CALIBRATION;
+    // authenticated: "internal" (kod-içi güvenilir varsayılan/programatik
+    // kurulum — loadFromJSON) | "verified" (verifyAndLoad, İMZA doğrulanarak)
+    // | "unauthenticated" (verifyAndLoad, allowUnauthenticated:true İLE
+    // kasıtlı olarak imzasız kabul edildi — ÜRETİMDE KULLANILMAMALI).
+    this.meta = { authenticated: meta.authenticated ?? "internal", rejectedRows: meta.rejectedRows ?? [] };
   }
 
-  /** hal/noise_matrix_sweep.py + bb84/noise_matrix_validate.js'in ürettiği
-   * bb84/noise_calibration.json içeriğiyle (veya HAL köprüsünden canlı
-   * çekilen eşdeğer bir nesneyle) kalibrasyonu değiştirir. Mevcut
-   * `noiseMatrixCalibration` tekil örneğini GÜNCELLEMEZ — çağıran taraf
-   * `noiseMatrixCalibration.data = NoiseMatrixCalibration.loadFromJSON(obj).data`
-   * ile veya yeni bir örnek atayarak canlı singleton'ı değiştirmelidir. */
+  // ── MANTIKSIZLIK DENETİMİ (uygulama) ───────────────────────────────
+  // Sınır dışı satırlar TEK TEK atılır (tüm kalibrasyon iptal edilmez) ve
+  // sebepleriyle birlikte meta.rejectedRows'a kaydedilir — sessizce yutulmaz.
+  static _sanitizeRiskTable(table) {
+    if (!Array.isArray(table)) return { clean: [], rejected: [] };
+    const [kmLo, kmHi] = NoiseMatrixCalibration.VALID_KM_RANGE;
+    const [qLo, qHi] = NoiseMatrixCalibration.VALID_QBER_RANGE;
+    const clean = [], rejected = [];
+    for (const row of table) {
+      const km = row && row.km, q = row && row.qberMean;
+      const reasons = [];
+      if (typeof km !== "number" || !Number.isFinite(km) || km < kmLo || km > kmHi) reasons.push(`km=${km} makul aralık dışı [${kmLo},${kmHi}]`);
+      if (typeof q !== "number" || !Number.isFinite(q) || q < qLo || q > qHi) reasons.push(`qberMean=${q} makul aralık dışı [${qLo},${qHi}]`);
+      if (reasons.length) {
+        rejected.push({ row, reasons });
+        if (typeof console !== "undefined") console.warn(`[NoiseMatrixCalibration] satır REDDEDİLDİ: ${reasons.join("; ")}`, row);
+      } else {
+        clean.push(row);
+      }
+    }
+    return { clean, rejected };
+  }
+
+  static _finishLoad(obj, authenticated) {
+    const { clean, rejected } = NoiseMatrixCalibration._sanitizeRiskTable(obj?.measuredRiskByDistanceKm);
+    return new NoiseMatrixCalibration({ ...obj, measuredRiskByDistanceKm: clean }, { authenticated, rejectedRows: rejected });
+  }
+
+  /** İÇ/GÜVENİLİR kullanım için — İMZA DOĞRULAMASI YAPMAZ (yalnızca
+   * mantıksızlık sınırlarını uygular). Bunu YALNIZCA (a) DEFAULT_CALIBRATION
+   * gibi kod-içi/derleme-zamanı güvenilir veriler, (b) test/geliştirme
+   * senaryoları için kullanın. Dışarıdan (dosya/ağ/köprü) gelen HER veri
+   * verifyAndLoad() İLE yüklenmelidir — aksi hâlde saldırı simülasyonunun
+   * AŞAMA 6 bulgusundaki açığı yeniden açmış olursunuz. */
   static loadFromJSON(obj) {
-    return new NoiseMatrixCalibration(obj);
+    return NoiseMatrixCalibration._finishLoad(obj, "internal");
+  }
+
+  // ── KAYNAK DOĞRULAMA (HMAC-SHA256, Web Crypto / SubtleCrypto) ──────
+  // Üretim hattı (bb84/noise_matrix_validate.js, Node crypto.createHmac
+  // ile AYNI kanonik-JSON + HMAC-SHA256 şemasını kullanır) payload'ı
+  // imzalar; burada SubtleCrypto.verify ile doğrulanır — hem tarayıcıda
+  // hem Node'da (Node 19+ global crypto.subtle) çalışır. Varsayılan
+  // FAIL-CLOSED: imza yoksa/uyuşmuyorsa REDDEDİLİR (throw). Gerçek
+  // dağıtımda imzalama anahtarı, bu depoda zaten entegre edilmiş
+  // SoftHSM2/PKCS#11 yazılımsal HSM'de saklanmalıdır (bkz.
+  // PRODUCTION_READINESS_ROADMAP.md) — burada yalnızca DOĞRULAMA
+  // (public/shared key kullanımı) tarafı var, imzalama anahtarının kendisi
+  // bu koda hiç girmez.
+  static async importSigningKey(rawKeyBytes) {
+    return crypto.subtle.importKey("raw", rawKeyBytes, { name: "HMAC", hash: "SHA-256" }, false, ["verify", "sign"]);
+  }
+
+  /** Kanonik (anahtar-sıralı) JSON serileştirme — imzalayan (Node) ve
+   * doğrulayan (bu sınıf) TARAFLARIN AYNI baytları imzalayıp/doğrulaması
+   * için ikisinde de BİREBİR AYNI algoritma kullanılmalıdır (bkz.
+   * bb84/noise_matrix_validate.js içindeki eşdeğer fonksiyon). */
+  static _canonicalize(obj) {
+    if (Array.isArray(obj)) return "[" + obj.map(NoiseMatrixCalibration._canonicalize).join(",") + "]";
+    if (obj && typeof obj === "object") {
+      const keys = Object.keys(obj).sort();
+      return "{" + keys.map(k => JSON.stringify(k) + ":" + NoiseMatrixCalibration._canonicalize(obj[k])).join(",") + "}";
+    }
+    return JSON.stringify(obj);
+  }
+
+  static _hexToBytes(hex) {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < bytes.length; i++) bytes[i] = parseInt(hex.substr(i * 2, 2), 16);
+    return bytes;
   }
 
   /**
-   * Verilen mesafe için [0,1] normalize edilmiş "ölçülen risk" skorunu
-   * döndürür — measuredRiskByDistanceKm tablosundan LİNEER ENTERPOLE eder
-   * (tablo dışı mesafeler en yakın uç değere sabitlenir/clamp edilir).
-   * Normalize: tablodaki min/max QBER [0,1] aralığına ölçeklenir — mutlak
-   * QBER değil, GÖRECELİ ("bu mesafe tabloya göre ne kadar riskli") bir
-   * sinyaldir; routing maliyetine çarpan olarak eklenmeye uygundur.
-   * @param {number} km
-   * @returns {number}
+   * Dışarıdan gelen (dosya/ağ/köprü) kalibrasyon verisini YALNIZCA imza
+   * doğrulanırsa yükler.
+   * @param {object} payload - imzalanan HAM veri (signature alanı OLMADAN)
+   * @param {string} signatureHex - HMAC-SHA256 imzası (hex)
+   * @param {CryptoKey} cryptoKey - importSigningKey() ile içe aktarılmış anahtar
+   * @param {{allowUnauthenticated?: boolean}} [opts] - allowUnauthenticated:true
+   *   YALNIZCA açık/kasıtlı demo/geliştirme kaçış kapısıdır — üretimde
+   *   KULLANILMAMALIDIR (PROD-STRIP ile üretim derlemesinden sökülmesi önerilir).
    */
+  static async verifyAndLoad(payload, signatureHex, cryptoKey, opts = {}) {
+    if (!signatureHex) {
+      if (opts.allowUnauthenticated) {
+        if (typeof console !== "undefined") console.warn("[NoiseMatrixCalibration] İMZASIZ kalibrasyon KASITLI OLARAK kabul edildi (allowUnauthenticated=true) — ÜRETİMDE KULLANILMAMALI.");
+        return NoiseMatrixCalibration._finishLoad(payload, "unauthenticated");
+      }
+      throw new Error("NoiseMatrixCalibration.verifyAndLoad: imza yok ve allowUnauthenticated=true verilmedi — kalibrasyon REDDEDİLDİ (fail-closed)");
+    }
+    const canonical = NoiseMatrixCalibration._canonicalize(payload);
+    const sigBytes = NoiseMatrixCalibration._hexToBytes(signatureHex);
+    const ok = await crypto.subtle.verify("HMAC", cryptoKey, sigBytes, new TextEncoder().encode(canonical));
+    if (!ok) throw new Error("NoiseMatrixCalibration.verifyAndLoad: İMZA DOĞRULAMASI BAŞARISIZ — kalibrasyon REDDEDİLDİ (veri değiştirilmiş veya yanlış anahtarla imzalanmış olabilir)");
+    return NoiseMatrixCalibration._finishLoad(payload, "verified");
+  }
+
+  // ── LİNK KİMLİKLİ RİSK (kurban/decoy bulaşmasına karşı) ─────────────
+  // Her tablo satırı artık opsiyonel bir `linkKey` (`"A-B"` biçiminde)
+  // taşıyabilir — belirli bir FİZİKSEL HAT için ölçülmüş veriyi işaretler.
+  // Önce bu linke özgü satırlar aranır; bulunamazsa (linkKey'siz "genel"
+  // satırlara) mesafe eğrisine DÜŞÜLÜR — ama bu durumda attribution
+  // alanı "network-fallback" olarak işaretlenir ki çağıran taraf "bu
+  // GERÇEKTEN bu hat için mi ölçüldü yoksa yalnızca tahmin mi" ayrımını
+  // yapabilsin. Artık bir hattı zehirlemek, aynı mesafedeki BAŞKA
+  // (linkKey'i farklı/link'e özgü verisi olan) hatları OTOMATİK olarak
+  // etkilemiyor.
+  riskForLink(linkKey, km) {
+    const table = this.data.measuredRiskByDistanceKm || [];
+    const [a, b] = String(linkKey).split("-");
+    const reverseKey = b !== undefined ? `${b}-${a}` : null;
+    const linkRows = table.filter(r => r.linkKey === linkKey || (reverseKey && r.linkKey === reverseKey));
+    if (linkRows.length > 0) {
+      return { risk: NoiseMatrixCalibration._interpolate(linkRows, km), attribution: "link-specific", sampleCount: linkRows.length };
+    }
+    const genericRows = table.filter(r => !r.linkKey);
+    return {
+      risk: NoiseMatrixCalibration._interpolate(genericRows, km),
+      attribution: genericRows.length ? "network-fallback" : "none",
+      sampleCount: genericRows.length,
+    };
+  }
+
+  /** Geriye dönük uyumluluk: mevcut çağrı yerleri/testler yalnızca bir
+   * SAYI bekliyor — bu, riskForLink'in "genel eğri" (linkKey'siz satırlar)
+   * kısmını doğrudan döndürür (link-özgü satırları GÖRMEZ). YENİ kod
+   * riskForLink() kullanmalıdır. */
   riskForDistance(km) {
-    const table = this.data.measuredRiskByDistanceKm;
+    const genericRows = (this.data.measuredRiskByDistanceKm || []).filter(r => !r.linkKey);
+    return NoiseMatrixCalibration._interpolate(genericRows, km);
+  }
+
+  static _interpolate(table, km) {
     if (!table || table.length === 0) return 0;
-    const qbers = table.map(t => t.qberMean);
+    const sorted = [...table].sort((x, y) => x.km - y.km);
+    const qbers = sorted.map(t => t.qberMean);
     const qMin = Math.min(...qbers), qMax = Math.max(...qbers);
     const norm = (q) => (qMax > qMin ? (q - qMin) / (qMax - qMin) : 0);
-    if (km <= table[0].km) return norm(table[0].qberMean);
-    if (km >= table[table.length - 1].km) return norm(table[table.length - 1].qberMean);
-    for (let i = 0; i < table.length - 1; i++) {
-      const a = table[i], b = table[i + 1];
-      if (km >= a.km && km <= b.km) {
-        const f = (km - a.km) / (b.km - a.km);
-        const q = a.qberMean + f * (b.qberMean - a.qberMean);
+    if (km <= sorted[0].km) return norm(sorted[0].qberMean);
+    if (km >= sorted[sorted.length - 1].km) return norm(sorted[sorted.length - 1].qberMean);
+    for (let i = 0; i < sorted.length - 1; i++) {
+      const p = sorted[i], nxt = sorted[i + 1];
+      if (km >= p.km && km <= nxt.km) {
+        const f = (km - p.km) / (nxt.km - p.km);
+        const q = p.qberMean + f * (nxt.qberMean - p.qberMean);
         return norm(q);
       }
     }
     return 0;
   }
 
-  getCalibratedLossDbPerKm(fallback) { return this.data.attenuationDbPerKm?.measuredMean ?? fallback; }
-  getCalibratedDarkRateHz(fallback) { return this.data.darkRateHz?.measuredMean ?? fallback; }
+  getCalibratedLossDbPerKm(fallback) {
+    const v = this.data.attenuationDbPerKm?.measuredMean;
+    const [lo, hi] = NoiseMatrixCalibration.VALID_ATTEN_DB_PER_KM_RANGE;
+    return (typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi) ? v : fallback;
+  }
+  getCalibratedDarkRateHz(fallback) {
+    const v = this.data.darkRateHz?.measuredMean;
+    const [lo, hi] = NoiseMatrixCalibration.VALID_DARK_RATE_HZ_RANGE;
+    return (typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi) ? v : fallback;
+  }
   isRealHardware() { return !!this.data.sourceIsRealHardware; }
 }
 
@@ -10177,8 +10326,12 @@ function PhotonNet() {
     // EdgeWeightPolicy.computeWeight içinde predictiveRisk ile AYNI
     // "opsiyonel çarpan" desenini izler — bu blok eklenmeden önceki TÜM
     // davranış (measuredRisk her zaman 0 gibi) BİREBİR KORUNUR.
+    // SALDIRI SİMÜLASYONU SERTLEŞTİRMESİ: artık riskForDistance (yalnızca
+    // mesafeye bakan, "kurban" hatları da bulaştıran eski davranış) değil,
+    // riskForLink (önce bu SPESİFİK hattın kendi ölçümünü arayan, yoksa
+    // ağ-çapında genel eğriye düşen) kullanılıyor.
     const measuredRisk = {};
-    for (const l of links) measuredRisk[`${l.a}-${l.b}`] = noiseMatrixCalibration.riskForDistance(l.km);
+    for (const l of links) measuredRisk[`${l.a}-${l.b}`] = noiseMatrixCalibration.riskForLink(`${l.a}-${l.b}`, l.km).risk;
     const route = routeCalculation(nodes, links, src, dst, linkLoad, getNode, linkDown, predictiveRisk, measuredRisk);
     if(!route){
       const quarantined = Object.keys(activeAnomalies);
