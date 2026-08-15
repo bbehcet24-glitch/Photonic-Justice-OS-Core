@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T14:26:20.700Z",
+  "generatedAt": "2026-08-15T14:35:25.114Z",
   "checks": [
     {
       "name": "Akış DURAĞAN: kova kova varış hızının değişim katsayısı < %3",
@@ -24,7 +24,7 @@
     {
       "name": "Gecikme–hız takası GERÇEK: SLA büyüdükçe sürdürülen hız monoton artıyor",
       "ok": true,
-      "detail": "100ms→0 · 200ms→0 · 350ms→61.54 · 500ms→320.88 · 750ms→563.82 · 1000ms→709.63 · 1500ms→903.68 · 2200ms→1043.97 · 3400ms→1225.51 · 5000ms→1309.85 · 6800ms→1408.46"
+      "detail": "100ms→0 · 200ms→0 · 350ms→62.93 · 500ms→323.26 · 750ms→568 · 1000ms→725.23 · 1500ms→910.37 · 2200ms→1070.83 · 3400ms→1225.51 · 5000ms→1329.2 · 6800ms→1408.46"
     },
     {
       "name": "Tek bir 'en iyi T' YOK: en yüksek hız, taranan en uzun SLA'da",
@@ -138,75 +138,75 @@
     },
     {
       "slaMs": 350,
-      "blocks": 39,
-      "deadBlocks": 1,
-      "meanBlockMs": 348.7,
-      "meanEllPerBlock": 21.5,
+      "blocks": 38,
+      "deadBlocks": 0,
+      "meanBlockMs": 350,
+      "meanEllPerBlock": 22,
       "totalEll": 837,
-      "sustainedRateBps": 61.54,
-      "pairsWasted": 3280,
-      "wastedPct": 2.24,
-      "pctOfCeiling": 3.2
+      "sustainedRateBps": 62.93,
+      "pairsWasted": 0,
+      "wastedPct": 0,
+      "pctOfCeiling": 3.3
     },
     {
       "slaMs": 500,
-      "blocks": 28,
-      "deadBlocks": 1,
-      "meanBlockMs": 485.7,
-      "meanEllPerBlock": 155.9,
+      "blocks": 27,
+      "deadBlocks": 0,
+      "meanBlockMs": 500,
+      "meanEllPerBlock": 161.6,
       "totalEll": 4364,
-      "sustainedRateBps": 320.88,
-      "pairsWasted": 1086,
-      "wastedPct": 0.74,
-      "pctOfCeiling": 16.8
+      "sustainedRateBps": 323.26,
+      "pairsWasted": 0,
+      "wastedPct": 0,
+      "pctOfCeiling": 17
     },
     {
       "slaMs": 750,
-      "blocks": 19,
-      "deadBlocks": 1,
-      "meanBlockMs": 715.8,
-      "meanEllPerBlock": 403.6,
+      "blocks": 18,
+      "deadBlocks": 0,
+      "meanBlockMs": 750,
+      "meanEllPerBlock": 426,
       "totalEll": 7668,
-      "sustainedRateBps": 563.82,
-      "pairsWasted": 1086,
-      "wastedPct": 0.74,
-      "pctOfCeiling": 29.6
+      "sustainedRateBps": 568,
+      "pairsWasted": 0,
+      "wastedPct": 0,
+      "pctOfCeiling": 29.8
     },
     {
       "slaMs": 1000,
-      "blocks": 14,
+      "blocks": 13,
       "deadBlocks": 0,
-      "meanBlockMs": 971.4,
-      "meanEllPerBlock": 689.4,
-      "totalEll": 9651,
-      "sustainedRateBps": 709.63,
+      "meanBlockMs": 1000,
+      "meanEllPerBlock": 725.2,
+      "totalEll": 9428,
+      "sustainedRateBps": 725.23,
       "pairsWasted": 0,
       "wastedPct": 0,
-      "pctOfCeiling": 37.2
+      "pctOfCeiling": 38
     },
     {
       "slaMs": 1500,
-      "blocks": 10,
-      "deadBlocks": 1,
-      "meanBlockMs": 1360,
-      "meanEllPerBlock": 1229,
+      "blocks": 9,
+      "deadBlocks": 0,
+      "meanBlockMs": 1500,
+      "meanEllPerBlock": 1365.6,
       "totalEll": 12290,
-      "sustainedRateBps": 903.68,
-      "pairsWasted": 1086,
-      "wastedPct": 0.74,
-      "pctOfCeiling": 47.4
+      "sustainedRateBps": 910.37,
+      "pairsWasted": 0,
+      "wastedPct": 0,
+      "pctOfCeiling": 47.8
     },
     {
       "slaMs": 2200,
-      "blocks": 7,
+      "blocks": 6,
       "deadBlocks": 0,
-      "meanBlockMs": 1942.9,
-      "meanEllPerBlock": 2028.3,
-      "totalEll": 14198,
-      "sustainedRateBps": 1043.97,
+      "meanBlockMs": 2200,
+      "meanEllPerBlock": 2355.8,
+      "totalEll": 14135,
+      "sustainedRateBps": 1070.83,
       "pairsWasted": 0,
       "wastedPct": 0,
-      "pctOfCeiling": 54.8
+      "pctOfCeiling": 56.2
     },
     {
       "slaMs": 3400,
@@ -222,15 +222,15 @@
     },
     {
       "slaMs": 5000,
-      "blocks": 3,
+      "blocks": 2,
       "deadBlocks": 0,
-      "meanBlockMs": 4533.3,
-      "meanEllPerBlock": 5938,
-      "totalEll": 17814,
-      "sustainedRateBps": 1309.85,
+      "meanBlockMs": 5000,
+      "meanEllPerBlock": 6646,
+      "totalEll": 13292,
+      "sustainedRateBps": 1329.2,
       "pairsWasted": 0,
       "wastedPct": 0,
-      "pctOfCeiling": 68.7
+      "pctOfCeiling": 69.7
     },
     {
       "slaMs": 6800,
@@ -285,7 +285,7 @@
     "firstTMs": 53.85,
     "lastTMs": 13481.48,
     "adaptiveSteps": 5,
-    "baselineSustainedBps": 903.68
+    "baselineSustainedBps": 910.37
   },
   "admission": {
     "threshold": 0.205863,

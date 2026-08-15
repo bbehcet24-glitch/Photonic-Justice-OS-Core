@@ -50,10 +50,10 @@ const EPOCHS = 4;           // ≈13,6 s sürekli bağlantı
 const SEED = 0x51D3C0DE;
 
 /** Her epoch farklı tohumla koşulur; yalnızca plato penceresi alınır. */
-function buildStream() {
+function buildStream(epochs = EPOCHS) {
   const perPath = {}, rates = {};
   const all = [];
-  for (let e = 0; e < EPOCHS; e++) {
+  for (let e = 0; e < epochs; e++) {
     for (const p of PATHS) {
       const r = M.simulateChain({
         nodes: p.nodes, segmentKm: p.km, ...R.SIM,
@@ -73,7 +73,7 @@ function buildStream() {
     const own = all.filter(q => q.path === p.label);
     perPath[p.label].ePh = R.bbm92BasisResolved(own, SEED).ePh;
   }
-  return { pairs: all, sessionMs: EPOCHS * EPOCH_MS, perPath, rates };
+  return { pairs: all, sessionMs: epochs * EPOCH_MS, perPath, rates };
 }
 
 /** Akışın gerçekten durağan olduğunun kanıtı: kova kova varış hızı. */

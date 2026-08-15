@@ -1,0 +1,708 @@
+{
+  "generatedAt": "2026-08-15T14:37:28.304Z",
+  "checks": [
+    {
+      "name": "Uzatılmış akış hâlâ durağan (18 epoch, 61.2 s)",
+      "ok": true,
+      "detail": "10748.1 ± 34.7 çift/s, CV %0.32, 657.782 çift"
+    },
+    {
+      "name": "Her SLA'da en az 4 tam blok ölçüldü (tek bloktan hız okunmadı)",
+      "ok": true,
+      "detail": "500ms:122 blok · 1000ms:61 blok · 2000ms:30 blok · 3400ms:18 blok · 5000ms:12 blok · 6800ms:9 blok · 8500ms:7 blok · 10000ms:6 blok"
+    },
+    {
+      "name": "Analitik model ölçümle uyuşuyor (her SLA'da |hata| < %6)",
+      "ok": true,
+      "detail": "500ms %0.7 · 1000ms %0.86 · 2000ms %1.29 · 3400ms %0.73 · 5000ms %0.29 · 6800ms %0.33 · 8500ms %0.4 · 10000ms %0.62"
+    },
+    {
+      "name": "SLA 10 s'de tavana ne kadar yaklaşıldı",
+      "ok": true,
+      "detail": "1470.37 / 1882 bit/s = tavanın %78.14'i (6 blok × ort. 10000 ms, blok başına 14703.7 bit)"
+    },
+    {
+      "name": "Hız hâlâ monoton artıyor — 10 s'de bile doyum YOK",
+      "ok": true,
+      "detail": "500ms→327.62 · 1000ms→724.9 · 2000ms→1031.37 · 3400ms→1206.42 · 5000ms→1309.55 · 6800ms→1385.03 · 8500ms→1434.54 · 10000ms→1470.37"
+    },
+    {
+      "name": "Tavan aşılmıyor (fizik sınırı korunuyor)",
+      "ok": true,
+      "detail": "en yüksek ölçüm 1470.37 bit/s ≤ R∞ 1882 bit/s"
+    },
+    {
+      "name": "Tavana yaklaşma KARESEL yasaya uyuyor: boşluk yarıya inerken süre ~4×",
+      "ok": true,
+      "detail": "t(%95)/t(%90) = 4.18 (beklenen 4, boşluk %10→%5)"
+    },
+    {
+      "name": "Aynı yasa bir kademe ötede de tutuyor: boşluk 1/5'e inerken süre ~25×",
+      "ok": true,
+      "detail": "t(%99)/t(%95) = 25.95 (beklenen 25, boşluk %5→%1) · %99 için blok ≈ 1.67 saat — pratikte ulaşılamaz"
+    }
+  ],
+  "stream": {
+    "epochs": 18,
+    "epochMs": 3400,
+    "sessionMs": 61200,
+    "totalPairs": 657782,
+    "pairsPerSec": 10748.1,
+    "stationarity": {
+      "bucketRates": [
+        10784.3,
+        10723.5,
+        10723.5,
+        10744.7,
+        10782,
+        10772.2,
+        10769.8,
+        10771,
+        10700.4,
+        10708.2,
+        10804.7,
+        10763.1,
+        10720.4,
+        10771.8,
+        10776.1,
+        10729.8,
+        10747.8,
+        10694.5,
+        10831.8,
+        10712.5,
+        10744.7,
+        10720.4,
+        10732.5,
+        10723.9
+      ],
+      "meanRate": 10748.1,
+      "sd": 34.7,
+      "cv": 0.0032
+    },
+    "ePh": 0.052866,
+    "leakPerBit": 0.0013,
+    "buildSeconds": 19.8
+  },
+  "ceilingBps": 1881.59,
+  "curve": [
+    {
+      "slaMs": 500,
+      "blocks": 122,
+      "meanBlockMs": 500,
+      "meanEllPerBlock": 163.8,
+      "totalEll": 19985,
+      "sustainedRateBps": 327.62,
+      "pctOfCeiling": 17.41,
+      "modelRateBps": 325.34,
+      "modelPctOfCeiling": 17.29,
+      "modelErrorPct": 0.7
+    },
+    {
+      "slaMs": 1000,
+      "blocks": 61,
+      "meanBlockMs": 1000,
+      "meanEllPerBlock": 724.9,
+      "totalEll": 44219,
+      "sustainedRateBps": 724.9,
+      "pctOfCeiling": 38.53,
+      "modelRateBps": 718.71,
+      "modelPctOfCeiling": 38.2,
+      "modelErrorPct": 0.86
+    },
+    {
+      "slaMs": 2000,
+      "blocks": 30,
+      "meanBlockMs": 2000,
+      "meanEllPerBlock": 2062.7,
+      "totalEll": 61882,
+      "sustainedRateBps": 1031.37,
+      "pctOfCeiling": 54.81,
+      "modelRateBps": 1018.19,
+      "modelPctOfCeiling": 54.11,
+      "modelErrorPct": 1.29
+    },
+    {
+      "slaMs": 3400,
+      "blocks": 18,
+      "meanBlockMs": 3400,
+      "meanEllPerBlock": 4101.8,
+      "totalEll": 73833,
+      "sustainedRateBps": 1206.42,
+      "pctOfCeiling": 64.12,
+      "modelRateBps": 1197.62,
+      "modelPctOfCeiling": 63.65,
+      "modelErrorPct": 0.73
+    },
+    {
+      "slaMs": 5000,
+      "blocks": 12,
+      "meanBlockMs": 5000,
+      "meanEllPerBlock": 6547.8,
+      "totalEll": 78573,
+      "sustainedRateBps": 1309.55,
+      "pctOfCeiling": 69.6,
+      "modelRateBps": 1305.77,
+      "modelPctOfCeiling": 69.4,
+      "modelErrorPct": 0.29
+    },
+    {
+      "slaMs": 6800,
+      "blocks": 9,
+      "meanBlockMs": 6800,
+      "meanEllPerBlock": 9418.2,
+      "totalEll": 84764,
+      "sustainedRateBps": 1385.03,
+      "pctOfCeiling": 73.61,
+      "modelRateBps": 1380.43,
+      "modelPctOfCeiling": 73.36,
+      "modelErrorPct": 0.33
+    },
+    {
+      "slaMs": 8500,
+      "blocks": 7,
+      "meanBlockMs": 8500,
+      "meanEllPerBlock": 12193.6,
+      "totalEll": 85355,
+      "sustainedRateBps": 1434.54,
+      "pctOfCeiling": 76.24,
+      "modelRateBps": 1428.87,
+      "modelPctOfCeiling": 75.94,
+      "modelErrorPct": 0.4
+    },
+    {
+      "slaMs": 10000,
+      "blocks": 6,
+      "meanBlockMs": 10000,
+      "meanEllPerBlock": 14703.7,
+      "totalEll": 88222,
+      "sustainedRateBps": 1470.37,
+      "pctOfCeiling": 78.14,
+      "modelRateBps": 1461.37,
+      "modelPctOfCeiling": 77.67,
+      "modelErrorPct": 0.62
+    }
+  ],
+  "at10s": {
+    "slaMs": 10000,
+    "blocks": 6,
+    "meanBlockMs": 10000,
+    "meanEllPerBlock": 14703.7,
+    "totalEll": 88222,
+    "sustainedRateBps": 1470.37,
+    "pctOfCeiling": 78.14,
+    "modelRateBps": 1461.37,
+    "modelPctOfCeiling": 77.67,
+    "modelErrorPct": 0.62
+  },
+  "extrapolation": {
+    "note": "Bu satırlar ÖLÇÜM DEĞİL, ölçümle doğrulanmış modelden çıkarımdır (10 s'nin ötesi ekstrapolasyondur).",
+    "secondsFor": {
+      "80%": 12.7,
+      "90%": 55.27,
+      "95%": 231.2,
+      "99%": 6000.04
+    },
+    "scalingLaw": {
+      "gapHalving_t95_over_t90": 4.18,
+      "expected": 4,
+      "gapFifth_t99_over_t95": 25.95,
+      "expectedFifth": 25,
+      "law": "tavana kalan boşluk ∼ 1/√T ⇒ boşluğu k kat daraltmak süreyi k² kat büyütür"
+    }
+  },
+  "latencyCost": [
+    {
+      "blockMs": 400,
+      "blockSec": 0.4,
+      "pctOfCeiling": 9.25,
+      "measured": false
+    },
+    {
+      "blockMs": 439,
+      "blockSec": 0.44,
+      "pctOfCeiling": 12.69,
+      "measured": false
+    },
+    {
+      "blockMs": 481,
+      "blockSec": 0.48,
+      "pctOfCeiling": 15.95,
+      "measured": false
+    },
+    {
+      "blockMs": 500,
+      "blockSec": 0.5,
+      "pctOfCeiling": 17.29,
+      "measured": true
+    },
+    {
+      "blockMs": 527,
+      "blockSec": 0.53,
+      "pctOfCeiling": 19.08,
+      "measured": false
+    },
+    {
+      "blockMs": 578,
+      "blockSec": 0.58,
+      "pctOfCeiling": 22.15,
+      "measured": false
+    },
+    {
+      "blockMs": 634,
+      "blockSec": 0.63,
+      "pctOfCeiling": 25.1,
+      "measured": false
+    },
+    {
+      "blockMs": 695,
+      "blockSec": 0.69,
+      "pctOfCeiling": 27.93,
+      "measured": false
+    },
+    {
+      "blockMs": 762,
+      "blockSec": 0.76,
+      "pctOfCeiling": 30.67,
+      "measured": false
+    },
+    {
+      "blockMs": 836,
+      "blockSec": 0.84,
+      "pctOfCeiling": 33.33,
+      "measured": false
+    },
+    {
+      "blockMs": 916,
+      "blockSec": 0.92,
+      "pctOfCeiling": 35.85,
+      "measured": false
+    },
+    {
+      "blockMs": 1000,
+      "blockSec": 1,
+      "pctOfCeiling": 38.2,
+      "measured": true
+    },
+    {
+      "blockMs": 1005,
+      "blockSec": 1,
+      "pctOfCeiling": 38.33,
+      "measured": false
+    },
+    {
+      "blockMs": 1102,
+      "blockSec": 1.1,
+      "pctOfCeiling": 40.7,
+      "measured": false
+    },
+    {
+      "blockMs": 1208,
+      "blockSec": 1.21,
+      "pctOfCeiling": 42.98,
+      "measured": false
+    },
+    {
+      "blockMs": 1325,
+      "blockSec": 1.32,
+      "pctOfCeiling": 45.19,
+      "measured": false
+    },
+    {
+      "blockMs": 1452,
+      "blockSec": 1.45,
+      "pctOfCeiling": 47.3,
+      "measured": false
+    },
+    {
+      "blockMs": 1592,
+      "blockSec": 1.59,
+      "pctOfCeiling": 49.35,
+      "measured": false
+    },
+    {
+      "blockMs": 1746,
+      "blockSec": 1.75,
+      "pctOfCeiling": 51.33,
+      "measured": false
+    },
+    {
+      "blockMs": 1915,
+      "blockSec": 1.92,
+      "pctOfCeiling": 53.24,
+      "measured": false
+    },
+    {
+      "blockMs": 2000,
+      "blockSec": 2,
+      "pctOfCeiling": 54.11,
+      "measured": true
+    },
+    {
+      "blockMs": 2099,
+      "blockSec": 2.1,
+      "pctOfCeiling": 55.07,
+      "measured": false
+    },
+    {
+      "blockMs": 2302,
+      "blockSec": 2.3,
+      "pctOfCeiling": 56.84,
+      "measured": false
+    },
+    {
+      "blockMs": 2524,
+      "blockSec": 2.52,
+      "pctOfCeiling": 58.55,
+      "measured": false
+    },
+    {
+      "blockMs": 2767,
+      "blockSec": 2.77,
+      "pctOfCeiling": 60.19,
+      "measured": false
+    },
+    {
+      "blockMs": 3034,
+      "blockSec": 3.03,
+      "pctOfCeiling": 61.77,
+      "measured": false
+    },
+    {
+      "blockMs": 3327,
+      "blockSec": 3.33,
+      "pctOfCeiling": 63.3,
+      "measured": false
+    },
+    {
+      "blockMs": 3400,
+      "blockSec": 3.4,
+      "pctOfCeiling": 63.65,
+      "measured": true
+    },
+    {
+      "blockMs": 3648,
+      "blockSec": 3.65,
+      "pctOfCeiling": 64.77,
+      "measured": false
+    },
+    {
+      "blockMs": 4000,
+      "blockSec": 4,
+      "pctOfCeiling": 66.18,
+      "measured": false
+    },
+    {
+      "blockMs": 4386,
+      "blockSec": 4.39,
+      "pctOfCeiling": 67.55,
+      "measured": false
+    },
+    {
+      "blockMs": 4809,
+      "blockSec": 4.81,
+      "pctOfCeiling": 68.86,
+      "measured": false
+    },
+    {
+      "blockMs": 5000,
+      "blockSec": 5,
+      "pctOfCeiling": 69.4,
+      "measured": true
+    },
+    {
+      "blockMs": 5273,
+      "blockSec": 5.27,
+      "pctOfCeiling": 70.12,
+      "measured": false
+    },
+    {
+      "blockMs": 5782,
+      "blockSec": 5.78,
+      "pctOfCeiling": 71.34,
+      "measured": false
+    },
+    {
+      "blockMs": 6340,
+      "blockSec": 6.34,
+      "pctOfCeiling": 72.51,
+      "measured": false
+    },
+    {
+      "blockMs": 6800,
+      "blockSec": 6.8,
+      "pctOfCeiling": 73.36,
+      "measured": true
+    },
+    {
+      "blockMs": 6951,
+      "blockSec": 6.95,
+      "pctOfCeiling": 73.63,
+      "measured": false
+    },
+    {
+      "blockMs": 7622,
+      "blockSec": 7.62,
+      "pctOfCeiling": 74.71,
+      "measured": false
+    },
+    {
+      "blockMs": 8357,
+      "blockSec": 8.36,
+      "pctOfCeiling": 75.75,
+      "measured": false
+    },
+    {
+      "blockMs": 8500,
+      "blockSec": 8.5,
+      "pctOfCeiling": 75.94,
+      "measured": true
+    },
+    {
+      "blockMs": 9163,
+      "blockSec": 9.16,
+      "pctOfCeiling": 76.75,
+      "measured": false
+    },
+    {
+      "blockMs": 10000,
+      "blockSec": 10,
+      "pctOfCeiling": 77.67,
+      "measured": true
+    },
+    {
+      "blockMs": 10048,
+      "blockSec": 10.05,
+      "pctOfCeiling": 77.72,
+      "measured": false
+    },
+    {
+      "blockMs": 11017,
+      "blockSec": 11.02,
+      "pctOfCeiling": 78.64,
+      "measured": false
+    },
+    {
+      "blockMs": 12080,
+      "blockSec": 12.08,
+      "pctOfCeiling": 79.53,
+      "measured": false
+    },
+    {
+      "blockMs": 13245,
+      "blockSec": 13.24,
+      "pctOfCeiling": 80.38,
+      "measured": false
+    },
+    {
+      "blockMs": 14523,
+      "blockSec": 14.52,
+      "pctOfCeiling": 81.2,
+      "measured": false
+    },
+    {
+      "blockMs": 15924,
+      "blockSec": 15.92,
+      "pctOfCeiling": 81.99,
+      "measured": false
+    },
+    {
+      "blockMs": 17461,
+      "blockSec": 17.46,
+      "pctOfCeiling": 82.75,
+      "measured": false
+    },
+    {
+      "blockMs": 19145,
+      "blockSec": 19.14,
+      "pctOfCeiling": 83.48,
+      "measured": false
+    },
+    {
+      "blockMs": 20992,
+      "blockSec": 20.99,
+      "pctOfCeiling": 84.17,
+      "measured": false
+    },
+    {
+      "blockMs": 23018,
+      "blockSec": 23.02,
+      "pctOfCeiling": 84.84,
+      "measured": false
+    },
+    {
+      "blockMs": 25238,
+      "blockSec": 25.24,
+      "pctOfCeiling": 85.49,
+      "measured": false
+    },
+    {
+      "blockMs": 27673,
+      "blockSec": 27.67,
+      "pctOfCeiling": 86.1,
+      "measured": false
+    },
+    {
+      "blockMs": 30343,
+      "blockSec": 30.34,
+      "pctOfCeiling": 86.7,
+      "measured": false
+    },
+    {
+      "blockMs": 33271,
+      "blockSec": 33.27,
+      "pctOfCeiling": 87.26,
+      "measured": false
+    },
+    {
+      "blockMs": 36480,
+      "blockSec": 36.48,
+      "pctOfCeiling": 87.81,
+      "measured": false
+    },
+    {
+      "blockMs": 40000,
+      "blockSec": 40,
+      "pctOfCeiling": 88.33,
+      "measured": false
+    },
+    {
+      "blockMs": 43859,
+      "blockSec": 43.86,
+      "pctOfCeiling": 88.83,
+      "measured": false
+    },
+    {
+      "blockMs": 48091,
+      "blockSec": 48.09,
+      "pctOfCeiling": 89.31,
+      "measured": false
+    },
+    {
+      "blockMs": 52730,
+      "blockSec": 52.73,
+      "pctOfCeiling": 89.77,
+      "measured": false
+    },
+    {
+      "blockMs": 55270,
+      "blockSec": 55.27,
+      "pctOfCeiling": 90,
+      "measured": false
+    },
+    {
+      "blockMs": 57818,
+      "blockSec": 57.82,
+      "pctOfCeiling": 90.21,
+      "measured": false
+    },
+    {
+      "blockMs": 63396,
+      "blockSec": 63.4,
+      "pctOfCeiling": 90.64,
+      "measured": false
+    },
+    {
+      "blockMs": 69512,
+      "blockSec": 69.51,
+      "pctOfCeiling": 91.04,
+      "measured": false
+    },
+    {
+      "blockMs": 76218,
+      "blockSec": 76.22,
+      "pctOfCeiling": 91.43,
+      "measured": false
+    },
+    {
+      "blockMs": 83572,
+      "blockSec": 83.57,
+      "pctOfCeiling": 91.8,
+      "measured": false
+    },
+    {
+      "blockMs": 91635,
+      "blockSec": 91.64,
+      "pctOfCeiling": 92.16,
+      "measured": false
+    },
+    {
+      "blockMs": 100475,
+      "blockSec": 100.47,
+      "pctOfCeiling": 92.5,
+      "measured": false
+    },
+    {
+      "blockMs": 110169,
+      "blockSec": 110.17,
+      "pctOfCeiling": 92.83,
+      "measured": false
+    },
+    {
+      "blockMs": 120798,
+      "blockSec": 120.8,
+      "pctOfCeiling": 93.14,
+      "measured": false
+    },
+    {
+      "blockMs": 132452,
+      "blockSec": 132.45,
+      "pctOfCeiling": 93.44,
+      "measured": false
+    },
+    {
+      "blockMs": 145231,
+      "blockSec": 145.23,
+      "pctOfCeiling": 93.73,
+      "measured": false
+    },
+    {
+      "blockMs": 159243,
+      "blockSec": 159.24,
+      "pctOfCeiling": 94,
+      "measured": false
+    },
+    {
+      "blockMs": 174606,
+      "blockSec": 174.61,
+      "pctOfCeiling": 94.27,
+      "measured": false
+    },
+    {
+      "blockMs": 191452,
+      "blockSec": 191.45,
+      "pctOfCeiling": 94.52,
+      "measured": false
+    },
+    {
+      "blockMs": 209923,
+      "blockSec": 209.92,
+      "pctOfCeiling": 94.76,
+      "measured": false
+    },
+    {
+      "blockMs": 230176,
+      "blockSec": 230.18,
+      "pctOfCeiling": 94.99,
+      "measured": false
+    },
+    {
+      "blockMs": 231200,
+      "blockSec": 231.2,
+      "pctOfCeiling": 95,
+      "measured": false
+    },
+    {
+      "blockMs": 252383,
+      "blockSec": 252.38,
+      "pctOfCeiling": 95.21,
+      "measured": false
+    },
+    {
+      "blockMs": 276732,
+      "blockSec": 276.73,
+      "pctOfCeiling": 95.42,
+      "measured": false
+    }
+  ],
+  "allChecksPassed": true
+}

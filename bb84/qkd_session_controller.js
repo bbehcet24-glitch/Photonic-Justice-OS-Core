@@ -383,6 +383,14 @@ function runHybridSession(pairs, opts = {}) {
  * yumuşak bir düşüş değil. `holdBelowMinEll` açıkken kontrolcü, ölü
  * blok yaymaktansa SLA'yı `maxHoldMs`e kadar uzatır.
  */
+
+/** t > target olan ilk indeks (dizi t'ye göre sıralı). */
+function lowerBound(arr, target) {
+  let lo = 0, hi = arr.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (arr[mid].t > target) hi = mid; else lo = mid + 1; }
+  return lo;
+}
+
 function runContinuous(pairs, opts = {}) {
   const {
     maxLatencyMs = 1000, leakPerBit = 0.02, tickMs = 25, minEll = 128,
@@ -396,9 +404,19 @@ function runContinuous(pairs, opts = {}) {
   const blocks = [];
   let cursor = 0, guard = 0;
   while (cursor < tEnd && guard++ < 10000) {
-    // Kalan akışı, blok başlangıcına göre GÖRELİ zamana kaydır
-    const slice = [];
-    for (const p of sorted) if (p.t > cursor) slice.push({ ...p, t: p.t - cursor });
+    // Kalan akışı, blok başlangıcına göre GÖRELİ zamana kaydır.
+    // DİKKAT — PENCERELEME: burada TÜM kalan akışı kopyalamak, blok
+    // sayısıyla çarpılan O(çift × blok) bir maliyet doğurur (uzun
+    // oturumda 500+ blok × 600k çift = kullanılamaz). Blok en fazla
+    // `limit` kadar sürebileceği için yalnızca o pencere kopyalanır;
+    // dizi zaten sıralı olduğundan sınırlar ikili aramayla bulunur.
+    const limit = holdBelowMinEll ? Math.min(maxHoldMs, tEnd - cursor + tickMs)
+                                  : Math.min(maxLatencyMs, tEnd - cursor + tickMs);
+    const lo = lowerBound(sorted, cursor);            // t > cursor olan ilk indeks
+    const hi = lowerBound(sorted, cursor + limit);    // t > cursor+limit olan ilk indeks
+    if (lo >= sorted.length) break;
+    const slice = new Array(Math.max(0, hi - lo));
+    for (let i = lo; i < hi; i++) slice[i - lo] = { ...sorted[i], t: sorted[i].t - cursor };
     if (!slice.length) break;
 
     let sla = maxLatencyMs;
@@ -413,7 +431,10 @@ function runContinuous(pairs, opts = {}) {
     const closed = dec.closedAtMs;
     if (closed == null || closed <= 0) break;
     const real = realiseBlock(slice, closed, (seed + blocks.length * 7919) >>> 0);
-    const truncated = cursor + closed > tEnd + tickMs;
+    // Akış bittiği için kapanan blok, SLA'yı TEMSİL ETMEZ: süresi
+    // kısadır ve ortalamayı aşağı çeker. Kesik sayılıp istatistikten
+    // düşülür (ölçüm, SLA ile kapanan bloklar üzerinden okunur).
+    const truncated = cursor + closed > tEnd + tickMs || dec.reason === "arz bitti";
     blocks.push({
       index: blocks.length, startMs: +cursor.toFixed(1), endMs: +(cursor + closed).toFixed(1),
       durationMs: +closed.toFixed(1), slaUsedMs: sla, reason: dec.reason,
@@ -424,7 +445,10 @@ function runContinuous(pairs, opts = {}) {
 
   const complete = blocks.filter(b => !b.truncated);
   const ell = complete.reduce((s, b) => s + b.ell, 0);
-  const span = complete.length ? complete[complete.length - 1].endMs : 0;
+  // Süre, tamamlanmış blokların SÜRELERİ TOPLAMIDIR — son (kesik) blok
+  // atıldığı için "son bloğun bitiş anı" kullanılamaz, yoksa atılan
+  // sürenin anahtarı payda içinde kalır ve hız olduğundan düşük çıkar.
+  const span = complete.reduce((s, b) => s + b.durationMs, 0);
   const dead = complete.filter(b => b.ell === 0);
   return {
     blocks, totals: {
