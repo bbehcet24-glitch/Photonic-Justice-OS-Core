@@ -1,0 +1,286 @@
+#!/usr/bin/env node
+"use strict";
+/**
+ * gen_architecture_map.js — PhotonNet katman haritası.
+ *
+ * Modül envanteri, dosyaların GERÇEK require kenarlarından çıkarıldı
+ * (hafızadan değil). Satır sayıları ve öz-test sayıları koşum anında
+ * dosyalardan/raporlardan OKUNUR — elle yazılmaz, böylece harita
+ * bayatladığında sayılar da bayatlamaz, düzeltilir.
+ *
+ * FORM: katman yığını (bağımlılık yönü tek yönlü olduğu için ok
+ * kalabalığı yerine sıralı kutular) + katman başına satır çubuğu.
+ */
+const fs = require("fs");
+const path = require("path");
+
+const CAT_L = ["#2a78d6", "#eb6834", "#1baf7a"];
+const CAT_D = ["#3987e5", "#d95926", "#199e70"];
+const RAMP_L = ["#86b6ef", "#5598e7", "#2a78d6", "#1c5cab", "#0d366b"];
+const RAMP_D = ["#cde2fb", "#9ec5f4", "#6da7ec", "#2a78d6", "#184f95"];
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const tr = (v, d) => Number(v).toLocaleString("tr-TR", d !== undefined ? { minimumFractionDigits: d, maximumFractionDigits: d } : undefined);
+
+const DIR = __dirname;
+const lines = (f) => { try { return fs.readFileSync(path.join(DIR, f), "utf-8").split("\n").length; } catch { return 0; } };
+const checks = (r) => { try { const d = JSON.parse(fs.readFileSync(path.join(DIR, "reports", r), "utf-8")); return { n: d.checks?.length ?? 0, ok: !!d.allChecksPassed }; } catch { return null; } };
+
+// ── KATMANLAR (require grafiğinden doğrulandı) ──
+const LAYERS = [
+  {
+    id: "L0", name: "Çekirdek", tag: "değiştirilmedi",
+    what: "Kriptografik ve ağ ilkelleri. Bu seansta TEK SATIRI değişmedi — üstteki her katman onu çağırdı, hiçbiri yeniden yazmadı.",
+    gives: ["CascadeReconciliation", "QKDSecurityProof (Serfling + GLLP)", "Toeplitz gizlilik yükseltme", "OTP", "KeyPoolBuffer", "KeyDeliveryStore (ETSI 014)", "ClassicalAuthChannel (Wegman–Carter)", "NetworkTopology + routeCalculation", "LinkRiskReputationEngine", "mulberry32"],
+    mods: [{ f: "photonnet_core.js", r: "tüm ilkeller" }],
+  },
+  {
+    id: "L1", name: "Dolanıklık fiziği", tag: "bu seansta v2",
+    what: "Bell-diyagonal durum cebiri, DEJMPS arıtma, akıllı kuantum bellek zamanlaması ve gerçek fiber fiziği. Verim %0,25 → %10,85.",
+    gives: ["bellSwap (Pauli konvolüsyonu)", "dejmpsPurify / dejmpsPurifyAsym", "QuantumMemoryScheduler", "fiberTransmittance / fiberDelayMs", "phaseErrorForKm", "requiredLinkFidelity"],
+    mods: [{ f: "entanglement_swap_scheduler.js", r: "v2 motor" }, { f: "entanglement_hom_fidelity_sim.js", r: "HOM görünürlüğü" }],
+    tests: [{ f: "entanglement_swap_scheduler_test.js" }, { f: "entanglement_swap_concurrency_test.js" }, { f: "memory_technology_threshold_test.js" }, { f: "attenuation_sweep_test.js" }, { f: "entanglement_hom_fidelity_test.js" }],
+  },
+  {
+    id: "L2", name: "Çok-atlamalı zincir", tag: "",
+    what: "N segmentli zincir, takas politikaları ve segment başına gereken sadakatin türetilmesi. Takas SIRASI fark yaratmaz (Pauli konvolüsyonu değişmeli) — ölçülmüş negatif sonuç.",
+    gives: ["simulateChain", "requiredSegmentFidelity", "zaman damgalı çift çıktısı (pair.t)"],
+    mods: [{ f: "entanglement_multihop_router.js", r: "zincir + politika" }],
+    tests: [{ f: "multihop_qkd_flow_test.js" }],
+  },
+  {
+    id: "L3", name: "Ağ matrisi + paralel yönlendirme", tag: "",
+    what: "Topoloji matrislere dökülür (bitişiklik, mesafe, kapasite, bağ sadakati); yollar sıralanır ve akış problemi olarak tahsis edilir. Tek yola göre ×2,48 çift kazancı.",
+    gives: ["buildMatrices (A, D, C, Fe)", "enumeratePaths / describePath", "greedyAllocate + bruteForceAllocate", "edgeDisjointSets", "verifyWithMatrixPowers"],
+    mods: [{ f: "quantum_network_matrix.js", r: "matris + tahsis" }],
+    tests: [{ f: "network_matrix_routing_test.js" }, { f: "multipath_routing_test.js" }],
+  },
+  {
+    id: "L4", name: "QKD protokol katmanı", tag: "baz-çözünürlü",
+    what: "Dolanık çiftlerden anahtar. BBM92 ve E91/CHSH; anahtar Z bazından, faz kestirimi X bazından (karışık QBER kullanılmaz). Hibrit görev döngüsü baz eşleşme verimini yükseltir.",
+    gives: ["measureBBM92 / runQkdFlow", "correlationMatrix / chshStandard / runE91Flow", "chshRoundsForSignificance", "bbm92BasisResolved / e91BasisResolved", "dutyCycleMeasure / optimalBias", "privacyAmplify (Toeplitz)"],
+    mods: [
+      { f: "qkd_over_entanglement.js", r: "BBM92 + E91/CHSH" },
+      { f: "parallel_routing_qkd_rate_test.js", r: "baz-çözünürlü muhasebe (kütüphane)" },
+      { f: "bb84_e91_duty_cycle.js", r: "yanlı baz + Bell döngüsü" },
+    ],
+    tests: [{ f: "qkd_at_limit_test.js" }, { f: "duty_cycle_test.js", rep: "duty_cycle.json" }],
+    reps: ["parallel_routing_qkd_rate.json"],
+  },
+  {
+    id: "L5", name: "Oturum kontrolcüsü", tag: "türetilmiş kurallar",
+    what: "Bloğu ne zaman kapatmalı, hangi yolu havuza almalı, Bell sertifikası nasıl sürdürülmeli. Hiçbir sabit sayı yok: kapanış ℓ′(T)=ℓ(T)/T tepe koşulundan, kabul e*=ē+(1−h₂(ē))/log₂((1−ē)/ē) teğetinden türetilir.",
+    gives: ["SessionController (marjinal kural + SLA)", "admissionThreshold / admissionDelta", "predictEll (Cascade'siz öngörücü)", "chshProbe + runHybridSession", "runContinuous (ardışık bloklar)"],
+    mods: [{ f: "qkd_session_controller.js", r: "kapanış + kabul + monitör" }, { f: "continuous_stream_test.js", r: "durağan akış üreteci (kütüphane)" }],
+    tests: [{ f: "qkd_session_controller_test.js", rep: "qkd_session_controller.json" }, { f: "sla_ceiling_test.js", rep: "sla_ceiling.json" }],
+    reps: ["continuous_stream.json"],
+  },
+  {
+    id: "L6", name: "Anahtar tedariki ve geri-basınç", tag: "yeni",
+    what: "Üretim gecikmesini teslim gecikmesinden ayıran depo, ve depo doluluğunu üretime geri besleyen geri-basınç. Tüketici gecikmesi 0 ms; israf %34,9 → %0.",
+    gives: ["runElastic (elastik pencere)", "KeyAllocator (core KeyDeliveryStore üstünde)", "runTieredSupply", "requiredStoreBits (D·T_b + 3σ)", "ProductionThrottle + bant kuralı", "recommendPhiHigh (φ = 0,80)"],
+    mods: [{ f: "qkd_key_supply.js", r: "depo + tahsis" }, { f: "qkd_backpressure.js", r: "throttle + öneri" }],
+    tests: [{ f: "key_supply_test.js", rep: "key_supply.json" }, { f: "backpressure_test.js", rep: "backpressure.json" }, { f: "phi_high_tuning_test.js", rep: "phi_high_tuning.json" }],
+    docs: ["docs/PHI_HIGH.md"],
+  },
+  {
+    id: "L7", name: "Dış entegrasyon", tag: "",
+    what: "Üretilen anahtarın sistem dışına taşınması: ETSI GS QKD 014 KME sunucusu, IBM mTLS istemcisi, QKDNetSim trafik köprüsü.",
+    gives: ["ETSI 014 enc_keys / dec_keys", "mTLS + sertifika rotasyonu/iptali", "QKDNetSim profil köprüsü"],
+    mods: [{ f: "etsi014_kme_server.js", r: "KME sunucusu" }, { f: "mock_ibm_client.js", r: "IBM mTLS istemcisi" }, { f: "qkdnetsim_traffic_bridge.js", r: "QKDNetSim köprüsü" }, { f: "build_production_server.js", r: "üretim derlemesi" }],
+    tests: [{ f: "buffer_starvation_test.js" }, { f: "ibm_math_audit.js" }],
+  },
+];
+
+const CROSS = [
+  {
+    name: "Güvenlik denetimi ve saldırı benzetimi", col: "var(--k2)",
+    what: "Katmanlara dik kesen doğrulama: bağımsız yeniden hesaplanabilir üretim denetimi, QBER tırmanma saldırıları, gürültü kalibrasyonu sertleştirme.",
+    mods: ["production_security_audit.js", "attack_simulation_qber_escalation.js", "god_mode_ragnarok_attack_omega_v4.js", "god_mode_ragnarok_attack_omega_v3.js", "god_mode_ragnarok_attack_omega.js", "god_mode_ragnarok_attack_real.js", "god_mode_ragnarok_attack.js", "noise_calibration_hardening_test.js", "noise_calibration_wiring_test.js", "noise_matrix_validate.js", "link_reputation_engine_test.js"],
+  },
+  {
+    name: "Raporlama ve görselleştirme", col: "var(--k3)",
+    what: "Her katmanın çıktısı için tek dosyalık, açık/karanlık modlu, palet doğrulamalı görseller ve istemci raporları.",
+    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
+  },
+];
+
+function build() {
+  // ── canlı sayılar ──
+  for (const L of LAYERS) {
+    L.modLines = L.mods.reduce((s, m) => s + (m.lines = lines(m.f)), 0);
+    L.testLines = (L.tests ?? []).reduce((s, t) => s + (t.lines = lines(t.f)), 0);
+    for (const t of L.tests ?? []) if (t.rep) t.checks = checks(t.rep);
+    // `reps`: o katmana ait ama testi başka katmanda duran raporlar.
+    // İlk kurguda bunlar toplama GİRMİYORDU ve başlık 73/73 diyordu —
+    // oysa rapor üreten testlerdeki toplam kontrol 103'tü.
+    L.extraChecks = (L.reps ?? []).map(checks).filter(Boolean);
+    L.checkCount = (L.tests ?? []).reduce((s, t) => s + (t.checks?.n ?? 0), 0) +
+      L.extraChecks.reduce((s, c) => s + c.n, 0);
+    L.checkOk = [...(L.tests ?? []).map(t => t.checks), ...L.extraChecks].filter(Boolean).every(c => c.ok);
+  }
+  for (const C of CROSS) C.modLines = C.mods.reduce((s, m) => s + lines(m), 0);
+
+  const coreLines = LAYERS[0].modLines;
+  const stackLines = LAYERS.slice(1).reduce((s, L) => s + L.modLines + L.testLines, 0);
+  const crossLines = CROSS.reduce((s, c) => s + c.modLines, 0);
+  const allChecks = LAYERS.flatMap(L => [...(L.tests ?? []).map(t => t.checks), ...(L.extraChecks ?? [])].filter(Boolean));
+  const totalChecks = allChecks.reduce((s, c) => s + c.n, 0);
+  const allPass = allChecks.every(c => c.ok);
+  const reportCount = allChecks.length;
+
+  // ── katman başına satır çubuğu (çekirdek hariç: ölçeği ezerdi) ──
+  const stack = LAYERS.slice(1);
+  const BW = 300, maxL = Math.max(...stack.map(L => L.modLines + L.testLines));
+
+  const layerCards = LAYERS.map((L, i) => {
+    const isCore = i === 0;
+    const bar = isCore ? "" : `<div class="bar"><span style="width:${(100 * (L.modLines + L.testLines) / maxL).toFixed(1)}%;background:var(--s${Math.min(5, i)})"></span></div>`;
+    const mods = L.mods.map(m => `<span class="chip"><b>${esc(m.f)}</b> <i>${esc(m.r)}</i> <u>${tr(m.lines)}</u></span>`).join("");
+    const tests = (L.tests ?? []).map(t =>
+      `<span class="chip t">${esc(t.f)}${t.checks ? ` <u>${t.checks.n} test ${t.checks.ok ? "✓" : "✗"}</u>` : ""}</span>`).join("");
+    const docs = (L.docs ?? []).map(d => `<span class="chip d">${esc(d)}</span>`).join("");
+    const reps = (L.reps ?? []).map((r, i) => `<span class="chip t">${esc(r)} <u>${L.extraChecks[i]?.n ?? 0} test ${L.extraChecks[i]?.ok ? "✓" : "✗"}</u></span>`).join("");
+    return `<div class="layer${isCore ? " core" : ""}">
+      <div class="lhead"><span class="lid">${L.id}</span><span class="lname">${esc(L.name)}</span>
+        ${L.tag ? `<span class="ltag">${esc(L.tag)}</span>` : ""}
+        <span class="lloc">${tr(L.modLines + L.testLines)} satır</span></div>
+      ${bar}
+      <p class="lwhat">${esc(L.what)}</p>
+      <div class="gives">${L.gives.map(g => `<code>${esc(g)}</code>`).join("")}</div>
+      <div class="chips">${mods}${tests}${reps}${docs}</div>
+    </div>`;
+  }).reverse().join('<div class="arrow">▲ çağırır</div>');
+
+  const crossCards = CROSS.map(c => `<div class="cross" style="border-left-color:${c.col}">
+    <div class="chead">${esc(c.name)} <span class="lloc">${tr(c.modLines)} satır · ${c.mods.length} dosya</span></div>
+    <p class="lwhat">${esc(c.what)}</p>
+    <div class="chips">${c.mods.map(m => `<span class="chip s">${esc(m)} <u>${tr(lines(m))}</u></span>`).join("")}</div>
+  </div>`).join("");
+
+  return `<!doctype html>
+<html lang="tr"><head><meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>PhotonNet — katman haritası</title>
+<style>
+  .viz-root{color-scheme:light;--surface-1:#fcfcfb;--surface-2:#f0efec;--surface-3:#e6e5e1;
+    --text-primary:#0b0b0b;--text-secondary:#52514e;--text-muted:#78766f;--grid:#dedcd6;--muted-mark:#c9c8c2;
+    --k1:${CAT_L[0]};--k2:${CAT_L[1]};--k3:${CAT_L[2]};
+    --s1:${RAMP_L[0]};--s2:${RAMP_L[1]};--s3:${RAMP_L[2]};--s4:${RAMP_L[3]};--s5:${RAMP_L[4]};}
+  @media (prefers-color-scheme:dark){:root:where(:not([data-theme="light"])) .viz-root{color-scheme:dark;
+    --surface-1:#1a1a19;--surface-2:#2b2b28;--surface-3:#35342f;--text-primary:#fff;--text-secondary:#c3c2b7;--text-muted:#96958c;--grid:#45443f;--muted-mark:#4a4a46;
+    --k1:${CAT_D[0]};--k2:${CAT_D[1]};--k3:${CAT_D[2]};
+    --s1:${RAMP_D[0]};--s2:${RAMP_D[1]};--s3:${RAMP_D[2]};--s4:${RAMP_D[3]};--s5:${RAMP_D[4]};}}
+  :root[data-theme="dark"] .viz-root{color-scheme:dark;
+    --surface-1:#1a1a19;--surface-2:#2b2b28;--surface-3:#35342f;--text-primary:#fff;--text-secondary:#c3c2b7;--text-muted:#96958c;--grid:#45443f;--muted-mark:#4a4a46;
+    --k1:${CAT_D[0]};--k2:${CAT_D[1]};--k3:${CAT_D[2]};
+    --s1:${RAMP_D[0]};--s2:${RAMP_D[1]};--s3:${RAMP_D[2]};--s4:${RAMP_D[3]};--s5:${RAMP_D[4]};}
+  body{margin:0;background:var(--surface-1);}
+  .viz-root{background:var(--surface-1);color:var(--text-primary);
+    font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    padding:26px 30px 40px;max-width:920px;margin:0 auto;}
+  h1{font-size:22px;margin:0 0 6px;letter-spacing:-0.01em;}
+  h2{font-size:14px;margin:34px 0 8px;}
+  .sub{font-size:13px;color:var(--text-secondary);line-height:1.55;margin:0 0 6px;}
+  .note{font-size:11.5px;color:var(--text-muted);line-height:1.6;margin:10px 0 0;}
+  .tiles{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0 4px;}
+  .tile{background:var(--surface-2);border-radius:9px;padding:10px 14px;min-width:96px;}
+  .tile .l{font-size:10.5px;color:var(--text-muted);margin-bottom:3px;}
+  .tile .v{font-size:19px;font-weight:640;letter-spacing:-0.01em;}
+  .layer{background:var(--surface-2);border-radius:11px;padding:13px 16px 14px;margin:0;}
+  .layer.core{background:var(--surface-3);}
+  .lhead{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;}
+  .lid{font-size:11px;font-weight:720;color:var(--k1);letter-spacing:0.04em;}
+  .lname{font-size:14.5px;font-weight:660;}
+  .ltag{font-size:10px;background:var(--k1);color:#fff;border-radius:4px;padding:2px 6px;font-weight:600;}
+  .lloc{margin-left:auto;font-size:11px;color:var(--text-muted);}
+  .bar{height:5px;background:var(--grid);border-radius:3px;margin:9px 0 2px;overflow:hidden;}
+  .bar span{display:block;height:100%;border-radius:3px;}
+  .lwhat{font-size:12.5px;color:var(--text-secondary);line-height:1.55;margin:7px 0 8px;}
+  .gives{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;}
+  .gives code{font-size:10.5px;background:var(--surface-1);border:1px solid var(--grid);border-radius:5px;padding:2px 7px;color:var(--text-primary);}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;}
+  .chip{font-size:10.5px;background:var(--surface-1);border-radius:5px;padding:3px 8px;color:var(--text-secondary);border-left:3px solid var(--k1);}
+  .chip.t{border-left-color:var(--k3);} .chip.d{border-left-color:var(--k2);} .chip.s{border-left-color:var(--muted-mark);}
+  .chip b{font-weight:620;color:var(--text-primary);}
+  .chip i{font-style:normal;color:var(--text-muted);}
+  .chip u{text-decoration:none;color:var(--text-muted);font-variant-numeric:tabular-nums;}
+  .arrow{text-align:center;font-size:10.5px;color:var(--text-muted);padding:5px 0;letter-spacing:0.06em;}
+  .cross{background:var(--surface-2);border-left:3px solid var(--k2);border-radius:0 9px 9px 0;padding:11px 15px;margin-bottom:9px;}
+  .chead{display:flex;align-items:baseline;font-size:13.5px;font-weight:640;}
+  .callout{border-left:3px solid var(--k2);background:var(--surface-2);padding:11px 15px;border-radius:0 8px 8px 0;font-size:12.5px;line-height:1.6;margin:14px 0 0;}
+  .callout.ok{border-left-color:var(--k1);}
+  table{border-collapse:collapse;width:100%;margin-top:8px;font-size:11px;}
+  th,td{border:1px solid var(--grid);padding:4px 7px;text-align:left;}
+  th{background:var(--surface-2);font-weight:620;}
+  details{margin-top:16px;font-size:11.5px;color:var(--text-secondary);}
+  summary{cursor:pointer;}
+</style></head>
+<body><div class="viz-root" data-palette="${CAT_L.join(",")}">
+
+<h1>PhotonNet — katman haritası</h1>
+<p class="sub">Envanter hafızadan değil, dosyaların <b>gerçek require kenarlarından</b> çıkarıldı; satır ve öz-test sayıları koşum anında dosyalardan ve raporlardan okunuyor. Bağımlılık yönü tek yönlü: her katman yalnızca altındakileri çağırıyor.</p>
+
+<div class="tiles">
+  <div class="tile"><div class="l">katman</div><div class="v">8</div></div>
+  <div class="tile"><div class="l">çekirdek (dokunulmadı)</div><div class="v">${tr(coreLines)}</div></div>
+  <div class="tile"><div class="l">üstteki yığın</div><div class="v">${tr(stackLines)}</div></div>
+  <div class="tile"><div class="l">dik kesen katmanlar</div><div class="v">${tr(crossLines)}</div></div>
+  <div class="tile"><div class="l">öz-test (${reportCount} rapor)</div><div class="v">${allPass ? `<span style="color:var(--k1)">${totalChecks}/${totalChecks}</span>` : totalChecks}</div></div>
+</div>
+
+<h2>Yığın — aşağıdan yukarı</h2>
+${layerCards}
+
+<h2>Katmanlara dik kesenler</h2>
+${crossCards}
+
+<div class="callout ok"><b>Bu seansta değişmeyen şey:</b> <code>photonnet_core.js</code>'in tek satırı. Cascade, Serfling/GLLP sonlu-anahtar kanıtı, Toeplitz, OTP, ETSI-014 <code>KeyDeliveryStore</code>, Wegman–Carter kimlik doğrulaması, topoloji ve rota hesabı — hepsi <b>çağrıldı, yeniden yazılmadı</b>. Yeni davranışlar hep üstüne kondu. Örneğin depo tahsis politikası çekirdeğin <code>KeyDeliveryStore</code>'unun üstüne yazıldı, o sınıf değiştirilmedi.</div>
+
+<div class="callout"><b>Dürüst yapısal not — iki dosya adı yalan söylüyor.</b> <code>parallel_routing_qkd_rate_test.js</code> ve <code>continuous_stream_test.js</code> adlarında "test" geçiyor ama artık <b>kütüphane</b> olarak kullanılıyorlar: birincisini 5, ikincisini 4 modül <code>require</code> ediyor (baz-çözünürlü muhasebe ve durağan akış üreteci oradan geliyor). Bu, testten kütüphaneye kaymış kod — çalışıyor ama adlandırma yanıltıcı. Temizlenecekse iki fonksiyon ayrı modüllere taşınmalı; <b>şimdi taşımadım</b>, çünkü 8 dosyanın import'unu değiştirmek bu haritanın kapsamı dışında ve tek başına bir commit hak ediyor.</div>
+
+<h2>Katman özeti</h2>
+<table><thead><tr><th>Katman</th><th>Modül</th><th>Test</th><th>Satır</th><th>Öz-test</th><th>Ne ekledi</th></tr></thead><tbody>
+${LAYERS.map(L => `<tr><td><b>${L.id}</b> ${esc(L.name)}</td><td>${L.mods.length}</td><td>${(L.tests ?? []).length}</td><td>${tr(L.modLines + L.testLines)}</td><td>${L.checkCount || "—"}</td><td>${esc(L.gives.slice(0, 2).join(", "))}…</td></tr>`).join("")}
+</tbody></table>
+
+<details>
+<summary>Bu seansın commit'leri (yeniden eskiye)</summary>
+<table><thead><tr><th>Commit</th><th>Ne</th></tr></thead><tbody>
+${[
+    ["8d303df", "φ_high üretim ayarı sabitlendi ve dokümante edildi (0,80)"],
+    ["02c1a5e", "depo doluluğuna göre üretim geri-basıncı (backpressure/throttling)"],
+    ["9a299b3", "BB84/E91 hibrit görev döngüsü — yanlı baz + Bell sertifikası"],
+    ["237e3db", "ultra-düşük gecikme — elastik pencere ve anahtar deposu"],
+    ["5cd40d6", "SLA 10 s'ye uzatıldı — tavana yaklaşma ölçüldü ve modellendi"],
+    ["57edf74", "kontrolcünün sürekli akışta uçtan uca koşumu"],
+    ["8ede938", "QKD oturum kontrolcüsü — kapanış kuralı, kabul eşiği, Bell monitörü"],
+    ["6b5b57f", "paralel yönlendirme kazancının R_key'e etkisi (BBM92 + E91)"],
+    ["b27f782", "ağ matrisi + paralel yönlendirme görseli"],
+    ["255e6b2", "ağ yapısını matrise dök + paralel yönlendirme (×2,48)"],
+    ["63e3340", "52 km sınırında QKD grafiği"],
+    ["4dc8ca9", "E91 + CHSH Bell testi; 52 km'de BBM92 ve E91 anahtar üretimi"],
+    ["8b3bec8", "kanal zayıflama (α) taraması + DEJMPS tur maliyeti"],
+    ["6f1fd7e", "23.994 çiftlik QKD akışının grafiği"],
+    ["7dccea7", "üçüncü düğüm + dinamik kuantum yönlendirme + üst katmanda QKD"],
+    ["4425a6c", "bellek teknolojisi ↔ kritik mesafe eşiği; zamanlayıcıda 3 hata"],
+    ["ad4eb3d", "dolanıklık-takası motoru v2 (verim %0,25 → %10,85)"],
+    ["bf5df45", "QKDNetSim trafik profili + derleme talimatları"],
+    ["cad5912", "sertifika rotasyon/iptal + IBM mTLS koşum raporları"],
+    ["60c121d", "istemci ağ raporu aracı yeniden yazıldı"],
+    ["65b460a", "dolanıklık-swap eşzamanlılık + arıtma stres testi"],
+    ["8f36452", "konteyner sıfırlanması sonrası kurtarma"],
+  ].map(([h, m]) => `<tr><td><code>${h}</code></td><td>${esc(m)}</td></tr>`).join("")}
+</tbody></table>
+</details>
+
+<p class="note"><b>Okuma sırası:</b> L0 ilkelleri verir; L1 dolanık çift üretir; L2 çifti zincir boyunca taşır; L3 hangi yollardan kaç çift geleceğine karar verir; L4 çifti anahtara çevirir; L5 bloğun ne zaman kapanacağına ve hangi yolun havuza gireceğine karar verir; L6 anahtarı depolayıp tüketiciye sıfır gecikmeyle servis eder ve doluluğu üretime geri besler; L7 anahtarı sistem dışına taşır. Dik kesen iki katman (güvenlik denetimi, raporlama) her seviyeye bağlanır.</p>
+
+</div></body></html>`;
+}
+
+if (require.main === module) {
+  const outPath = process.argv[2] || "/tmp/photonnet_architecture.html";
+  fs.writeFileSync(outPath, build());
+  console.log("HTML yazıldı: " + outPath);
+}
+module.exports = { build };
