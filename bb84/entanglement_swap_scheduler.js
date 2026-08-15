@@ -758,6 +758,7 @@ function simulate(cfg) {
       max: +Math.max(...F).toFixed(6),
       allAboveTarget: Math.min(...F) >= targetFinalFidelity,
     } : { n: 0, mean: null, min: null, max: null, allAboveTarget: false },
+    pairs: finalPairs,   // üst katman (QKD) bunları TÜKETİR
     memory: memStats,
     ledger: { admitted: totalAdmitted, released: totalReleased, balanced: totalAdmitted === totalReleased },
     guardHit: guard >= GUARD_MAX,

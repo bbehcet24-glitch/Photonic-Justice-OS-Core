@@ -1,0 +1,151 @@
+{
+  "generatedAt": "2026-08-15T08:35:17.284Z",
+  "sections": {
+    "routing": {
+      "sequential": {
+        "finalPairs": 3989,
+        "yieldPct": 6.6483,
+        "fMin": 0.850246,
+        "meanSpanWaitMs": 0.08793,
+        "meanLatencyMs": 0.32847,
+        "ledgerBalanced": true,
+        "fusionsByPair": {
+          "A-R1-R2": 3075,
+          "A-R2-B": 2746,
+          "R1-R2-B": 1593,
+          "A-R1-B": 1279
+        }
+      },
+      "dynamic": {
+        "finalPairs": 4009,
+        "yieldPct": 6.6808,
+        "fMin": 0.858584,
+        "meanSpanWaitMs": 0.09045,
+        "meanLatencyMs": 0.32327,
+        "ledgerBalanced": true,
+        "fusionsByPair": {
+          "A-R1-R2": 2285,
+          "A-R2-B": 1915,
+          "R1-R2-B": 2379,
+          "A-R1-B": 2069
+        }
+      },
+      "balanced": {
+        "finalPairs": 3902,
+        "yieldPct": 6.5025,
+        "fMin": 0.85369,
+        "meanSpanWaitMs": 0.08797,
+        "meanLatencyMs": 0.34673,
+        "ledgerBalanced": true,
+        "fusionsByPair": {
+          "A-R1-R2": 2883,
+          "A-R2-B": 2379,
+          "R1-R2-B": 1911,
+          "A-R1-B": 1490
+        }
+      }
+    },
+    "routingFinding": {
+      "yieldSpreadPct": 2.67,
+      "waitToT2Ratio": 0.00905,
+      "explanation": "Pauli konvolüsyonu birleşmeli+değişmeli olduğundan takas sırası sadakati değiştirmez; yalnızca bekleme süresini etkiler ve bekleme/T2 oranı bu rejimde ~0.01'dir."
+    },
+    "qkdScaling": [
+      {
+        "attemptsPerLink": 1000,
+        "pairs": 233,
+        "meanFidelity": 0.950986,
+        "sifted": 122,
+        "n": 92,
+        "k": 30,
+        "qberZ": 0,
+        "qberX": 0.06451612903225806,
+        "qberEst": 0.033333,
+        "leakedBits": 22,
+        "residualErrors": 0,
+        "ell": 0,
+        "secure": false,
+        "ok": false,
+        "stage": "finite-key",
+        "dataFlow": null,
+        "verdict": "ABORT — bu blok boyutunda (n=92, k=30) sonlu-anahtar sınırı güvenli anahtar VERMİYOR. Bu bir HATA DEĞİL, sonlu-anahtar QKD'nin beklenen davranışıdır."
+      },
+      {
+        "attemptsPerLink": 5000,
+        "pairs": 1211,
+        "meanFidelity": 0.951481,
+        "sifted": 600,
+        "n": 450,
+        "k": 150,
+        "qberZ": 0,
+        "qberX": 0.03343465045592705,
+        "qberEst": 0.046667,
+        "leakedBits": 72,
+        "residualErrors": 0,
+        "ell": 0,
+        "secure": false,
+        "ok": false,
+        "stage": "finite-key",
+        "dataFlow": null,
+        "verdict": "ABORT — bu blok boyutunda (n=450, k=150) sonlu-anahtar sınırı güvenli anahtar VERMİYOR. Bu bir HATA DEĞİL, sonlu-anahtar QKD'nin beklenen davranışıdır."
+      },
+      {
+        "attemptsPerLink": 20000,
+        "pairs": 4805,
+        "meanFidelity": 0.951391,
+        "sifted": 2398,
+        "n": 1799,
+        "k": 599,
+        "qberZ": 0,
+        "qberX": 0.03750997605746209,
+        "qberEst": 0.015025,
+        "leakedBits": 348,
+        "residualErrors": 0,
+        "ell": 0,
+        "secure": false,
+        "ok": false,
+        "stage": "finite-key",
+        "dataFlow": null,
+        "verdict": "ABORT — bu blok boyutunda (n=1799, k=599) sonlu-anahtar sınırı güvenli anahtar VERMİYOR. Bu bir HATA DEĞİL, sonlu-anahtar QKD'nin beklenen davranışıdır."
+      },
+      {
+        "attemptsPerLink": 100000,
+        "pairs": 23994,
+        "meanFidelity": 0.95143,
+        "sifted": 11924,
+        "n": 8943,
+        "k": 2981,
+        "qberZ": 0,
+        "qberX": 0.04406323578876556,
+        "qberEst": 0.022811,
+        "leakedBits": 1729,
+        "residualErrors": 0,
+        "ell": 2254,
+        "secure": true,
+        "ok": true,
+        "stage": "complete",
+        "dataFlow": {
+          "messageChars": 78,
+          "messageBits": 704,
+          "keyBitsAvailable": 2254,
+          "keySufficientForOtp": true,
+          "cipherDiffersFromPlaintext": true,
+          "decryptedCorrectly": true,
+          "decodedPreview": "PhotonNet — dolanıklık takasıyla üretilen anahtarla korunan gerç"
+        },
+        "verdict": "BAŞARILI — 23994 dolanık çift tüketildi, ℓ=2254 bit bilgi-teorik güvenli anahtar üretildi ve mesaj OTP ile şifrelenip birebir çözüldü."
+      }
+    ],
+    "chainQkd": {
+      "totalKm": 28.063,
+      "pairs": 39962,
+      "meanFidelity": 0.922615,
+      "sifted": 19858,
+      "n": 14894,
+      "ell": 2639,
+      "secure": true,
+      "decryptedCorrectly": true
+    }
+  },
+  "failures": 0
+}
