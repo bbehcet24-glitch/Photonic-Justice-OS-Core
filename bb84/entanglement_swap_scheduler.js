@@ -81,13 +81,56 @@ const FIBER_REFRACTIVE_INDEX = 1.468;          // SMF-28 grup kırılma indisi @
 const FIBER_V_KM_PER_MS = C_VACUUM_KM_PER_MS / FIBER_REFRACTIVE_INDEX; // ≈204.22 km/ms
 const FIBER_ATTENUATION_DB_PER_KM = 0.2;       // SMF-28 @1550nm
 
-/** Fiber geçirgenliği (Beer-Lambert, dB cinsinden sönümleme). */
-function fiberTransmittance(km) {
-  return Math.pow(10, -(FIBER_ATTENUATION_DB_PER_KM * km) / 10);
+/**
+ * Fiber geçirgenliği (Beer-Lambert). α artık PARAMETRE — farklı fiber
+ * kaliteleri ve serbest-uzay bağlantıları taranabilsin diye. Verilmezse
+ * SMF-28 varsayılanı (0.2 dB/km) kullanılır, yani mevcut TÜM çağrı
+ * yerlerinin davranışı BİREBİR korunur.
+ *
+ * α = 0 DÜRÜSTLÜK NOTU: "kayıpsız kanal" İDEALLEŞTİRMESİDİR — bir ÜST
+ * SINIR referansıdır, gerçek bir uydu bağlantısı DEĞİLDİR. Gerçek
+ * serbest-uzay/uydu bağlantılarında baskın kayıp kırınım (difraksiyon,
+ * ~1/L² geometrik yayılma) ve atmosferik sönümlemedir; bunların hiçbiri
+ * km başına ÜSTEL değildir, dolayısıyla tek bir α ile temsil edilemez.
+ * (PhotonNet çekirdeğinde bu iş için AYRI modeller var: PointingBudget,
+ *  ScintillationModel, AtmosphericWindowModel.)
+ */
+function fiberTransmittance(km, alphaDbPerKm) {
+  const a = alphaDbPerKm == null ? FIBER_ATTENUATION_DB_PER_KM : alphaDbPerKm;
+  return Math.pow(10, -(a * km) / 10);
 }
 /** Verilen geçirgenliği üreten fiber uzunluğu (ters denklem). */
-function kmForTransmittance(T) {
-  return -10 * Math.log10(T) / FIBER_ATTENUATION_DB_PER_KM;
+function kmForTransmittance(T, alphaDbPerKm) {
+  const a = alphaDbPerKm == null ? FIBER_ATTENUATION_DB_PER_KM : alphaDbPerKm;
+  if (a <= 0) return Infinity;
+  return -10 * Math.log10(T) / a;
+}
+
+/**
+ * DEJMPS'in F_ham'dan F_hedef'e kaç TURDA çıktığını ve bunun KAYNAK
+ * BEDELİNİ analitik olarak hesaplar (saf faz gürültüsü, simetrik tur).
+ * Her tur 2 çift tüketip p olasılıkla 1 çift üretir; dolayısıyla bir
+ * çıktı için gereken ham çift sayısı Π(2/p_i) şeklinde ÜSTEL büyür.
+ * F → 0.5'e yaklaştıkça hem tur sayısı hem p'ler kötüleşir; bu
+ * fonksiyon o çifte-üstel patlamayı sayısallaştırır.
+ */
+function dejmpsRoundsToTarget(Fraw, Ftarget, maxRounds = 40) {
+  if (!(Fraw > 0.5)) return { rounds: Infinity, reachable: false, rawPairsPerOutput: Infinity, pChain: [], trajectory: [] };
+  let st = bellState(Fraw, 0, 0, 1 - Fraw);
+  const pChain = [], trajectory = [+Fraw.toFixed(6)];
+  let cost = 1;
+  for (let r = 1; r <= maxRounds; r++) {
+    if (st.I >= Ftarget) return { rounds: r - 1, reachable: true, rawPairsPerOutput: +cost.toFixed(3), pChain, trajectory };
+    const step = bellDejmpsStep(st, "Z");
+    if (!step || step.state.I <= st.I + 1e-12) {
+      return { rounds: Infinity, reachable: false, rawPairsPerOutput: Infinity, pChain, trajectory };
+    }
+    pChain.push(+step.pSuccess.toFixed(6));
+    cost *= 2 / step.pSuccess;
+    st = step.state;
+    trajectory.push(+st.I.toFixed(6));
+  }
+  return { rounds: Infinity, reachable: false, rawPairsPerOutput: Infinity, pChain, trajectory };
 }
 /** Tek yön fiber gecikmesi (ms) — ışık hızı sınırı. */
 function fiberDelayMs(km) {
@@ -479,6 +522,8 @@ function simulate(cfg) {
     // Uzun mesafede taze sadakat 0.5'e yaklaşır ve hedefe ulaşmak daha
     // çok tur gerektirir; tavan buna göre yükseltildi (v1'de 6 idi).
     maxPurificationRoundsPerPair = 10,
+    // Kanal zayıflama katsayısı (dB/km). Verilmezse SMF-28 varsayılanı.
+    attenuationDbPerKm = FIBER_ATTENUATION_DB_PER_KM,
     // ÇOKLAMA (multiplexing): gerçek tekrarlayıcı düğümleri tek modlu
     // DEĞİLDİR — frekans/zaman/uzamsal modlarda M paralel dolanıklık
     // denemesi aynı klasik onay penceresinde yapılır. Bu, üretim hızını
@@ -488,7 +533,7 @@ function simulate(cfg) {
   } = cfg;
 
   const rng = mulberry32(seed >>> 0);
-  const eta = fiberTransmittance(elementaryKm);
+  const eta = fiberTransmittance(elementaryKm, attenuationDbPerKm);
   const qPhase = phaseErrorForKm(elementaryKm);
   const delayMs = fiberDelayMs(elementaryKm);   // her klasik onay adımının bedeli
 
@@ -564,7 +609,7 @@ function simulate(cfg) {
   const stats = {
     attemptsConsumed: 0, heraldFailedLoss: 0,
     purifyAttempts: 0, purifySuccess: 0, purifyFailed: 0,
-    swaps: 0, swapsBelowTarget: 0, roundsHistogram: {},
+    swaps: 0, swapsBelowTarget: 0, roundsHistogram: {}, roundsPerFinalPair: [], roundsConsumedTotal: 0,
     orientationUsed: {},
   };
   const readyForSwap = { AR: null, RB: null };
@@ -694,7 +739,12 @@ function simulate(cfg) {
       // SAYILMAZ — atılır ve ayrıca raporlanır. (v1'de bu denetim YOKTU;
       // eşiğin altındaki çiftler sessizce başarı sayılıyordu.)
       if (swapped.I >= targetFinalFidelity) {
-        finalPairs.push({ t: now, F: swapped.I, state: swapped });
+        // Bu nihai çifte katkı veren İKİ bağ çiftinin arıtma tur seviyesi —
+        // "DEJMPS kaç tur harcadı" sorusunun doğrudan ölçümü.
+        const rA = ev.a.rounds ?? 0, rB = ev.b.rounds ?? 0;
+        stats.roundsPerFinalPair.push(Math.max(rA, rB));
+        stats.roundsConsumedTotal += rA + rB;
+        finalPairs.push({ t: now, F: swapped.I, state: swapped, roundsA: rA, roundsB: rB });
       } else {
         stats.swapsBelowTarget++;
       }
@@ -726,6 +776,7 @@ function simulate(cfg) {
       targetFinalFidelity, seed, multiplexing,
     },
     physics: {
+      attenuationDbPerKm,
       transmittance: +eta.toFixed(6),
       lossRate: +(1 - eta).toFixed(6),
       phaseErrorRate: +qPhase.toFixed(6),
@@ -749,6 +800,9 @@ function simulate(cfg) {
       makespanMs: +now.toFixed(3),
       drainedAtEnd: drained,
       roundsHistogram: stats.roundsHistogram,
+      meanRoundsPerFinalPair: stats.roundsPerFinalPair.length
+        ? +(stats.roundsPerFinalPair.reduce((a, b) => a + b, 0) / stats.roundsPerFinalPair.length).toFixed(4) : null,
+      maxRoundsPerFinalPair: stats.roundsPerFinalPair.length ? Math.max(...stats.roundsPerFinalPair) : null,
       orientationUsed: stats.orientationUsed,
     },
     fidelity: F.length ? {
@@ -828,6 +882,7 @@ module.exports = {
   // durum cebri
   bellState, bellNormalize, bellFidelity, wernerState, bellDephase,
   bellDejmpsStep, dejmpsPurify, dejmpsPurifyAsym, bbpsswPurify, bellSwap, requiredLinkFidelity,
+  dejmpsRoundsToTarget,
   // zamanlayıcı + simülasyon
   QuantumMemoryScheduler, simulate, selfCheck,
 };

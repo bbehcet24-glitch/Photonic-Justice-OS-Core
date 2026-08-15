@@ -1,0 +1,2271 @@
+{
+  "generatedAt": "2026-08-15T08:48:45.641Z",
+  "method": {
+    "seeds": 7,
+    "kmRange": [
+      4,
+      90
+    ],
+    "kmStep": 2,
+    "base": {
+      "attemptsPerLink": 1000,
+      "memorySlots": 20,
+      "t1Ms": 50,
+      "t2Ms": 10,
+      "targetFinalFidelity": 0.85,
+      "policy": "smart",
+      "protocol": "dejmps",
+      "multiplexing": 1
+    },
+    "linkTarget": 0.91833,
+    "alphaZeroNote": "α=0, 'uydu bağlantısı' DEĞİL, KAYIPSIZ KANAL idealleştirmesidir. Gerçek serbest-uzay bağlantılarında baskın kayıp kırınım (~1/L²) ve atmosferik sönümlemedir; km başına üstel değildir ve tek bir α ile temsil edilemez."
+  },
+  "alphaSweep": [
+    {
+      "a": 0,
+      "label": "0,00",
+      "tech": "kayıpsız kanal (idealleştirme — üst sınır)",
+      "criticalKm": 52,
+      "workingKm": 42,
+      "curve": [
+        {
+          "km": 4,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 50,
+          "lossPct": 0,
+          "rawFidelity": 0.94464,
+          "meanRounds": 0
+        },
+        {
+          "km": 6,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 20.8714,
+          "lossPct": 0,
+          "rawFidelity": 0.9193,
+          "meanRounds": 1.048
+        },
+        {
+          "km": 8,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 19.4929,
+          "lossPct": 0,
+          "rawFidelity": 0.8954,
+          "meanRounds": 1.079
+        },
+        {
+          "km": 10,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 18.6,
+          "lossPct": 0,
+          "rawFidelity": 0.87287,
+          "meanRounds": 1.101
+        },
+        {
+          "km": 12,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 17.6571,
+          "lossPct": 0,
+          "rawFidelity": 0.85162,
+          "meanRounds": 1.126
+        },
+        {
+          "km": 14,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 16.9214,
+          "lossPct": 0,
+          "rawFidelity": 0.83158,
+          "meanRounds": 1.13
+        },
+        {
+          "km": 16,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 15.7214,
+          "lossPct": 0,
+          "rawFidelity": 0.81269,
+          "meanRounds": 1.195
+        },
+        {
+          "km": 18,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 14.5786,
+          "lossPct": 0,
+          "rawFidelity": 0.79487,
+          "meanRounds": 1.287
+        },
+        {
+          "km": 20,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 7.9,
+          "lossPct": 0,
+          "rawFidelity": 0.77806,
+          "meanRounds": 2.266
+        },
+        {
+          "km": 22,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 7.4643,
+          "lossPct": 0,
+          "rawFidelity": 0.76222,
+          "meanRounds": 2.31
+        },
+        {
+          "km": 24,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 6.8,
+          "lossPct": 0,
+          "rawFidelity": 0.74727,
+          "meanRounds": 2.431
+        },
+        {
+          "km": 26,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 6.2071,
+          "lossPct": 0,
+          "rawFidelity": 0.73318,
+          "meanRounds": 2.503
+        },
+        {
+          "km": 28,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 5.5286,
+          "lossPct": 0,
+          "rawFidelity": 0.71989,
+          "meanRounds": 2.725
+        },
+        {
+          "km": 30,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 4.4571,
+          "lossPct": 0,
+          "rawFidelity": 0.70736,
+          "meanRounds": 3.172
+        },
+        {
+          "km": 32,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 2.7786,
+          "lossPct": 0,
+          "rawFidelity": 0.69555,
+          "meanRounds": 3.69
+        },
+        {
+          "km": 34,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 2.4214,
+          "lossPct": 0,
+          "rawFidelity": 0.6844,
+          "meanRounds": 3.835
+        },
+        {
+          "km": 36,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 2.0071,
+          "lossPct": 0,
+          "rawFidelity": 0.67389,
+          "meanRounds": 4.319
+        },
+        {
+          "km": 38,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 1.55,
+          "lossPct": 0,
+          "rawFidelity": 0.66398,
+          "meanRounds": 4.601
+        },
+        {
+          "km": 40,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.7571,
+          "lossPct": 0,
+          "rawFidelity": 0.65464,
+          "meanRounds": 5.134
+        },
+        {
+          "km": 42,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.6643,
+          "lossPct": 0,
+          "rawFidelity": 0.64583,
+          "meanRounds": 5.443
+        },
+        {
+          "km": 44,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.4429,
+          "lossPct": 0,
+          "rawFidelity": 0.63752,
+          "meanRounds": 5.589
+        },
+        {
+          "km": 46,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.2286,
+          "lossPct": 0,
+          "rawFidelity": 0.62968,
+          "meanRounds": 6.536
+        },
+        {
+          "km": 48,
+          "nonZero": 6,
+          "seeds": 7,
+          "meanYieldPct": 0.1286,
+          "lossPct": 0,
+          "rawFidelity": 0.62229,
+          "meanRounds": 6.861
+        },
+        {
+          "km": 50,
+          "nonZero": 6,
+          "seeds": 7,
+          "meanYieldPct": 0.1,
+          "lossPct": 0,
+          "rawFidelity": 0.61532,
+          "meanRounds": 7.056
+        },
+        {
+          "km": 52,
+          "nonZero": 4,
+          "seeds": 7,
+          "meanYieldPct": 0.0357,
+          "lossPct": 0,
+          "rawFidelity": 0.60875,
+          "meanRounds": 8.25
+        },
+        {
+          "km": 54,
+          "nonZero": 1,
+          "seeds": 7,
+          "meanYieldPct": 0.0071,
+          "lossPct": 0,
+          "rawFidelity": 0.60255,
+          "meanRounds": 10
+        },
+        {
+          "km": 56,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.59671,
+          "meanRounds": null
+        },
+        {
+          "km": 58,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.5912,
+          "meanRounds": null
+        },
+        {
+          "km": 60,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.586,
+          "meanRounds": null
+        },
+        {
+          "km": 62,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.5811,
+          "meanRounds": null
+        },
+        {
+          "km": 64,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.57648,
+          "meanRounds": null
+        },
+        {
+          "km": 66,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.57212,
+          "meanRounds": null
+        },
+        {
+          "km": 68,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.56801,
+          "meanRounds": null
+        },
+        {
+          "km": 70,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.56413,
+          "meanRounds": null
+        },
+        {
+          "km": 72,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.56048,
+          "meanRounds": null
+        },
+        {
+          "km": 74,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.55703,
+          "meanRounds": null
+        },
+        {
+          "km": 76,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.55378,
+          "meanRounds": null
+        },
+        {
+          "km": 78,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.55072,
+          "meanRounds": null
+        },
+        {
+          "km": 80,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.54783,
+          "meanRounds": null
+        },
+        {
+          "km": 82,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.5451,
+          "meanRounds": null
+        },
+        {
+          "km": 84,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.54253,
+          "meanRounds": null
+        },
+        {
+          "km": 86,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.54011,
+          "meanRounds": null
+        },
+        {
+          "km": 88,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.53782,
+          "meanRounds": null
+        },
+        {
+          "km": 90,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 0,
+          "rawFidelity": 0.53567,
+          "meanRounds": null
+        }
+      ],
+      "at94": {
+        "km": 10,
+        "nonZero": 7,
+        "seeds": 7,
+        "meanYieldPct": 18.6,
+        "lossPct": 0,
+        "rawFidelity": 0.87287,
+        "meanRounds": 1.101
+      }
+    },
+    {
+      "a": 0.16,
+      "label": "0,16",
+      "tech": "ultra-düşük kayıplı fiber (mertebe)",
+      "criticalKm": 38,
+      "workingKm": 30,
+      "curve": [
+        {
+          "km": 4,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 42.7,
+          "lossPct": 13.7,
+          "rawFidelity": 0.94464,
+          "meanRounds": 0.017
+        },
+        {
+          "km": 6,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 16.6,
+          "lossPct": 19.83,
+          "rawFidelity": 0.9193,
+          "meanRounds": 1.051
+        },
+        {
+          "km": 8,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 14.3429,
+          "lossPct": 25.53,
+          "rawFidelity": 0.8954,
+          "meanRounds": 1.091
+        },
+        {
+          "km": 10,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 12.2071,
+          "lossPct": 30.82,
+          "rawFidelity": 0.87287,
+          "meanRounds": 1.177
+        },
+        {
+          "km": 12,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 10.95,
+          "lossPct": 35.73,
+          "rawFidelity": 0.85162,
+          "meanRounds": 1.223
+        },
+        {
+          "km": 14,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 9.8,
+          "lossPct": 40.3,
+          "rawFidelity": 0.83158,
+          "meanRounds": 1.228
+        },
+        {
+          "km": 16,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 8.2,
+          "lossPct": 44.54,
+          "rawFidelity": 0.81269,
+          "meanRounds": 1.334
+        },
+        {
+          "km": 18,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 6.8643,
+          "lossPct": 48.48,
+          "rawFidelity": 0.79487,
+          "meanRounds": 1.558
+        },
+        {
+          "km": 20,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 3.4357,
+          "lossPct": 52.14,
+          "rawFidelity": 0.77806,
+          "meanRounds": 2.495
+        },
+        {
+          "km": 22,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 2.8571,
+          "lossPct": 55.54,
+          "rawFidelity": 0.76222,
+          "meanRounds": 2.621
+        },
+        {
+          "km": 24,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 2.4214,
+          "lossPct": 58.7,
+          "rawFidelity": 0.74727,
+          "meanRounds": 2.719
+        },
+        {
+          "km": 26,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 1.8857,
+          "lossPct": 61.63,
+          "rawFidelity": 0.73318,
+          "meanRounds": 2.975
+        },
+        {
+          "km": 28,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 1.3214,
+          "lossPct": 64.35,
+          "rawFidelity": 0.71989,
+          "meanRounds": 3.506
+        },
+        {
+          "km": 30,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.7071,
+          "lossPct": 66.89,
+          "rawFidelity": 0.70736,
+          "meanRounds": 4.237
+        },
+        {
+          "km": 32,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.4357,
+          "lossPct": 69.24,
+          "rawFidelity": 0.69555,
+          "meanRounds": 4.412
+        },
+        {
+          "km": 34,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.3,
+          "lossPct": 71.42,
+          "rawFidelity": 0.6844,
+          "meanRounds": 5.103
+        },
+        {
+          "km": 36,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.15,
+          "lossPct": 73.45,
+          "rawFidelity": 0.67389,
+          "meanRounds": 5.205
+        },
+        {
+          "km": 38,
+          "nonZero": 4,
+          "seeds": 7,
+          "meanYieldPct": 0.0357,
+          "lossPct": 75.34,
+          "rawFidelity": 0.66398,
+          "meanRounds": 6.125
+        },
+        {
+          "km": 40,
+          "nonZero": 3,
+          "seeds": 7,
+          "meanYieldPct": 0.0214,
+          "lossPct": 77.09,
+          "rawFidelity": 0.65464,
+          "meanRounds": 5.333
+        },
+        {
+          "km": 42,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 78.72,
+          "rawFidelity": 0.64583,
+          "meanRounds": null
+        },
+        {
+          "km": 44,
+          "nonZero": 1,
+          "seeds": 7,
+          "meanYieldPct": 0.0071,
+          "lossPct": 80.23,
+          "rawFidelity": 0.63752,
+          "meanRounds": 5
+        },
+        {
+          "km": 46,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 81.63,
+          "rawFidelity": 0.62968,
+          "meanRounds": null
+        },
+        {
+          "km": 48,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 82.94,
+          "rawFidelity": 0.62229,
+          "meanRounds": null
+        },
+        {
+          "km": 50,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 84.15,
+          "rawFidelity": 0.61532,
+          "meanRounds": null
+        },
+        {
+          "km": 52,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 85.28,
+          "rawFidelity": 0.60875,
+          "meanRounds": null
+        },
+        {
+          "km": 54,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 86.32,
+          "rawFidelity": 0.60255,
+          "meanRounds": null
+        },
+        {
+          "km": 56,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 87.29,
+          "rawFidelity": 0.59671,
+          "meanRounds": null
+        },
+        {
+          "km": 58,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 88.2,
+          "rawFidelity": 0.5912,
+          "meanRounds": null
+        },
+        {
+          "km": 60,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 89.04,
+          "rawFidelity": 0.586,
+          "meanRounds": null
+        },
+        {
+          "km": 62,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 89.81,
+          "rawFidelity": 0.5811,
+          "meanRounds": null
+        },
+        {
+          "km": 64,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 90.54,
+          "rawFidelity": 0.57648,
+          "meanRounds": null
+        },
+        {
+          "km": 66,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 91.21,
+          "rawFidelity": 0.57212,
+          "meanRounds": null
+        },
+        {
+          "km": 68,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 91.83,
+          "rawFidelity": 0.56801,
+          "meanRounds": null
+        },
+        {
+          "km": 70,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 92.41,
+          "rawFidelity": 0.56413,
+          "meanRounds": null
+        },
+        {
+          "km": 72,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 92.95,
+          "rawFidelity": 0.56048,
+          "meanRounds": null
+        },
+        {
+          "km": 74,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 93.45,
+          "rawFidelity": 0.55703,
+          "meanRounds": null
+        },
+        {
+          "km": 76,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 93.92,
+          "rawFidelity": 0.55378,
+          "meanRounds": null
+        },
+        {
+          "km": 78,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 94.35,
+          "rawFidelity": 0.55072,
+          "meanRounds": null
+        },
+        {
+          "km": 80,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 94.75,
+          "rawFidelity": 0.54783,
+          "meanRounds": null
+        },
+        {
+          "km": 82,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 95.12,
+          "rawFidelity": 0.5451,
+          "meanRounds": null
+        },
+        {
+          "km": 84,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 95.47,
+          "rawFidelity": 0.54253,
+          "meanRounds": null
+        },
+        {
+          "km": 86,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 95.79,
+          "rawFidelity": 0.54011,
+          "meanRounds": null
+        },
+        {
+          "km": 88,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.09,
+          "rawFidelity": 0.53782,
+          "meanRounds": null
+        },
+        {
+          "km": 90,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.37,
+          "rawFidelity": 0.53567,
+          "meanRounds": null
+        }
+      ],
+      "at94": {
+        "km": 10,
+        "nonZero": 7,
+        "seeds": 7,
+        "meanYieldPct": 12.2071,
+        "lossPct": 30.82,
+        "rawFidelity": 0.87287,
+        "meanRounds": 1.177
+      }
+    },
+    {
+      "a": 0.2,
+      "label": "0,20",
+      "tech": "SMF-28 standart @1550nm",
+      "criticalKm": 36,
+      "workingKm": 28,
+      "curve": [
+        {
+          "km": 4,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 40.9071,
+          "lossPct": 16.82,
+          "rawFidelity": 0.94464,
+          "meanRounds": 0.022
+        },
+        {
+          "km": 6,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 15.7286,
+          "lossPct": 24.14,
+          "rawFidelity": 0.9193,
+          "meanRounds": 1.063
+        },
+        {
+          "km": 8,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 13.4786,
+          "lossPct": 30.82,
+          "rawFidelity": 0.8954,
+          "meanRounds": 1.098
+        },
+        {
+          "km": 10,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 11.2929,
+          "lossPct": 36.9,
+          "rawFidelity": 0.87287,
+          "meanRounds": 1.147
+        },
+        {
+          "km": 12,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 9.5929,
+          "lossPct": 42.46,
+          "rawFidelity": 0.85162,
+          "meanRounds": 1.215
+        },
+        {
+          "km": 14,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 8.3071,
+          "lossPct": 47.52,
+          "rawFidelity": 0.83158,
+          "meanRounds": 1.285
+        },
+        {
+          "km": 16,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 6.9143,
+          "lossPct": 52.14,
+          "rawFidelity": 0.81269,
+          "meanRounds": 1.382
+        },
+        {
+          "km": 18,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 5.6286,
+          "lossPct": 56.35,
+          "rawFidelity": 0.79487,
+          "meanRounds": 1.665
+        },
+        {
+          "km": 20,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 2.8357,
+          "lossPct": 60.19,
+          "rawFidelity": 0.77806,
+          "meanRounds": 2.491
+        },
+        {
+          "km": 22,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 2.2071,
+          "lossPct": 63.69,
+          "rawFidelity": 0.76222,
+          "meanRounds": 2.659
+        },
+        {
+          "km": 24,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 1.75,
+          "lossPct": 66.89,
+          "rawFidelity": 0.74727,
+          "meanRounds": 2.914
+        },
+        {
+          "km": 26,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 1.4143,
+          "lossPct": 69.8,
+          "rawFidelity": 0.73318,
+          "meanRounds": 3.231
+        },
+        {
+          "km": 28,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.85,
+          "lossPct": 72.46,
+          "rawFidelity": 0.71989,
+          "meanRounds": 3.572
+        },
+        {
+          "km": 30,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.3714,
+          "lossPct": 74.88,
+          "rawFidelity": 0.70736,
+          "meanRounds": 4.07
+        },
+        {
+          "km": 32,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.2286,
+          "lossPct": 77.09,
+          "rawFidelity": 0.69555,
+          "meanRounds": 5.2
+        },
+        {
+          "km": 34,
+          "nonZero": 6,
+          "seeds": 7,
+          "meanYieldPct": 0.0714,
+          "lossPct": 79.11,
+          "rawFidelity": 0.6844,
+          "meanRounds": 5.056
+        },
+        {
+          "km": 36,
+          "nonZero": 5,
+          "seeds": 7,
+          "meanYieldPct": 0.0714,
+          "lossPct": 80.95,
+          "rawFidelity": 0.67389,
+          "meanRounds": 5.933
+        },
+        {
+          "km": 38,
+          "nonZero": 2,
+          "seeds": 7,
+          "meanYieldPct": 0.0214,
+          "lossPct": 82.62,
+          "rawFidelity": 0.66398,
+          "meanRounds": 5.5
+        },
+        {
+          "km": 40,
+          "nonZero": 2,
+          "seeds": 7,
+          "meanYieldPct": 0.0143,
+          "lossPct": 84.15,
+          "rawFidelity": 0.65464,
+          "meanRounds": 7
+        },
+        {
+          "km": 42,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 85.55,
+          "rawFidelity": 0.64583,
+          "meanRounds": null
+        },
+        {
+          "km": 44,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 86.82,
+          "rawFidelity": 0.63752,
+          "meanRounds": null
+        },
+        {
+          "km": 46,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 87.98,
+          "rawFidelity": 0.62968,
+          "meanRounds": null
+        },
+        {
+          "km": 48,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 89.04,
+          "rawFidelity": 0.62229,
+          "meanRounds": null
+        },
+        {
+          "km": 50,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 90,
+          "rawFidelity": 0.61532,
+          "meanRounds": null
+        },
+        {
+          "km": 52,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 90.88,
+          "rawFidelity": 0.60875,
+          "meanRounds": null
+        },
+        {
+          "km": 54,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 91.68,
+          "rawFidelity": 0.60255,
+          "meanRounds": null
+        },
+        {
+          "km": 56,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 92.41,
+          "rawFidelity": 0.59671,
+          "meanRounds": null
+        },
+        {
+          "km": 58,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 93.08,
+          "rawFidelity": 0.5912,
+          "meanRounds": null
+        },
+        {
+          "km": 60,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 93.69,
+          "rawFidelity": 0.586,
+          "meanRounds": null
+        },
+        {
+          "km": 62,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 94.25,
+          "rawFidelity": 0.5811,
+          "meanRounds": null
+        },
+        {
+          "km": 64,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 94.75,
+          "rawFidelity": 0.57648,
+          "meanRounds": null
+        },
+        {
+          "km": 66,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 95.21,
+          "rawFidelity": 0.57212,
+          "meanRounds": null
+        },
+        {
+          "km": 68,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 95.63,
+          "rawFidelity": 0.56801,
+          "meanRounds": null
+        },
+        {
+          "km": 70,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.02,
+          "rawFidelity": 0.56413,
+          "meanRounds": null
+        },
+        {
+          "km": 72,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.37,
+          "rawFidelity": 0.56048,
+          "meanRounds": null
+        },
+        {
+          "km": 74,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.69,
+          "rawFidelity": 0.55703,
+          "meanRounds": null
+        },
+        {
+          "km": 76,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.98,
+          "rawFidelity": 0.55378,
+          "meanRounds": null
+        },
+        {
+          "km": 78,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 97.25,
+          "rawFidelity": 0.55072,
+          "meanRounds": null
+        },
+        {
+          "km": 80,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 97.49,
+          "rawFidelity": 0.54783,
+          "meanRounds": null
+        },
+        {
+          "km": 82,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 97.71,
+          "rawFidelity": 0.5451,
+          "meanRounds": null
+        },
+        {
+          "km": 84,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 97.91,
+          "rawFidelity": 0.54253,
+          "meanRounds": null
+        },
+        {
+          "km": 86,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.09,
+          "rawFidelity": 0.54011,
+          "meanRounds": null
+        },
+        {
+          "km": 88,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.26,
+          "rawFidelity": 0.53782,
+          "meanRounds": null
+        },
+        {
+          "km": 90,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.42,
+          "rawFidelity": 0.53567,
+          "meanRounds": null
+        }
+      ],
+      "at94": {
+        "km": 10,
+        "nonZero": 7,
+        "seeds": 7,
+        "meanYieldPct": 11.2929,
+        "lossPct": 36.9,
+        "rawFidelity": 0.87287,
+        "meanRounds": 1.147
+      }
+    },
+    {
+      "a": 0.3,
+      "label": "0,30",
+      "tech": "yaşlanmış/ekli saha fiberi (mertebe)",
+      "criticalKm": 32,
+      "workingKm": 24,
+      "curve": [
+        {
+          "km": 4,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 36.6857,
+          "lossPct": 24.14,
+          "rawFidelity": 0.94464,
+          "meanRounds": 0.042
+        },
+        {
+          "km": 6,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 13.2,
+          "lossPct": 33.93,
+          "rawFidelity": 0.9193,
+          "meanRounds": 1.103
+        },
+        {
+          "km": 8,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 10.9643,
+          "lossPct": 42.46,
+          "rawFidelity": 0.8954,
+          "meanRounds": 1.115
+        },
+        {
+          "km": 10,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 8.8786,
+          "lossPct": 49.88,
+          "rawFidelity": 0.87287,
+          "meanRounds": 1.146
+        },
+        {
+          "km": 12,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 7.2429,
+          "lossPct": 56.35,
+          "rawFidelity": 0.85162,
+          "meanRounds": 1.273
+        },
+        {
+          "km": 14,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 5.5643,
+          "lossPct": 61.98,
+          "rawFidelity": 0.83158,
+          "meanRounds": 1.366
+        },
+        {
+          "km": 16,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 4.5714,
+          "lossPct": 66.89,
+          "rawFidelity": 0.81269,
+          "meanRounds": 1.495
+        },
+        {
+          "km": 18,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 3.3571,
+          "lossPct": 71.16,
+          "rawFidelity": 0.79487,
+          "meanRounds": 1.826
+        },
+        {
+          "km": 20,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 1.6286,
+          "lossPct": 74.88,
+          "rawFidelity": 0.77806,
+          "meanRounds": 2.671
+        },
+        {
+          "km": 22,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 1.1571,
+          "lossPct": 78.12,
+          "rawFidelity": 0.76222,
+          "meanRounds": 3.018
+        },
+        {
+          "km": 24,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.7286,
+          "lossPct": 80.95,
+          "rawFidelity": 0.74727,
+          "meanRounds": 3.46
+        },
+        {
+          "km": 26,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.4643,
+          "lossPct": 83.4,
+          "rawFidelity": 0.73318,
+          "meanRounds": 4.022
+        },
+        {
+          "km": 28,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.2786,
+          "lossPct": 85.55,
+          "rawFidelity": 0.71989,
+          "meanRounds": 4.464
+        },
+        {
+          "km": 30,
+          "nonZero": 5,
+          "seeds": 7,
+          "meanYieldPct": 0.0786,
+          "lossPct": 87.41,
+          "rawFidelity": 0.70736,
+          "meanRounds": 4.533
+        },
+        {
+          "km": 32,
+          "nonZero": 4,
+          "seeds": 7,
+          "meanYieldPct": 0.0286,
+          "lossPct": 89.04,
+          "rawFidelity": 0.69555,
+          "meanRounds": 6
+        },
+        {
+          "km": 34,
+          "nonZero": 1,
+          "seeds": 7,
+          "meanYieldPct": 0.0071,
+          "lossPct": 90.45,
+          "rawFidelity": 0.6844,
+          "meanRounds": 6
+        },
+        {
+          "km": 36,
+          "nonZero": 1,
+          "seeds": 7,
+          "meanYieldPct": 0.0071,
+          "lossPct": 91.68,
+          "rawFidelity": 0.67389,
+          "meanRounds": 4
+        },
+        {
+          "km": 38,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 92.76,
+          "rawFidelity": 0.66398,
+          "meanRounds": null
+        },
+        {
+          "km": 40,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 93.69,
+          "rawFidelity": 0.65464,
+          "meanRounds": null
+        },
+        {
+          "km": 42,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 94.5,
+          "rawFidelity": 0.64583,
+          "meanRounds": null
+        },
+        {
+          "km": 44,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 95.21,
+          "rawFidelity": 0.63752,
+          "meanRounds": null
+        },
+        {
+          "km": 46,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 95.83,
+          "rawFidelity": 0.62968,
+          "meanRounds": null
+        },
+        {
+          "km": 48,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.37,
+          "rawFidelity": 0.62229,
+          "meanRounds": null
+        },
+        {
+          "km": 50,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.84,
+          "rawFidelity": 0.61532,
+          "meanRounds": null
+        },
+        {
+          "km": 52,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 97.25,
+          "rawFidelity": 0.60875,
+          "meanRounds": null
+        },
+        {
+          "km": 54,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 97.6,
+          "rawFidelity": 0.60255,
+          "meanRounds": null
+        },
+        {
+          "km": 56,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 97.91,
+          "rawFidelity": 0.59671,
+          "meanRounds": null
+        },
+        {
+          "km": 58,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.18,
+          "rawFidelity": 0.5912,
+          "meanRounds": null
+        },
+        {
+          "km": 60,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.42,
+          "rawFidelity": 0.586,
+          "meanRounds": null
+        },
+        {
+          "km": 62,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.62,
+          "rawFidelity": 0.5811,
+          "meanRounds": null
+        },
+        {
+          "km": 64,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.8,
+          "rawFidelity": 0.57648,
+          "meanRounds": null
+        },
+        {
+          "km": 66,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.95,
+          "rawFidelity": 0.57212,
+          "meanRounds": null
+        },
+        {
+          "km": 68,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.09,
+          "rawFidelity": 0.56801,
+          "meanRounds": null
+        },
+        {
+          "km": 70,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.21,
+          "rawFidelity": 0.56413,
+          "meanRounds": null
+        },
+        {
+          "km": 72,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.31,
+          "rawFidelity": 0.56048,
+          "meanRounds": null
+        },
+        {
+          "km": 74,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.4,
+          "rawFidelity": 0.55703,
+          "meanRounds": null
+        },
+        {
+          "km": 76,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.48,
+          "rawFidelity": 0.55378,
+          "meanRounds": null
+        },
+        {
+          "km": 78,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.54,
+          "rawFidelity": 0.55072,
+          "meanRounds": null
+        },
+        {
+          "km": 80,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.6,
+          "rawFidelity": 0.54783,
+          "meanRounds": null
+        },
+        {
+          "km": 82,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.65,
+          "rawFidelity": 0.5451,
+          "meanRounds": null
+        },
+        {
+          "km": 84,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.7,
+          "rawFidelity": 0.54253,
+          "meanRounds": null
+        },
+        {
+          "km": 86,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.74,
+          "rawFidelity": 0.54011,
+          "meanRounds": null
+        },
+        {
+          "km": 88,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.77,
+          "rawFidelity": 0.53782,
+          "meanRounds": null
+        },
+        {
+          "km": 90,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.8,
+          "rawFidelity": 0.53567,
+          "meanRounds": null
+        }
+      ],
+      "at94": {
+        "km": 10,
+        "nonZero": 7,
+        "seeds": 7,
+        "meanYieldPct": 8.8786,
+        "lossPct": 49.88,
+        "rawFidelity": 0.87287,
+        "meanRounds": 1.146
+      }
+    },
+    {
+      "a": 0.4,
+      "label": "0,40",
+      "tech": "kötü / çok ekli fiber (mertebe)",
+      "criticalKm": 26,
+      "workingKm": 20,
+      "curve": [
+        {
+          "km": 4,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 33.7714,
+          "lossPct": 30.82,
+          "rawFidelity": 0.94464,
+          "meanRounds": 0.032
+        },
+        {
+          "km": 6,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 11.7643,
+          "lossPct": 42.46,
+          "rawFidelity": 0.9193,
+          "meanRounds": 1.109
+        },
+        {
+          "km": 8,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 9.0857,
+          "lossPct": 52.14,
+          "rawFidelity": 0.8954,
+          "meanRounds": 1.146
+        },
+        {
+          "km": 10,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 6.9714,
+          "lossPct": 60.19,
+          "rawFidelity": 0.87287,
+          "meanRounds": 1.195
+        },
+        {
+          "km": 12,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 5.3714,
+          "lossPct": 66.89,
+          "rawFidelity": 0.85162,
+          "meanRounds": 1.306
+        },
+        {
+          "km": 14,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 3.9929,
+          "lossPct": 72.46,
+          "rawFidelity": 0.83158,
+          "meanRounds": 1.422
+        },
+        {
+          "km": 16,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 2.7571,
+          "lossPct": 77.09,
+          "rawFidelity": 0.81269,
+          "meanRounds": 1.659
+        },
+        {
+          "km": 18,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 1.9357,
+          "lossPct": 80.95,
+          "rawFidelity": 0.79487,
+          "meanRounds": 2.15
+        },
+        {
+          "km": 20,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.7786,
+          "lossPct": 84.15,
+          "rawFidelity": 0.77806,
+          "meanRounds": 2.946
+        },
+        {
+          "km": 22,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.4357,
+          "lossPct": 86.82,
+          "rawFidelity": 0.76222,
+          "meanRounds": 3.32
+        },
+        {
+          "km": 24,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.2929,
+          "lossPct": 89.04,
+          "rawFidelity": 0.74727,
+          "meanRounds": 3.984
+        },
+        {
+          "km": 26,
+          "nonZero": 7,
+          "seeds": 7,
+          "meanYieldPct": 0.1071,
+          "lossPct": 90.88,
+          "rawFidelity": 0.73318,
+          "meanRounds": 4.5
+        },
+        {
+          "km": 28,
+          "nonZero": 3,
+          "seeds": 7,
+          "meanYieldPct": 0.0286,
+          "lossPct": 92.41,
+          "rawFidelity": 0.71989,
+          "meanRounds": 5.333
+        },
+        {
+          "km": 30,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 93.69,
+          "rawFidelity": 0.70736,
+          "meanRounds": null
+        },
+        {
+          "km": 32,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 94.75,
+          "rawFidelity": 0.69555,
+          "meanRounds": null
+        },
+        {
+          "km": 34,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 95.63,
+          "rawFidelity": 0.6844,
+          "meanRounds": null
+        },
+        {
+          "km": 36,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.37,
+          "rawFidelity": 0.67389,
+          "meanRounds": null
+        },
+        {
+          "km": 38,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 96.98,
+          "rawFidelity": 0.66398,
+          "meanRounds": null
+        },
+        {
+          "km": 40,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 97.49,
+          "rawFidelity": 0.65464,
+          "meanRounds": null
+        },
+        {
+          "km": 42,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 97.91,
+          "rawFidelity": 0.64583,
+          "meanRounds": null
+        },
+        {
+          "km": 44,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.26,
+          "rawFidelity": 0.63752,
+          "meanRounds": null
+        },
+        {
+          "km": 46,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.55,
+          "rawFidelity": 0.62968,
+          "meanRounds": null
+        },
+        {
+          "km": 48,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 98.8,
+          "rawFidelity": 0.62229,
+          "meanRounds": null
+        },
+        {
+          "km": 50,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99,
+          "rawFidelity": 0.61532,
+          "meanRounds": null
+        },
+        {
+          "km": 52,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.17,
+          "rawFidelity": 0.60875,
+          "meanRounds": null
+        },
+        {
+          "km": 54,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.31,
+          "rawFidelity": 0.60255,
+          "meanRounds": null
+        },
+        {
+          "km": 56,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.42,
+          "rawFidelity": 0.59671,
+          "meanRounds": null
+        },
+        {
+          "km": 58,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.52,
+          "rawFidelity": 0.5912,
+          "meanRounds": null
+        },
+        {
+          "km": 60,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.6,
+          "rawFidelity": 0.586,
+          "meanRounds": null
+        },
+        {
+          "km": 62,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.67,
+          "rawFidelity": 0.5811,
+          "meanRounds": null
+        },
+        {
+          "km": 64,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.72,
+          "rawFidelity": 0.57648,
+          "meanRounds": null
+        },
+        {
+          "km": 66,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.77,
+          "rawFidelity": 0.57212,
+          "meanRounds": null
+        },
+        {
+          "km": 68,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.81,
+          "rawFidelity": 0.56801,
+          "meanRounds": null
+        },
+        {
+          "km": 70,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.84,
+          "rawFidelity": 0.56413,
+          "meanRounds": null
+        },
+        {
+          "km": 72,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.87,
+          "rawFidelity": 0.56048,
+          "meanRounds": null
+        },
+        {
+          "km": 74,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.89,
+          "rawFidelity": 0.55703,
+          "meanRounds": null
+        },
+        {
+          "km": 76,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.91,
+          "rawFidelity": 0.55378,
+          "meanRounds": null
+        },
+        {
+          "km": 78,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.92,
+          "rawFidelity": 0.55072,
+          "meanRounds": null
+        },
+        {
+          "km": 80,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.94,
+          "rawFidelity": 0.54783,
+          "meanRounds": null
+        },
+        {
+          "km": 82,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.95,
+          "rawFidelity": 0.5451,
+          "meanRounds": null
+        },
+        {
+          "km": 84,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.96,
+          "rawFidelity": 0.54253,
+          "meanRounds": null
+        },
+        {
+          "km": 86,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.96,
+          "rawFidelity": 0.54011,
+          "meanRounds": null
+        },
+        {
+          "km": 88,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.97,
+          "rawFidelity": 0.53782,
+          "meanRounds": null
+        },
+        {
+          "km": 90,
+          "nonZero": 0,
+          "seeds": 7,
+          "meanYieldPct": 0,
+          "lossPct": 99.97,
+          "rawFidelity": 0.53567,
+          "meanRounds": null
+        }
+      ],
+      "at94": {
+        "km": 10,
+        "nonZero": 7,
+        "seeds": 7,
+        "meanYieldPct": 6.9714,
+        "lossPct": 60.19,
+        "rawFidelity": 0.87287,
+        "meanRounds": 1.195
+      }
+    }
+  ],
+  "dejmpsRounds": {
+    "linkTarget": 0.91833,
+    "analytic": [
+      {
+        "F": 0.95,
+        "rounds": 0,
+        "cost": 1,
+        "p1": null,
+        "reachable": true
+      },
+      {
+        "F": 0.92,
+        "rounds": 0,
+        "cost": 1,
+        "p1": null,
+        "reachable": true
+      },
+      {
+        "F": 0.9,
+        "rounds": 1,
+        "cost": 2.439,
+        "p1": 0.82,
+        "reachable": true
+      },
+      {
+        "F": 0.85,
+        "rounds": 1,
+        "cost": 2.685,
+        "p1": 0.745,
+        "reachable": true
+      },
+      {
+        "F": 0.8,
+        "rounds": 1,
+        "cost": 2.941,
+        "p1": 0.68,
+        "reachable": true
+      },
+      {
+        "F": 0.75,
+        "rounds": 2,
+        "cost": 7.805,
+        "p1": 0.625,
+        "reachable": true
+      },
+      {
+        "F": 0.7,
+        "rounds": 2,
+        "cost": 9.347,
+        "p1": 0.58,
+        "reachable": true
+      },
+      {
+        "F": 0.65,
+        "rounds": 2,
+        "cost": 11.265,
+        "p1": 0.545,
+        "reachable": true
+      },
+      {
+        "F": 0.6,
+        "rounds": 3,
+        "cost": 36.996,
+        "p1": 0.52,
+        "reachable": true
+      },
+      {
+        "F": 0.575,
+        "rounds": 4,
+        "cost": 104.987,
+        "p1": 0.51125,
+        "reachable": true
+      },
+      {
+        "F": 0.55,
+        "rounds": 4,
+        "cost": 147.596,
+        "p1": 0.505,
+        "reachable": true
+      },
+      {
+        "F": 0.535,
+        "rounds": 5,
+        "cost": 446.971,
+        "p1": 0.50245,
+        "reachable": true
+      },
+      {
+        "F": 0.52,
+        "rounds": 5,
+        "cost": 685.333,
+        "p1": 0.5008,
+        "reachable": true
+      },
+      {
+        "F": 0.51,
+        "rounds": 6,
+        "cost": 2740.897,
+        "p1": 0.5002,
+        "reachable": true
+      },
+      {
+        "F": 0.505,
+        "rounds": 7,
+        "cost": 10963.152,
+        "p1": 0.50005,
+        "reachable": true
+      },
+      {
+        "F": 0.502,
+        "rounds": 9,
+        "cost": 123810.197,
+        "p1": 0.500008,
+        "reachable": true
+      }
+    ],
+    "measured": [
+      {
+        "km": 4,
+        "Fraw": 0.94464,
+        "measuredRounds": 0.022,
+        "analyticRounds": 0,
+        "yieldPct": 40.9071,
+        "roundOverhead": 0.022
+      },
+      {
+        "km": 9.354,
+        "Fraw": 0.88,
+        "measuredRounds": 1.117,
+        "analyticRounds": 1,
+        "yieldPct": 11.9929,
+        "roundOverhead": 0.117
+      },
+      {
+        "km": 15,
+        "Fraw": 0.822,
+        "measuredRounds": 1.328,
+        "analyticRounds": 1,
+        "yieldPct": 7.6929,
+        "roundOverhead": 0.328
+      },
+      {
+        "km": 20,
+        "Fraw": 0.77806,
+        "measuredRounds": 2.491,
+        "analyticRounds": 1,
+        "yieldPct": 2.8357,
+        "roundOverhead": 1.491
+      },
+      {
+        "km": 25,
+        "Fraw": 0.74012,
+        "measuredRounds": 2.865,
+        "analyticRounds": 2,
+        "yieldPct": 1.4429,
+        "roundOverhead": 0.865
+      },
+      {
+        "km": 30,
+        "Fraw": 0.70736,
+        "measuredRounds": 4.07,
+        "analyticRounds": 2,
+        "yieldPct": 0.3714,
+        "roundOverhead": 2.07
+      },
+      {
+        "km": 35,
+        "Fraw": 0.67907,
+        "measuredRounds": 6,
+        "analyticRounds": 2,
+        "yieldPct": 0.0714,
+        "roundOverhead": 4
+      }
+    ]
+  },
+  "failures": 0
+}
