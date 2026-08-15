@@ -1,0 +1,1042 @@
+{
+  "generatedAt": "2026-08-15T13:25:57.500Z",
+  "checks": [
+    {
+      "name": "Tahsis, commit edilmiş yönlendirme sonucunu yeniden üretiyor (10.277 çift, ×2,48)",
+      "ok": true,
+      "detail": "paralel=10277, tek=4136, kazanç=×2.4848"
+    },
+    {
+      "name": "Toplanan çift sayısı tahsis toplamıyla birebir aynı",
+      "ok": true,
+      "detail": "toplandı=10277, tahsis=10277"
+    },
+    {
+      "name": "Tüm çiftler saf faz gürültülü (X = Y = 0) — baz asimetrisinin kaynağı",
+      "ok": true,
+      "detail": "her yolda X=Y=0"
+    },
+    {
+      "name": "Havuzlamanın QBER'i seyrelttiği doğrulandı (birleşik e_ph > en iyi yolun e_ph'i)",
+      "ok": true,
+      "detail": "birleşik e_ph=0.04833 > tek yol e_ph=0.033488"
+    },
+    {
+      "name": "Seyrelmeye RAĞMEN üç yolu birden havuzlamak en yüksek ℓ'yi veriyor (amortisman baskın)",
+      "ok": true,
+      "detail": "en iyi alt küme = [A→R2→R3→B, A→R1→B, A→R4→B], ℓ=678"
+    },
+    {
+      "name": "ℓ kazancı tohuma karşı kararlı (tek yol ℓ = 75.3 ± 11.8, birleşik ℓ = 661 ± 29.2)",
+      "ok": true,
+      "detail": "değişkenlik: tek yol %15.7, birleşik %4.4 · kazanç bandı ×6.46 – ×13.65"
+    },
+    {
+      "name": "Yol başına AYRI anahtarlama, paralel kazancı tamamen harcıyor (R_key tek yolun ALTINDA)",
+      "ok": true,
+      "detail": "ayrı bloklarla R_key kazancı = ×0.618 (< 1) — 2. ve 3. yol tek başına abort ediyor"
+    },
+    {
+      "name": "Birleşik blok, yol başına ayrı anahtarlamayı yeniyor (sonlu-anahtar amortismanı)",
+      "ok": true,
+      "detail": "birleşik ℓ=661 > ayrı bloklar Σℓ=77.5 (20 tohum ortalaması)"
+    },
+    {
+      "name": "ℓ kazancı, çift kazancından BÜYÜK (süper-doğrusal — μ ∼ 1/√n)",
+      "ok": true,
+      "detail": "ℓ kazancı=×8.778 > çift kazancı=×2.4848"
+    },
+    {
+      "name": "Ölçülen faz hatası, analitik çiftle-ağırlıklı 1−F beklentisiyle uyumlu (15 tohum, 4σ)",
+      "ok": true,
+      "detail": "ölçülen=0.054786 ± 0.001228, öngörü=0.055334, sapma=0.45σ"
+    },
+    {
+      "name": "Anahtar bazı hata oranı TAM sıfır (saf fazda QBER_Z = X+Y = 0)",
+      "ok": true,
+      "detail": "15 tohumun hepsinde e_bit = 0"
+    },
+    {
+      "name": "Karışık-baz QBER = e_ph/2 (baz asimetrisinin doğrudan kanıtı, 4σ)",
+      "ok": true,
+      "detail": "simetrik QBER=0.029065, beklenen e_ph/2=0.027393 ± 0.004575 → 0.37σ"
+    },
+    {
+      "name": "Simetrik muhasebe faz terimini FAZLA kredilendiriyor (güvenlik açığı > 0 bit)",
+      "ok": true,
+      "detail": "151 bit fazla kredi (n=3819)"
+    },
+    {
+      "name": "Paralel yönlendirme, ilk güvenli anahtara tek yoldan ERKEN ulaşıyor",
+      "ok": true,
+      "detail": "paralel=350 ms, tek=650 ms"
+    },
+    {
+      "name": "R_key eğrisi monoton ARTMIYOR olabilir ama ℓ monoton artmalı (çift eklemek anahtarı azaltamaz)",
+      "ok": true,
+      "detail": "parallelEll her adımda azalmıyor"
+    },
+    {
+      "name": "E91 için TÜRETİLEN blok eşiği ölçümle doğrulandı (0,7× → abort, 1,6× → anahtar)",
+      "ok": true,
+      "detail": "0,7×(14306 çift) ℓ=0 · 1,6×(32700 çift) ℓ=391"
+    },
+    {
+      "name": "Birleşik havuzda CHSH ihlali 3σ üzerinde kanıtlandı",
+      "ok": true,
+      "detail": "S=2.67713 ± 0.04401 (15.39σ)"
+    },
+    {
+      "name": "CHSH ihlali kanıtlandığı hâlde E91 anahtarı ABORT ediyor — iki koşul ayrıdır",
+      "ok": true,
+      "detail": "S ihlali 15.39σ ama ℓ=0 (anahtar turu 1157, gereken ≈2271)"
+    },
+    {
+      "name": "BBM92, aynı çiftlerden E91'den daha fazla anahtar çıkarıyor (eleme oranı 1/2 vs 1/9)",
+      "ok": true,
+      "detail": "BBM92 ℓ=678 > E91 ℓ=0"
+    }
+  ],
+  "routing": {
+    "pathsFound": 5,
+    "allocatedPaths": [
+      "A→R2→R3→B",
+      "A→R1→B",
+      "A→R4→B"
+    ],
+    "singleBestPath": "A→R2→R3→B",
+    "singlePairs": 4136,
+    "parallelPairs": 10277,
+    "pairGain": 2.4848
+  },
+  "paths": [
+    {
+      "label": "A→R2→R3→B",
+      "hops": 3,
+      "totalKm": 25,
+      "pairs": 4136,
+      "makespanMs": 881.41,
+      "meanFidelity": 0.95717,
+      "predictedPhaseError": 0.04283
+    },
+    {
+      "label": "A→R1→B",
+      "hops": 2,
+      "totalKm": 22,
+      "pairs": 3318,
+      "makespanMs": 1175.213,
+      "meanFidelity": 0.950827,
+      "predictedPhaseError": 0.049173
+    },
+    {
+      "label": "A→R4→B",
+      "hops": 2,
+      "totalKm": 29,
+      "pairs": 2823,
+      "makespanMs": 1469.016,
+      "meanFidelity": 0.919105,
+      "predictedPhaseError": 0.080895
+    }
+  ],
+  "subsetScan": [
+    {
+      "paths": [
+        "A→R2→R3→B",
+        "A→R1→B",
+        "A→R4→B"
+      ],
+      "pairs": 10277,
+      "timeMs": 1469.016,
+      "ePh": 0.04833,
+      "ell": 678,
+      "rKeyBps": 461.53
+    },
+    {
+      "paths": [
+        "A→R2→R3→B",
+        "A→R1→B"
+      ],
+      "pairs": 7454,
+      "timeMs": 1175.213,
+      "ePh": 0.037666,
+      "ell": 407,
+      "rKeyBps": 346.32
+    },
+    {
+      "paths": [
+        "A→R2→R3→B",
+        "A→R4→B"
+      ],
+      "pairs": 6959,
+      "timeMs": 1469.016,
+      "ePh": 0.045506,
+      "ell": 326,
+      "rKeyBps": 221.92
+    },
+    {
+      "paths": [
+        "A→R1→B",
+        "A→R4→B"
+      ],
+      "pairs": 6141,
+      "timeMs": 1469.016,
+      "ePh": 0.046865,
+      "ell": 227,
+      "rKeyBps": 154.53
+    },
+    {
+      "paths": [
+        "A→R2→R3→B"
+      ],
+      "pairs": 4136,
+      "timeMs": 881.41,
+      "ePh": 0.033488,
+      "ell": 75,
+      "rKeyBps": 85.09
+    },
+    {
+      "paths": [
+        "A→R1→B"
+      ],
+      "pairs": 3318,
+      "timeMs": 1175.213,
+      "ePh": 0.033295,
+      "ell": 3,
+      "rKeyBps": 2.55
+    },
+    {
+      "paths": [
+        "A→R4→B"
+      ],
+      "pairs": 2823,
+      "timeMs": 1469.016,
+      "ePh": 0.068641,
+      "ell": 0,
+      "rKeyBps": 0
+    }
+  ],
+  "strategies": {
+    "single": {
+      "label": "tek yol (A→R2→R3→B)",
+      "paths": [
+        "A→R2→R3→B"
+      ],
+      "pairs": 4136,
+      "timeMs": 881.41,
+      "key": {
+        "ok": true,
+        "consumed": 4136,
+        "sifted": 2064,
+        "nZ": 989,
+        "kX": 1075,
+        "eBit": 0,
+        "ePh": 0.033488,
+        "mu": 0.211525,
+        "qPhUpper": 0.245014,
+        "leakEC": 4,
+        "corTerm": 50.83,
+        "paTerm": 64.44,
+        "ell": 75,
+        "reason": null
+      },
+      "symmetric": {
+        "ok": false,
+        "ell": 0,
+        "qberEst": 0.013566,
+        "n": 1548
+      },
+      "e91": {
+        "ok": false,
+        "consumed": 4136,
+        "bell": {
+          "S": 2.67817,
+          "standardError": 0.06857,
+          "sigmaAboveClassical": 9.89,
+          "chshRounds": 1877,
+          "violated": true,
+          "roundsNeededFor3Sigma": 173
+        },
+        "nKey": 443,
+        "kPE": 452,
+        "eBit": 0.022573,
+        "ePh": 0.042035,
+        "mu": 0.321165,
+        "leakEC": 81,
+        "ell": 0,
+        "reason": "sonlu-anahtar sınırı ℓ ≤ 0 (abort)"
+      },
+      "rKeyBps": 85.09,
+      "e91RKeyBps": 0
+    },
+    "perPath": {
+      "label": "paralel — yol başına AYRI blok",
+      "paths": [
+        "A→R2→R3→B",
+        "A→R1→B",
+        "A→R4→B"
+      ],
+      "pairs": 10277,
+      "timeMs": 1469.016,
+      "perBlock": [
+        {
+          "label": "A→R2→R3→B",
+          "ok": true,
+          "consumed": 4136,
+          "sifted": 2064,
+          "nZ": 989,
+          "kX": 1075,
+          "eBit": 0,
+          "ePh": 0.033488,
+          "mu": 0.211525,
+          "qPhUpper": 0.245014,
+          "leakEC": 4,
+          "corTerm": 50.83,
+          "paTerm": 64.44,
+          "ell": 75,
+          "reason": null
+        },
+        {
+          "label": "A→R1→B",
+          "ok": false,
+          "consumed": 3318,
+          "sifted": 1657,
+          "nZ": 836,
+          "kX": 821,
+          "eBit": 0,
+          "ePh": 0.047503,
+          "mu": 0.235917,
+          "qPhUpper": 0.28342,
+          "leakEC": 4,
+          "corTerm": 50.83,
+          "paTerm": 64.44,
+          "ell": 0,
+          "reason": "sonlu-anahtar sınırı ℓ ≤ 0 verdi (abort)"
+        },
+        {
+          "label": "A→R4→B",
+          "ok": false,
+          "consumed": 2823,
+          "sifted": 1418,
+          "nZ": 706,
+          "kX": 712,
+          "eBit": 0,
+          "ePh": 0.085674,
+          "mu": 0.25504,
+          "qPhUpper": 0.340714,
+          "leakEC": 4,
+          "corTerm": 50.83,
+          "paTerm": 64.44,
+          "ell": 0,
+          "reason": "sonlu-anahtar sınırı ℓ ≤ 0 verdi (abort)"
+        }
+      ],
+      "key": {
+        "ell": 75,
+        "blocks": 3,
+        "note": "corTerm+paTerm blok başına AYRI ayrı ödenir; μ her blokta ayrı ve daha büyüktür"
+      },
+      "e91": {
+        "ell": 0,
+        "perBlock": [
+          {
+            "label": "A→R2→R3→B",
+            "ok": false,
+            "consumed": 4136,
+            "bell": {
+              "S": 2.67817,
+              "standardError": 0.06857,
+              "sigmaAboveClassical": 9.89,
+              "chshRounds": 1877,
+              "violated": true,
+              "roundsNeededFor3Sigma": 173
+            },
+            "nKey": 443,
+            "kPE": 452,
+            "eBit": 0.022573,
+            "ePh": 0.042035,
+            "mu": 0.321165,
+            "leakEC": 81,
+            "ell": 0,
+            "reason": "sonlu-anahtar sınırı ℓ ≤ 0 (abort)"
+          },
+          {
+            "label": "A→R1→B",
+            "ok": false,
+            "consumed": 3318,
+            "bell": {
+              "S": 2.68717,
+              "standardError": 0.07742,
+              "sigmaAboveClassical": 8.88,
+              "chshRounds": 1460,
+              "violated": true,
+              "roundsNeededFor3Sigma": 168
+            },
+            "nKey": 404,
+            "kPE": 392,
+            "eBit": 0.012376,
+            "ePh": 0.056122,
+            "mu": 0.340631,
+            "leakEC": 48,
+            "ell": 0,
+            "reason": "sonlu-anahtar sınırı ℓ ≤ 0 (abort)"
+          },
+          {
+            "label": "A→R4→B",
+            "ok": false,
+            "consumed": 2823,
+            "bell": {
+              "S": 2.73473,
+              "standardError": 0.08132,
+              "sigmaAboveClassical": 9.04,
+              "chshRounds": 1264,
+              "violated": true,
+              "roundsNeededFor3Sigma": 143
+            },
+            "nKey": 298,
+            "kPE": 330,
+            "eBit": 0.036913,
+            "ePh": 0.084848,
+            "mu": 0.384043,
+            "leakEC": 91,
+            "ell": 0,
+            "reason": "sonlu-anahtar sınırı ℓ ≤ 0 (abort)"
+          }
+        ]
+      },
+      "rKeyBps": 51.05,
+      "e91RKeyBps": 0
+    },
+    "pooled": {
+      "label": "paralel — TEK birleşik blok",
+      "paths": [
+        "A→R2→R3→B",
+        "A→R1→B",
+        "A→R4→B"
+      ],
+      "pairs": 10277,
+      "timeMs": 1469.016,
+      "key": {
+        "ok": true,
+        "consumed": 10277,
+        "sifted": 5092,
+        "nZ": 2547,
+        "kX": 2545,
+        "eBit": 0,
+        "ePh": 0.04833,
+        "mu": 0.134518,
+        "qPhUpper": 0.182848,
+        "leakEC": 5,
+        "corTerm": 50.83,
+        "paTerm": 64.44,
+        "ell": 678,
+        "reason": null
+      },
+      "symmetric": {
+        "ok": true,
+        "ell": 295,
+        "qberEst": 0.029065,
+        "n": 3819
+      },
+      "e91": {
+        "ok": false,
+        "consumed": 10277,
+        "bell": {
+          "S": 2.67713,
+          "standardError": 0.04401,
+          "sigmaAboveClassical": 15.39,
+          "chshRounds": 4570,
+          "violated": true,
+          "roundsNeededFor3Sigma": 174
+        },
+        "nKey": 1157,
+        "kPE": 1116,
+        "eBit": 0.031115,
+        "ePh": 0.042115,
+        "mu": 0.20142,
+        "leakEC": 300,
+        "ell": 0,
+        "reason": "sonlu-anahtar sınırı ℓ ≤ 0 (abort)"
+      },
+      "rKeyBps": 461.53,
+      "e91RKeyBps": 0
+    },
+    "bestSubset": {
+      "label": "paralel — en iyi alt küme (3/3 yol)",
+      "paths": [
+        "A→R2→R3→B",
+        "A→R1→B",
+        "A→R4→B"
+      ],
+      "pairs": 10277,
+      "timeMs": 1469.016,
+      "key": {
+        "ok": true,
+        "consumed": 10277,
+        "sifted": 5092,
+        "nZ": 2547,
+        "kX": 2545,
+        "eBit": 0,
+        "ePh": 0.04833,
+        "mu": 0.134518,
+        "qPhUpper": 0.182848,
+        "leakEC": 5,
+        "corTerm": 50.83,
+        "paTerm": 64.44,
+        "ell": 678,
+        "reason": null
+      },
+      "rKeyBps": 461.53
+    }
+  },
+  "ellStability": {
+    "seeds": 20,
+    "single": {
+      "mean": 75.3,
+      "sd": 11.8,
+      "min": 52,
+      "max": 93,
+      "aborts": 0
+    },
+    "perPath": {
+      "mean": 77.5,
+      "sd": 13.5,
+      "min": 52,
+      "max": 100,
+      "aborts": 0
+    },
+    "pooled": {
+      "mean": 661,
+      "sd": 29.2,
+      "min": 601,
+      "max": 710,
+      "aborts": 0
+    }
+  },
+  "gains": {
+    "pairGain": 2.4848,
+    "pairRateGain": 1.4909,
+    "ellGainPooled": 8.778,
+    "ellGainPerPath": 1.029,
+    "rKeyGainPooled": 5.267,
+    "rKeyGainPerPath": 0.618,
+    "ellGainRangeAcrossSeeds": "×6.46 – ×13.65",
+    "note": "Kazançlar 20 tohumun ORTALAMALARININ ORANIDIR. Tek tohumluk oran ×9.04 çıkmıştı — bu sahte hassasiyettir."
+  },
+  "accountingComparison": {
+    "pooled": {
+      "symmetricQber": 0.029065,
+      "symmetricN": 3819,
+      "symmetricEll": 295,
+      "resolvedEBit": 0,
+      "resolvedEPh": 0.04833,
+      "resolvedN": 2547,
+      "resolvedEll": 678,
+      "qberRatio": 0.601,
+      "safetyGapBits": 151,
+      "safetyGapNote": "Simetrik muhasebe faz terimini e_ph=0.04833 yerine QBER=0.029065 ile hesaplıyor; bu, n=3819 bitlik blokta 151 bit FAZLA kredi demek — güvenlik açığı.",
+      "efficiencyNote": "Buna karşılık simetrik akış anahtar bitlerinin %25'ini parametre kestirimine feda ediyor ve e_bit≈0.029065 olduğu için Cascade sızıntısı çok yüksek; baz-çözünürlü akışta e_bit=0 olduğundan sızıntı 5 bitte kalıyor.",
+      "netEllDifference": 383,
+      "predictedEPh": 0.055334,
+      "measuredEPhMultiSeed": 0.054786
+    }
+  },
+  "rKeyCurve": [
+    {
+      "tMs": 100,
+      "singlePairs": 527,
+      "parallelPairs": 1055,
+      "singleEll": 0,
+      "parallelEll": 0,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 0,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.59242,
+      "parallelChshSigma": 4.17
+    },
+    {
+      "tMs": 150,
+      "singlePairs": 792,
+      "parallelPairs": 1605,
+      "singleEll": 0,
+      "parallelEll": 0,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 0,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.60798,
+      "parallelChshSigma": 5.32
+    },
+    {
+      "tMs": 200,
+      "singlePairs": 1051,
+      "parallelPairs": 2137,
+      "singleEll": 0,
+      "parallelEll": 0,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 0,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.58649,
+      "parallelChshSigma": 5.95
+    },
+    {
+      "tMs": 250,
+      "singlePairs": 1310,
+      "parallelPairs": 2667,
+      "singleEll": 0,
+      "parallelEll": 0,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 0,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.62877,
+      "parallelChshSigma": 7.26
+    },
+    {
+      "tMs": 300,
+      "singlePairs": 1574,
+      "parallelPairs": 3206,
+      "singleEll": 0,
+      "parallelEll": 0,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 0,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.6819,
+      "parallelChshSigma": 8.75
+    },
+    {
+      "tMs": 350,
+      "singlePairs": 1832,
+      "parallelPairs": 3724,
+      "singleEll": 0,
+      "parallelEll": 33,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 94.29,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.66377,
+      "parallelChshSigma": 9.14
+    },
+    {
+      "tMs": 400,
+      "singlePairs": 2099,
+      "parallelPairs": 4248,
+      "singleEll": 0,
+      "parallelEll": 73,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 182.5,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.66093,
+      "parallelChshSigma": 9.7
+    },
+    {
+      "tMs": 450,
+      "singlePairs": 2356,
+      "parallelPairs": 4774,
+      "singleEll": 0,
+      "parallelEll": 120,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 266.67,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.66666,
+      "parallelChshSigma": 10.34
+    },
+    {
+      "tMs": 500,
+      "singlePairs": 2619,
+      "parallelPairs": 5331,
+      "singleEll": 0,
+      "parallelEll": 169,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 338,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.69432,
+      "parallelChshSigma": 11.44
+    },
+    {
+      "tMs": 550,
+      "singlePairs": 2886,
+      "parallelPairs": 5860,
+      "singleEll": 0,
+      "parallelEll": 214,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 389.09,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.68051,
+      "parallelChshSigma": 11.7
+    },
+    {
+      "tMs": 600,
+      "singlePairs": 3151,
+      "parallelPairs": 6408,
+      "singleEll": 0,
+      "parallelEll": 268,
+      "singleRKeyBps": 0,
+      "parallelRKeyBps": 446.67,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.68491,
+      "parallelChshSigma": 12.33
+    },
+    {
+      "tMs": 650,
+      "singlePairs": 3414,
+      "parallelPairs": 6935,
+      "singleEll": 13,
+      "parallelEll": 332,
+      "singleRKeyBps": 20,
+      "parallelRKeyBps": 510.77,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.67607,
+      "parallelChshSigma": 12.65
+    },
+    {
+      "tMs": 700,
+      "singlePairs": 3682,
+      "parallelPairs": 7492,
+      "singleEll": 35,
+      "parallelEll": 397,
+      "singleRKeyBps": 50,
+      "parallelRKeyBps": 567.14,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.67592,
+      "parallelChshSigma": 13.17
+    },
+    {
+      "tMs": 750,
+      "singlePairs": 3960,
+      "parallelPairs": 8040,
+      "singleEll": 61,
+      "parallelEll": 446,
+      "singleRKeyBps": 81.33,
+      "parallelRKeyBps": 594.67,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.68109,
+      "parallelChshSigma": 13.76
+    },
+    {
+      "tMs": 800,
+      "singlePairs": 4136,
+      "parallelPairs": 8479,
+      "singleEll": 75,
+      "parallelEll": 486,
+      "singleRKeyBps": 93.75,
+      "parallelRKeyBps": 607.5,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.68835,
+      "parallelChshSigma": 14.31
+    },
+    {
+      "tMs": 850,
+      "singlePairs": 4136,
+      "parallelPairs": 8755,
+      "singleEll": 75,
+      "parallelEll": 521,
+      "singleRKeyBps": 88.24,
+      "parallelRKeyBps": 612.94,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.69857,
+      "parallelChshSigma": 14.8
+    },
+    {
+      "tMs": 900,
+      "singlePairs": 4136,
+      "parallelPairs": 9027,
+      "singleEll": 75,
+      "parallelEll": 557,
+      "singleRKeyBps": 83.33,
+      "parallelRKeyBps": 618.89,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.68749,
+      "parallelChshSigma": 14.75
+    },
+    {
+      "tMs": 950,
+      "singlePairs": 4136,
+      "parallelPairs": 9298,
+      "singleEll": 75,
+      "parallelEll": 578,
+      "singleRKeyBps": 78.95,
+      "parallelRKeyBps": 608.42,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.69265,
+      "parallelChshSigma": 15.07
+    },
+    {
+      "tMs": 1000,
+      "singlePairs": 4136,
+      "parallelPairs": 9499,
+      "singleEll": 75,
+      "parallelEll": 597,
+      "singleRKeyBps": 75,
+      "parallelRKeyBps": 597,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.69909,
+      "parallelChshSigma": 15.39
+    },
+    {
+      "tMs": 1050,
+      "singlePairs": 4136,
+      "parallelPairs": 9609,
+      "singleEll": 75,
+      "parallelEll": 610,
+      "singleRKeyBps": 71.43,
+      "parallelRKeyBps": 580.95,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.70206,
+      "parallelChshSigma": 15.55
+    },
+    {
+      "tMs": 1100,
+      "singlePairs": 4136,
+      "parallelPairs": 9723,
+      "singleEll": 75,
+      "parallelEll": 619,
+      "singleRKeyBps": 68.18,
+      "parallelRKeyBps": 562.73,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.70324,
+      "parallelChshSigma": 15.66
+    },
+    {
+      "tMs": 1150,
+      "singlePairs": 4136,
+      "parallelPairs": 9825,
+      "singleEll": 75,
+      "parallelEll": 632,
+      "singleRKeyBps": 65.22,
+      "parallelRKeyBps": 549.57,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.68678,
+      "parallelChshSigma": 15.29
+    },
+    {
+      "tMs": 1200,
+      "singlePairs": 4136,
+      "parallelPairs": 9925,
+      "singleEll": 75,
+      "parallelEll": 642,
+      "singleRKeyBps": 62.5,
+      "parallelRKeyBps": 535,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.67948,
+      "parallelChshSigma": 15.18
+    },
+    {
+      "tMs": 1250,
+      "singlePairs": 4136,
+      "parallelPairs": 10028,
+      "singleEll": 75,
+      "parallelEll": 654,
+      "singleRKeyBps": 60,
+      "parallelRKeyBps": 523.2,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.67194,
+      "parallelChshSigma": 15.06
+    },
+    {
+      "tMs": 1300,
+      "singlePairs": 4136,
+      "parallelPairs": 10129,
+      "singleEll": 75,
+      "parallelEll": 668,
+      "singleRKeyBps": 57.69,
+      "parallelRKeyBps": 513.85,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.6716,
+      "parallelChshSigma": 15.13
+    },
+    {
+      "tMs": 1350,
+      "singlePairs": 4136,
+      "parallelPairs": 10234,
+      "singleEll": 75,
+      "parallelEll": 672,
+      "singleRKeyBps": 55.56,
+      "parallelRKeyBps": 497.78,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.67399,
+      "parallelChshSigma": 15.26
+    },
+    {
+      "tMs": 1400,
+      "singlePairs": 4136,
+      "parallelPairs": 10277,
+      "singleEll": 75,
+      "parallelEll": 678,
+      "singleRKeyBps": 53.57,
+      "parallelRKeyBps": 484.29,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.67713,
+      "parallelChshSigma": 15.39
+    },
+    {
+      "tMs": 1450,
+      "singlePairs": 4136,
+      "parallelPairs": 10277,
+      "singleEll": 75,
+      "parallelEll": 678,
+      "singleRKeyBps": 51.72,
+      "parallelRKeyBps": 467.59,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.67713,
+      "parallelChshSigma": 15.39
+    },
+    {
+      "tMs": 1500,
+      "singlePairs": 4136,
+      "parallelPairs": 10277,
+      "singleEll": 75,
+      "parallelEll": 678,
+      "singleRKeyBps": 50,
+      "parallelRKeyBps": 452,
+      "singleE91Ell": 0,
+      "parallelE91Ell": 0,
+      "singleE91RKeyBps": 0,
+      "parallelE91RKeyBps": 0,
+      "parallelChshS": 2.67713,
+      "parallelChshSigma": 15.39
+    }
+  ],
+  "breakEven": {
+    "singleFirstKeyMs": 650,
+    "parallelFirstKeyMs": 350,
+    "singleFirstE91Ms": null,
+    "parallelFirstE91Ms": null,
+    "note": "Sonlu-anahtar sınırı yüzünden her iki strateji de bir EŞİK SÜRESİNDEN önce SIFIR anahtar verir; paralel bu eşiğe daha erken ulaşır."
+  },
+  "e91": {
+    "pooled": {
+      "ok": false,
+      "consumed": 10277,
+      "bell": {
+        "S": 2.67713,
+        "standardError": 0.04401,
+        "sigmaAboveClassical": 15.39,
+        "chshRounds": 4570,
+        "violated": true,
+        "roundsNeededFor3Sigma": 174
+      },
+      "nKey": 1157,
+      "kPE": 1116,
+      "eBit": 0.031115,
+      "ePh": 0.042115,
+      "mu": 0.20142,
+      "leakEC": 300,
+      "ell": 0,
+      "reason": "sonlu-anahtar sınırı ℓ ≤ 0 (abort)"
+    },
+    "single": {
+      "ok": false,
+      "consumed": 4136,
+      "bell": {
+        "S": 2.67817,
+        "standardError": 0.06857,
+        "sigmaAboveClassical": 9.89,
+        "chshRounds": 1877,
+        "violated": true,
+        "roundsNeededFor3Sigma": 173
+      },
+      "nKey": 443,
+      "kPE": 452,
+      "eBit": 0.022573,
+      "ePh": 0.042035,
+      "mu": 0.321165,
+      "leakEC": 81,
+      "ell": 0,
+      "reason": "sonlu-anahtar sınırı ℓ ≤ 0 (abort)"
+    },
+    "requiredBlock": {
+      "keyRoundsNeeded": 2271,
+      "pairsNeeded": 20437,
+      "leakPerBit": 0.25929,
+      "asymptoticRate": 0.4888
+    },
+    "requiredBlockVerified": {
+      "below": 0,
+      "above": 391
+    },
+    "note": "E91 anahtarı YALNIZCA eşleşen yönlerden alır: (45°,45°) anahtar, (90°,90°) faz kestirimi — her biri turların 1/9'u. BBM92'de bu oran 1/2'dir. Aradaki fark, Bell testinin ÜCRETİDİR.",
+    "twoConditions": "Bell ihlalinin istatistiksel olarak kanıtlanması ile sonlu-anahtar sınırının aşılması AYRI koşullardır; burada birincisi geçip ikincisi kalıyor."
+  },
+  "allChecksPassed": true
+}
