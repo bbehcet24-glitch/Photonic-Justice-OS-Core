@@ -1,0 +1,882 @@
+{
+  "generatedAt": "2026-08-15T14:47:41.932Z",
+  "checks": [
+    {
+      "name": "Sert 200 ms SLA sistemi KİLİTLİYOR (taban)",
+      "ok": true,
+      "detail": "340 blok, ℓ=0 bit, 731.015 çift çöpe"
+    },
+    {
+      "name": "Elastik pencere kilidi AÇIYOR (sert SLA'da 0 iken artık anahtar var)",
+      "ok": true,
+      "detail": "ℓ hedefi 128 bit → 146 blok, toplam 18.720 bit, 275.98 bit/s"
+    },
+    {
+      "name": "AMA ultra-düşük gecikme VERMİYOR: en hızlı blok bile 200 ms'i aşıyor",
+      "ok": true,
+      "detail": "en küçük gecikme 455 ms > 200 ms · p50 465 ms · p95 470 ms"
+    },
+    {
+      "name": "Elastik gecikme DEĞİŞKEN (jitter) — sert SLA'nın yerini tutamaz",
+      "ok": true,
+      "detail": "min 455 ms → p95 470 ms, jitter 15 ms"
+    },
+    {
+      "name": "Daha küçük ℓ hedefi bile fiziksel alt sınırı aşamıyor",
+      "ok": true,
+      "detail": "ℓ=64 bit hedefiyle bile en hızlı blok 385 ms"
+    },
+    {
+      "name": "Depo doluyken tüketici gecikmesi ≈ 0 (üretim gecikmesinden AYRIŞTI)",
+      "ok": true,
+      "detail": "320 istek servis edildi (ısınma sonrası 290), gözlenen ret 0 · üçler kuralıyla gerçek ret oranı için %95 ÜST SINIR %1.03 — \"0 gördük\", \"oran sıfır\" demek değil · üretim 5000 ms bloklarla çalışırken tüketici anında servis alıyor"
+    },
+    {
+      "name": "Depo, ısınma döneminde reddediyor — bu bir hata değil, dolma süresi",
+      "ok": true,
+      "detail": "toplam ret 30 (hepsi ilk 10000 ms içinde), kararlı durumda ret yok"
+    },
+    {
+      "name": "YETERLİLİK: talep üretimi aşarsa SONSUZ depo bile kurtarmıyor",
+      "ok": true,
+      "detail": "talep = üretimin %130'u → kapasite SINIRSIZ olmasına rağmen kararlı ret oranı %24.1 · depo dalgalanmayı yutar, AÇIĞI KAPATMAZ"
+    },
+    {
+      "name": "Türetilen S_min = D·T_b + 3σ, ölçülen sıfır-ret eşiğiyle uyuşuyor (±%25)",
+      "ok": true,
+      "detail": "türetilen 5.224 bit = ortalama çekiliş 3.280 + kuyruk payı 1.944 · ölçülen en küçük sıfır-ret kapasitesi 4.179 bit (türetilenin 0.8×)"
+    },
+    {
+      "name": "Kuyruk terimi GEREKLİ: yalnızca ortalama çekiliş (D·T_b) kadar depo YETMİYOR",
+      "ok": true,
+      "detail": "ortalama çekiliş 3.280 bit civarındaki kapasitelerde hâlâ ret var — dalgalanma √T_b ile ölçeklendiği için sabit çarpan yerine kuyruk payı türetildi"
+    },
+    {
+      "name": "Yetersiz depo hem REDDEDİYOR hem de taşan anahtarı ÇÖPE ATIYOR (çift kayıp)",
+      "ok": true,
+      "detail": "kapasite türetilenin 0.3× → ret %50.3 VE üretilen anahtarın %76.55'i taşıp atılıyor"
+    },
+    {
+      "name": "GÜVENLİK BEDELİ ölçüldü: depo büyüdükçe anahtarın beklediği süre uzuyor",
+      "ok": true,
+      "detail": "kapasite 1.567 → azami yaş 5530.5 ms · kapasite 15.672 → azami yaş 26988.9 ms"
+    },
+    {
+      "name": "Yalnızca DEPO her iki garantiyi birden veriyor",
+      "ok": true,
+      "detail": "depo: gecikme 0 ms VE 1312.31 bit/s (tavanın %69.77'i) · elastik: p50 465 ms ve yalnızca 275.98 bit/s"
+    }
+  ],
+  "stream": {
+    "sessionMs": 68000,
+    "totalPairs": 731015,
+    "pairsPerSec": 10750.2,
+    "cv": 0.0025,
+    "ePh": 0.052963,
+    "leakPerBit": 0.00129,
+    "ceilingBps": 1880.9
+  },
+  "hardSla": {
+    "slaMs": 200,
+    "blocks": 340,
+    "ell": 0,
+    "sustainedRateBps": 0,
+    "pairsWasted": 731015
+  },
+  "elastic": {
+    "64": {
+      "blocks": 172,
+      "ell": 10962,
+      "spanMs": 67865,
+      "sustainedRateBps": 161.53,
+      "latencyP50": 395,
+      "latencyP95": 400,
+      "latencyMin": 385,
+      "latencyMax": 405,
+      "latencyJitter": 15
+    },
+    "128": {
+      "blocks": 146,
+      "ell": 18720,
+      "spanMs": 67830,
+      "sustainedRateBps": 275.98,
+      "latencyP50": 465,
+      "latencyP95": 470,
+      "latencyMin": 455,
+      "latencyMax": 475,
+      "latencyJitter": 15
+    },
+    "256": {
+      "blocks": 114,
+      "ell": 29195,
+      "spanMs": 67610,
+      "sustainedRateBps": 431.81,
+      "latencyP50": 595,
+      "latencyP95": 600,
+      "latencyMin": 580,
+      "latencyMax": 600,
+      "latencyJitter": 20
+    },
+    "512": {
+      "blocks": 82,
+      "ell": 42301,
+      "spanMs": 67650,
+      "sustainedRateBps": 625.29,
+      "latencyP50": 825,
+      "latencyP95": 830,
+      "latencyMin": 815,
+      "latencyMax": 840,
+      "latencyJitter": 15
+    }
+  },
+  "production": {
+    "slaMs": 5000,
+    "blocks": 13,
+    "meanBlockMs": 5000,
+    "meanEllPerBlock": 6561.5,
+    "sustainedRateBps": 1312.31,
+    "pctOfCeiling": 69.77
+  },
+  "tiered": {
+    "depositedBits": 85300,
+    "discardedBits": 0,
+    "servedBits": 40960,
+    "deniedBits": 3840,
+    "servedCount": 320,
+    "deniedCount": 30,
+    "denialRate": 0.08571,
+    "finalLevelBits": 44340,
+    "meanKeyAgeMs": 18191.4,
+    "maxKeyAgeMs": 35491.4,
+    "keyIdsIssued": 13,
+    "demandBps": 656,
+    "requestBits": 128,
+    "lambdaPerSec": 5.125,
+    "capacityBits": null,
+    "requestsAfterWarmup": 290,
+    "denialsAfterWarmup": 0,
+    "steadyDenialRate": 0,
+    "peakLevelBits": 45876,
+    "traceLen": 363,
+    "steadyDenialUpperBound95": 0.01034
+  },
+  "levelTrace": [
+    {
+      "tMs": 69.2,
+      "levelBits": 0
+    },
+    {
+      "tMs": 585.6,
+      "levelBits": 0
+    },
+    {
+      "tMs": 1004.8,
+      "levelBits": 0
+    },
+    {
+      "tMs": 1372.8,
+      "levelBits": 0
+    },
+    {
+      "tMs": 1716.7,
+      "levelBits": 0
+    },
+    {
+      "tMs": 2124,
+      "levelBits": 0
+    },
+    {
+      "tMs": 2253.1,
+      "levelBits": 0
+    },
+    {
+      "tMs": 2761.7,
+      "levelBits": 0
+    },
+    {
+      "tMs": 3686.5,
+      "levelBits": 0
+    },
+    {
+      "tMs": 4651.7,
+      "levelBits": 0
+    },
+    {
+      "tMs": 5000,
+      "levelBits": 6630
+    },
+    {
+      "tMs": 5373.6,
+      "levelBits": 6246
+    },
+    {
+      "tMs": 5814.5,
+      "levelBits": 5862
+    },
+    {
+      "tMs": 6088.5,
+      "levelBits": 5478
+    },
+    {
+      "tMs": 6416.6,
+      "levelBits": 5094
+    },
+    {
+      "tMs": 7173,
+      "levelBits": 4710
+    },
+    {
+      "tMs": 7432.4,
+      "levelBits": 4326
+    },
+    {
+      "tMs": 7709.4,
+      "levelBits": 3942
+    },
+    {
+      "tMs": 8152,
+      "levelBits": 3558
+    },
+    {
+      "tMs": 8760.7,
+      "levelBits": 3174
+    },
+    {
+      "tMs": 9541.4,
+      "levelBits": 2790
+    },
+    {
+      "tMs": 10345.8,
+      "levelBits": 9196
+    },
+    {
+      "tMs": 10907.1,
+      "levelBits": 8812
+    },
+    {
+      "tMs": 11351.3,
+      "levelBits": 8428
+    },
+    {
+      "tMs": 11393.2,
+      "levelBits": 8044
+    },
+    {
+      "tMs": 11624.4,
+      "levelBits": 7660
+    },
+    {
+      "tMs": 11966.7,
+      "levelBits": 7276
+    },
+    {
+      "tMs": 12339.4,
+      "levelBits": 6892
+    },
+    {
+      "tMs": 13023,
+      "levelBits": 6508
+    },
+    {
+      "tMs": 13516.9,
+      "levelBits": 6124
+    },
+    {
+      "tMs": 14051.1,
+      "levelBits": 5740
+    },
+    {
+      "tMs": 14970.7,
+      "levelBits": 5356
+    },
+    {
+      "tMs": 15751.8,
+      "levelBits": 11768
+    },
+    {
+      "tMs": 16448.9,
+      "levelBits": 11384
+    },
+    {
+      "tMs": 16878.8,
+      "levelBits": 11000
+    },
+    {
+      "tMs": 17644,
+      "levelBits": 10616
+    },
+    {
+      "tMs": 18488.9,
+      "levelBits": 10232
+    },
+    {
+      "tMs": 19150.8,
+      "levelBits": 9848
+    },
+    {
+      "tMs": 19635.5,
+      "levelBits": 9464
+    },
+    {
+      "tMs": 20409,
+      "levelBits": 15791
+    },
+    {
+      "tMs": 20674.5,
+      "levelBits": 15407
+    },
+    {
+      "tMs": 21048.7,
+      "levelBits": 15023
+    },
+    {
+      "tMs": 21674.9,
+      "levelBits": 14639
+    },
+    {
+      "tMs": 22884.3,
+      "levelBits": 14255
+    },
+    {
+      "tMs": 23729.8,
+      "levelBits": 13871
+    },
+    {
+      "tMs": 23810.8,
+      "levelBits": 13487
+    },
+    {
+      "tMs": 24730.6,
+      "levelBits": 13103
+    },
+    {
+      "tMs": 25350.7,
+      "levelBits": 19383
+    },
+    {
+      "tMs": 25574.5,
+      "levelBits": 18999
+    },
+    {
+      "tMs": 26191.4,
+      "levelBits": 18615
+    },
+    {
+      "tMs": 26866.7,
+      "levelBits": 18231
+    },
+    {
+      "tMs": 27686.7,
+      "levelBits": 17847
+    },
+    {
+      "tMs": 28408.3,
+      "levelBits": 17463
+    },
+    {
+      "tMs": 28931.2,
+      "levelBits": 17079
+    },
+    {
+      "tMs": 29997.7,
+      "levelBits": 16695
+    },
+    {
+      "tMs": 30166.3,
+      "levelBits": 22997
+    },
+    {
+      "tMs": 30727.4,
+      "levelBits": 22613
+    },
+    {
+      "tMs": 31059.6,
+      "levelBits": 22229
+    },
+    {
+      "tMs": 31550.8,
+      "levelBits": 21845
+    },
+    {
+      "tMs": 32462.6,
+      "levelBits": 21461
+    },
+    {
+      "tMs": 33020.3,
+      "levelBits": 21077
+    },
+    {
+      "tMs": 33531.1,
+      "levelBits": 20693
+    },
+    {
+      "tMs": 33789.5,
+      "levelBits": 20309
+    },
+    {
+      "tMs": 34480.3,
+      "levelBits": 19925
+    },
+    {
+      "tMs": 34789.6,
+      "levelBits": 19541
+    },
+    {
+      "tMs": 34891.9,
+      "levelBits": 19157
+    },
+    {
+      "tMs": 35469.1,
+      "levelBits": 25353
+    },
+    {
+      "tMs": 36549.3,
+      "levelBits": 24969
+    },
+    {
+      "tMs": 37846.7,
+      "levelBits": 24585
+    },
+    {
+      "tMs": 39263.3,
+      "levelBits": 24201
+    },
+    {
+      "tMs": 40000,
+      "levelBits": 30386
+    },
+    {
+      "tMs": 40672.7,
+      "levelBits": 30002
+    },
+    {
+      "tMs": 41725.1,
+      "levelBits": 29618
+    },
+    {
+      "tMs": 41926.9,
+      "levelBits": 29234
+    },
+    {
+      "tMs": 43020.3,
+      "levelBits": 28850
+    },
+    {
+      "tMs": 44131.1,
+      "levelBits": 28466
+    },
+    {
+      "tMs": 44582.9,
+      "levelBits": 28082
+    },
+    {
+      "tMs": 45208.3,
+      "levelBits": 34295
+    },
+    {
+      "tMs": 45735,
+      "levelBits": 33911
+    },
+    {
+      "tMs": 46002.8,
+      "levelBits": 33527
+    },
+    {
+      "tMs": 46539.6,
+      "levelBits": 33143
+    },
+    {
+      "tMs": 46960.1,
+      "levelBits": 32759
+    },
+    {
+      "tMs": 47248.7,
+      "levelBits": 32375
+    },
+    {
+      "tMs": 47409.6,
+      "levelBits": 31991
+    },
+    {
+      "tMs": 47985.9,
+      "levelBits": 31607
+    },
+    {
+      "tMs": 48651.2,
+      "levelBits": 31223
+    },
+    {
+      "tMs": 49392.5,
+      "levelBits": 30839
+    },
+    {
+      "tMs": 49970.9,
+      "levelBits": 30455
+    },
+    {
+      "tMs": 50176.6,
+      "levelBits": 36618
+    },
+    {
+      "tMs": 51361.5,
+      "levelBits": 36234
+    },
+    {
+      "tMs": 52377.2,
+      "levelBits": 35850
+    },
+    {
+      "tMs": 52548.4,
+      "levelBits": 35466
+    },
+    {
+      "tMs": 52760.6,
+      "levelBits": 35082
+    },
+    {
+      "tMs": 52920.7,
+      "levelBits": 34698
+    },
+    {
+      "tMs": 53168.8,
+      "levelBits": 34314
+    },
+    {
+      "tMs": 53511.3,
+      "levelBits": 33930
+    },
+    {
+      "tMs": 53825,
+      "levelBits": 33546
+    },
+    {
+      "tMs": 55000,
+      "levelBits": 39777
+    },
+    {
+      "tMs": 55214,
+      "levelBits": 39393
+    },
+    {
+      "tMs": 55558.5,
+      "levelBits": 39009
+    },
+    {
+      "tMs": 55919.9,
+      "levelBits": 38625
+    },
+    {
+      "tMs": 56653.4,
+      "levelBits": 38241
+    },
+    {
+      "tMs": 56891.2,
+      "levelBits": 37857
+    },
+    {
+      "tMs": 57313.9,
+      "levelBits": 37473
+    },
+    {
+      "tMs": 57789.9,
+      "levelBits": 37089
+    },
+    {
+      "tMs": 58314.9,
+      "levelBits": 36705
+    },
+    {
+      "tMs": 59273.1,
+      "levelBits": 36321
+    },
+    {
+      "tMs": 60037.9,
+      "levelBits": 42733
+    },
+    {
+      "tMs": 60619.9,
+      "levelBits": 42349
+    },
+    {
+      "tMs": 61243.7,
+      "levelBits": 41965
+    },
+    {
+      "tMs": 61960.6,
+      "levelBits": 41581
+    },
+    {
+      "tMs": 62534.4,
+      "levelBits": 41197
+    },
+    {
+      "tMs": 63373.3,
+      "levelBits": 40813
+    },
+    {
+      "tMs": 63657.4,
+      "levelBits": 40429
+    },
+    {
+      "tMs": 63989.5,
+      "levelBits": 40045
+    },
+    {
+      "tMs": 64402.3,
+      "levelBits": 39661
+    },
+    {
+      "tMs": 64690.3,
+      "levelBits": 39277
+    },
+    {
+      "tMs": 65323.4,
+      "levelBits": 45748
+    },
+    {
+      "tMs": 65570.5,
+      "levelBits": 45364
+    },
+    {
+      "tMs": 66218.1,
+      "levelBits": 44980
+    },
+    {
+      "tMs": 66780.6,
+      "levelBits": 44596
+    }
+  ],
+  "overload": {
+    "depositedBits": 85300,
+    "discardedBits": 0,
+    "servedBits": 85120,
+    "deniedBits": 36608,
+    "servedCount": 665,
+    "deniedCount": 286,
+    "denialRate": 0.30074,
+    "finalLevelBits": 180,
+    "meanKeyAgeMs": 1974.8,
+    "maxKeyAgeMs": 5186,
+    "keyIdsIssued": 13,
+    "demandBps": 1706,
+    "requestBits": 128,
+    "lambdaPerSec": 13.328,
+    "capacityBits": null,
+    "requestsAfterWarmup": 809,
+    "denialsAfterWarmup": 195,
+    "steadyDenialRate": 0.24104,
+    "peakLevelBits": 6836
+  },
+  "sizing": {
+    "demandBps": 656,
+    "blockMs": 5000,
+    "requestBits": 128,
+    "derivedMinBits": 5224,
+    "formula": "S_min = D·T_b + 3·requestBits·√(λ·T_b)",
+    "meanDrainBits": 3280,
+    "tailTermBits": 1944,
+    "sweep": [
+      {
+        "capacityBits": 1567,
+        "ofDerived": 0.3,
+        "steadyDenialRate": 0.50345,
+        "discardedBits": 65301,
+        "discardedPct": 76.55,
+        "meanKeyAgeMs": 1348.6,
+        "maxKeyAgeMs": 5530.5
+      },
+      {
+        "capacityBits": 2351,
+        "ofDerived": 0.45,
+        "steadyDenialRate": 0.2931,
+        "discardedBits": 55941,
+        "discardedPct": 65.58,
+        "meanKeyAgeMs": 1951.1,
+        "maxKeyAgeMs": 6725.1
+      },
+      {
+        "capacityBits": 3134,
+        "ofDerived": 0.6,
+        "steadyDenialRate": 0.12414,
+        "discardedBits": 48118,
+        "discardedPct": 56.41,
+        "meanKeyAgeMs": 2580.6,
+        "maxKeyAgeMs": 8020.3
+      },
+      {
+        "capacityBits": 3657,
+        "ofDerived": 0.7,
+        "steadyDenialRate": 0.04138,
+        "discardedBits": 44011,
+        "discardedPct": 51.6,
+        "meanKeyAgeMs": 3058.5,
+        "maxKeyAgeMs": 9369.8
+      },
+      {
+        "capacityBits": 4179,
+        "ofDerived": 0.8,
+        "steadyDenialRate": 0,
+        "discardedBits": 41697,
+        "discardedPct": 48.88,
+        "meanKeyAgeMs": 3671.8,
+        "maxKeyAgeMs": 10208.3
+      },
+      {
+        "capacityBits": 4702,
+        "ofDerived": 0.9,
+        "steadyDenialRate": 0,
+        "discardedBits": 41174,
+        "discardedPct": 48.27,
+        "meanKeyAgeMs": 4437.9,
+        "maxKeyAgeMs": 10840.7
+      },
+      {
+        "capacityBits": 5224,
+        "ofDerived": 1,
+        "steadyDenialRate": 0,
+        "discardedBits": 40652,
+        "discardedPct": 47.66,
+        "meanKeyAgeMs": 5202.5,
+        "maxKeyAgeMs": 11242.6
+      },
+      {
+        "capacityBits": 5746,
+        "ofDerived": 1.1,
+        "steadyDenialRate": 0,
+        "discardedBits": 40130,
+        "discardedPct": 47.05,
+        "meanKeyAgeMs": 5906.4,
+        "maxKeyAgeMs": 11960.1
+      },
+      {
+        "capacityBits": 6530,
+        "ofDerived": 1.25,
+        "steadyDenialRate": 0,
+        "discardedBits": 39346,
+        "discardedPct": 46.13,
+        "meanKeyAgeMs": 6959.1,
+        "maxKeyAgeMs": 12747.9
+      },
+      {
+        "capacityBits": 7836,
+        "ofDerived": 1.5,
+        "steadyDenialRate": 0,
+        "discardedBits": 38040,
+        "discardedPct": 44.6,
+        "meanKeyAgeMs": 8565.6,
+        "maxKeyAgeMs": 14638.8
+      },
+      {
+        "capacityBits": 10448,
+        "ofDerived": 2,
+        "steadyDenialRate": 0,
+        "discardedBits": 35428,
+        "discardedPct": 41.53,
+        "meanKeyAgeMs": 11435.2,
+        "maxKeyAgeMs": 18571.7
+      },
+      {
+        "capacityBits": 15672,
+        "ofDerived": 3,
+        "steadyDenialRate": 0,
+        "discardedBits": 30204,
+        "discardedPct": 35.41,
+        "meanKeyAgeMs": 15694,
+        "maxKeyAgeMs": 26988.9
+      }
+    ],
+    "smallestZeroDenialBits": 4179
+  },
+  "securityCost": {
+    "note": "Depoda bekleyen anahtar, deposu ele geçiren birine toplu hâlde açılır. Depo boyutu maliyetle değil, azami anahtar YAŞI politikasıyla sınırlanmalıdır.",
+    "byCapacity": [
+      {
+        "capacityBits": 1567,
+        "meanKeyAgeMs": 1348.6,
+        "maxKeyAgeMs": 5530.5
+      },
+      {
+        "capacityBits": 2351,
+        "meanKeyAgeMs": 1951.1,
+        "maxKeyAgeMs": 6725.1
+      },
+      {
+        "capacityBits": 3134,
+        "meanKeyAgeMs": 2580.6,
+        "maxKeyAgeMs": 8020.3
+      },
+      {
+        "capacityBits": 3657,
+        "meanKeyAgeMs": 3058.5,
+        "maxKeyAgeMs": 9369.8
+      },
+      {
+        "capacityBits": 4179,
+        "meanKeyAgeMs": 3671.8,
+        "maxKeyAgeMs": 10208.3
+      },
+      {
+        "capacityBits": 4702,
+        "meanKeyAgeMs": 4437.9,
+        "maxKeyAgeMs": 10840.7
+      },
+      {
+        "capacityBits": 5224,
+        "meanKeyAgeMs": 5202.5,
+        "maxKeyAgeMs": 11242.6
+      },
+      {
+        "capacityBits": 5746,
+        "meanKeyAgeMs": 5906.4,
+        "maxKeyAgeMs": 11960.1
+      },
+      {
+        "capacityBits": 6530,
+        "meanKeyAgeMs": 6959.1,
+        "maxKeyAgeMs": 12747.9
+      },
+      {
+        "capacityBits": 7836,
+        "meanKeyAgeMs": 8565.6,
+        "maxKeyAgeMs": 14638.8
+      },
+      {
+        "capacityBits": 10448,
+        "meanKeyAgeMs": 11435.2,
+        "maxKeyAgeMs": 18571.7
+      },
+      {
+        "capacityBits": 15672,
+        "meanKeyAgeMs": 15694,
+        "maxKeyAgeMs": 26988.9
+      }
+    ]
+  },
+  "comparison": [
+    {
+      "strateji": "sert 200 ms SLA",
+      "tuketiciGecikmeMs": 200,
+      "garanti": "gecikme",
+      "anahtar": 0,
+      "hizBps": 0,
+      "calisir": false
+    },
+    {
+      "strateji": "elastik pencere (ℓ≥128)",
+      "tuketiciGecikmeMs": 465,
+      "garanti": "anahtar",
+      "anahtar": 18720,
+      "hizBps": 275.98,
+      "calisir": true
+    },
+    {
+      "strateji": "depo (üretim 5000 ms)",
+      "tuketiciGecikmeMs": 0,
+      "garanti": "gecikme + anahtar",
+      "anahtar": 40960,
+      "hizBps": 1312.31,
+      "calisir": true
+    }
+  ],
+  "allChecksPassed": true
+}
