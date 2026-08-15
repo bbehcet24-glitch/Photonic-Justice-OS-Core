@@ -1,0 +1,301 @@
+{
+  "generatedAt": "2026-08-15T14:57:17.687Z",
+  "checks": [
+    {
+      "name": "Ölçülen tabanlar teorik oranlarla uyuşuyor (E91 1/9 ve 1/9, BBM92 1/4 ve 1/2)",
+      "ok": true,
+      "detail": "E91 anahtar 0.11122 (≈0,111) · BBM92 anahtar 0.25104 (≈0,250), eleme 0.50063 (≈0,500)"
+    },
+    {
+      "name": "\"×4,5\" iddiası, ölçümle TAM OLARAK BB84-eleme ÷ E91-anahtar oranına denk geliyor",
+      "ok": true,
+      "detail": "ölçülen oran 4.5 — ama aynı ölçütle karşılaştırınca (anahtar/anahtar) 2.26"
+    },
+    {
+      "name": "Yanlı baz seçimi anahtar turu oranını p² kadar yükseltiyor (ölçüm ≈ teori)",
+      "ok": true,
+      "detail": "p=0.5→0.24826 · p=0.6→0.35659 · p=0.7→0.48467 · p=0.75→0.55468 · p=0.8→0.63292 · p=0.85→0.7141 · p=0.9→0.80182 · p=0.95→0.89432 · p=0.98→0.95119"
+    },
+    {
+      "name": "p'nin İÇ OPTİMUMU var: p→1'de ℓ tekrar düşüyor (PE örneklemi çöküyor)",
+      "ok": true,
+      "detail": "en iyi ölçülen p=0.85 → ℓ=103.979 · p=0.98 → ℓ=230 (μ 0.417746)"
+    },
+    {
+      "name": "Türetilen p*, ölçülen en iyi p ile uyuşuyor (±0,08)",
+      "ok": true,
+      "detail": "türetilen p* = 0.84994 (öngörülen ℓ 102.631) · ölçülen en iyi p = 0.85 (ℓ 103.979)"
+    },
+    {
+      "name": "ℓ kazancı, baz eşleşme kazancından KÜÇÜK (μ bedeli gerçek)",
+      "ok": true,
+      "detail": "baz eşleşme ×2.845 ama ℓ ×2.36 — aradaki fark μ'nün bedeli"
+    },
+    {
+      "name": "Hedeflenen ×4,5, E91 tabanına göre AŞILIYOR; yansız BBM92 tabanına göre aşılmıyor",
+      "ok": true,
+      "detail": "E91'e göre ×6.421 (>4,5 ✓) · yansız BBM92'ye göre ×2.845 (<4,5) — 4 kat teorik tavandır (¼→1) ve sonlu blokta ulaşılamaz"
+    },
+    {
+      "name": "Optimum yanlılık ve kazanç, blok boyutu büyüdükçe ARTIYOR",
+      "ok": true,
+      "detail": "5.848 tur → p*=0.64355, ×1.675 · 14.620 tur → p*=0.70534, ×1.965 · 29.240 tur → p*=0.7465, ×2.208 · 73.101 tur → p*=0.7935, ×2.508 · 146.202 tur → p*=0.82378, ×2.707 · 292.403 tur → p*=0.84994, ×2.876"
+    },
+    {
+      "name": "Ölçülen kazanç teorik tavanı (×4) AŞMIYOR",
+      "ok": true,
+      "detail": "teorik tavan ×3.944 (p→1, ¼→1−f_bell) · en yüksek ölçüm ×2.876"
+    },
+    {
+      "name": "Bell görev döngüsü sertifikayı sürdürüyor (3σ üstü ihlal)",
+      "ok": true,
+      "detail": "turların %1'i Bell moduna ayrıldı → 2.877 tur, S=2.77063 ± 0.05348 (14.41σ)"
+    },
+    {
+      "name": "Güvenlik değişmezleri korunuyor: e_bit = 0 ve e_ph X bazından",
+      "ok": true,
+      "detail": "e_bit=0 (saf fazda 0 olmalı) · e_ph=0.049083, bağımsız ölçüm 0.052122 (fark %5.8)"
+    }
+  ],
+  "stream": {
+    "sessionMs": 27200,
+    "totalPairs": 292403,
+    "ePh": 0.052122,
+    "leakPerBit": 0.001322
+  },
+  "baselines": {
+    "e91": {
+      "keyRoundFraction": 0.11122,
+      "peRoundFraction": 0.11065,
+      "chshFraction": 0.44485,
+      "wastedFraction": 0.33329
+    },
+    "bbm92Unbiased": {
+      "keyRoundFraction": 0.25104,
+      "peRoundFraction": 0.24958,
+      "basisMatchFraction": 0.50063
+    },
+    "claimedTarget": 4.5,
+    "whereTheClaimComesFrom": {
+      "ratio_bbm92AllSifted_over_e91Key": 4.5,
+      "ratio_bbm92Key_over_e91Key": 2.26,
+      "note": "×4,5 ≈ BB84'ün TÜM elemesi ÷ E91'in ANAHTAR turları. Aynı ölçütle (anahtar turu) oran 2,25'tir."
+    }
+  },
+  "biasSweep": [
+    {
+      "pKey": 0.5,
+      "keyRounds": 72591,
+      "peRounds": 72305,
+      "bellRounds": 2907,
+      "keyRoundFraction": 0.24826,
+      "mu": 0.025212,
+      "ePh": 0.051421,
+      "eBit": 0,
+      "ell": 44055,
+      "basisGainVsUnbiased": 0.989,
+      "basisGainVsE91": 2.232
+    },
+    {
+      "pKey": 0.6,
+      "keyRounds": 104269,
+      "peRounds": 46239,
+      "bellRounds": 2835,
+      "keyRoundFraction": 0.35659,
+      "mu": 0.026811,
+      "ePh": 0.051558,
+      "eBit": 0,
+      "ell": 62685,
+      "basisGainVsUnbiased": 1.42,
+      "basisGainVsE91": 3.206
+    },
+    {
+      "pKey": 0.7,
+      "keyRounds": 141718,
+      "peRounds": 26002,
+      "bellRounds": 2922,
+      "keyRoundFraction": 0.48467,
+      "mu": 0.032374,
+      "ePh": 0.053996,
+      "eBit": 0,
+      "ell": 81296,
+      "basisGainVsUnbiased": 1.931,
+      "basisGainVsE91": 4.358
+    },
+    {
+      "pKey": 0.75,
+      "keyRounds": 162190,
+      "peRounds": 18112,
+      "bellRounds": 2930,
+      "keyRoundFraction": 0.55468,
+      "mu": 0.037595,
+      "ePh": 0.053335,
+      "eBit": 0,
+      "ell": 90571,
+      "basisGainVsUnbiased": 2.21,
+      "basisGainVsE91": 4.987
+    },
+    {
+      "pKey": 0.8,
+      "keyRounds": 185068,
+      "peRounds": 11531,
+      "bellRounds": 2902,
+      "keyRoundFraction": 0.63292,
+      "mu": 0.046059,
+      "ePh": 0.051513,
+      "eBit": 0,
+      "ell": 99350,
+      "basisGainVsUnbiased": 2.521,
+      "basisGainVsE91": 5.691
+    },
+    {
+      "pKey": 0.85,
+      "keyRounds": 208805,
+      "peRounds": 6377,
+      "bellRounds": 2877,
+      "keyRoundFraction": 0.7141,
+      "mu": 0.061005,
+      "ePh": 0.049083,
+      "eBit": 0,
+      "ell": 103979,
+      "basisGainVsUnbiased": 2.845,
+      "basisGainVsE91": 6.421
+    },
+    {
+      "pKey": 0.9,
+      "keyRounds": 234455,
+      "peRounds": 2854,
+      "bellRounds": 2931,
+      "keyRoundFraction": 0.80182,
+      "mu": 0.090382,
+      "ePh": 0.048353,
+      "eBit": 0,
+      "ell": 97836,
+      "basisGainVsUnbiased": 3.194,
+      "basisGainVsE91": 7.209
+    },
+    {
+      "pKey": 0.95,
+      "keyRounds": 261501,
+      "peRounds": 693,
+      "bellRounds": 2860,
+      "keyRoundFraction": 0.89432,
+      "mu": 0.182654,
+      "ePh": 0.050505,
+      "eBit": 0,
+      "ell": 56167,
+      "basisGainVsUnbiased": 3.562,
+      "basisGainVsE91": 8.041
+    },
+    {
+      "pKey": 0.98,
+      "keyRounds": 278131,
+      "peRounds": 133,
+      "bellRounds": 2856,
+      "keyRoundFraction": 0.95119,
+      "mu": 0.417746,
+      "ePh": 0.052632,
+      "eBit": 0,
+      "ell": 230,
+      "basisGainVsUnbiased": 3.789,
+      "basisGainVsE91": 8.552
+    }
+  ],
+  "bestMeasured": {
+    "pKey": 0.85,
+    "keyRounds": 208805,
+    "peRounds": 6377,
+    "bellRounds": 2877,
+    "keyRoundFraction": 0.7141,
+    "mu": 0.061005,
+    "ePh": 0.049083,
+    "eBit": 0,
+    "ell": 103979,
+    "basisGainVsUnbiased": 2.845,
+    "basisGainVsE91": 6.421
+  },
+  "derivedOptimum": {
+    "rounds": 292403,
+    "p": 0.84994,
+    "ellPredicted": 102631,
+    "keyRoundFraction": 0.71517,
+    "peRoundFraction": 0.02229,
+    "nPredicted": 209118,
+    "kPredicted": 6519,
+    "muPredicted": 0.060357
+  },
+  "gains": {
+    "basisMatchGainVsUnbiased": 2.845,
+    "basisMatchGainVsE91": 6.421,
+    "ellGainVsUnbiased": 2.36,
+    "note": "Baz eşleşme kazancı ile ℓ kazancı AYNI DEĞİLDİR: anahtar turu artarken PE örneklemi küçülür ve μ büyür."
+  },
+  "scaleWithBlockSize": [
+    {
+      "rounds": 5848,
+      "derivedP": 0.64355,
+      "keyRoundFraction": 0.40133,
+      "basisGainVsUnbiased": 1.675,
+      "ell": 275,
+      "ellBase": 173,
+      "ellGain": 1.59
+    },
+    {
+      "rounds": 14620,
+      "derivedP": 0.70534,
+      "keyRoundFraction": 0.49254,
+      "basisGainVsUnbiased": 1.965,
+      "ell": 1938,
+      "ellBase": 1143,
+      "ellGain": 1.696
+    },
+    {
+      "rounds": 29240,
+      "derivedP": 0.7465,
+      "keyRoundFraction": 0.55144,
+      "basisGainVsUnbiased": 2.208,
+      "ell": 5392,
+      "ellBase": 3040,
+      "ellGain": 1.774
+    },
+    {
+      "rounds": 73101,
+      "derivedP": 0.7935,
+      "keyRoundFraction": 0.62124,
+      "basisGainVsUnbiased": 2.508,
+      "ell": 18292,
+      "ellBase": 9316,
+      "ellGain": 1.964
+    },
+    {
+      "rounds": 146202,
+      "derivedP": 0.82378,
+      "keyRoundFraction": 0.67191,
+      "basisGainVsUnbiased": 2.707,
+      "ell": 43578,
+      "ellBase": 20541,
+      "ellGain": 2.122
+    },
+    {
+      "rounds": 292403,
+      "derivedP": 0.84994,
+      "keyRoundFraction": 0.714,
+      "basisGainVsUnbiased": 2.876,
+      "ell": 104582,
+      "ellBase": 44055,
+      "ellGain": 2.374
+    }
+  ],
+  "theoreticalCeiling": 3.944,
+  "certification": {
+    "fBell": 0.01,
+    "bellRounds": 2877,
+    "S": 2.77063,
+    "standardError": 0.05348,
+    "sigmaAboveClassical": 14.41,
+    "chshRounds": 2877,
+    "violated": true,
+    "keyCostPct": 1
+  },
+  "allChecksPassed": true
+}
