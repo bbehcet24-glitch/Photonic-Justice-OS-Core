@@ -1,0 +1,113 @@
+{
+  "generatedAt": "2026-08-15T08:41:09.311Z",
+  "engine": {
+    "elementaryKm": 9.354,
+    "attemptsPerLink": 100000,
+    "rawAttempts": 200000,
+    "pairs": 23994,
+    "yieldPct": 11.997,
+    "meanFidelity": 0.95143,
+    "minFidelity": 0.900221,
+    "t2Ms": 10,
+    "t1Ms": 50,
+    "targetF": 0.85
+  },
+  "qber": {
+    "z": 0,
+    "x": 0.04406323578876556,
+    "estimated": 0.022811,
+    "muSerfling": 0.101501,
+    "qPhaseUpper": 0.124312,
+    "h2": 0.54163
+  },
+  "funnel": [
+    {
+      "label": "Tüketilen dolanık çift",
+      "value": 23994,
+      "unit": "çift",
+      "note": "200.000 ham foton denemesinden üretildi (%11.997 verim)"
+    },
+    {
+      "label": "Elenmiş (sifted) bit",
+      "value": 11924,
+      "unit": "bit",
+      "note": "Alice ve Bob'un bazları uyuşmayan 12.070 çift atıldı (BBM92 ~%50 eleme)"
+    },
+    {
+      "label": "Anahtar örneklemi (n)",
+      "value": 8943,
+      "unit": "bit",
+      "note": "2.981 bit parametre tahminine (QBER ölçümü) ayrıldı — anahtara katılmaz"
+    },
+    {
+      "label": "Faz-entropi sonrası",
+      "value": 4099,
+      "unit": "bit",
+      "note": "n·(1−h₂(q_faz)) — q_faz ≤ 0.1243 (Serfling μ=0.1015 dahil), h₂=0.5416"
+    },
+    {
+      "label": "Güvenli anahtar (ℓ)",
+      "value": 2254,
+      "unit": "bit",
+      "note": "EC sızıntısı 1.729 bit + ε terimleri 115 bit düşüldü"
+    }
+  ],
+  "accounting": {
+    "n": 8943,
+    "k": 2981,
+    "leak": 1729,
+    "corTerm": 50.83,
+    "paTerm": 64.44,
+    "afterEntropy": 4099.2,
+    "ell": 2254,
+    "identity": "4099.2 − 1729 − 50.83 − 64.44 = 2254.94 → ⌊·⌋ = 2254",
+    "verified": true
+  },
+  "errorCorrection": {
+    "leakedBits": 1729,
+    "residualErrors": 0,
+    "converged": true,
+    "leakPerBit": 0.1933
+  },
+  "dataFlow": {
+    "messageChars": 78,
+    "messageBits": 704,
+    "keyBitsAvailable": 2254,
+    "keySufficientForOtp": true,
+    "cipherDiffersFromPlaintext": true,
+    "decryptedCorrectly": true,
+    "decodedPreview": "PhotonNet — dolanıklık takasıyla üretilen anahtarla korunan gerç"
+  },
+  "privacyAmplification": {
+    "inputBits": 8943,
+    "outputBits": 2254,
+    "compressionRatio": 0.252,
+    "aliceBobKeysIdentical": true
+  },
+  "scale": [
+    {
+      "attempts": 1000,
+      "pairs": 233,
+      "ell": 0,
+      "secure": false
+    },
+    {
+      "attempts": 5000,
+      "pairs": 1211,
+      "ell": 0,
+      "secure": false
+    },
+    {
+      "attempts": 20000,
+      "pairs": 4805,
+      "ell": 0,
+      "secure": false
+    },
+    {
+      "attempts": 100000,
+      "pairs": 23994,
+      "ell": 2254,
+      "secure": true
+    }
+  ]
+}
