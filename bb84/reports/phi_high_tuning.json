@@ -1,0 +1,803 @@
+{
+  "generatedAt": "2026-08-15T15:25:59.114Z",
+  "checks": [
+    {
+      "name": "Nokta bazında diz noktası KAYIYOR — bu yüzden o ölçüt reddedildi",
+      "ok": true,
+      "detail": "9 noktada diz değerleri {0.6, 0.7, 0.8, 0.85, 0.9, 0.95} — aralık 0.35. Tek bir sayı bu ölçütle savunulamaz"
+    },
+    {
+      "name": "Kabul edilen ölçüt φ_high = 0.8 veriyor (değişim oranı çöküşü)",
+      "ok": true,
+      "detail": "0.5→0.6: 1 puan tasarruf → 1.337 puan ret · 0.6→0.7: 1 puan tasarruf → 0.748 puan ret · 0.7→0.8: 1 puan tasarruf → 0.311 puan ret · 0.8→0.85: 1 puan tasarruf → 0.011 puan ret · 0.85→0.9: 1 puan tasarruf → 0.068 puan ret · 0.9→0.95: 1 puan tasarruf → 0.069 puan ret"
+    },
+    {
+      "name": "Çöküş gerçek: bir sonraki adım tasarrufu yiyor ama dayanıklılık getirmiyor",
+      "ok": true,
+      "detail": "0.8→0.85: 8.7 puan tasarruf kaybı, yalnızca 0.1 puan ret azalması (oran 0.011 < 0.1)"
+    },
+    {
+      "name": "Üç profil de ölçüldü ve dokümante edildi",
+      "ok": true,
+      "detail": "verimlilik-önce φ=0.5: tasarruf %42.99, sıçrama ret %30.34 · dengeli φ=0.8: tasarruf %27.26, sıçrama ret %19.04 · dayanıklılık-önce φ=0.9: tasarruf %9.92, sıçrama ret %18.35"
+    },
+    {
+      "name": "Varsayılan profil hiçbir noktada düz talepte ret veya taşma üretmiyor",
+      "ok": true,
+      "detail": "düz talepte ret %0 · azami taşma %0"
+    },
+    {
+      "name": "Bant kuralı sağlanamıyorsa öneri REDDEDİLİYOR ve düzeltme sayıları veriliyor",
+      "ok": true,
+      "detail": "dar kurulum: ℓ(blok)=14.644 bit / depo 10.422 bit → uygulanamaz. Çözüm: depo ≥ 97.624 bit VEYA blok ≤ 1652 ms"
+    },
+    {
+      "name": "Geniş kurulumda öneri diz noktasına bağlanıyor (bant kısıtı bağlayıcı değil)",
+      "ok": true,
+      "detail": "φ_high = 0.8, sınırlayan: önerilen diz noktası (bant tavanı 0.9173)"
+    }
+  ],
+  "setup": {
+    "sessionMs": 40800,
+    "totalPairs": 438716,
+    "productionBps": 1308.53,
+    "fixedBlockMs": 5000,
+    "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0.1 puan ret azalması)",
+    "recommended": 0.8
+  },
+  "grid": [
+    {
+      "demandRatio": 0.3,
+      "capMult": 1,
+      "demandBps": 393,
+      "capacityBits": 3470,
+      "recommendation": {
+        "recommended": 0.8,
+        "bandCap": -0.9355,
+        "ellPerBlockBits": 6543,
+        "capacityBits": 3470,
+        "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+        "phiHigh": null,
+        "feasible": false,
+        "reason": "bant kuralı sağlanamıyor: tek blok, üst banda hiçbir φ_high için sığmıyor",
+        "requiredCapacityBits": 43618,
+        "maxBlockMsForCapacity": 831
+      },
+      "rows": [
+        {
+          "phi": 0.5,
+          "savingsPct": 56.5,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 26.82
+        },
+        {
+          "phi": 0.6,
+          "savingsPct": 54.09,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 20.67
+        },
+        {
+          "phi": 0.7,
+          "savingsPct": 48.87,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 20.11
+        },
+        {
+          "phi": 0.8,
+          "savingsPct": 37.98,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 18.44
+        },
+        {
+          "phi": 0.85,
+          "savingsPct": 33.83,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 18.44
+        },
+        {
+          "phi": 0.9,
+          "savingsPct": 19.93,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 17.88
+        },
+        {
+          "phi": 0.95,
+          "savingsPct": 8.51,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 16.76
+        }
+      ]
+    },
+    {
+      "demandRatio": 0.3,
+      "capMult": 2,
+      "demandBps": 393,
+      "capacityBits": 6940,
+      "recommendation": {
+        "recommended": 0.8,
+        "bandCap": 0.0073,
+        "ellPerBlockBits": 6543,
+        "capacityBits": 6940,
+        "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+        "phiHigh": null,
+        "feasible": false,
+        "reason": "bant kuralı sağlanamıyor: tek blok, üst banda hiçbir φ_high için sığmıyor",
+        "requiredCapacityBits": 43618,
+        "maxBlockMsForCapacity": 1256
+      },
+      "rows": [
+        {
+          "phi": 0.5,
+          "savingsPct": 62.32,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 43.02
+        },
+        {
+          "phi": 0.6,
+          "savingsPct": 59.09,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 16.2
+        },
+        {
+          "phi": 0.7,
+          "savingsPct": 56.09,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 8.94
+        },
+        {
+          "phi": 0.8,
+          "savingsPct": 49.72,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 5.59
+        },
+        {
+          "phi": 0.85,
+          "savingsPct": 41.18,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 5.59
+        },
+        {
+          "phi": 0.9,
+          "savingsPct": 22.32,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 4.47
+        },
+        {
+          "phi": 0.95,
+          "savingsPct": 12.19,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 3.91
+        }
+      ]
+    },
+    {
+      "demandRatio": 0.3,
+      "capMult": 3,
+      "demandBps": 393,
+      "capacityBits": 10410,
+      "recommendation": {
+        "recommended": 0.8,
+        "bandCap": 0.3215,
+        "ellPerBlockBits": 6543,
+        "capacityBits": 10410,
+        "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+        "phiHigh": null,
+        "feasible": false,
+        "reason": "bant kuralı sağlanamıyor: tek blok, üst banda hiçbir φ_high için sığmıyor",
+        "requiredCapacityBits": 43618,
+        "maxBlockMsForCapacity": 1651
+      },
+      "rows": [
+        {
+          "phi": 0.5,
+          "savingsPct": 62.27,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 7.82
+        },
+        {
+          "phi": 0.6,
+          "savingsPct": 58.44,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 3.35
+        },
+        {
+          "phi": 0.7,
+          "savingsPct": 56.96,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 0
+        },
+        {
+          "phi": 0.8,
+          "savingsPct": 51.81,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 0
+        },
+        {
+          "phi": 0.85,
+          "savingsPct": 46.5,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 2.23
+        },
+        {
+          "phi": 0.9,
+          "savingsPct": 38.09,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 0
+        },
+        {
+          "phi": 0.95,
+          "savingsPct": 14.79,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 0
+        }
+      ]
+    },
+    {
+      "demandRatio": 0.5,
+      "capMult": 1,
+      "demandBps": 654,
+      "capacityBits": 5211,
+      "recommendation": {
+        "recommended": 0.8,
+        "bandCap": -0.3055,
+        "ellPerBlockBits": 6543,
+        "capacityBits": 5211,
+        "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+        "phiHigh": null,
+        "feasible": false,
+        "reason": "bant kuralı sağlanamıyor: tek blok, üst banda hiçbir φ_high için sığmıyor",
+        "requiredCapacityBits": 43618,
+        "maxBlockMsForCapacity": 1050
+      },
+      "rows": [
+        {
+          "phi": 0.5,
+          "savingsPct": 38.77,
+          "discardedPct": 0,
+          "flatDenialPct": 1.77,
+          "spikeDenialPct": 34.56
+        },
+        {
+          "phi": 0.6,
+          "savingsPct": 34.92,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 31.88
+        },
+        {
+          "phi": 0.7,
+          "savingsPct": 26.86,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 32.55
+        },
+        {
+          "phi": 0.8,
+          "savingsPct": 19.01,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 30.2
+        },
+        {
+          "phi": 0.85,
+          "savingsPct": 8.91,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 29.2
+        },
+        {
+          "phi": 0.9,
+          "savingsPct": 1.48,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 31.88
+        },
+        {
+          "phi": 0.95,
+          "savingsPct": 0.51,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 29.87
+        }
+      ]
+    },
+    {
+      "demandRatio": 0.5,
+      "capMult": 2,
+      "demandBps": 654,
+      "capacityBits": 10422,
+      "recommendation": {
+        "recommended": 0.8,
+        "bandCap": 0.3222,
+        "ellPerBlockBits": 6543,
+        "capacityBits": 10422,
+        "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+        "phiHigh": null,
+        "feasible": false,
+        "reason": "bant kuralı sağlanamıyor: tek blok, üst banda hiçbir φ_high için sığmıyor",
+        "requiredCapacityBits": 43618,
+        "maxBlockMsForCapacity": 1652
+      },
+      "rows": [
+        {
+          "phi": 0.5,
+          "savingsPct": 42.24,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 23.49
+        },
+        {
+          "phi": 0.6,
+          "savingsPct": 40.42,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 26.51
+        },
+        {
+          "phi": 0.7,
+          "savingsPct": 36.38,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 23.83
+        },
+        {
+          "phi": 0.8,
+          "savingsPct": 29.27,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 16.78
+        },
+        {
+          "phi": 0.85,
+          "savingsPct": 15.66,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 17.79
+        },
+        {
+          "phi": 0.9,
+          "savingsPct": 3.64,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 16.11
+        },
+        {
+          "phi": 0.95,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 16.11
+        }
+      ]
+    },
+    {
+      "demandRatio": 0.5,
+      "capMult": 3,
+      "demandBps": 654,
+      "capacityBits": 15633,
+      "recommendation": {
+        "recommended": 0.8,
+        "bandCap": 0.5315,
+        "ellPerBlockBits": 6543,
+        "capacityBits": 15633,
+        "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+        "phiHigh": 0.5315,
+        "feasible": true,
+        "boundBy": "bant kuralı"
+      },
+      "rows": [
+        {
+          "phi": 0.5,
+          "savingsPct": 46.45,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 30.87
+        },
+        {
+          "phi": 0.6,
+          "savingsPct": 42.02,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 22.48
+        },
+        {
+          "phi": 0.7,
+          "savingsPct": 36.75,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 19.46
+        },
+        {
+          "phi": 0.8,
+          "savingsPct": 31.84,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 14.09
+        },
+        {
+          "phi": 0.85,
+          "savingsPct": 21,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 11.41
+        },
+        {
+          "phi": 0.9,
+          "savingsPct": 3.8,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 9.06
+        },
+        {
+          "phi": 0.95,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 9.06
+        }
+      ]
+    },
+    {
+      "demandRatio": 0.7,
+      "capMult": 1,
+      "demandBps": 916,
+      "capacityBits": 6877,
+      "recommendation": {
+        "recommended": 0.8,
+        "bandCap": -0.0014,
+        "ellPerBlockBits": 6543,
+        "capacityBits": 6877,
+        "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+        "phiHigh": null,
+        "feasible": false,
+        "reason": "bant kuralı sağlanamıyor: tek blok, üst banda hiçbir φ_high için sığmıyor",
+        "requiredCapacityBits": 43618,
+        "maxBlockMsForCapacity": 1249
+      },
+      "rows": [
+        {
+          "phi": 0.5,
+          "savingsPct": 17.62,
+          "discardedPct": 0,
+          "flatDenialPct": 1.7,
+          "spikeDenialPct": 39.28
+        },
+        {
+          "phi": 0.6,
+          "savingsPct": 12.65,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 36.69
+        },
+        {
+          "phi": 0.7,
+          "savingsPct": 10.15,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 37.21
+        },
+        {
+          "phi": 0.8,
+          "savingsPct": 2.63,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 36.43
+        },
+        {
+          "phi": 0.85,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 37.73
+        },
+        {
+          "phi": 0.9,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 37.73
+        },
+        {
+          "phi": 0.95,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 37.73
+        }
+      ]
+    },
+    {
+      "demandRatio": 0.7,
+      "capMult": 2,
+      "demandBps": 916,
+      "capacityBits": 13754,
+      "recommendation": {
+        "recommended": 0.8,
+        "bandCap": 0.4743,
+        "ellPerBlockBits": 6543,
+        "capacityBits": 13754,
+        "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+        "phiHigh": null,
+        "feasible": false,
+        "reason": "bant kuralı sağlanamıyor: tek blok, üst banda hiçbir φ_high için sığmıyor",
+        "requiredCapacityBits": 43618,
+        "maxBlockMsForCapacity": 2016
+      },
+      "rows": [
+        {
+          "phi": 0.5,
+          "savingsPct": 30.84,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 35.4
+        },
+        {
+          "phi": 0.6,
+          "savingsPct": 22.07,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 31.27
+        },
+        {
+          "phi": 0.7,
+          "savingsPct": 17.92,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 28.17
+        },
+        {
+          "phi": 0.8,
+          "savingsPct": 12.96,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 28.94
+        },
+        {
+          "phi": 0.85,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 27.13
+        },
+        {
+          "phi": 0.9,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 27.13
+        },
+        {
+          "phi": 0.95,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 27.13
+        }
+      ]
+    },
+    {
+      "demandRatio": 0.7,
+      "capMult": 3,
+      "demandBps": 916,
+      "capacityBits": 20631,
+      "recommendation": {
+        "recommended": 0.8,
+        "bandCap": 0.6329,
+        "ellPerBlockBits": 6543,
+        "capacityBits": 20631,
+        "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+        "phiHigh": 0.6329,
+        "feasible": true,
+        "boundBy": "bant kuralı"
+      },
+      "rows": [
+        {
+          "phi": 0.5,
+          "savingsPct": 29.87,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 31.78
+        },
+        {
+          "phi": 0.6,
+          "savingsPct": 23.18,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 30.49
+        },
+        {
+          "phi": 0.7,
+          "savingsPct": 18.98,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 20.93
+        },
+        {
+          "phi": 0.8,
+          "savingsPct": 10.12,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 20.93
+        },
+        {
+          "phi": 0.85,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 20.93
+        },
+        {
+          "phi": 0.9,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 20.93
+        },
+        {
+          "phi": 0.95,
+          "savingsPct": 0,
+          "discardedPct": 0,
+          "flatDenialPct": 0,
+          "spikeDenialPct": 20.93
+        }
+      ]
+    }
+  ],
+  "rejectedCriterion": {
+    "note": "nokta bazında 'ret ≤ taban+1 puan iken tasarrufu maksimize et' ölçütü",
+    "kneePerPoint": [
+      0.95,
+      0.9,
+      0.7,
+      0.8,
+      0.8,
+      0.9,
+      0.6,
+      0.85,
+      0.7
+    ],
+    "spread": 0.35
+  },
+  "aggregate": [
+    {
+      "phi": 0.5,
+      "savings": 42.99,
+      "spikeDenial": 30.34,
+      "flatDenial": 0.39,
+      "worstSpikeDenial": 43.02
+    },
+    {
+      "phi": 0.6,
+      "savings": 38.54,
+      "spikeDenial": 24.39,
+      "flatDenial": 0,
+      "worstSpikeDenial": 36.69
+    },
+    {
+      "phi": 0.7,
+      "savings": 34.33,
+      "spikeDenial": 21.24,
+      "flatDenial": 0,
+      "worstSpikeDenial": 37.21
+    },
+    {
+      "phi": 0.8,
+      "savings": 27.26,
+      "spikeDenial": 19.04,
+      "flatDenial": 0,
+      "worstSpikeDenial": 36.43
+    },
+    {
+      "phi": 0.85,
+      "savings": 18.56,
+      "spikeDenial": 18.94,
+      "flatDenial": 0,
+      "worstSpikeDenial": 37.73
+    },
+    {
+      "phi": 0.9,
+      "savings": 9.92,
+      "spikeDenial": 18.35,
+      "flatDenial": 0,
+      "worstSpikeDenial": 37.73
+    },
+    {
+      "phi": 0.95,
+      "savings": 4,
+      "spikeDenial": 17.94,
+      "flatDenial": 0,
+      "worstSpikeDenial": 37.73
+    }
+  ],
+  "exchangeRates": [
+    {
+      "from": 0.5,
+      "to": 0.6,
+      "savingsLost": 4.45,
+      "denialGained": 5.95,
+      "ratio": 1.337
+    },
+    {
+      "from": 0.6,
+      "to": 0.7,
+      "savingsLost": 4.21,
+      "denialGained": 3.15,
+      "ratio": 0.748
+    },
+    {
+      "from": 0.7,
+      "to": 0.8,
+      "savingsLost": 7.07,
+      "denialGained": 2.2,
+      "ratio": 0.311
+    },
+    {
+      "from": 0.8,
+      "to": 0.85,
+      "savingsLost": 8.7,
+      "denialGained": 0.1,
+      "ratio": 0.011
+    },
+    {
+      "from": 0.85,
+      "to": 0.9,
+      "savingsLost": 8.64,
+      "denialGained": 0.59,
+      "ratio": 0.068
+    },
+    {
+      "from": 0.9,
+      "to": 0.95,
+      "savingsLost": 5.92,
+      "denialGained": 0.41,
+      "ratio": 0.069
+    }
+  ],
+  "derivedPhi": 0.8,
+  "bandOverride": {
+    "tight": {
+      "recommended": 0.8,
+      "bandCap": -0.4551,
+      "ellPerBlockBits": 14644,
+      "capacityBits": 10422,
+      "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+      "phiHigh": null,
+      "feasible": false,
+      "reason": "bant kuralı sağlanamıyor: tek blok, üst banda hiçbir φ_high için sığmıyor",
+      "requiredCapacityBits": 97624,
+      "maxBlockMsForCapacity": 1652
+    },
+    "roomy": {
+      "recommended": 0.8,
+      "bandCap": 0.9173,
+      "ellPerBlockBits": 6543,
+      "capacityBits": 200000,
+      "criterion": "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+      "phiHigh": 0.8,
+      "feasible": true,
+      "boundBy": "önerilen diz noktası"
+    }
+  },
+  "allChecksPassed": true
+}

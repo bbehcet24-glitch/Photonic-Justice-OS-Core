@@ -251,4 +251,92 @@ function runControlled(pairs, opts = {}) {
   };
 }
 
-module.exports = { makeEllModel, blockForEll, blockForHeadroom, ProductionThrottle, runControlled };
+
+// ══════════════════════════════════════════════════════════
+// 4) ÖNERİLEN φ_high — ölçüt AÇIK, kısıt TÜRETİLMİŞ
+// ══════════════════════════════════════════════════════════
+/**
+ * ÖNERİLEN ÜRETİM AYARI: φ_high = 0,80  (varsayılan/"dengeli" profil)
+ *
+ * ── ÖNCE REDDEDİLEN ÖLÇÜT ──
+ * İlk yaklaşım "her çalışma noktasında sıçrama reddini tabanın 1 puan
+ * içinde tutan en tasarruflu φ" idi. ÖLÇÜM BUNU ÇÜRÜTTÜ: 9 noktalık
+ * ızgarada (talep/üretim 0,3–0,7 × depo 1–3 × S_min) diz noktası
+ * 0,60 ile 0,95 arasında dolaştı ve ölçüt bıçak sırtı çıktı — 0,8
+ * puanlık bir fark uygunluğu ters çevirip seçimi φ=0,85'e (tasarruf
+ * %0) kaydırabiliyordu. NOKTA BAZINDA DİZ YOKTUR.
+ *
+ * ── KABUL EDİLEN ÖLÇÜT: DEĞİŞİM ORANININ ÇÖKÜŞÜ ──
+ * Izgara ORTALAMASINDA takas neredeyse doğrusaldır, ama bir yerde
+ * kırılır. φ'yi artırmak, birim tasarruf başına ne kadar sıçrama reddi
+ * satın alıyor:
+ *      0,50→0,60 : 1 puan tasarruf → 1,31 puan ret azalması
+ *      0,60→0,70 : 1 → 0,76
+ *      0,70→0,80 : 1 → 0,31
+ *      0,80→0,85 : 1 → 0,01      ← ÇÖKÜŞ
+ *      0,85→0,95 : 1 → 0,07
+ * φ = 0,80, φ'yi artırmanın hâlâ ANLAMLI dayanıklılık satın aldığı SON
+ * noktadır. Ötesinde 17,4 puan tasarruf verip 0,6 puan ret alınıyor.
+ *
+ * ── BU BİR KEŞİF DEĞİL, DURUŞ ──
+ * Dürüstçe: 0,80 "ölçümden çıkan tek doğru" değildir; "verimliliği,
+ * dayanıklılık satın almayı bıraktığı ana kadar tercih et" duruşunun
+ * sayısal karşılığıdır. Farklı duruşlar farklı sayı verir ve üçü de
+ * ölçüldü (9 noktalık ızgara ortalamaları):
+ *
+ *   profil            φ_high   kaynak tasarrufu   sıçramada ret
+ *   verimlilik-önce    0,50         %43,0              %30,3
+ *   DENGELİ (varsayılan) 0,80       %27,3              %19,0
+ *   dayanıklılık-önce  0,90          %9,9              %18,4
+ *
+ * ── SERT KISIT: BANT KURALI (öneriden ÖNCE gelir) ──
+ * Üst bant en az bir bloğu almazsa her mevduat eşiği aşar ve
+ * denetleyici sürekli kısar:
+ *        φ_high ≤ 1 − ℓ(T_b)/S − pay
+ * Sağlanamıyorsa φ_high'ı oynatmak ÇÖZMEZ — blok kısaltılmalı ya da
+ * depo büyütülmelidir; fonksiyon gereken iki sayıyı da döndürür.
+ *
+ * ── GEÇERLİLİK ZARFI ──
+ * Talep/üretim 0,3–0,7 ve depo 1–3 × S_min. Dışında yeniden ölçün:
+ * bb84/phi_high_tuning_test.js ızgarayı olduğu gibi yeniden koşturur.
+ */
+const PHI_PROFILES = {
+  "verimlilik-önce": 0.50,
+  "dengeli": 0.80,
+  "dayanıklılık-önce": 0.90,
+};
+const RECOMMENDED_PHI_HIGH = 0.80;
+const EXCHANGE_COLLAPSE_RATIO = 0.1;   // 1 puan tasarruf başına <0,1 puan ret azalması = çöküş
+
+function recommendPhiHigh(opts = {}) {
+  const {
+    capacityBits, blockMs, ellModel,
+    knee = RECOMMENDED_PHI_HIGH, bandMargin = 0.05, minPhi = 0.5,
+  } = opts;
+  const ell = ellModel(blockMs);
+  const bandCap = 1 - ell / capacityBits - bandMargin;
+  const base = {
+    recommended: knee, bandCap: +bandCap.toFixed(4),
+    ellPerBlockBits: Math.round(ell), capacityBits,
+    criterion: "ızgara ortalamasında değişim oranının çöktüğü son φ (1 puan tasarruf → <0,1 puan ret azalması)",
+  };
+  if (bandCap < minPhi) {
+    // φ_high'ı düşürmek çözmez — üretim ya da depo değişmelidir.
+    return {
+      ...base, phiHigh: null, feasible: false,
+      reason: "bant kuralı sağlanamıyor: tek blok, üst banda hiçbir φ_high için sığmıyor",
+      requiredCapacityBits: Math.ceil(ell / (1 - knee - bandMargin)),
+      maxBlockMsForCapacity: Math.round(blockForHeadroom(ellModel, capacityBits * (1 - knee - bandMargin))),
+    };
+  }
+  const phi = Math.min(knee, bandCap);
+  return {
+    ...base, phiHigh: +phi.toFixed(4), feasible: true,
+    boundBy: phi < knee - 1e-9 ? "bant kuralı" : "önerilen diz noktası",
+  };
+}
+
+module.exports = {
+  makeEllModel, blockForEll, blockForHeadroom, ProductionThrottle, runControlled,
+  recommendPhiHigh, RECOMMENDED_PHI_HIGH, PHI_PROFILES, EXCHANGE_COLLAPSE_RATIO,
+};
