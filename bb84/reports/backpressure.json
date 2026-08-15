@@ -1,0 +1,905 @@
+{
+  "generatedAt": "2026-08-15T15:12:54.843Z",
+  "checks": [
+    {
+      "name": "TABAN: sabit bloklu üretim, dolu depoda anahtarı çöpe atıyor",
+      "ok": true,
+      "detail": "üretilen 52.942 bit, atılan %34.86 · 438.716 çift harcandı (hepsi), ret %0.00"
+    },
+    {
+      "name": "Geri-basınç israfı kesiyor",
+      "ok": true,
+      "detail": "atılan %34.86 → %0"
+    },
+    {
+      "name": "Karşılığında FİZİKSEL KAYNAK tasarrufu: üretilmeyen çift",
+      "ok": true,
+      "detail": "136.481 çift (%31.11) hiç üretilmedi — sabit bloklu üretici aynı işi 438.716 çift harcayarak yapıyordu"
+    },
+    {
+      "name": "Tasarruf, servis kalitesini BOZMADAN sağlanıyor",
+      "ok": true,
+      "detail": "ısınma sonrası ret: taban %0.00 → geri-basınç %0.00 · ısınma sonrası servis 21.632 vs 21.632 bit"
+    },
+    {
+      "name": "Boş alan kısıtı çalışıyor: hiçbir blok depoyu taşırmıyor",
+      "ok": true,
+      "detail": "geri-basınçlı koşumda atılan bit = 0. Kısıt ℓ̂ ÖNGÖRÜSÜ üzerinden kurulduğu için marjsız kurguda 150 bitlik artık taşma ölçülmüştü; boş alanın %90'ı hedeflenerek kapatıldı"
+    },
+    {
+      "name": "Blok uzunluğu SABİT DEĞİL, boş alana göre değişiyor",
+      "ok": true,
+      "detail": "blok aralığı 1897.8–6783.5 ms · mod dağılımı {\"ÜRETİM\":10} · türetilen en kısa üretken blok 463.1 ms"
+    },
+    {
+      "name": "TAKAS ölçüldü: kısma, sıçrama dayanıklılığından feragat ediyor",
+      "ok": true,
+      "detail": "sıçramada ret: sabit %12.08 → geri-basınç %23.49 (daha KÖTÜ) · karşılığında %31.11 çift tasarrufu. Sabit üretici depoyu taşıtarak %100'de tutuyor, geri-basınç %75'te — sıçramada eldeki yedek farkı bu"
+    },
+    {
+      "name": "φ_high ayar düğmesi: yükseldikçe tasarruf azalıyor, sıçrama dayanıklılığı artıyor",
+      "ok": true,
+      "detail": "φ=0.5: tasarruf %42.24, sıçrama ret %23.49 · φ=0.65: tasarruf %37.27, sıçrama ret %24.83 · φ=0.8: tasarruf %29.27, sıçrama ret %16.78 · φ=0.9: tasarruf %3.64, sıçrama ret %16.11 · φ=0.95: tasarruf %0, sıçrama ret %16.11 · φ=0.99: tasarruf %0, sıçrama ret %16.11"
+    },
+    {
+      "name": "Sıçrama sırasında denetleyici KISMAYI bırakıp tam gaz üretime geçiyor",
+      "ok": true,
+      "detail": "düz talepte atlanan çift %31.11 → sıçramada %22.92 (kaynak, talep arttığında geri devreye alınıyor) · mod dağılımı {\"ÜRETİM\":9}"
+    },
+    {
+      "name": "HİSTEREZİS gerekli: kapatılınca mod değişimi (chatter) artıyor",
+      "ok": true,
+      "detail": "histerezisli 9 mod değişimi · histerezissiz 17 (×1.9 chatter)"
+    },
+    {
+      "name": "SINIR: talep azami üretimi aşarsa geri-basınç da kurtarmıyor",
+      "ok": true,
+      "detail": "talep = üretimin %130'u → ret %25.3 · geri-basınç İSRAFI önler, KAPASİTE YARATMAZ (R > D koşulu değişmez)"
+    },
+    {
+      "name": "Aşırı yükte kısma, TEK BLOĞUN üst banda sığmamasından kaynaklanıyor (türetilmiş kural)",
+      "ok": true,
+      "detail": "ℓ(blok)=14.644 bit > üst bant 2.606 bit → her mevduat eşiği aşıyor, denetleyici kısa süre kısıyor (atlanan %6.02). Kuralı sağlamak için blok ≤ 2398 ms olmalı"
+    },
+    {
+      "name": "Kural uygulanınca aşırı yükte kısma kayboluyor",
+      "ok": true,
+      "detail": "blok 2398 ms'e indirilince kısma yüzünden atlanan çift 21.616 → 0"
+    }
+  ],
+  "setup": {
+    "sessionMs": 40800,
+    "totalPairs": 438716,
+    "pairsPerSec": 10752.8,
+    "ePh": 0.052609,
+    "leakPerBit": 0.001297,
+    "fixedBlockMs": 5000,
+    "productionBps": 1308.53,
+    "demandBps": 654,
+    "capacityBits": 10422,
+    "requestBits": 128,
+    "warmupMs": 10000
+  },
+  "fixed": {
+    "blocks": 9,
+    "modeSwitches": 0,
+    "minBlockMs": 5000,
+    "producedBits": 52942,
+    "storedBits": 34486,
+    "discardedBits": 18456,
+    "discardedPct": 34.86,
+    "servedBits": 24064,
+    "servedAfterWarmup": 21632,
+    "requests": 169,
+    "denials": 0,
+    "skipReason": {
+      "KISMA": 0,
+      "bosAlanYok": 0
+    },
+    "denialRate": 0,
+    "pairsTotal": 438716,
+    "pairsUsed": 438716,
+    "pairsSkipped": 0,
+    "pairsSkippedPct": 0,
+    "meanKeyAgeMs": 9373.2,
+    "maxKeyAgeMs": 15542.2,
+    "finalLevelBits": 10422,
+    "blockMsRange": [
+      800,
+      5000
+    ],
+    "modeHistogram": {
+      "SABİT": 9
+    }
+  },
+  "backpressure": {
+    "blocks": 10,
+    "modeSwitches": 9,
+    "minBlockMs": 463.1,
+    "producedBits": 32552,
+    "storedBits": 32552,
+    "discardedBits": 0,
+    "discardedPct": 0,
+    "servedBits": 23296,
+    "servedAfterWarmup": 21632,
+    "requests": 169,
+    "denials": 0,
+    "skipReason": {
+      "KISMA": 111733,
+      "bosAlanYok": 24748
+    },
+    "denialRate": 0,
+    "pairsTotal": 438716,
+    "pairsUsed": 302235,
+    "pairsSkipped": 136481,
+    "pairsSkippedPct": 31.11,
+    "meanKeyAgeMs": 8448.2,
+    "maxKeyAgeMs": 13410.1,
+    "finalLevelBits": 9256,
+    "blockMsRange": [
+      1897.8,
+      6783.5
+    ],
+    "modeHistogram": {
+      "ÜRETİM": 10
+    }
+  },
+  "traceSample": [
+    {
+      "tMs": 6783.5,
+      "mode": "ÜRETİM",
+      "fill": 0,
+      "blockMs": 6783.5,
+      "ell": 9496,
+      "idleMs": 0
+    },
+    {
+      "tMs": 6783.5,
+      "mode": "KISMA",
+      "fill": 0.9111,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 2568
+    },
+    {
+      "tMs": 9351.5,
+      "mode": "KISMA",
+      "fill": 0.7638,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 219.4
+    },
+    {
+      "tMs": 9571,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9594.7,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9618.4,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9642.1,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9665.8,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9689.5,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9713.2,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9736.9,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9760.6,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9784.3,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9808,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9831.7,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9855.4,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9879.1,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9902.8,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9926.5,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9950.2,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9973.9,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9997.6,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 10021.3,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 10045,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 10068.7,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 10092.4,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 13480.9,
+      "mode": "ÜRETİM",
+      "fill": 0.6655,
+      "blockMs": 2764.8,
+      "ell": 3224,
+      "idleMs": 0
+    },
+    {
+      "tMs": 15671.6,
+      "mode": "ÜRETİM",
+      "fill": 0.7538,
+      "blockMs": 2190.7,
+      "ell": 2308,
+      "idleMs": 0
+    },
+    {
+      "tMs": 15671.6,
+      "mode": "KISMA",
+      "fill": 0.877,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 2023.7
+    },
+    {
+      "tMs": 20842.9,
+      "mode": "ÜRETİM",
+      "fill": 0.6682,
+      "blockMs": 2747.6,
+      "ell": 3106,
+      "idleMs": 0
+    },
+    {
+      "tMs": 23090.7,
+      "mode": "ÜRETİM",
+      "fill": 0.7452,
+      "blockMs": 2247.7,
+      "ell": 2350,
+      "idleMs": 0
+    },
+    {
+      "tMs": 25063.6,
+      "mode": "ÜRETİM",
+      "fill": 0.7864,
+      "blockMs": 1972.9,
+      "ell": 1972,
+      "idleMs": 0
+    },
+    {
+      "tMs": 25063.6,
+      "mode": "KISMA",
+      "fill": 0.8774,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 2029.8
+    },
+    {
+      "tMs": 30288.6,
+      "mode": "ÜRETİM",
+      "fill": 0.6686,
+      "blockMs": 2745.2,
+      "ell": 3130,
+      "idleMs": 0
+    },
+    {
+      "tMs": 32273.1,
+      "mode": "ÜRETİM",
+      "fill": 0.7847,
+      "blockMs": 1984.6,
+      "ell": 2076,
+      "idleMs": 0
+    },
+    {
+      "tMs": 32273.1,
+      "mode": "KISMA",
+      "fill": 0.8856,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 2161.3
+    },
+    {
+      "tMs": 34434.5,
+      "mode": "KISMA",
+      "fill": 0.7628,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 204.1
+    },
+    {
+      "tMs": 34638.6,
+      "mode": "KISMA",
+      "fill": 0.7628,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 204.1
+    },
+    {
+      "tMs": 38463.7,
+      "mode": "ÜRETİM",
+      "fill": 0.6646,
+      "blockMs": 2771,
+      "ell": 3050,
+      "idleMs": 0
+    },
+    {
+      "tMs": 40361.5,
+      "mode": "ÜRETİM",
+      "fill": 0.7975,
+      "blockMs": 1897.8,
+      "ell": 1840,
+      "idleMs": 0
+    },
+    {
+      "tMs": 40361.5,
+      "mode": "KISMA",
+      "fill": 0.8881,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 2201.1
+    }
+  ],
+  "fixedTrace": [
+    {
+      "tMs": 5000,
+      "mode": "SABİT",
+      "fill": 0,
+      "blockMs": 5000,
+      "ell": 6588,
+      "idleMs": 0
+    },
+    {
+      "tMs": 10000,
+      "mode": "SABİT",
+      "fill": 0.6321243523316062,
+      "blockMs": 5000,
+      "ell": 6611,
+      "idleMs": 0
+    },
+    {
+      "tMs": 15000,
+      "mode": "SABİT",
+      "fill": 1,
+      "blockMs": 5000,
+      "ell": 6576,
+      "idleMs": 0
+    },
+    {
+      "tMs": 20000,
+      "mode": "SABİT",
+      "fill": 1,
+      "blockMs": 5000,
+      "ell": 6439,
+      "idleMs": 0
+    },
+    {
+      "tMs": 25000,
+      "mode": "SABİT",
+      "fill": 1,
+      "blockMs": 5000,
+      "ell": 6544,
+      "idleMs": 0
+    },
+    {
+      "tMs": 30000,
+      "mode": "SABİT",
+      "fill": 1,
+      "blockMs": 5000,
+      "ell": 6580,
+      "idleMs": 0
+    },
+    {
+      "tMs": 35000,
+      "mode": "SABİT",
+      "fill": 1,
+      "blockMs": 5000,
+      "ell": 6576,
+      "idleMs": 0
+    },
+    {
+      "tMs": 40000,
+      "mode": "SABİT",
+      "fill": 1,
+      "blockMs": 5000,
+      "ell": 6609,
+      "idleMs": 0
+    },
+    {
+      "tMs": 40800,
+      "mode": "SABİT",
+      "fill": 1,
+      "blockMs": 800,
+      "ell": 419,
+      "idleMs": 0
+    }
+  ],
+  "spike": {
+    "windowMs": [
+      16320,
+      28560
+    ],
+    "peakDemandBps": 1962,
+    "fixed": {
+      "blocks": 9,
+      "modeSwitches": 0,
+      "minBlockMs": 5000,
+      "producedBits": 52942,
+      "storedBits": 46169,
+      "discardedBits": 6773,
+      "discardedPct": 12.79,
+      "servedBits": 35968,
+      "servedAfterWarmup": 33536,
+      "requests": 298,
+      "denials": 36,
+      "skipReason": {
+        "KISMA": 0,
+        "bosAlanYok": 0
+      },
+      "denialRate": 0.12081,
+      "pairsTotal": 438716,
+      "pairsUsed": 438716,
+      "pairsSkipped": 0,
+      "pairsSkippedPct": 0,
+      "meanKeyAgeMs": 4439.7,
+      "maxKeyAgeMs": 10599.1,
+      "finalLevelBits": 10201,
+      "blockMsRange": [
+        800,
+        5000
+      ],
+      "modeHistogram": {
+        "SABİT": 9
+      }
+    },
+    "backpressure": {
+      "blocks": 9,
+      "modeSwitches": 5,
+      "minBlockMs": 463.1,
+      "producedBits": 38506,
+      "storedBits": 38506,
+      "discardedBits": 0,
+      "discardedPct": 0,
+      "servedBits": 30848,
+      "servedAfterWarmup": 29184,
+      "requests": 298,
+      "denials": 70,
+      "skipReason": {
+        "KISMA": 94073,
+        "bosAlanYok": 6462
+      },
+      "denialRate": 0.2349,
+      "pairsTotal": 438716,
+      "pairsUsed": 338181,
+      "pairsSkipped": 100535,
+      "pairsSkippedPct": 22.92,
+      "meanKeyAgeMs": 4207.6,
+      "maxKeyAgeMs": 10667.1,
+      "finalLevelBits": 7658,
+      "blockMsRange": [
+        1677.1,
+        6783.5
+      ],
+      "modeHistogram": {
+        "ÜRETİM": 9
+      }
+    }
+  },
+  "spikeTrace": [
+    {
+      "tMs": 6783.5,
+      "mode": "ÜRETİM",
+      "fill": 0,
+      "blockMs": 6783.5,
+      "ell": 9496,
+      "idleMs": 0
+    },
+    {
+      "tMs": 9351.5,
+      "mode": "KISMA",
+      "fill": 0.7638,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 219.4
+    },
+    {
+      "tMs": 9594.7,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9642.1,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9689.5,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9736.9,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9784.3,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9831.7,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9879.1,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9926.5,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 9973.9,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 10021.3,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 10068.7,
+      "mode": "KISMA",
+      "fill": 0.7515,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 23.7
+    },
+    {
+      "tMs": 13480.9,
+      "mode": "ÜRETİM",
+      "fill": 0.6655,
+      "blockMs": 2764.8,
+      "ell": 3224,
+      "idleMs": 0
+    },
+    {
+      "tMs": 15671.6,
+      "mode": "KISMA",
+      "fill": 0.877,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 2023.7
+    },
+    {
+      "tMs": 25626.5,
+      "mode": "ÜRETİM",
+      "fill": 0.4751,
+      "blockMs": 3955,
+      "ell": 4873,
+      "idleMs": 0
+    },
+    {
+      "tMs": 33478.2,
+      "mode": "ÜRETİM",
+      "fill": 0.4838,
+      "blockMs": 3902,
+      "ell": 4783,
+      "idleMs": 0
+    },
+    {
+      "tMs": 37396.1,
+      "mode": "ÜRETİM",
+      "fill": 0.8298,
+      "blockMs": 1677.1,
+      "ell": 1570,
+      "idleMs": 0
+    },
+    {
+      "tMs": 40285.2,
+      "mode": "KISMA",
+      "fill": 0.7839,
+      "blockMs": 0,
+      "ell": 0,
+      "idleMs": 540.5
+    }
+  ],
+  "highFillSweep": [
+    {
+      "highFill": 0.5,
+      "pairsSkippedPct": 42.24,
+      "discardedPct": 0,
+      "flatDenialPct": 0,
+      "spikeDenialPct": 23.49,
+      "maxKeyAgeMs": 12632.6
+    },
+    {
+      "highFill": 0.65,
+      "pairsSkippedPct": 37.27,
+      "discardedPct": 0,
+      "flatDenialPct": 0,
+      "spikeDenialPct": 24.83,
+      "maxKeyAgeMs": 12632.6
+    },
+    {
+      "highFill": 0.8,
+      "pairsSkippedPct": 29.27,
+      "discardedPct": 0,
+      "flatDenialPct": 0,
+      "spikeDenialPct": 16.78,
+      "maxKeyAgeMs": 13754.2
+    },
+    {
+      "highFill": 0.9,
+      "pairsSkippedPct": 3.64,
+      "discardedPct": 0,
+      "flatDenialPct": 0,
+      "spikeDenialPct": 16.11,
+      "maxKeyAgeMs": 14900.7
+    },
+    {
+      "highFill": 0.95,
+      "pairsSkippedPct": 0,
+      "discardedPct": 0,
+      "flatDenialPct": 0,
+      "spikeDenialPct": 16.11,
+      "maxKeyAgeMs": 14900.7
+    },
+    {
+      "highFill": 0.99,
+      "pairsSkippedPct": 0,
+      "discardedPct": 0,
+      "flatDenialPct": 0,
+      "spikeDenialPct": 16.11,
+      "maxKeyAgeMs": 14900.7
+    }
+  ],
+  "hysteresis": {
+    "withSwitches": 9,
+    "withoutSwitches": 17,
+    "withBlocks": 10,
+    "withoutBlocks": 10
+  },
+  "overload": {
+    "blocks": 15,
+    "modeSwitches": 4,
+    "minBlockMs": 463.1,
+    "producedBits": 44380,
+    "storedBits": 44380,
+    "discardedBits": 0,
+    "discardedPct": 0,
+    "servedBits": 44288,
+    "servedAfterWarmup": 37760,
+    "requests": 395,
+    "denials": 100,
+    "skipReason": {
+      "KISMA": 21616,
+      "bosAlanYok": 4794
+    },
+    "denialRate": 0.25316,
+    "pairsTotal": 438716,
+    "pairsUsed": 412306,
+    "pairsSkipped": 26410,
+    "pairsSkippedPct": 6.02,
+    "meanKeyAgeMs": 1970.3,
+    "maxKeyAgeMs": 6653.7,
+    "finalLevelBits": 92,
+    "blockMsRange": [
+      415.1,
+      6783.5
+    ],
+    "modeHistogram": {
+      "ÜRETİM": 15
+    },
+    "demandBps": 1701
+  },
+  "bandRule": {
+    "rule": "ℓ(T_b) ≤ (1 − φ_high)·S — sağlanmazsa her mevduat üst bandı aşar",
+    "ellPerBlockBits": 14644,
+    "bandBits": 2606,
+    "satisfied": false,
+    "impliedMaxBlockMs": 2398
+  },
+  "overloadTuned": {
+    "blocks": 28,
+    "modeSwitches": 0,
+    "minBlockMs": 463.1,
+    "producedBits": 37696,
+    "storedBits": 37696,
+    "discardedBits": 0,
+    "discardedPct": 0,
+    "servedBits": 35584,
+    "servedAfterWarmup": 27136,
+    "requests": 395,
+    "denials": 183,
+    "skipReason": {
+      "KISMA": 0,
+      "bosAlanYok": 0
+    },
+    "denialRate": 0.46329,
+    "pairsTotal": 438716,
+    "pairsUsed": 438716,
+    "pairsSkipped": 0,
+    "pairsSkippedPct": 0,
+    "meanKeyAgeMs": 707,
+    "maxKeyAgeMs": 2609.7,
+    "finalLevelBits": 2112,
+    "blockMsRange": [
+      478,
+      2398
+    ],
+    "modeHistogram": {
+      "ÜRETİM": 28
+    }
+  },
+  "allChecksPassed": true
+}
