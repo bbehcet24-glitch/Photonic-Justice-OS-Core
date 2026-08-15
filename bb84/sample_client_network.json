@@ -1,0 +1,19 @@
+{
+  "clientName": "Örnek Telekom A.Ş.",
+  "_not": "Bu dosya, bir müşterinin PhotonNet'e SAĞLAYACAĞI ham veri biçiminin ÖRNEĞİDİR (kurgusal bir şirket). Gerçek kullanımda 'km' değerleri müşterinin kendi fiber envanterinden, 'detector' değerleri ise sahadaki tek-foton dedektörlerinin veri sayfasından gelir.",
+  "nodes": [
+    { "id": "ANKARA",  "lat": 39.93, "lon": 32.86, "on": true },
+    { "id": "IZMIR",   "lat": 38.42, "lon": 27.14, "on": true },
+    { "id": "BURSA",   "lat": 40.19, "lon": 29.06, "on": true },
+    { "id": "ANTALYA", "lat": 36.90, "lon": 30.71, "on": true },
+    { "id": "KONYA",   "lat": 37.87, "lon": 32.48, "on": true }
+  ],
+  "links": [
+    { "a": "ANKARA",  "b": "IZMIR",   "km": 520, "detector": { "efficiency": 0.85, "darkRateHz": 50 } },
+    { "a": "ANKARA",  "b": "BURSA",   "km": 385, "detector": { "efficiency": 0.85, "darkRateHz": 50 } },
+    { "a": "ANKARA",  "b": "KONYA",   "km": 260, "detector": { "efficiency": 0.82, "darkRateHz": 120 } },
+    { "a": "IZMIR",   "b": "BURSA",   "km": 330, "detector": { "efficiency": 0.80, "darkRateHz": 200 } },
+    { "a": "IZMIR",   "b": "ANTALYA", "km": 450, "detector": { "efficiency": 0.85, "darkRateHz": 50 } },
+    { "a": "KONYA",   "b": "ANTALYA", "km": 580, "detector": { "efficiency": 0.78, "darkRateHz": 300 } }
+  ]
+}

@@ -60,16 +60,16 @@ function buildHtml(report) {
   const cyberRows = cyber.perLink.map(c => `
     <tr>
       <td>${c.link}</td><td>${c.km} km</td>
-      <td>${c.bagimsizYedekVarMi ? "✅ VAR" : "❌ YOK"}</td>
+      <td>${c.bagimsizYedekVarMi ? `✅ VAR (${c.detay.yedekYolHopSayisi} hop / ${c.detay.yedekYolKm} km)` : "❌ YOK"}</td>
       <td>${c.dosDireniyorMu ? "✅ DAYANIKLI" : "⚠️ SAVUNMASIZ"}</td>
-      <td>${c.detay.primarySuspect ? (c.detay.usedDisjointBackup ? "birincil şüpheli → yedeğe kaydı" : "birincil şüpheli, yedek YOK") : "birincil zaten güvenli"}</td>
+      <td>${c.detay.davranis ?? (c.detay.primarySuspect ? (c.detay.usedDisjointBackup ? "birincil şüpheli → yedeğe kaydı" : "birincil şüpheli, yedek YOK") : "birincil zaten güvenli")}</td>
     </tr>`).join("");
   const ragnarokRows = ragnarok.map(g => `
     <tr>
       <td>${g.link}</td>
-      <td>${g.meşruTemelRisk.toFixed(3)} (${g.meşruTemelFlag ?? "kalibre"})</td>
-      <td>${g.cercevelemeAniSicramaMi ? "❌ ANİ SIÇRAMA" : "✅ EMA korudu"}</td>
-      <td>${g.hizSiniriTetiklendiMi ? "✅ Askıya alındı" : "❌ Tetiklenmedi"}</td>
+      <td style="color:${g.olculenGercekAlarmUstundeMi ? PAL.critical : PAL.textPrimary}">${g.olculenGercekRisk != null ? g.olculenGercekRisk.toFixed(3) : "—"}${g.olculenGercekAlarmUstundeMi ? " ⚠️" : ""}</td>
+      <td>${g.meşruTemelRisk.toFixed(3)} → ${g.cercevelemeSonrasiRisk != null ? g.cercevelemeSonrasiRisk.toFixed(3) : "—"} ${g.cercevelemeAniSicramaMi ? "❌ EŞİĞİ AŞTI" : `✅ eşik ${g.dosSupheEsigi} altında`}</td>
+      <td>${g.hizSiniriTetiklendiMi ? `✅ ${g.hizSiniriIlkRedNumarasi}. denemede askıya alındı` : "❌ Tetiklenmedi"}</td>
       <td style="font-weight:600">${g.verdict}</td>
     </tr>`).join("");
 
@@ -108,16 +108,17 @@ ${qberRows}
 ${qberBarChart(qberResults)}
 
 <h2>2) Siber Direnç Analizi (çoklu-yol / DoS direnci)</h2>
-<p class="note">Her hat, doğrulanmış-yüksek-riskli (DoS/zehirlenme kurbanı) olarak işaretlenip, sistemin GERÇEKTEN bağımsız (kenar-ayrık) bir yedek yola kayıp kayamadığı test edilmiştir.</p>
+<p class="note">İki ayrı test: <b>(1) Bağımsız yedek yol</b> — hat topolojiden tamamen çıkarıldığında (fiziksel kesinti, kazma, sabotaj) iki şehir arasında hâlâ bir yol kalıyor mu? <b>(2) DoS direnci</b> — hat doğrulanmış-yüksek-riskli (zehirlenme kurbanı) işaretlendiğinde, sistemin nihai olarak seçtiği rota o hattı ARTIK kullanmıyor mu?</p>
 <table>
 <tr><th>Hat</th><th>Mesafe</th><th>Bağımsız yedek yol</th><th>DoS direnci</th><th>Davranış</th></tr>
 ${cyberRows}
 </table>
 
 <h2>3) Ragnarok Saldırı Dayanıklılık Raporu</h2>
-<p class="note">Her hat için izole bir itibar-motoru örneğiyle: (a) meşru kalibrasyon temeli bu hattın gerçek ölçülen QBER'i ile kuruldu, (b) çerçeveleme/framing denemesi (tek kötü niyetli okumanın anlık risk sıçratıp sıçratamadığı), (c) hız-sınırı aşımı (aynı pencerede art arda çok fazla güncelleme denemesi) test edildi.</p>
+<p class="note">Her hat için izole (taze) bir itibar-motoru örneğiyle üç ölçüm: <b>(1) Ölçülen gerçek risk</b> — hattın kendi gerçek QBER'inden türetilen itibar riski (⚠️ = %11 alarm eşiğinin üstünde). <b>(2) Çerçeveleme (framing) direnci</b> — saldırgan SAĞLIKLI bir hattı kötü göstermek için tek bir sahte "felaket" okuması (QBER %49) enjekte ederse, risk tek adımda DoS-şüphe eşiğini (${ragnarok[0]?.dosSupheEsigi ?? 0.75}) aşabiliyor mu? <b>(3) Hız-sınırı</b> — saldırgan aynı 1 saniyelik pencerede art arda güncelleme denerse kaynak askıya alınıyor mu?</p>
+<p class="note"><b>Metodoloji notu:</b> çerçeveleme testi bilinçli olarak SABİT ve SAĞLIKLI bir temel (QBER %${((ragnarok[0]?.cercevelemeTemelQber ?? 0.02)*100).toFixed(0)}) üzerinde çalıştırılır — çünkü çerçeveleme, sağlıklı bir hattı karalama girişimidir. Hattın gerçek QBER'i zaten alarm eşiğinin üstündeyse itibar riski matematiksel olarak 1.0'a doyar ve "sıçrama" ölçülemez hâle gelirdi. Bu yüzden bu sütun, hattın kendi sağlığını değil, İTİBAR MOTORUNUN sönümleme (EMA) gücünü ölçer.</p>
 <table>
-<tr><th>Hat</th><th>Meşru temel risk</th><th>Çerçeveleme direnci</th><th>Hız-sınırı</th><th>Sonuç</th></tr>
+<tr><th>Hat</th><th>Ölçülen gerçek risk</th><th>Çerçeveleme direnci (temel → saldırı sonrası)</th><th>Hız-sınırı</th><th>Sonuç</th></tr>
 ${ragnarokRows}
 </table>
 
