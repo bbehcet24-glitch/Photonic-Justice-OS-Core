@@ -360,8 +360,89 @@ function runHybridSession(pairs, opts = {}) {
   };
 }
 
+
+// ══════════════════════════════════════════════════════════
+// 5) SÜREKLİ AKIŞ SÜRÜCÜSÜ — ardışık bloklar
+// ══════════════════════════════════════════════════════════
+/**
+ * Tek atışlık bir bütçe yerine, durağan bir çift akışı üzerinde
+ * bloğu KAPATIP YENİSİNİ AÇARAK çalışır.
+ *
+ * Burada asıl tasarım gerilimi ortaya çıkar: durağan akışta marjinal
+ * kural HİÇ tetiklenmez (arz incelmez), dolayısıyla blok uzunluğunu
+ * SLA belirler. Ve blok başına sabit vergi (corTerm + paTerm ≈ 115 bit,
+ * artı μ ∼ 1/√n) HER BLOKTA yeniden ödendiği için:
+ *      kısa blok  → düşük gecikme, düşük hız
+ *      uzun blok  → yüksek hız, yüksek gecikme
+ * Yani sürekli akışta "en iyi T" diye tek bir sayı YOKTUR; bir
+ * GECİKME–HIZ ÇALIŞMA EĞRİSİ vardır. Operatör SLA'yı seçer, kontrolcü
+ * o SLA'da ulaşılabilir en iyi hızı verir.
+ *
+ * SLA çok kısaltılırsa bloklar sonlu-anahtar sınırını geçemez ve
+ * ℓ = 0 olur — yani ÜRETİLEN TÜM ÇİFTLER ÇÖPE GİDER. Bu bir uçurumdur,
+ * yumuşak bir düşüş değil. `holdBelowMinEll` açıkken kontrolcü, ölü
+ * blok yaymaktansa SLA'yı `maxHoldMs`e kadar uzatır.
+ */
+function runContinuous(pairs, opts = {}) {
+  const {
+    maxLatencyMs = 1000, leakPerBit = 0.02, tickMs = 25, minEll = 128,
+    seed = 0x51D3C0DE, holdBelowMinEll = false, maxHoldMs = Infinity,
+    sessionMs = null,
+  } = opts;
+  const sorted = [...pairs].sort((a, b) => a.t - b.t);
+  if (!sorted.length) return { blocks: [], totals: { ell: 0, blocks: 0 } };
+  const tEnd = sessionMs ?? sorted[sorted.length - 1].t;
+
+  const blocks = [];
+  let cursor = 0, guard = 0;
+  while (cursor < tEnd && guard++ < 10000) {
+    // Kalan akışı, blok başlangıcına göre GÖRELİ zamana kaydır
+    const slice = [];
+    for (const p of sorted) if (p.t > cursor) slice.push({ ...p, t: p.t - cursor });
+    if (!slice.length) break;
+
+    let sla = maxLatencyMs;
+    let dec = new SessionController({ tickMs, leakPerBit, minEll, maxLatencyMs: sla }).decide(slice);
+    // Ölü blok yayma: gerekirse SLA'yı uzat
+    if (holdBelowMinEll && dec.ellHat < minEll) {
+      while (dec.ellHat < minEll && sla < maxHoldMs && cursor + sla < tEnd) {
+        sla = Math.min(sla * 2, maxHoldMs);
+        dec = new SessionController({ tickMs, leakPerBit, minEll, maxLatencyMs: sla }).decide(slice);
+      }
+    }
+    const closed = dec.closedAtMs;
+    if (closed == null || closed <= 0) break;
+    const real = realiseBlock(slice, closed, (seed + blocks.length * 7919) >>> 0);
+    const truncated = cursor + closed > tEnd + tickMs;
+    blocks.push({
+      index: blocks.length, startMs: +cursor.toFixed(1), endMs: +(cursor + closed).toFixed(1),
+      durationMs: +closed.toFixed(1), slaUsedMs: sla, reason: dec.reason,
+      pairs: real.pairs, ell: real.ell, ePh: real.ePh, rateBps: real.rateBps, truncated,
+    });
+    cursor += closed;
+  }
+
+  const complete = blocks.filter(b => !b.truncated);
+  const ell = complete.reduce((s, b) => s + b.ell, 0);
+  const span = complete.length ? complete[complete.length - 1].endMs : 0;
+  const dead = complete.filter(b => b.ell === 0);
+  return {
+    blocks, totals: {
+      blocks: complete.length, truncatedBlocks: blocks.length - complete.length,
+      ell, spanMs: +span.toFixed(1),
+      sustainedRateBps: span > 0 ? +(ell / (span / 1000)).toFixed(2) : 0,
+      meanBlockMs: complete.length ? +(span / complete.length).toFixed(1) : null,
+      meanEllPerBlock: complete.length ? +(ell / complete.length).toFixed(1) : 0,
+      deadBlocks: dead.length,
+      pairsConsumed: complete.reduce((s, b) => s + b.pairs, 0),
+      pairsWasted: dead.reduce((s, b) => s + b.pairs, 0),
+    },
+  };
+}
+
 module.exports = {
   admissionThreshold, admissionDelta, predictEll,
   SessionController, realiseBlock, bellMonitorPlan, chshProbe, runHybridSession,
+  runContinuous,
   h2, EPS, COR_TERM, PA_TERM,
 };

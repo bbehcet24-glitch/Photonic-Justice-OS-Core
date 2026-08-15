@@ -1,0 +1,320 @@
+{
+  "generatedAt": "2026-08-15T14:26:20.700Z",
+  "checks": [
+    {
+      "name": "Akış DURAĞAN: kova kova varış hızının değişim katsayısı < %3",
+      "ok": true,
+      "detail": "10758.2 ± 62.8 çift/s (CV %0.58), 4 epoch × 3400 ms = 13600 ms"
+    },
+    {
+      "name": "Çalışma eğrisi asimptotik tavanın ALTINDA kalıyor (fizik sınırı aşılmıyor)",
+      "ok": true,
+      "detail": "tavan R∞ = 1906 bit/s · en iyi taranan SLA onun %73.9'i"
+    },
+    {
+      "name": "Durağan akışta marjinal kural HİÇ tetiklenmiyor — arz incelmiyor, zirve yok",
+      "ok": true,
+      "detail": "14 bloğun gerekçe dağılımı: \"SLA — gecikme bütçesi doldu\" ×13 · \"arz bitti\" ×1"
+    },
+    {
+      "name": "Bloğu SLA kapatıyor (son blok hariç — o akış bittiği için kapanır)",
+      "ok": true,
+      "detail": "son bloktan öncekilerin tamamı SLA ile kapandı; son blok: \"arz bitti\""
+    },
+    {
+      "name": "Gecikme–hız takası GERÇEK: SLA büyüdükçe sürdürülen hız monoton artıyor",
+      "ok": true,
+      "detail": "100ms→0 · 200ms→0 · 350ms→61.54 · 500ms→320.88 · 750ms→563.82 · 1000ms→709.63 · 1500ms→903.68 · 2200ms→1043.97 · 3400ms→1225.51 · 5000ms→1309.85 · 6800ms→1408.46"
+    },
+    {
+      "name": "Tek bir 'en iyi T' YOK: en yüksek hız, taranan en uzun SLA'da",
+      "ok": true,
+      "detail": "en iyi SLA = 6800 ms → 1408.46 bit/s (eğri hâlâ tırmanıyor, tepe yapmıyor)"
+    },
+    {
+      "name": "SLA UÇURUMU var: belli bir gecikmenin altında anahtar SIFIR ve tüm çiftler çöpe gidiyor",
+      "ok": true,
+      "detail": "sıfır anahtar veren SLA'lar: 100, 200 ms · ilk üretken SLA: 350 ms"
+    },
+    {
+      "name": "`holdBelowMinEll` uçurumu kapatıyor: ölü blok yaymak yerine SLA'yı uzatıyor",
+      "ok": true,
+      "detail": "SLA 200 ms'de kesmeden ℓ=0 idi; tutma açıkken 17 blok, ℓ=8200 bit, ortalama blok 800 ms (SLA'nın 4.0 katına uzadı)"
+    },
+    {
+      "name": "Bell monitörü oturumun TAMAMI boyunca ihlali 3σ üstünde kanıtlıyor",
+      "ok": true,
+      "detail": "S=2.49621 → 3σ · 344 çift (%0.24) · 53.85–13481.48 ms = oturumun %98.7'i"
+    },
+    {
+      "name": "Uzun oturumda monitörün göreli maliyeti DÜŞÜYOR (gereken tur sayısı sabit, akış büyüyor)",
+      "ok": true,
+      "detail": "saptırılan pay %0.235 — tek atışlık 10.277 çiftlik koşumda %3,04 idi"
+    },
+    {
+      "name": "Kabul eşiği akış boyunca AYNI kararı veriyor: üç yol da havuzda kalıyor",
+      "ok": true,
+      "detail": "e* = 0.2059 · A→R2→R3→B 0.040447 (5.09× pay) · A→R1→B 0.045869 (4.49× pay) · A→R4→B 0.075104 (2.74× pay)"
+    }
+  ],
+  "stream": {
+    "epochs": 4,
+    "epochMs": 3400,
+    "sessionMs": 13600,
+    "budgetPerSegment": 100000,
+    "totalPairs": 146311,
+    "perPath": {
+      "A→R2→R3→B": {
+        "ePh": 0.040447,
+        "pairs": 72074,
+        "meanF": 0.957171
+      },
+      "A→R1→B": {
+        "ePh": 0.045869,
+        "pairs": 46184,
+        "meanF": 0.95083
+      },
+      "A→R4→B": {
+        "ePh": 0.075104,
+        "pairs": 28053,
+        "meanF": 0.919105
+      }
+    },
+    "perPathRatePerSec": {
+      "A→R2→R3→B": 5301.2,
+      "A→R1→B": 3413.2,
+      "A→R4→B": 2048.2
+    },
+    "stationarity": {
+      "bucketRates": [
+        10744.7,
+        10816.5,
+        10791.8,
+        10697.6,
+        10790.6,
+        10682.4,
+        10652.9,
+        10774.1,
+        10743.5,
+        10747.1,
+        10647.1,
+        10840,
+        10768.2,
+        10817.6,
+        10760,
+        10856.5
+      ],
+      "meanRate": 10758.2,
+      "sd": 62.8,
+      "cv": 0.0058
+    },
+    "leakPerBit": 0.00134,
+    "pooledEPh": 0.050818
+  },
+  "operatingCurve": [
+    {
+      "slaMs": 100,
+      "blocks": 136,
+      "deadBlocks": 136,
+      "meanBlockMs": 100,
+      "meanEllPerBlock": 0,
+      "totalEll": 0,
+      "sustainedRateBps": 0,
+      "pairsWasted": 146311,
+      "wastedPct": 100,
+      "pctOfCeiling": 0
+    },
+    {
+      "slaMs": 200,
+      "blocks": 68,
+      "deadBlocks": 68,
+      "meanBlockMs": 200,
+      "meanEllPerBlock": 0,
+      "totalEll": 0,
+      "sustainedRateBps": 0,
+      "pairsWasted": 146311,
+      "wastedPct": 100,
+      "pctOfCeiling": 0
+    },
+    {
+      "slaMs": 350,
+      "blocks": 39,
+      "deadBlocks": 1,
+      "meanBlockMs": 348.7,
+      "meanEllPerBlock": 21.5,
+      "totalEll": 837,
+      "sustainedRateBps": 61.54,
+      "pairsWasted": 3280,
+      "wastedPct": 2.24,
+      "pctOfCeiling": 3.2
+    },
+    {
+      "slaMs": 500,
+      "blocks": 28,
+      "deadBlocks": 1,
+      "meanBlockMs": 485.7,
+      "meanEllPerBlock": 155.9,
+      "totalEll": 4364,
+      "sustainedRateBps": 320.88,
+      "pairsWasted": 1086,
+      "wastedPct": 0.74,
+      "pctOfCeiling": 16.8
+    },
+    {
+      "slaMs": 750,
+      "blocks": 19,
+      "deadBlocks": 1,
+      "meanBlockMs": 715.8,
+      "meanEllPerBlock": 403.6,
+      "totalEll": 7668,
+      "sustainedRateBps": 563.82,
+      "pairsWasted": 1086,
+      "wastedPct": 0.74,
+      "pctOfCeiling": 29.6
+    },
+    {
+      "slaMs": 1000,
+      "blocks": 14,
+      "deadBlocks": 0,
+      "meanBlockMs": 971.4,
+      "meanEllPerBlock": 689.4,
+      "totalEll": 9651,
+      "sustainedRateBps": 709.63,
+      "pairsWasted": 0,
+      "wastedPct": 0,
+      "pctOfCeiling": 37.2
+    },
+    {
+      "slaMs": 1500,
+      "blocks": 10,
+      "deadBlocks": 1,
+      "meanBlockMs": 1360,
+      "meanEllPerBlock": 1229,
+      "totalEll": 12290,
+      "sustainedRateBps": 903.68,
+      "pairsWasted": 1086,
+      "wastedPct": 0.74,
+      "pctOfCeiling": 47.4
+    },
+    {
+      "slaMs": 2200,
+      "blocks": 7,
+      "deadBlocks": 0,
+      "meanBlockMs": 1942.9,
+      "meanEllPerBlock": 2028.3,
+      "totalEll": 14198,
+      "sustainedRateBps": 1043.97,
+      "pairsWasted": 0,
+      "wastedPct": 0,
+      "pctOfCeiling": 54.8
+    },
+    {
+      "slaMs": 3400,
+      "blocks": 4,
+      "deadBlocks": 0,
+      "meanBlockMs": 3400,
+      "meanEllPerBlock": 4166.8,
+      "totalEll": 16667,
+      "sustainedRateBps": 1225.51,
+      "pairsWasted": 0,
+      "wastedPct": 0,
+      "pctOfCeiling": 64.3
+    },
+    {
+      "slaMs": 5000,
+      "blocks": 3,
+      "deadBlocks": 0,
+      "meanBlockMs": 4533.3,
+      "meanEllPerBlock": 5938,
+      "totalEll": 17814,
+      "sustainedRateBps": 1309.85,
+      "pairsWasted": 0,
+      "wastedPct": 0,
+      "pctOfCeiling": 68.7
+    },
+    {
+      "slaMs": 6800,
+      "blocks": 2,
+      "deadBlocks": 0,
+      "meanBlockMs": 6800,
+      "meanEllPerBlock": 9577.5,
+      "totalEll": 19155,
+      "sustainedRateBps": 1408.46,
+      "pairsWasted": 0,
+      "wastedPct": 0,
+      "pctOfCeiling": 73.9
+    }
+  ],
+  "bestSla": {
+    "slaMs": 6800,
+    "blocks": 2,
+    "deadBlocks": 0,
+    "meanBlockMs": 6800,
+    "meanEllPerBlock": 9577.5,
+    "totalEll": 19155,
+    "sustainedRateBps": 1408.46,
+    "pairsWasted": 0,
+    "wastedPct": 0,
+    "pctOfCeiling": 73.9
+  },
+  "asymptoticCeilingBps": 1906.34,
+  "bestSlaPctOfCeiling": 73.9,
+  "slaCliff": {
+    "zeroKeySlas": [
+      100,
+      200
+    ],
+    "firstProductiveSlaMs": 350,
+    "note": "Bu bir uçurumdur, yumuşak düşüş değil: eşiğin altında üretilen ÇİFTLERİN TAMAMI çöpe gider."
+  },
+  "holdRescue": {
+    "slaMs": 200,
+    "blocks": 17,
+    "ell": 8200,
+    "sustainedRateBps": 602.94,
+    "meanBlockMs": 800,
+    "deadBlocks": 0
+  },
+  "monitor": {
+    "divertedPairs": 344,
+    "divertedFraction": 0.00235,
+    "S": 2.49621,
+    "sigma": 3,
+    "violated": true,
+    "sessionCoverage": 0.9874,
+    "firstTMs": 53.85,
+    "lastTMs": 13481.48,
+    "adaptiveSteps": 5,
+    "baselineSustainedBps": 903.68
+  },
+  "admission": {
+    "threshold": 0.205863,
+    "perPath": [
+      {
+        "label": "A→R2→R3→B",
+        "ePh": 0.040447,
+        "pairs": 72074,
+        "meanF": 0.957171,
+        "headroom": 5.09,
+        "admit": true
+      },
+      {
+        "label": "A→R1→B",
+        "ePh": 0.045869,
+        "pairs": 46184,
+        "meanF": 0.95083,
+        "headroom": 4.49,
+        "admit": true
+      },
+      {
+        "label": "A→R4→B",
+        "ePh": 0.075104,
+        "pairs": 28053,
+        "meanF": 0.919105,
+        "headroom": 2.74,
+        "admit": true
+      }
+    ]
+  },
+  "allChecksPassed": true
+}
