@@ -1,0 +1,502 @@
+{
+  "generatedAt": "2026-08-15T09:31:13.323Z",
+  "topology": {
+    "nodes": [
+      "A",
+      "R1",
+      "R2",
+      "R3",
+      "R4",
+      "B"
+    ],
+    "links": [
+      {
+        "a": "A",
+        "b": "R1",
+        "km": 10,
+        "capacity": 20000
+      },
+      {
+        "a": "R1",
+        "b": "B",
+        "km": 12,
+        "capacity": 20000
+      },
+      {
+        "a": "A",
+        "b": "R2",
+        "km": 8,
+        "capacity": 20000
+      },
+      {
+        "a": "R2",
+        "b": "R3",
+        "km": 9,
+        "capacity": 20000
+      },
+      {
+        "a": "R3",
+        "b": "B",
+        "km": 8,
+        "capacity": 20000
+      },
+      {
+        "a": "A",
+        "b": "R4",
+        "km": 15,
+        "capacity": 20000
+      },
+      {
+        "a": "R4",
+        "b": "B",
+        "km": 14,
+        "capacity": 20000
+      },
+      {
+        "a": "R1",
+        "b": "R3",
+        "km": 7,
+        "capacity": 20000
+      }
+    ],
+    "targetFinalFidelity": 0.85,
+    "maxHops": 4,
+    "attemptsPerSegment": 20000
+  },
+  "matrices": {
+    "A": [
+      [
+        0,
+        1,
+        1,
+        0,
+        1,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        1,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        1,
+        0,
+        0
+      ],
+      [
+        0,
+        1,
+        1,
+        0,
+        0,
+        1
+      ],
+      [
+        1,
+        0,
+        0,
+        0,
+        0,
+        1
+      ],
+      [
+        0,
+        1,
+        0,
+        1,
+        1,
+        0
+      ]
+    ],
+    "D": [
+      [
+        0,
+        10,
+        8,
+        null,
+        15,
+        null
+      ],
+      [
+        10,
+        0,
+        null,
+        7,
+        null,
+        12
+      ],
+      [
+        8,
+        null,
+        0,
+        9,
+        null,
+        null
+      ],
+      [
+        null,
+        7,
+        9,
+        0,
+        null,
+        8
+      ],
+      [
+        15,
+        null,
+        null,
+        null,
+        0,
+        14
+      ],
+      [
+        null,
+        12,
+        null,
+        8,
+        14,
+        0
+      ]
+    ],
+    "Fe": [
+      [
+        0,
+        0.872869572876795,
+        0.8954026330906457,
+        0,
+        0.8219959547810485,
+        0
+      ],
+      [
+        0.872869572876795,
+        0,
+        0,
+        0.9071747730461259,
+        0,
+        0.8516206184328841
+      ],
+      [
+        0.8954026330906457,
+        0,
+        0,
+        0.8839708464387226,
+        0,
+        0
+      ],
+      [
+        0,
+        0.9071747730461259,
+        0.8839708464387226,
+        0,
+        0,
+        0.8954026330906457
+      ],
+      [
+        0.8219959547810485,
+        0,
+        0,
+        0,
+        0,
+        0.8315825916103282
+      ],
+      [
+        0,
+        0.8516206184328841,
+        0,
+        0.8954026330906457,
+        0.8315825916103282,
+        0
+      ]
+    ],
+    "C": [
+      [
+        0,
+        20000,
+        20000,
+        0,
+        20000,
+        0
+      ],
+      [
+        20000,
+        0,
+        0,
+        20000,
+        0,
+        20000
+      ],
+      [
+        20000,
+        0,
+        0,
+        20000,
+        0,
+        0
+      ],
+      [
+        0,
+        20000,
+        20000,
+        0,
+        0,
+        20000
+      ],
+      [
+        20000,
+        0,
+        0,
+        0,
+        0,
+        20000
+      ],
+      [
+        0,
+        20000,
+        0,
+        20000,
+        20000,
+        0
+      ]
+    ]
+  },
+  "matrixPowerWalks": {
+    "1": 0,
+    "2": 2,
+    "3": 2,
+    "4": 14
+  },
+  "paths": [
+    {
+      "label": "A→R1→R3→B",
+      "hops": 3,
+      "totalKm": 25,
+      "segmentKm": [
+        10,
+        7,
+        8
+      ],
+      "edges": [
+        "A|R1",
+        "R1|R3",
+        "B|R3"
+      ],
+      "elementaryFidelity": [
+        0.87287,
+        0.90717,
+        0.8954
+      ],
+      "rawEndToEndFidelity": 0.740125,
+      "requiredSegmentFidelity": 0.943952,
+      "feasible": true,
+      "reason": null,
+      "pairs": 3321,
+      "etaPerSegmentAttempt": 0.16605,
+      "meanFidelity": 0.956432,
+      "minFidelity": 0.95564
+    },
+    {
+      "label": "A→R1→B",
+      "hops": 2,
+      "totalKm": 22,
+      "segmentKm": [
+        10,
+        12
+      ],
+      "edges": [
+        "A|R1",
+        "B|R1"
+      ],
+      "elementaryFidelity": [
+        0.87287,
+        0.85162
+      ],
+      "rawEndToEndFidelity": 0.762217,
+      "requiredSegmentFidelity": 0.91833,
+      "feasible": true,
+      "reason": null,
+      "pairs": 3318,
+      "etaPerSegmentAttempt": 0.1659,
+      "meanFidelity": 0.950827,
+      "minFidelity": 0.950112
+    },
+    {
+      "label": "A→R2→R3→R1→B",
+      "hops": 4,
+      "totalKm": 36,
+      "segmentKm": [
+        8,
+        9,
+        7,
+        12
+      ],
+      "edges": [
+        "A|R2",
+        "R2|R3",
+        "R1|R3",
+        "B|R1"
+      ],
+      "elementaryFidelity": [
+        0.8954,
+        0.88397,
+        0.90717,
+        0.85162
+      ],
+      "rawEndToEndFidelity": 0.673893,
+      "requiredSegmentFidelity": 0.957346,
+      "feasible": true,
+      "reason": null,
+      "pairs": 2482,
+      "etaPerSegmentAttempt": 0.1241,
+      "meanFidelity": 0.932761,
+      "minFidelity": 0.93216
+    },
+    {
+      "label": "A→R2→R3→B",
+      "hops": 3,
+      "totalKm": 25,
+      "segmentKm": [
+        8,
+        9,
+        8
+      ],
+      "edges": [
+        "A|R2",
+        "R2|R3",
+        "B|R3"
+      ],
+      "elementaryFidelity": [
+        0.8954,
+        0.88397,
+        0.8954
+      ],
+      "rawEndToEndFidelity": 0.740125,
+      "requiredSegmentFidelity": 0.943952,
+      "feasible": true,
+      "reason": null,
+      "pairs": 4136,
+      "etaPerSegmentAttempt": 0.2068,
+      "meanFidelity": 0.95717,
+      "minFidelity": 0.956564
+    },
+    {
+      "label": "A→R4→B",
+      "hops": 2,
+      "totalKm": 29,
+      "segmentKm": [
+        15,
+        14
+      ],
+      "edges": [
+        "A|R4",
+        "B|R4"
+      ],
+      "elementaryFidelity": [
+        0.822,
+        0.83158
+      ],
+      "rawEndToEndFidelity": 0.713537,
+      "requiredSegmentFidelity": 0.91833,
+      "feasible": true,
+      "reason": null,
+      "pairs": 2823,
+      "etaPerSegmentAttempt": 0.14115,
+      "meanFidelity": 0.919105,
+      "minFidelity": 0.91826
+    }
+  ],
+  "routing": {
+    "single": {
+      "path": "A→R2→R3→B",
+      "allocated": 20000,
+      "totalPairs": 4136
+    },
+    "greedy": {
+      "allocation": [
+        {
+          "path": "A→R2→R3→B",
+          "allocated": 20000,
+          "expectedPairs": 4136
+        },
+        {
+          "path": "A→R1→R3→B",
+          "allocated": 0,
+          "expectedPairs": 0
+        },
+        {
+          "path": "A→R1→B",
+          "allocated": 20000,
+          "expectedPairs": 3318
+        },
+        {
+          "path": "A→R4→B",
+          "allocated": 20000,
+          "expectedPairs": 2823
+        },
+        {
+          "path": "A→R2→R3→R1→B",
+          "allocated": 0,
+          "expectedPairs": 0
+        }
+      ],
+      "totalPairs": 10277,
+      "residualCapacity": {
+        "A|R1": 0,
+        "A|R2": 0,
+        "A|R4": 0,
+        "R1|R3": 20000,
+        "B|R1": 0,
+        "R2|R3": 0,
+        "B|R3": 0,
+        "B|R4": 0
+      }
+    },
+    "brute": {
+      "totalPairs": 10277,
+      "allocation": [
+        {
+          "path": "A→R1→R3→B",
+          "allocated": 0,
+          "expectedPairs": 0
+        },
+        {
+          "path": "A→R1→B",
+          "allocated": 20000,
+          "expectedPairs": 3318
+        },
+        {
+          "path": "A→R2→R3→R1→B",
+          "allocated": 0,
+          "expectedPairs": 0
+        },
+        {
+          "path": "A→R2→R3→B",
+          "allocated": 20000,
+          "expectedPairs": 4136
+        },
+        {
+          "path": "A→R4→B",
+          "allocated": 20000,
+          "expectedPairs": 2823
+        }
+      ],
+      "evaluated": 161051
+    },
+    "edgeDisjointPaths": [
+      "A→R2→R3→B",
+      "A→R1→B",
+      "A→R4→B"
+    ],
+    "sharedEdgeUsers": [
+      "A→R1→R3→B",
+      "A→R2→R3→R1→B"
+    ],
+    "parallelGain": 2.484767891682785
+  },
+  "failures": 0
+}
