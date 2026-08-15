@@ -72,6 +72,10 @@ const { mulberry32 } = require("./photonnet_core.js");
 // ══════════════════════════════════════════════════════════
 // BÖLÜM 1 — FİZİKSEL SABİTLER VE DENKLEMLER (gerçek birimler)
 // ══════════════════════════════════════════════════════════
+// Arıtmanın kurtarabildiği en düşük sadakat (0.5) üzerine eklenen pratik
+// marj — tam eşikteki bir çift sonsuz yavaş yakınsar, bellekte yer işgal eder.
+const FIDELITY_FLOOR_MARGIN = 0.01;
+
 const C_VACUUM_KM_PER_MS = 299.792458;        // ışık hızı (km/ms)
 const FIBER_REFRACTIVE_INDEX = 1.468;          // SMF-28 grup kırılma indisi @1550nm
 const FIBER_V_KM_PER_MS = C_VACUUM_KM_PER_MS / FIBER_REFRACTIVE_INDEX; // ≈204.22 km/ms
@@ -273,6 +277,12 @@ class QuantumMemoryScheduler {
     this.t1Ms = cfg.t1Ms;
     this.t2Ms = cfg.t2Ms;
     this.floor = cfg.usableFidelityFloor;
+    // Takas için YETERLİ sadakat. Bu seviyeye ULAŞMIŞ bir çifti daha
+    // fazla arıtmak SAF İSRAFTIR (2 çift tüketip 1 üretir), bu yüzden
+    // arıtma seçiminden çıkarılır — ama BELLEKTE KALIR, yani dekoheransı
+    // izlenmeye devam eder ve bu seviyenin altına düşerse KENDİLİĞİNDEN
+    // yeniden arıtma havuzuna katılır.
+    this.swapTargetF = cfg.swapTargetF;
     this.rng = cfg.rng;
     this.mem = [];           // {id, state, tStamp, reserved}
     this.stats = {
@@ -355,7 +365,10 @@ class QuantumMemoryScheduler {
    */
   selectPurificationPair(now) {
     this.gc(now);
-    const free = this.mem.filter(p => !p.reserved);
+    // Hedefe ULAŞMIŞ çiftler arıtma havuzunun DIŞINDA tutulur (bkz.
+    // swapTargetF notu) — onları arıtmak, zaten yeterli iki çiftten
+    // birini yok etmek olurdu.
+    const free = this.mem.filter(p => !p.reserved && !(this.swapTargetF != null && p.state.I >= this.swapTargetF));
     if (free.length < 2) return null;
 
     if (this.policy === "naive") {
@@ -403,6 +416,12 @@ class QuantumMemoryScheduler {
     }
     const sorted = [...pool].sort((x, y) => y.state.I - x.state.I);
     return [sorted[0], sorted[1]];
+  }
+
+  /** Hedefe ulaşmış bir çift VAR MI? (bellekten ÇIKARMAZ — yalnızca bakar) */
+  peekReady(targetF, now) {
+    this.gc(now);
+    return this.mem.some(p => !p.reserved && p.state.I >= targetF);
   }
 
   /** Hedefe ULAŞMIŞ (arıtmaya gerek kalmamış) bir çift varsa çıkar. */
@@ -457,7 +476,9 @@ function simulate(cfg) {
   const {
     elementaryKm, attemptsPerLink, memorySlots, t1Ms, t2Ms,
     policy, protocol, targetFinalFidelity, seed,
-    maxPurificationRoundsPerPair = 6,
+    // Uzun mesafede taze sadakat 0.5'e yaklaşır ve hedefe ulaşmak daha
+    // çok tur gerektirir; tavan buna göre yükseltildi (v1'de 6 idi).
+    maxPurificationRoundsPerPair = 10,
     // ÇOKLAMA (multiplexing): gerçek tekrarlayıcı düğümleri tek modlu
     // DEĞİLDİR — frekans/zaman/uzamsal modlarda M paralel dolanıklık
     // denemesi aynı klasik onay penceresinde yapılır. Bu, üretim hızını
@@ -472,11 +493,43 @@ function simulate(cfg) {
   const delayMs = fiberDelayMs(elementaryKm);   // her klasik onay adımının bedeli
 
   // Hedef bağ sadakati — protokolün durum modeline göre TÜRETİLİR.
-  const linkTarget = requiredLinkFidelity(
+  const linkTargetIdeal = requiredLinkFidelity(
     targetFinalFidelity, protocol === "dejmps" ? "dephasing" : "werner");
-  // Kullanılabilirlik tabanı: bunun altındaki bir çift, makul sayıda
-  // arıtma turuyla hedefe ulaşamaz → bellekte yer işgal etmemeli.
-  const floor = 0.5 + (linkTarget - 0.5) * 0.25;
+
+  // TAKAS ONAYI MARJI — sihirli sayı DEĞİL, denklemin tersi.
+  // Bir çift "hazır" ilan edildikten sonra takas sonucunun uçlara
+  // ulaşması L/v kadar sürer ve bu süre boyunca dekohere olur. Marjsız
+  // bir eşik, ham sadakatin hedefe ÇOK YAKIN olduğu mesafelerde (~6 km)
+  // çiftlerin takas anında eşiğin ALTINA düşüp atılmasına yol açıyordu.
+  // Burada, "delayMs kadar dekohere olduktan SONRA takas edildiğinde
+  // hâlâ hedefi tutan" en düşük bağ sadakatini ikili aramayla buluyoruz.
+  const linkTarget = (() => {
+    const survives = (F) => {
+      const aged = bellDephase(bellState(F, 0, 0, 1 - F), delayMs, t2Ms);
+      return bellSwap(aged, aged).I >= targetFinalFidelity;
+    };
+    if (protocol !== "dejmps") return linkTargetIdeal; // Werner yolu bu modeli kullanmıyor
+    if (survives(linkTargetIdeal)) return linkTargetIdeal;
+    let lo = linkTargetIdeal, hi = 0.999999;
+    for (let i = 0; i < 60; i++) {
+      const mid = (lo + hi) / 2;
+      if (survives(mid)) hi = mid; else lo = mid;
+    }
+    return hi;
+  })();
+  // KULLANILABİLİRLİK TABANI — cebirsel olarak TÜRETİLİR, elle seçilmez.
+  // Saf faz gürültüsünde DEJMPS(Z) bir çifti YUKARI çeker ancak ve ancak
+  //   I' > I  ⟺  I²/(I²+Z²) > I  ⟺  2I² − 3I + 1 < 0  ⟺  0.5 < I < 1
+  // olduğunda. Yani arıtmanın kurtarabildiği HER çift F > 0.5'tir; taban
+  // bundan daha yukarıda olamaz.
+  // (Bir ara sürümde taban 0.5 + (hedef−0.5)·0.25 = 0.6046 olarak elle
+  //  seçilmişti. Bu, 52 km üzerinde TAZE çiftlerin bile tabanın altında
+  //  kalmasına ve arıtmayla kurtarılabilecekken anında atılmasına yol
+  //  açıyordu — 60 km'de deneme bütçesi 80 katına çıkarıldığında bile
+  //  verim sıfır kalıyordu. Hata bu taramada bulundu.)
+  // Pratik pay: tam 0.5'teki bir çift sonsuz yavaş yakınsar, bu yüzden
+  // küçük bir marj eklenir.
+  const floor = 0.5 + FIDELITY_FLOOR_MARGIN;
 
   // Tek bir zamanlama çağrısında başlatılabilecek paralel arıtma sayısı
   // için güvenlik tavanı — bir KAPASİTE MODELİ DEĞİL, sonsuz döngüye karşı
@@ -490,7 +543,8 @@ function simulate(cfg) {
   const nextAttempt = {};
   for (const L of links) {
     sched[L] = new QuantumMemoryScheduler({
-      slots: memorySlots, policy, t1Ms, t2Ms, usableFidelityFloor: floor, rng,
+      slots: memorySlots, policy, t1Ms, t2Ms, usableFidelityFloor: floor,
+      swapTargetF: linkTarget, rng,
     });
     pending[L] = attemptsPerLink;
     nextAttempt[L] = 0;
@@ -519,13 +573,20 @@ function simulate(cfg) {
   const GUARD_MAX = 20_000_000;
 
   const tryScheduleWork = (t) => {
+    // (i) TAKAS EŞLEŞTİRMESİ — hazır bir çift, HER İKİ bağ da hazır olmadan
+    // bellekten ALINMAZ. (Bir ara sürümde hazır çift hemen alınıp eşi
+    // beklenirken bellekte tutuluyordu; bu bekleme sırasındaki dekoherans
+    // onu hedefin altına düşürüyor ve takas atılıyordu. Ham sadakatin
+    // hedefe ÇOK YAKIN olduğu mesafelerde — ~6 km — verim bu yüzden
+    // %40'tan %2'ye çöküyordu. Artık çift, eşi hazır olana kadar
+    // bellekte kalır ve orada arıtma havuzunun parçası olmayı sürdürür.)
+    if (links.every(L => sched[L].peekReady(linkTarget, t))) {
+      for (const L of links) {
+        if (!readyForSwap[L]) readyForSwap[L] = sched[L].takeReady(linkTarget, t);
+      }
+    }
     for (const L of links) {
       const S = sched[L];
-      // (i) Hedefe ulaşmış çift varsa takas kuyruğuna al.
-      if (!readyForSwap[L]) {
-        const ready = S.takeReady(linkTarget, t);
-        if (ready) readyForSwap[L] = ready;
-      }
       // (ii) Arıtma başlat — ELDEKİ TÜM uygun çiftler için, PARALEL.
       //      Burada KASITLI OLARAK bir "tur başına N işlem" tavanı YOKTUR
       //      (v1'deki PURIFICATION_CAPACITY_PER_ROUND=40 gibi). Bir düğüm,
@@ -671,6 +732,7 @@ function simulate(cfg) {
       oneWayDelayMs: +delayMs.toFixed(6),
       fiberVelocityKmPerMs: +FIBER_V_KM_PER_MS.toFixed(3),
       requiredLinkFidelity: +linkTarget.toFixed(6),
+      requiredLinkFidelityIdeal: +linkTargetIdeal.toFixed(6),
       usableFidelityFloor: +floor.toFixed(6),
     },
     totals: {

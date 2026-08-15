@@ -1,0 +1,2696 @@
+{
+  "generatedAt": "2026-08-15T08:24:03.022Z",
+  "budgetLifted": [
+    {
+      "t2Ms": 1000,
+      "label": "1 s",
+      "attemptsPerLink": 1000,
+      "criticalKm": 45
+    },
+    {
+      "t2Ms": 1000,
+      "label": "1 s",
+      "attemptsPerLink": 10000,
+      "criticalKm": 65
+    },
+    {
+      "t2Ms": 10000,
+      "label": "10 s",
+      "attemptsPerLink": 1000,
+      "criticalKm": 45
+    },
+    {
+      "t2Ms": 10000,
+      "label": "10 s",
+      "attemptsPerLink": 10000,
+      "criticalKm": 60
+    }
+  ],
+  "method": {
+    "seeds": 5,
+    "kmRange": [
+      4,
+      130
+    ],
+    "kmStep": 2,
+    "criticalRule": "tohumların ≥%50'si ≥1 nihai çift üretiyor",
+    "workingRule": "ortalama verim ≥ %0.5",
+    "honestyNote": "T2 değerleri gerçek platformların BÜYÜKLÜK MERTEBELERİNİ temsil eden gösterge değerlerdir; belirli bir cihazın ölçülmüş spesifikasyonu değildir."
+  },
+  "constants": {
+    "attenuationDbPerKm": 0.2,
+    "refractiveIndex": 1.468,
+    "velocityKmPerMs": 204.218,
+    "targetFinalFidelity": 0.85,
+    "memorySlots": 20,
+    "protocol": "dejmps"
+  },
+  "tiers": [
+    {
+      "t2Ms": 1,
+      "label": "1 ms",
+      "tech": "kısa ömürlü atomik ensemble (mertebe)",
+      "criticalKm": 18,
+      "workingKm": 16,
+      "curve": [
+        {
+          "km": 4,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 781.2,
+          "meanYieldPct": 39.06,
+          "minFidelity": 0.8656
+        },
+        {
+          "km": 6,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 267.6,
+          "meanYieldPct": 13.38,
+          "minFidelity": 0.8972
+        },
+        {
+          "km": 8,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 211.6,
+          "meanYieldPct": 10.58,
+          "minFidelity": 0.8829
+        },
+        {
+          "km": 10,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 149.2,
+          "meanYieldPct": 7.46,
+          "minFidelity": 0.8663
+        },
+        {
+          "km": 12,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 92.4,
+          "meanYieldPct": 4.62,
+          "minFidelity": 0.8527
+        },
+        {
+          "km": 14,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 24.6,
+          "meanYieldPct": 1.23,
+          "minFidelity": 0.8639
+        },
+        {
+          "km": 16,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 11.8,
+          "meanYieldPct": 0.59,
+          "minFidelity": 0.8543
+        },
+        {
+          "km": 18,
+          "nonZeroSeeds": 4,
+          "totalSeeds": 5,
+          "meanPairs": 2.6,
+          "meanYieldPct": 0.13,
+          "minFidelity": 0.8517
+        },
+        {
+          "km": 20,
+          "nonZeroSeeds": 2,
+          "totalSeeds": 5,
+          "meanPairs": 0.4,
+          "meanYieldPct": 0.02,
+          "minFidelity": 0.8555
+        },
+        {
+          "km": 22,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 24,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 26,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 28,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 30,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 32,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 34,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 36,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 38,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 40,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 42,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 44,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 46,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 48,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 50,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 52,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 54,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 56,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 58,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 60,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 62,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 64,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 66,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 68,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 70,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 72,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 74,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 76,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 78,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 80,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 82,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 84,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 86,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 88,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 90,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 92,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 94,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 96,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 98,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 100,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 102,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 104,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 106,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 108,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 110,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 112,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 114,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 116,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 118,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 120,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 122,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 124,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 126,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 128,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 130,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        }
+      ],
+      "at40km": {
+        "km": 40,
+        "nonZeroSeeds": 0,
+        "totalSeeds": 5,
+        "meanPairs": 0,
+        "meanYieldPct": 0,
+        "minFidelity": null
+      }
+    },
+    {
+      "t2Ms": 10,
+      "label": "10 ms",
+      "tech": "v1/v2 taban varsayımı",
+      "criticalKm": 36,
+      "workingKm": 28,
+      "curve": [
+        {
+          "km": 4,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 818,
+          "meanYieldPct": 40.9,
+          "minFidelity": 0.8714
+        },
+        {
+          "km": 6,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 314.8,
+          "meanYieldPct": 15.74,
+          "minFidelity": 0.9117
+        },
+        {
+          "km": 8,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 267.8,
+          "meanYieldPct": 13.39,
+          "minFidelity": 0.9051
+        },
+        {
+          "km": 10,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 226,
+          "meanYieldPct": 11.3,
+          "minFidelity": 0.8982
+        },
+        {
+          "km": 12,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 192.2,
+          "meanYieldPct": 9.61,
+          "minFidelity": 0.8902
+        },
+        {
+          "km": 14,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 167.6,
+          "meanYieldPct": 8.38,
+          "minFidelity": 0.8819
+        },
+        {
+          "km": 16,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 138.4,
+          "meanYieldPct": 6.92,
+          "minFidelity": 0.8689
+        },
+        {
+          "km": 18,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 111.8,
+          "meanYieldPct": 5.59,
+          "minFidelity": 0.8563
+        },
+        {
+          "km": 20,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 55,
+          "meanYieldPct": 2.75,
+          "minFidelity": 0.8927
+        },
+        {
+          "km": 22,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 43.2,
+          "meanYieldPct": 2.16,
+          "minFidelity": 0.8814
+        },
+        {
+          "km": 24,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 35.8,
+          "meanYieldPct": 1.79,
+          "minFidelity": 0.8583
+        },
+        {
+          "km": 26,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 28.4,
+          "meanYieldPct": 1.42,
+          "minFidelity": 0.8551
+        },
+        {
+          "km": 28,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 16,
+          "meanYieldPct": 0.8,
+          "minFidelity": 0.8526
+        },
+        {
+          "km": 30,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 7,
+          "meanYieldPct": 0.35,
+          "minFidelity": 0.855
+        },
+        {
+          "km": 32,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 5.2,
+          "meanYieldPct": 0.26,
+          "minFidelity": 0.8582
+        },
+        {
+          "km": 34,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 1.6,
+          "meanYieldPct": 0.08,
+          "minFidelity": 0.8727
+        },
+        {
+          "km": 36,
+          "nonZeroSeeds": 4,
+          "totalSeeds": 5,
+          "meanPairs": 1.4,
+          "meanYieldPct": 0.07,
+          "minFidelity": 0.8553
+        },
+        {
+          "km": 38,
+          "nonZeroSeeds": 2,
+          "totalSeeds": 5,
+          "meanPairs": 0.6,
+          "meanYieldPct": 0.03,
+          "minFidelity": 0.8605
+        },
+        {
+          "km": 40,
+          "nonZeroSeeds": 2,
+          "totalSeeds": 5,
+          "meanPairs": 0.4,
+          "meanYieldPct": 0.02,
+          "minFidelity": 0.8576
+        },
+        {
+          "km": 42,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 44,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 46,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 48,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 50,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 52,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 54,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 56,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 58,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 60,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 62,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 64,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 66,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 68,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 70,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 72,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 74,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 76,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 78,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 80,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 82,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 84,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 86,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 88,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 90,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 92,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 94,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 96,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 98,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 100,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 102,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 104,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 106,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 108,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 110,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 112,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 114,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 116,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 118,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 120,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 122,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 124,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 126,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 128,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 130,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        }
+      ],
+      "at40km": {
+        "km": 40,
+        "nonZeroSeeds": 2,
+        "totalSeeds": 5,
+        "meanPairs": 0.4,
+        "meanYieldPct": 0.02,
+        "minFidelity": 0.8576
+      }
+    },
+    {
+      "t2Ms": 100,
+      "label": "100 ms",
+      "tech": "soğutulmuş katı-hal / iyon tuzağı (mertebe)",
+      "criticalKm": 52,
+      "workingKm": 32,
+      "curve": [
+        {
+          "km": 4,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 821.8,
+          "meanYieldPct": 41.09,
+          "minFidelity": 0.8736
+        },
+        {
+          "km": 6,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 712,
+          "meanYieldPct": 35.6,
+          "minFidelity": 0.8508
+        },
+        {
+          "km": 8,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 271.4,
+          "meanYieldPct": 13.57,
+          "minFidelity": 0.9072
+        },
+        {
+          "km": 10,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 235.4,
+          "meanYieldPct": 11.77,
+          "minFidelity": 0.9081
+        },
+        {
+          "km": 12,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 208,
+          "meanYieldPct": 10.4,
+          "minFidelity": 0.8956
+        },
+        {
+          "km": 14,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 184.4,
+          "meanYieldPct": 9.22,
+          "minFidelity": 0.8859
+        },
+        {
+          "km": 16,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 159.6,
+          "meanYieldPct": 7.98,
+          "minFidelity": 0.8762
+        },
+        {
+          "km": 18,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 133.4,
+          "meanYieldPct": 6.67,
+          "minFidelity": 0.8659
+        },
+        {
+          "km": 20,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 111.4,
+          "meanYieldPct": 5.57,
+          "minFidelity": 0.8548
+        },
+        {
+          "km": 22,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 58,
+          "meanYieldPct": 2.9,
+          "minFidelity": 0.894
+        },
+        {
+          "km": 24,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 49.4,
+          "meanYieldPct": 2.47,
+          "minFidelity": 0.8883
+        },
+        {
+          "km": 26,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 40.4,
+          "meanYieldPct": 2.02,
+          "minFidelity": 0.8788
+        },
+        {
+          "km": 28,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 38,
+          "meanYieldPct": 1.9,
+          "minFidelity": 0.8702
+        },
+        {
+          "km": 30,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 28.8,
+          "meanYieldPct": 1.44,
+          "minFidelity": 0.8611
+        },
+        {
+          "km": 32,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 21.8,
+          "meanYieldPct": 1.09,
+          "minFidelity": 0.8513
+        },
+        {
+          "km": 34,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 9.4,
+          "meanYieldPct": 0.47,
+          "minFidelity": 0.8808
+        },
+        {
+          "km": 36,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 9.6,
+          "meanYieldPct": 0.48,
+          "minFidelity": 0.8676
+        },
+        {
+          "km": 38,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 6.2,
+          "meanYieldPct": 0.31,
+          "minFidelity": 0.8653
+        },
+        {
+          "km": 40,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 6.8,
+          "meanYieldPct": 0.34,
+          "minFidelity": 0.8516
+        },
+        {
+          "km": 42,
+          "nonZeroSeeds": 4,
+          "totalSeeds": 5,
+          "meanPairs": 2.8,
+          "meanYieldPct": 0.14,
+          "minFidelity": 0.8633
+        },
+        {
+          "km": 44,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 2.2,
+          "meanYieldPct": 0.11,
+          "minFidelity": 0.8715
+        },
+        {
+          "km": 46,
+          "nonZeroSeeds": 4,
+          "totalSeeds": 5,
+          "meanPairs": 1.4,
+          "meanYieldPct": 0.07,
+          "minFidelity": 0.8549
+        },
+        {
+          "km": 48,
+          "nonZeroSeeds": 2,
+          "totalSeeds": 5,
+          "meanPairs": 0.4,
+          "meanYieldPct": 0.02,
+          "minFidelity": 0.8707
+        },
+        {
+          "km": 50,
+          "nonZeroSeeds": 1,
+          "totalSeeds": 5,
+          "meanPairs": 0.2,
+          "meanYieldPct": 0.01,
+          "minFidelity": 0.881
+        },
+        {
+          "km": 52,
+          "nonZeroSeeds": 4,
+          "totalSeeds": 5,
+          "meanPairs": 0.8,
+          "meanYieldPct": 0.04,
+          "minFidelity": 0.8567
+        },
+        {
+          "km": 54,
+          "nonZeroSeeds": 1,
+          "totalSeeds": 5,
+          "meanPairs": 0.2,
+          "meanYieldPct": 0.01,
+          "minFidelity": 0.8709
+        },
+        {
+          "km": 56,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 58,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 60,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 62,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 64,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 66,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 68,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 70,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 72,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 74,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 76,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 78,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 80,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 82,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 84,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 86,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 88,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 90,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 92,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 94,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 96,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 98,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 100,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 102,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 104,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 106,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 108,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 110,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 112,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 114,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 116,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 118,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 120,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 122,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 124,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 126,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 128,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 130,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        }
+      ],
+      "at40km": {
+        "km": 40,
+        "nonZeroSeeds": 5,
+        "totalSeeds": 5,
+        "meanPairs": 6.8,
+        "meanYieldPct": 0.34,
+        "minFidelity": 0.8516
+      }
+    },
+    {
+      "t2Ms": 1000,
+      "label": "1 s",
+      "tech": "dinamik ayrıştırmalı spin belleği (mertebe)",
+      "criticalKm": 54,
+      "workingKm": 36,
+      "curve": [
+        {
+          "km": 4,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 821,
+          "meanYieldPct": 41.05,
+          "minFidelity": 0.891
+        },
+        {
+          "km": 6,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 747.8,
+          "meanYieldPct": 37.39,
+          "minFidelity": 0.8508
+        },
+        {
+          "km": 8,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 273.4,
+          "meanYieldPct": 13.67,
+          "minFidelity": 0.9592
+        },
+        {
+          "km": 10,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 239,
+          "meanYieldPct": 11.95,
+          "minFidelity": 0.942
+        },
+        {
+          "km": 12,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 204.6,
+          "meanYieldPct": 10.23,
+          "minFidelity": 0.9334
+        },
+        {
+          "km": 14,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 183.8,
+          "meanYieldPct": 9.19,
+          "minFidelity": 0.9089
+        },
+        {
+          "km": 16,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 159,
+          "meanYieldPct": 7.95,
+          "minFidelity": 0.8797
+        },
+        {
+          "km": 18,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 142.4,
+          "meanYieldPct": 7.12,
+          "minFidelity": 0.8664
+        },
+        {
+          "km": 20,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 118.2,
+          "meanYieldPct": 5.91,
+          "minFidelity": 0.8554
+        },
+        {
+          "km": 22,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 53.4,
+          "meanYieldPct": 2.67,
+          "minFidelity": 0.9101
+        },
+        {
+          "km": 24,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 50.4,
+          "meanYieldPct": 2.52,
+          "minFidelity": 0.8956
+        },
+        {
+          "km": 26,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 44.4,
+          "meanYieldPct": 2.22,
+          "minFidelity": 0.8923
+        },
+        {
+          "km": 28,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 37.4,
+          "meanYieldPct": 1.87,
+          "minFidelity": 0.8729
+        },
+        {
+          "km": 30,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 35.6,
+          "meanYieldPct": 1.78,
+          "minFidelity": 0.8629
+        },
+        {
+          "km": 32,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 27.6,
+          "meanYieldPct": 1.38,
+          "minFidelity": 0.8535
+        },
+        {
+          "km": 34,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 11.8,
+          "meanYieldPct": 0.59,
+          "minFidelity": 0.9034
+        },
+        {
+          "km": 36,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 12,
+          "meanYieldPct": 0.6,
+          "minFidelity": 0.8791
+        },
+        {
+          "km": 38,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 8.8,
+          "meanYieldPct": 0.44,
+          "minFidelity": 0.8724
+        },
+        {
+          "km": 40,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 8.2,
+          "meanYieldPct": 0.41,
+          "minFidelity": 0.8598
+        },
+        {
+          "km": 42,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 4.2,
+          "meanYieldPct": 0.21,
+          "minFidelity": 0.8865
+        },
+        {
+          "km": 44,
+          "nonZeroSeeds": 4,
+          "totalSeeds": 5,
+          "meanPairs": 1.8,
+          "meanYieldPct": 0.09,
+          "minFidelity": 0.873
+        },
+        {
+          "km": 46,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 3,
+          "meanYieldPct": 0.15,
+          "minFidelity": 0.8696
+        },
+        {
+          "km": 48,
+          "nonZeroSeeds": 4,
+          "totalSeeds": 5,
+          "meanPairs": 1.4,
+          "meanYieldPct": 0.07,
+          "minFidelity": 0.8692
+        },
+        {
+          "km": 50,
+          "nonZeroSeeds": 3,
+          "totalSeeds": 5,
+          "meanPairs": 0.8,
+          "meanYieldPct": 0.04,
+          "minFidelity": 0.88
+        },
+        {
+          "km": 52,
+          "nonZeroSeeds": 3,
+          "totalSeeds": 5,
+          "meanPairs": 1.4,
+          "meanYieldPct": 0.07,
+          "minFidelity": 0.8667
+        },
+        {
+          "km": 54,
+          "nonZeroSeeds": 3,
+          "totalSeeds": 5,
+          "meanPairs": 0.6,
+          "meanYieldPct": 0.03,
+          "minFidelity": 0.8557
+        },
+        {
+          "km": 56,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 58,
+          "nonZeroSeeds": 1,
+          "totalSeeds": 5,
+          "meanPairs": 0.2,
+          "meanYieldPct": 0.01,
+          "minFidelity": 0.8634
+        },
+        {
+          "km": 60,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 62,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 64,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 66,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 68,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 70,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 72,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 74,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 76,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 78,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 80,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 82,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 84,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 86,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 88,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 90,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 92,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 94,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 96,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 98,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 100,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 102,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 104,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 106,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 108,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 110,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 112,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 114,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 116,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 118,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 120,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 122,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 124,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 126,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 128,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 130,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        }
+      ],
+      "at40km": {
+        "km": 40,
+        "nonZeroSeeds": 5,
+        "totalSeeds": 5,
+        "meanPairs": 8.2,
+        "meanYieldPct": 0.41,
+        "minFidelity": 0.8598
+      }
+    },
+    {
+      "t2Ms": 10000,
+      "label": "10 s",
+      "tech": "uzun ömürlü nükleer/nadir-toprak spin (mertebe)",
+      "criticalKm": 54,
+      "workingKm": 38,
+      "curve": [
+        {
+          "km": 4,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 821,
+          "meanYieldPct": 41.05,
+          "minFidelity": 0.895
+        },
+        {
+          "km": 6,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 756.2,
+          "meanYieldPct": 37.81,
+          "minFidelity": 0.8509
+        },
+        {
+          "km": 8,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 273.4,
+          "meanYieldPct": 13.67,
+          "minFidelity": 0.972
+        },
+        {
+          "km": 10,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 239,
+          "meanYieldPct": 11.95,
+          "minFidelity": 0.9576
+        },
+        {
+          "km": 12,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 204.6,
+          "meanYieldPct": 10.23,
+          "minFidelity": 0.9419
+        },
+        {
+          "km": 14,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 185.2,
+          "meanYieldPct": 9.26,
+          "minFidelity": 0.9224
+        },
+        {
+          "km": 16,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 158.6,
+          "meanYieldPct": 7.93,
+          "minFidelity": 0.9017
+        },
+        {
+          "km": 18,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 142,
+          "meanYieldPct": 7.1,
+          "minFidelity": 0.8812
+        },
+        {
+          "km": 20,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 122.2,
+          "meanYieldPct": 6.11,
+          "minFidelity": 0.8581
+        },
+        {
+          "km": 22,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 53.4,
+          "meanYieldPct": 2.67,
+          "minFidelity": 0.9394
+        },
+        {
+          "km": 24,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 50.4,
+          "meanYieldPct": 2.52,
+          "minFidelity": 0.9249
+        },
+        {
+          "km": 26,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 43.4,
+          "meanYieldPct": 2.17,
+          "minFidelity": 0.9102
+        },
+        {
+          "km": 28,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 37.6,
+          "meanYieldPct": 1.88,
+          "minFidelity": 0.891
+        },
+        {
+          "km": 30,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 36.6,
+          "meanYieldPct": 1.83,
+          "minFidelity": 0.8744
+        },
+        {
+          "km": 32,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 31.6,
+          "meanYieldPct": 1.58,
+          "minFidelity": 0.8544
+        },
+        {
+          "km": 34,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 11.8,
+          "meanYieldPct": 0.59,
+          "minFidelity": 0.9124
+        },
+        {
+          "km": 36,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 10.8,
+          "meanYieldPct": 0.54,
+          "minFidelity": 0.8984
+        },
+        {
+          "km": 38,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 11.6,
+          "meanYieldPct": 0.58,
+          "minFidelity": 0.8784
+        },
+        {
+          "km": 40,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 9.2,
+          "meanYieldPct": 0.46,
+          "minFidelity": 0.8625
+        },
+        {
+          "km": 42,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 4.4,
+          "meanYieldPct": 0.22,
+          "minFidelity": 0.9078
+        },
+        {
+          "km": 44,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 3,
+          "meanYieldPct": 0.15,
+          "minFidelity": 0.8878
+        },
+        {
+          "km": 46,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 3.4,
+          "meanYieldPct": 0.17,
+          "minFidelity": 0.8733
+        },
+        {
+          "km": 48,
+          "nonZeroSeeds": 5,
+          "totalSeeds": 5,
+          "meanPairs": 2.4,
+          "meanYieldPct": 0.12,
+          "minFidelity": 0.8559
+        },
+        {
+          "km": 50,
+          "nonZeroSeeds": 3,
+          "totalSeeds": 5,
+          "meanPairs": 1,
+          "meanYieldPct": 0.05,
+          "minFidelity": 0.8903
+        },
+        {
+          "km": 52,
+          "nonZeroSeeds": 3,
+          "totalSeeds": 5,
+          "meanPairs": 1.2,
+          "meanYieldPct": 0.06,
+          "minFidelity": 0.8719
+        },
+        {
+          "km": 54,
+          "nonZeroSeeds": 4,
+          "totalSeeds": 5,
+          "meanPairs": 1.2,
+          "meanYieldPct": 0.06,
+          "minFidelity": 0.8575
+        },
+        {
+          "km": 56,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 58,
+          "nonZeroSeeds": 1,
+          "totalSeeds": 5,
+          "meanPairs": 0.2,
+          "meanYieldPct": 0.01,
+          "minFidelity": 0.8646
+        },
+        {
+          "km": 60,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 62,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 64,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 66,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 68,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 70,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 72,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 74,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 76,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 78,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 80,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 82,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 84,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 86,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 88,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 90,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 92,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 94,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 96,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 98,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 100,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 102,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 104,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 106,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 108,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 110,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 112,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 114,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 116,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 118,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 120,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 122,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 124,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 126,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 128,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        },
+        {
+          "km": 130,
+          "nonZeroSeeds": 0,
+          "totalSeeds": 5,
+          "meanPairs": 0,
+          "meanYieldPct": 0,
+          "minFidelity": null
+        }
+      ],
+      "at40km": {
+        "km": 40,
+        "nonZeroSeeds": 5,
+        "totalSeeds": 5,
+        "meanPairs": 9.2,
+        "meanYieldPct": 0.46,
+        "minFidelity": 0.8625
+      }
+    }
+  ],
+  "failures": 0
+}
