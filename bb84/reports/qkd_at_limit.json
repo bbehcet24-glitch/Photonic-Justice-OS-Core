@@ -1,0 +1,233 @@
+{
+  "generatedAt": "2026-08-15T09:09:05.685Z",
+  "scaling": [
+    {
+      "rawAttempts": 1000000,
+      "pairs": 7752,
+      "bbm92N": 2906,
+      "qberX": 0.11365953109072376,
+      "bbm92Ell": 0,
+      "bbm92Secure": false,
+      "e91N": 1278,
+      "e91S": 2.46608,
+      "e91Sigma": 8.77,
+      "e91Ell": 0,
+      "e91Secure": false,
+      "e91Decrypted": null,
+      "bbm92Decrypted": null
+    },
+    {
+      "rawAttempts": 4000000,
+      "pairs": 31085,
+      "bbm92N": 11577,
+      "qberX": 0.1190754447474354,
+      "bbm92Ell": 0,
+      "bbm92Secure": false,
+      "e91N": 5224,
+      "e91S": 2.45579,
+      "e91Sigma": 17.051,
+      "e91Ell": 0,
+      "e91Secure": false,
+      "e91Decrypted": null,
+      "bbm92Decrypted": null
+    },
+    {
+      "rawAttempts": 16000000,
+      "pairs": 92376,
+      "bbm92N": 34650,
+      "qberX": 0.12380952380952381,
+      "bbm92Ell": 1445,
+      "bbm92Secure": true,
+      "e91N": 15313,
+      "e91S": 2.45596,
+      "e91Sigma": 29.442,
+      "e91Ell": 0,
+      "e91Secure": false,
+      "e91Decrypted": null,
+      "bbm92Decrypted": true
+    }
+  ],
+  "limitKm": 52,
+  "note": "52 km, zayıflama taramasında KAYIPSIZ kanalda bile bulunan kritik eşiktir; menzili belirleyen fiber kaybı değil, faz gürültüsü + bellek dekoheransıdır.",
+  "configs": [
+    {
+      "key": "baseline",
+      "alpha": 0,
+      "t2Ms": 10,
+      "attempts": 500000,
+      "label": "kayıpsız kanal, T₂=10 ms (taban)",
+      "rawAttempts": 1000000,
+      "pairs": 262,
+      "yieldPct": 0.0262,
+      "meanFidelity": 0.861932,
+      "attemptsPerPair": 3817,
+      "meanRoundsPerPair": 7.5115
+    },
+    {
+      "key": "goodmem",
+      "alpha": 0,
+      "t2Ms": 1000,
+      "attempts": 500000,
+      "label": "kayıpsız kanal, T₂=1 s (iyi bellek)",
+      "rawAttempts": 1000000,
+      "pairs": 7752,
+      "yieldPct": 0.7752,
+      "meanFidelity": 0.875988,
+      "attemptsPerPair": 129,
+      "meanRoundsPerPair": 5.3531
+    },
+    {
+      "key": "realfiber",
+      "alpha": 0.2,
+      "t2Ms": 1000,
+      "attempts": 500000,
+      "label": "SMF-28 (α=0,2), T₂=1 s",
+      "rawAttempts": 1000000,
+      "pairs": 515,
+      "yieldPct": 0.0515,
+      "meanFidelity": 0.87957,
+      "attemptsPerPair": 1942,
+      "meanRoundsPerPair": 5.9534
+    }
+  ],
+  "protocols": {
+    "baseline": {
+      "label": "kayıpsız kanal, T₂=10 ms (taban)",
+      "pairs": 262,
+      "bbm92": {
+        "sifted": 138,
+        "n": 104,
+        "qberZ": 0,
+        "qberX": 0.18840579710144928,
+        "ell": 0,
+        "secure": false,
+        "decrypted": null
+      },
+      "e91": {
+        "bell": {
+          "S": 1.9774,
+          "standardError": 0.32122,
+          "sigmaAboveClassical": -0.07,
+          "significantViolation": false,
+          "SanalyticStandard": 2.43791,
+          "SanalyticOptimal": 2.46899,
+          "tsirelson": 2.82843,
+          "classicalBound": 2,
+          "violated": false,
+          "chshRounds": 115,
+          "chshRoundsNeededFor3Sigma": 472,
+          "perSettingCorrelations": [
+            0.69231,
+            -0.58333,
+            0.33333,
+            0.36842
+          ]
+        },
+        "rounds": {
+          "keyRounds": 64,
+          "chshRounds": 115,
+          "discarded": 83,
+          "total": 262
+        },
+        "n": 0,
+        "qberEst": null,
+        "ell": 0,
+        "secure": false,
+        "decrypted": null
+      }
+    },
+    "goodmem": {
+      "label": "kayıpsız kanal, T₂=1 s (iyi bellek)",
+      "pairs": 7752,
+      "bbm92": {
+        "sifted": 3874,
+        "n": 2906,
+        "qberZ": 0,
+        "qberX": 0.11365953109072376,
+        "ell": 0,
+        "secure": false,
+        "decrypted": null
+      },
+      "e91": {
+        "bell": {
+          "S": 2.46608,
+          "standardError": 0.05314,
+          "sigmaAboveClassical": 8.77,
+          "significantViolation": true,
+          "SanalyticStandard": 2.47767,
+          "SanalyticOptimal": 2.50237,
+          "tsirelson": 2.82843,
+          "classicalBound": 2,
+          "violated": true,
+          "chshRounds": 3477,
+          "chshRoundsNeededFor3Sigma": 389,
+          "perSettingCorrelations": [
+            0.73073,
+            -0.68788,
+            0.50831,
+            0.53916
+          ]
+        },
+        "rounds": {
+          "keyRounds": 1704,
+          "chshRounds": 3477,
+          "discarded": 2571,
+          "total": 7752,
+          "keyFraction": 0.2198,
+          "chshFraction": 0.4485
+        },
+        "n": 1278,
+        "qberEst": 0.08216,
+        "ell": 0,
+        "secure": false,
+        "decrypted": null
+      }
+    },
+    "realfiber": {
+      "label": "SMF-28 (α=0,2), T₂=1 s",
+      "pairs": 515,
+      "bbm92": {
+        "sifted": 267,
+        "n": 201,
+        "qberZ": 0,
+        "qberX": 0.1386861313868613,
+        "ell": 0,
+        "secure": false,
+        "decrypted": null
+      },
+      "e91": {
+        "bell": {
+          "S": 2.25823,
+          "standardError": 0.21313,
+          "sigmaAboveClassical": 1.212,
+          "significantViolation": false,
+          "SanalyticStandard": 2.4878,
+          "SanalyticOptimal": 2.51101,
+          "tsirelson": 2.82843,
+          "classicalBound": 2,
+          "violated": true,
+          "chshRounds": 237,
+          "chshRoundsNeededFor3Sigma": 372,
+          "perSettingCorrelations": [
+            0.62963,
+            -0.67857,
+            0.53623,
+            0.41379
+          ]
+        },
+        "rounds": {
+          "keyRounds": 114,
+          "chshRounds": 237,
+          "discarded": 164,
+          "total": 515
+        },
+        "n": 0,
+        "qberEst": null,
+        "ell": 0,
+        "secure": false,
+        "decrypted": null
+      }
+    }
+  },
+  "failures": 0
+}
