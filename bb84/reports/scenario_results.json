@@ -1,0 +1,83 @@
+{
+  "generatedAt": "bkz. run.log (Date.now() betik-DIŞI ortamda damgalanmalı)",
+  "kmePort": 8543,
+  "ocspPort": 8988,
+  "results": [
+    {
+      "id": "S1",
+      "title": "Planlı rotasyon, İPTAL OLMADAN (kesintisiz geçiş penceresi)",
+      "verdict": "PASS",
+      "summary": "rotate_cert.sh (--revoke-old OLMADAN) çalıştırıldıktan SONRA hem ESKİ hem YENİ sertifika kabul edildi — sıfır kesintili geçiş mümkün (YENİ sertifikanın kabul edilmesi 30064ms sürdü — bkz. '30sn negatif önbellek yarışı' notu).",
+      "detail": {
+        "baseline_eski_sertifika": "KABUL (katman=http, HTTP 200, 62ms) — \"HTTP 200\"",
+        "rotasyon_sonrasi_eski_sertifika_kopyasi": "KABUL (katman=http, HTTP 200, 20ms) — \"HTTP 200\"",
+        "rotasyon_sonrasi_yeni_sertifika": "KABUL (katman=http, HTTP 200, 38ms) — \"HTTP 200\""
+      }
+    },
+    {
+      "id": "S2",
+      "title": "Planlı rotasyon, --revoke-old İLE (sızdırılmış anahtar senaryosu)",
+      "verdict": "PASS",
+      "summary": "eski sertifika rotate_cert.sh --revoke-old komutundan itibaren 19ms içinde reddedilmeye başladı (katman: TLS/CRL (bağlantı seviyesi)); yeni sertifika 30343ms içinde kabul edilir hale geldi (bu çalıştırmada YENİ sertifikanın ilk OCSP sorgusu, yanıtlayıcının henüz güncellenmemiş bir anlık görüntüsüne denk geldi — bkz. rapordaki '30sn negatif önbellek yarışı' notu).",
+      "detail": {
+        "baseline_eski_sertifika": "KABUL (katman=http, HTTP 200, 36ms) — \"HTTP 200\"",
+        "rotate_komutunun_calisma_suresi_ms": 1443,
+        "eski_sertifika_reddedilene_kadar_gecen_sure_ms": 19,
+        "eski_sertifika_reddinin_katmani": "TLS/CRL (bağlantı seviyesi — HTTP yanıtı hiç alınamadı)",
+        "eski_sertifika_son_hata_mesaji": "socket hang up",
+        "yeni_sertifikanin_kabul_edilene_kadar_gecen_sure_ms": 30343,
+        "yeni_sertifika_30sn_negatif_onbellek_yarisina_yakalandi_mi": true
+      }
+    },
+    {
+      "id": "S3",
+      "title": "Acil iptal, ROTASYON OLMADAN (\"önce kilitle\" senaryosu)",
+      "verdict": "PASS",
+      "summary": "revoke_cert.sh komutundan itibaren 659ms içinde sertifika reddedilmeye başladı (katman: TLS/CRL (bağlantı seviyesi)).",
+      "detail": {
+        "baseline": "KABUL (katman=http, HTTP 200, 35ms) — \"HTTP 200\"",
+        "revoke_komutunun_calisma_suresi_ms": 114,
+        "reddedilene_kadar_gecen_sure_ms": 659,
+        "reddin_katmani": "TLS/CRL (bağlantı seviyesi)",
+        "son_hata_mesaji": "socket hang up"
+      }
+    },
+    {
+      "id": "S4",
+      "title": "OCSP yanıtlayıcısı ÇÖKER (fail-closed doğrulaması + kurtarma davranışı)",
+      "verdict": "PASS",
+      "summary": "OCSP yanıtlayıcısı ERİŞİLEMEZ olduğunda GEÇERLİ bir sertifika bile 3945ms içinde HTTP 401 ile fail-CLOSED reddedildi (güvenlik açısından DOĞRU); yanıtlayıcı 23ms'de toparlandı ve TAZE bir kimlik hemen kabul edildi. ÖNEMLİ: kesinti sırasında reddedilen AYNI kimlik (B), yanıtlayıcı toparlandıktan HEMEN sonra bile HÂLÂ reddedildi — negatif sonuç da 30sn önbelleğe alınıyor.",
+      "detail": {
+        "baseline_A_ocsp_ayaktayken": "KABUL (katman=http, HTTP 200, 35ms) — \"HTTP 200\"",
+        "kesinti_sirasinda_B_hic_sorgulanmamis_kimlik": "RED (katman=http, HTTP 401, 3945ms) — \"OCSP yanıtlayıcıya ulaşılamadı/anlaşılamadı (fail-CLOSED — İKAZ: yanıtlayıcı çökerse istekler REDDEDİLİR): Command failed: openssl ocsp -issuer /tmp/cert-scenarios-qilV56/pki/ca-cert.pem -cert /tmp/ocsp-QeqSIa/peer.pem -url http://localhost:8988 -CAfile /tmp/cert-scenarios-qilV56/pki/ca-cert.pem -timeout 3\nError querying OCSP responder\n4037F8D5AD7F0000:error:10000093:BIO routines:BIO_do_connect_retry:connect timeout:../crypto/bio/bio_lib.c:968:\n\"",
+        "ocsp_yanitlayici_toparlanma_suresi_ms": 23,
+        "toparlanma_sonrasi_TAZE_kimlik_C": "KABUL (katman=http, HTTP 200, 41ms) — \"HTTP 200\"",
+        "toparlanma_sonrasi_AYNI_kimlik_B_negatif_onbellek_notu": "RED (katman=http, HTTP 401, 17ms) — \"OCSP yanıtlayıcıya ulaşılamadı/anlaşılamadı (fail-CLOSED — İKAZ: yanıtlayıcı çökerse istekler REDDEDİLİR): Command failed: openssl ocsp -issuer /tmp/cert-scenarios-qilV56/pki/ca-cert.pem -cert /tmp/ocsp-QeqSIa/peer.pem -url http://localhost:8988 -CAfile /tmp/cert-scenarios-qilV56/pki/ca-cert.pem -timeout 3\nError querying OCSP responder\n4037F8D5AD7F0000:error:10000093:BIO routines:BIO_do_connect_retry:connect timeout:../crypto/bio/bio_lib.c:968:\n\""
+      }
+    },
+    {
+      "id": "S5",
+      "title": "KALICI (keep-alive) mTLS bağlantısı AÇIKKEN sertifika iptal edilirse",
+      "verdict": "PASS",
+      "summary": "mevcut, ZATEN KURULMUŞ TLS bağlantısı KOPARILMADI — iptal, aynı bağlantı üzerindeki BİR SONRAKİ istekte, revoke_cert.sh'ten itibaren 60248ms içinde, uygulama katmanında (HTTP 401, OCSP) devreye girdi. Sonuç: TLS oturum yeniden kullanımı iptali ATLATMIYOR, ama soketin kendisi de anında kesilmiyor. EN ÖNEMLİ BULGU: bu, TEK bir 30sn önbellek döngüsünden BELİRGİN ŞEKİLDE UZUN sürdü — referans OCSP yanıtlayıcısının kendi yeniden-başlatma mekanizmasıyla uygulama önbelleğinin ETKİLEŞİMİ yüzünden GERÇEK dünya kilitlenme süresi teorik ~30sn DEĞİL, ~60sn'ye kadar çıkabiliyor (bkz. rapordaki ayrıntılı analiz).",
+      "detail": {
+        "ilk_istek_ok_mu": true,
+        "ilk_istek_yerel_port": 37998,
+        "iptal_sonrasi_reddedilene_kadar_gecen_sure_ms": 60248,
+        "iptal_sonrasi_reddin_katmani": "HTTP 401 (soket hâlâ açık, uygulama katmanı reddetti)",
+        "iptal_sonrasi_son_hata_mesaji": "OCSP: sertifika İPTAL EDİLMİŞ",
+        "tek_onbellek_dongusunden_fazla_surdu_mu": true
+      }
+    },
+    {
+      "id": "S6",
+      "title": "HİÇ iptal edilmemiş ama SÜRESİ DOLMUŞ sertifika (kısa-ömür güvencesi)",
+      "verdict": "PASS",
+      "summary": "süresi dolmuş (ama iptal listesinde OLMAYAN) sertifika CRL/OCSP kontrolüne hiç ULAŞMADAN, doğrudan TLS handshake seviyesinde reddedildi (20ms, hata: \"socket hang up\") — kısa ömür stratejisi, iptal MEKANİZMASINDAN BAĞIMSIZ ikinci bir güvence katmanı olarak doğrulandı.",
+      "detail": {
+        "sonuc": "RED (katman=connection, ECONNRESET, 20ms) — \"socket hang up\"",
+        "not": "İKAZ: bu red genellikle 'ECONNRESET/socket hang up' gibi OPAK bir hata olarak görünür — spesifik 'sertifika süresi dolmuş' metni istemciye YANSIMAZ (bkz. rapordaki operasyonel öneri)."
+      }
+    }
+  ]
+}

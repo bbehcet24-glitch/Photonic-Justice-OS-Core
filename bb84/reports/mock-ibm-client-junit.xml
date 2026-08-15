@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites>
+  <testsuite name="mock_ibm_client" tests="19" failures="0" errors="0" time="0.534">
+    <testcase name="[IBM düğümü (mock)] CA zincirine karşı geçerli (openssl verify -crl_check)" classname="mock_ibm_client" time="0.014"/>
+    <testcase name="[IBM düğümü (mock)] extendedKeyUsage=clientAuth mevcut" classname="mock_ibm_client" time="0.039"/>
+    <testcase name="[IBM düğümü (mock)] geçerlilik penceresi içinde (süresi dolmamış/henüz başlamamış değil)" classname="mock_ibm_client" time="0.081"/>
+    <testcase name="[IBM düğümü (mock)] Subject CN okunabiliyor" classname="mock_ibm_client" time="0.047"/>
+    <testcase name="[IBM düğümü (mock)] OCSP canlı durumu: geçerli (iptal edilmemiş)" classname="mock_ibm_client" time="0.018"/>
+    <testcase name="[PhotonNet eş SAE] CA zincirine karşı geçerli (openssl verify -crl_check)" classname="mock_ibm_client" time="0.008"/>
+    <testcase name="[PhotonNet eş SAE] extendedKeyUsage=clientAuth mevcut" classname="mock_ibm_client" time="0.041"/>
+    <testcase name="[PhotonNet eş SAE] geçerlilik penceresi içinde (süresi dolmamış/henüz başlamamış değil)" classname="mock_ibm_client" time="0.076"/>
+    <testcase name="[PhotonNet eş SAE] Subject CN okunabiliyor" classname="mock_ibm_client" time="0.039"/>
+    <testcase name="[PhotonNet eş SAE] OCSP canlı durumu: geçerli (iptal edilmemiş)" classname="mock_ibm_client" time="0.020"/>
+    <testcase name="IBM düğümü → KME: mTLS bağlantısı kuruldu + GET status başarılı" classname="mock_ibm_client" time="0.072"/>
+    <testcase name="IBM düğümü (MASTER): POST enc_keys ile 1 anahtar talep etti" classname="mock_ibm_client" time="0.004"/>
+    <testcase name="PhotonNet eş SAE (SLAVE): POST dec_keys ile AYNI key_ID&apos;yi çekti" classname="mock_ibm_client" time="0.037"/>
+    <testcase name="BÜTÜNLÜK: master&apos;ın aldığı anahtar BİT BİT slave&apos;in aldığıyla eşleşiyor" classname="mock_ibm_client" time="0.000"/>
+    <testcase name="NEGATİF TEST: aynı key_ID&apos;nin TEKRAR çekilmesi reddediliyor (replay koruması)" classname="mock_ibm_client" time="0.003"/>
+    <testcase name="NEGATİF TEST: number=999 (max_key_per_request aşımı) reddediliyor" classname="mock_ibm_client" time="0.002"/>
+    <testcase name="NEGATİF TEST: bilinmeyen key_ID ile dec_keys reddediliyor" classname="mock_ibm_client" time="0.002"/>
+    <testcase name="NEGATİF TEST (kritik güvenlik): CA-DIŞI/sahte sertifikayla bağlantı TLS seviyesinde reddediliyor" classname="mock_ibm_client" time="0.012"/>
+    <testcase name="NEGATİF TEST: İPTAL EDİLMİŞ sertifikayla bağlantı reddediliyor (CRL/OCSP)" classname="mock_ibm_client" time="0.019"/>
+  </testsuite>
+</testsuites>

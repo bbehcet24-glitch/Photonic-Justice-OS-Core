@@ -1,0 +1,34 @@
+══════════════════════════════════════════════════════════════════════
+MOCK IBM NETWORK CLIENT — ETSI GS QKD 014 / mTLS Entegrasyon Testi
+══════════════════════════════════════════════════════════════════════
+
+── Sertifika Doğrulama: IBM düğümü (mock) (/tmp/tmp.8VdnHp8Uto/pki/reqs/SAE-IBM-QNET-cert.pem) ──
+✅ [IBM düğümü (mock)] CA zincirine karşı geçerli (openssl verify -crl_check)
+✅ [IBM düğümü (mock)] extendedKeyUsage=clientAuth mevcut
+✅ [IBM düğümü (mock)] geçerlilik penceresi içinde (süresi dolmamış/henüz başlamamış değil) — 7 gün sonra sona eriyor (notAfter=2026-08-22T01:44:07.000Z)
+✅ [IBM düğümü (mock)] Subject CN okunabiliyor — CN=SAE-IBM-QNET
+✅ [IBM düğümü (mock)] OCSP canlı durumu: geçerli (iptal edilmemiş)
+
+── Sertifika Doğrulama: PhotonNet eş SAE (/tmp/tmp.8VdnHp8Uto/pki/reqs/SAE-ANK-cert.pem) ──
+✅ [PhotonNet eş SAE] CA zincirine karşı geçerli (openssl verify -crl_check)
+✅ [PhotonNet eş SAE] extendedKeyUsage=clientAuth mevcut
+✅ [PhotonNet eş SAE] geçerlilik penceresi içinde (süresi dolmamış/henüz başlamamış değil) — 7 gün sonra sona eriyor (notAfter=2026-08-22T01:44:07.000Z)
+✅ [PhotonNet eş SAE] Subject CN okunabiliyor — CN=SAE-ANK
+✅ [PhotonNet eş SAE] OCSP canlı durumu: geçerli (iptal edilmemiş)
+
+── Protokol Akışı: SAE-IBM-QNET (IBM, master) ↔ SAE-ANK (PhotonNet, slave) ──
+✅ IBM düğümü → KME: mTLS bağlantısı kuruldu + GET status başarılı — stored_key_count=8, key_size=256bit, sunucu_CN=localhost
+✅ IBM düğümü (MASTER): POST enc_keys ile 1 anahtar talep etti — key_ID=0d464456-8860-4a0a-9fe9-551f0d32746a, boyut=256bit
+✅ PhotonNet eş SAE (SLAVE): POST dec_keys ile AYNI key_ID'yi çekti — key_ID=0d464456-8860-4a0a-9fe9-551f0d32746a
+✅ BÜTÜNLÜK: master'ın aldığı anahtar BİT BİT slave'in aldığıyla eşleşiyor — eşleşti
+✅ NEGATİF TEST: aynı key_ID'nin TEKRAR çekilmesi reddediliyor (replay koruması) — beklendiği gibi reddedildi: HTTP 400: key_ID bulunamadı (rota=ANK-IBM-QNET): 0d464456-8860-4a0a-9fe9-551f0d32746a
+✅ NEGATİF TEST: number=999 (max_key_per_request aşımı) reddediliyor — beklendiği gibi reddedildi: HTTP 400: 'number' 1-128 aralığında bir tam sayı olmalı (max_key_per_request)
+✅ NEGATİF TEST: bilinmeyen key_ID ile dec_keys reddediliyor — beklendiği gibi reddedildi: HTTP 400: key_ID bulunamadı (rota=ANK-IBM-QNET): 632c6355-fc2d-45d1-9f08-419a232b131d
+✅ NEGATİF TEST (kritik güvenlik): CA-DIŞI/sahte sertifikayla bağlantı TLS seviyesinde reddediliyor — beklendiği gibi reddedildi: mTLS bağlantı hatası: socket hang up
+✅ NEGATİF TEST: İPTAL EDİLMİŞ sertifikayla bağlantı reddediliyor (CRL/OCSP) — beklendiği gibi reddedildi: mTLS bağlantı hatası: socket hang up
+
+══════════════════════════════════════════════════════════════════════
+SONUÇ: 19/19 test GEÇTİ
+══════════════════════════════════════════════════════════════════════
+
+📄 JUnit raporu yazıldı: /tmp/ci-reports/mock-ibm-client-junit.xml
