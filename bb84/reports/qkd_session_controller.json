@@ -1,0 +1,858 @@
+{
+  "generatedAt": "2026-08-15T14:15:43.174Z",
+  "checks": [
+    {
+      "name": "Zirve bir DOYUM noktası değil: bütçe 5× olunca zirve zamanı da hızı da büyüyor",
+      "ok": true,
+      "detail": "20k: zirve 918.1 ms / 616.47 bit/s → 100k: 3856.2 ms / 1256.69 bit/s"
+    },
+    {
+      "name": "SABİT 850 ms timeout büyük bütçede ÇÖKÜYOR (zirvenin çok altında)",
+      "ok": true,
+      "detail": "sabit=668.24 bit/s vs gerçek zirve=1256.69 bit/s (%53.2)"
+    },
+    {
+      "name": "Marjinal kural (20000 bütçe) gerçek zirvenin %12'si içinde kapatıyor — bütçeyi BİLMEDEN",
+      "ok": true,
+      "detail": "kontrolcü 925 ms → 608.65 bit/s · gerçek zirve 918.1 ms → 616.47 bit/s (%98.7)"
+    },
+    {
+      "name": "Kontrolcü, hiç kesmemeye göre üstün (20000 bütçe)",
+      "ok": true,
+      "detail": "kontrolcü=608.65 vs kesme yok=461.53 bit/s"
+    },
+    {
+      "name": "ℓ öngörücüsü gerçek boru hattına yakın (20000 bütçe, <%15 hata)",
+      "ok": true,
+      "detail": "öngörü 541 vs gerçek 563 bit → %3.91 hata"
+    },
+    {
+      "name": "Marjinal kural (100000 bütçe) gerçek zirvenin %12'si içinde kapatıyor — bütçeyi BİLMEDEN",
+      "ok": true,
+      "detail": "kontrolcü 4000 ms → 1252.25 bit/s · gerçek zirve 3856.2 ms → 1256.69 bit/s (%99.6)"
+    },
+    {
+      "name": "Kontrolcü, hiç kesmemeye göre üstün (100000 bütçe)",
+      "ok": true,
+      "detail": "kontrolcü=1252.25 vs kesme yok=840.29 bit/s"
+    },
+    {
+      "name": "ℓ öngörücüsü gerçek boru hattına yakın (100000 bütçe, <%15 hata)",
+      "ok": true,
+      "detail": "öngörü 4950 vs gerçek 5009 bit → %1.18 hata"
+    },
+    {
+      "name": "Kontrolcü, sabit timeout'u her iki bütçede de geçiyor veya eşitliyor",
+      "ok": true,
+      "detail": "20k: 608.65 vs 612.94 · 100k: 1252.25 vs 668.24 bit/s"
+    },
+    {
+      "name": "Sürekli beslemede marjinal kural TETİKLENMİYOR (arz incelmiyor → zirve yok)",
+      "ok": true,
+      "detail": "kapanış gerekçesi: \"arz bitti\" @ 3000 ms"
+    },
+    {
+      "name": "Sürekli beslemede kapanışı SLA belirliyor — sabit timeout'un yapamadığı şey",
+      "ok": true,
+      "detail": "gerekçe \"SLA — gecikme bütçesi doldu\" @ 1500 ms, ℓ=162 bit"
+    },
+    {
+      "name": "Türetilen kabul eşiği, kaba kuvvet alt küme taramasıyla AYNI kararı veriyor",
+      "ok": true,
+      "detail": "e* = 0.1960, en kötü yol e_ph = 0.068641 → 2.86× pay; Δℓ = 243 bit"
+    },
+    {
+      "name": "Eşik AYIRT EDİCİ: e* × 1,6 hatalı kurgusal bir yol REDDEDİLİYOR",
+      "ok": true,
+      "detail": "e_b = 0.3136 > e* = 0.1960 → Δℓ = -19 bit (kabul edilmiyor)"
+    },
+    {
+      "name": "Sonlu n'de kabul, asimptotik eşikten DAHA cazip (μ ∼ 1/√n de küçülüyor)",
+      "ok": true,
+      "detail": "asimptotik eşik alt sınırdır; ölçülen Δℓ = +243 bit"
+    },
+    {
+      "name": "ADANMIŞ CHSH probu, tam E91 ızgarasından ucuz (her çift 1 tur, 4/9 değil)",
+      "ok": true,
+      "detail": "prob: 312 çift / hız kaybı %5.51 · tam E91: 699 çift / %14.4"
+    },
+    {
+      "name": "Bell monitörü ihlali 3σ ÜSTÜNDE kanıtlıyor (anahtar üretimini durdurmadan)",
+      "ok": true,
+      "detail": "S=2.53035 ± 0.17041 → 3.11σ, 312 çift saptırıldı"
+    },
+    {
+      "name": "UYARLANIR monitör, sabit plandan sapıp hedefe kilitleniyor (sabit saptırma hedefi ıskalıyordu)",
+      "ok": true,
+      "detail": "plan 177 çift → 4 adımda 312 çifte uzadı; σ merdiveni: 1.17 → 1.72 → 2.88 → 3.11"
+    },
+    {
+      "name": "Sertifika oturumun TAMAMINI kapsıyor (monitör turları yayılmış, baştan blok değil)",
+      "ok": true,
+      "detail": "monitör turları 3.29–1364.72 ms aralığında → oturumun %99.3'i"
+    },
+    {
+      "name": "Monitör maliyeti, ℓ formülünden ÖNGÖRÜLEN değerle uyuşuyor (mekanizma doğrulandı)",
+      "ok": true,
+      "detail": "saptırılan çift %3.04 → öngörülen kayıp %5.19, ölçülen %5.51 (süper-doğrusallık çarpanı ×1.71)"
+    },
+    {
+      "name": "Monitörün mutlak maliyeti kabul edilebilir (<%10 hız)",
+      "ok": true,
+      "detail": "hız kaybı %5.51, saptırılan çift %3.04"
+    },
+    {
+      "name": "Hibrit, saf E91'i açık farkla geçiyor (E91 tek başına abort ediyordu)",
+      "ok": true,
+      "detail": "hibrit ℓ=532 bit @ 925 ms · saf E91 aynı havuzda ℓ=0 (abort)"
+    }
+  ],
+  "scenarios": {
+    "20000": {
+      "budget": 20000,
+      "totalPairs": 10277,
+      "tEndMs": 1469,
+      "leakPerBit": 0.00196,
+      "paths": [
+        {
+          "label": "A→R2→R3→B",
+          "pairs": 4136,
+          "makespanMs": 881.41,
+          "meanFidelity": 0.95717
+        },
+        {
+          "label": "A→R1→B",
+          "pairs": 3318,
+          "makespanMs": 1175.213,
+          "meanFidelity": 0.950827
+        },
+        {
+          "label": "A→R4→B",
+          "pairs": 2823,
+          "makespanMs": 1469.016,
+          "meanFidelity": 0.919105
+        }
+      ],
+      "truePeak": {
+        "tMs": 918.1,
+        "pairs": 9117,
+        "ell": 566,
+        "rateBps": 616.47
+      },
+      "fixedTimeout": {
+        "atMs": 850,
+        "pairs": 8755,
+        "ell": 521,
+        "ePh": 0.045578,
+        "nZ": 2159,
+        "leakEC": 5,
+        "rateBps": 612.94
+      },
+      "controller": {
+        "closedAtMs": 925,
+        "reason": "marjinal kural: ℓ̂′(T) < ℓ̂(T)/T",
+        "ellHat": 541,
+        "pairs": 9156,
+        "ell": 563,
+        "ePh": 0.045533,
+        "nZ": 2255,
+        "leakEC": 5,
+        "rateBps": 608.65
+      },
+      "noCut": {
+        "atMs": 1469,
+        "pairs": 10277,
+        "ell": 678,
+        "ePh": 0.04833,
+        "nZ": 2547,
+        "leakEC": 5,
+        "rateBps": 461.53
+      },
+      "curve": [
+        {
+          "tMs": 36.7,
+          "pairs": 399,
+          "ell": 0,
+          "rateBps": 0
+        },
+        {
+          "tMs": 73.5,
+          "pairs": 772,
+          "ell": 0,
+          "rateBps": 0
+        },
+        {
+          "tMs": 110.2,
+          "pairs": 1163,
+          "ell": 0,
+          "rateBps": 0
+        },
+        {
+          "tMs": 146.9,
+          "pairs": 1565,
+          "ell": 0,
+          "rateBps": 0
+        },
+        {
+          "tMs": 183.6,
+          "pairs": 1952,
+          "ell": 0,
+          "rateBps": 0
+        },
+        {
+          "tMs": 220.4,
+          "pairs": 2355,
+          "ell": 0,
+          "rateBps": 0
+        },
+        {
+          "tMs": 257.1,
+          "pairs": 2748,
+          "ell": 0,
+          "rateBps": 0
+        },
+        {
+          "tMs": 293.8,
+          "pairs": 3138,
+          "ell": 0,
+          "rateBps": 0
+        },
+        {
+          "tMs": 330.5,
+          "pairs": 3535,
+          "ell": 16,
+          "rateBps": 48.41
+        },
+        {
+          "tMs": 367.3,
+          "pairs": 3900,
+          "ell": 47,
+          "rateBps": 127.98
+        },
+        {
+          "tMs": 404,
+          "pairs": 4292,
+          "ell": 76,
+          "rateBps": 188.13
+        },
+        {
+          "tMs": 440.7,
+          "pairs": 4671,
+          "ell": 112,
+          "rateBps": 254.14
+        },
+        {
+          "tMs": 477.4,
+          "pairs": 5086,
+          "ell": 154,
+          "rateBps": 322.56
+        },
+        {
+          "tMs": 514.2,
+          "pairs": 5469,
+          "ell": 183,
+          "rateBps": 355.92
+        },
+        {
+          "tMs": 550.9,
+          "pairs": 5869,
+          "ell": 215,
+          "rateBps": 390.28
+        },
+        {
+          "tMs": 587.6,
+          "pairs": 6270,
+          "ell": 254,
+          "rateBps": 432.26
+        },
+        {
+          "tMs": 624.3,
+          "pairs": 6662,
+          "ell": 300,
+          "rateBps": 480.51
+        },
+        {
+          "tMs": 661.1,
+          "pairs": 7064,
+          "ell": 346,
+          "rateBps": 523.4
+        },
+        {
+          "tMs": 697.8,
+          "pairs": 7469,
+          "ell": 393,
+          "rateBps": 563.21
+        },
+        {
+          "tMs": 734.5,
+          "pairs": 7870,
+          "ell": 435,
+          "rateBps": 592.23
+        },
+        {
+          "tMs": 771.2,
+          "pairs": 8260,
+          "ell": 468,
+          "rateBps": 606.82
+        },
+        {
+          "tMs": 808,
+          "pairs": 8523,
+          "ell": 493,
+          "rateBps": 610.18
+        },
+        {
+          "tMs": 844.7,
+          "pairs": 8729,
+          "ell": 519,
+          "rateBps": 614.43
+        },
+        {
+          "tMs": 881.4,
+          "pairs": 8920,
+          "ell": 543,
+          "rateBps": 616.06
+        },
+        {
+          "tMs": 918.1,
+          "pairs": 9117,
+          "ell": 566,
+          "rateBps": 616.47
+        },
+        {
+          "tMs": 954.9,
+          "pairs": 9321,
+          "ell": 577,
+          "rateBps": 604.28
+        },
+        {
+          "tMs": 991.6,
+          "pairs": 9483,
+          "ell": 594,
+          "rateBps": 599.04
+        },
+        {
+          "tMs": 1028.3,
+          "pairs": 9559,
+          "ell": 607,
+          "rateBps": 590.29
+        },
+        {
+          "tMs": 1065,
+          "pairs": 9642,
+          "ell": 610,
+          "rateBps": 572.75
+        },
+        {
+          "tMs": 1101.8,
+          "pairs": 9724,
+          "ell": 620,
+          "rateBps": 562.73
+        },
+        {
+          "tMs": 1138.5,
+          "pairs": 9801,
+          "ell": 629,
+          "rateBps": 552.49
+        },
+        {
+          "tMs": 1175.2,
+          "pairs": 9878,
+          "ell": 636,
+          "rateBps": 541.18
+        },
+        {
+          "tMs": 1211.9,
+          "pairs": 9950,
+          "ell": 643,
+          "rateBps": 530.56
+        },
+        {
+          "tMs": 1248.7,
+          "pairs": 10024,
+          "ell": 656,
+          "rateBps": 525.36
+        },
+        {
+          "tMs": 1285.4,
+          "pairs": 10100,
+          "ell": 665,
+          "rateBps": 517.35
+        },
+        {
+          "tMs": 1322.1,
+          "pairs": 10175,
+          "ell": 667,
+          "rateBps": 504.49
+        },
+        {
+          "tMs": 1358.8,
+          "pairs": 10252,
+          "ell": 675,
+          "rateBps": 496.75
+        },
+        {
+          "tMs": 1395.6,
+          "pairs": 10277,
+          "ell": 678,
+          "rateBps": 485.82
+        },
+        {
+          "tMs": 1432.3,
+          "pairs": 10277,
+          "ell": 678,
+          "rateBps": 473.37
+        },
+        {
+          "tMs": 1469,
+          "pairs": 10277,
+          "ell": 678,
+          "rateBps": 461.53
+        }
+      ],
+      "predictorError": 3.91
+    },
+    "100000": {
+      "budget": 100000,
+      "totalPairs": 51665,
+      "tEndMs": 7345.1,
+      "leakPerBit": 0.00148,
+      "paths": [
+        {
+          "label": "A→R2→R3→B",
+          "pairs": 20851,
+          "makespanMs": 4407.049,
+          "meanFidelity": 0.957171
+        },
+        {
+          "label": "A→R1→B",
+          "pairs": 16628,
+          "makespanMs": 5876.065,
+          "meanFidelity": 0.950829
+        },
+        {
+          "label": "A→R4→B",
+          "pairs": 14186,
+          "makespanMs": 7345.081,
+          "meanFidelity": 0.919106
+        }
+      ],
+      "truePeak": {
+        "tMs": 3856.2,
+        "pairs": 41544,
+        "ell": 4846,
+        "rateBps": 1256.69
+      },
+      "fixedTimeout": {
+        "atMs": 850,
+        "pairs": 9099,
+        "ell": 568,
+        "ePh": 0.043611,
+        "nZ": 2245,
+        "leakEC": 5,
+        "rateBps": 668.24
+      },
+      "controller": {
+        "closedAtMs": 4000,
+        "reason": "marjinal kural: ℓ̂′(T) < ℓ̂(T)/T",
+        "ellHat": 4950,
+        "pairs": 42646,
+        "ell": 5009,
+        "ePh": 0.049224,
+        "nZ": 10599,
+        "leakEC": 15,
+        "rateBps": 1252.25
+      },
+      "noCut": {
+        "atMs": 7345.1,
+        "pairs": 51665,
+        "ell": 6172,
+        "ePh": 0.052971,
+        "nZ": 12830,
+        "leakEC": 19,
+        "rateBps": 840.29
+      },
+      "curve": [
+        {
+          "tMs": 183.6,
+          "pairs": 1952,
+          "ell": 0,
+          "rateBps": 0
+        },
+        {
+          "tMs": 367.3,
+          "pairs": 3900,
+          "ell": 47,
+          "rateBps": 127.98
+        },
+        {
+          "tMs": 550.9,
+          "pairs": 5869,
+          "ell": 215,
+          "rateBps": 390.28
+        },
+        {
+          "tMs": 734.5,
+          "pairs": 7870,
+          "ell": 435,
+          "rateBps": 592.23
+        },
+        {
+          "tMs": 918.1,
+          "pairs": 9807,
+          "ell": 641,
+          "rateBps": 698.15
+        },
+        {
+          "tMs": 1101.8,
+          "pairs": 11833,
+          "ell": 889,
+          "rateBps": 806.89
+        },
+        {
+          "tMs": 1285.4,
+          "pairs": 13842,
+          "ell": 1105,
+          "rateBps": 859.66
+        },
+        {
+          "tMs": 1469,
+          "pairs": 15845,
+          "ell": 1356,
+          "rateBps": 923.07
+        },
+        {
+          "tMs": 1652.6,
+          "pairs": 17806,
+          "ell": 1602,
+          "rateBps": 969.36
+        },
+        {
+          "tMs": 1836.3,
+          "pairs": 19765,
+          "ell": 1885,
+          "rateBps": 1026.54
+        },
+        {
+          "tMs": 2019.9,
+          "pairs": 21727,
+          "ell": 2166,
+          "rateBps": 1072.33
+        },
+        {
+          "tMs": 2203.5,
+          "pairs": 23679,
+          "ell": 2354,
+          "rateBps": 1068.29
+        },
+        {
+          "tMs": 2387.2,
+          "pairs": 25704,
+          "ell": 2631,
+          "rateBps": 1102.15
+        },
+        {
+          "tMs": 2570.8,
+          "pairs": 27666,
+          "ell": 2892,
+          "rateBps": 1124.95
+        },
+        {
+          "tMs": 2754.4,
+          "pairs": 29621,
+          "ell": 3196,
+          "rateBps": 1160.32
+        },
+        {
+          "tMs": 2938,
+          "pairs": 31594,
+          "ell": 3441,
+          "rateBps": 1171.19
+        },
+        {
+          "tMs": 3121.7,
+          "pairs": 33570,
+          "ell": 3680,
+          "rateBps": 1178.86
+        },
+        {
+          "tMs": 3305.3,
+          "pairs": 35552,
+          "ell": 3963,
+          "rateBps": 1198.99
+        },
+        {
+          "tMs": 3488.9,
+          "pairs": 37577,
+          "ell": 4246,
+          "rateBps": 1217
+        },
+        {
+          "tMs": 3672.5,
+          "pairs": 39549,
+          "ell": 4540,
+          "rateBps": 1236.2
+        },
+        {
+          "tMs": 3856.2,
+          "pairs": 41544,
+          "ell": 4846,
+          "rateBps": 1256.69
+        },
+        {
+          "tMs": 4039.8,
+          "pairs": 42859,
+          "ell": 5039,
+          "rateBps": 1247.34
+        },
+        {
+          "tMs": 4223.4,
+          "pairs": 43900,
+          "ell": 5173,
+          "rateBps": 1224.84
+        },
+        {
+          "tMs": 4407,
+          "pairs": 44918,
+          "ell": 5332,
+          "rateBps": 1209.88
+        },
+        {
+          "tMs": 4590.7,
+          "pairs": 45923,
+          "ell": 5446,
+          "rateBps": 1186.32
+        },
+        {
+          "tMs": 4774.3,
+          "pairs": 46943,
+          "ell": 5591,
+          "rateBps": 1171.06
+        },
+        {
+          "tMs": 4957.9,
+          "pairs": 47743,
+          "ell": 5688,
+          "rateBps": 1147.25
+        },
+        {
+          "tMs": 5141.6,
+          "pairs": 48100,
+          "ell": 5710,
+          "rateBps": 1110.56
+        },
+        {
+          "tMs": 5325.2,
+          "pairs": 48489,
+          "ell": 5769,
+          "rateBps": 1083.34
+        },
+        {
+          "tMs": 5508.8,
+          "pairs": 48876,
+          "ell": 5810,
+          "rateBps": 1054.67
+        },
+        {
+          "tMs": 5692.4,
+          "pairs": 49271,
+          "ell": 5872,
+          "rateBps": 1031.54
+        },
+        {
+          "tMs": 5876.1,
+          "pairs": 49627,
+          "ell": 5911,
+          "rateBps": 1005.95
+        },
+        {
+          "tMs": 6059.7,
+          "pairs": 50009,
+          "ell": 5964,
+          "rateBps": 984.21
+        },
+        {
+          "tMs": 6243.3,
+          "pairs": 50389,
+          "ell": 6012,
+          "rateBps": 962.95
+        },
+        {
+          "tMs": 6426.9,
+          "pairs": 50776,
+          "ell": 6065,
+          "rateBps": 943.68
+        },
+        {
+          "tMs": 6610.6,
+          "pairs": 51160,
+          "ell": 6115,
+          "rateBps": 925.03
+        },
+        {
+          "tMs": 6794.2,
+          "pairs": 51538,
+          "ell": 6162,
+          "rateBps": 906.95
+        },
+        {
+          "tMs": 6977.8,
+          "pairs": 51665,
+          "ell": 6172,
+          "rateBps": 884.52
+        },
+        {
+          "tMs": 7161.5,
+          "pairs": 51665,
+          "ell": 6172,
+          "rateBps": 861.84
+        },
+        {
+          "tMs": 7345.1,
+          "pairs": 51665,
+          "ell": 6172,
+          "rateBps": 840.29
+        }
+      ],
+      "predictorError": 1.18
+    }
+  },
+  "steadyState": {
+    "windowMs": 3000,
+    "pairs": 10277,
+    "withoutSla": {
+      "closedAtMs": 3000,
+      "reason": "arz bitti"
+    },
+    "withSla1500": {
+      "closedAtMs": 1500,
+      "reason": "SLA — gecikme bütçesi doldu",
+      "pairs": 5138,
+      "ell": 162,
+      "ePh": 0.035022,
+      "nZ": 1219,
+      "leakEC": 4,
+      "rateBps": 108
+    }
+  },
+  "admission": {
+    "perPath": [
+      {
+        "label": "A→R2→R3→B",
+        "pairs": 4136,
+        "ePh": 0.033488,
+        "meanF": 0.95717
+      },
+      {
+        "label": "A→R1→B",
+        "pairs": 3318,
+        "ePh": 0.033295,
+        "meanF": 0.950827
+      },
+      {
+        "label": "A→R4→B",
+        "pairs": 2823,
+        "ePh": 0.068641,
+        "meanF": 0.919105
+      }
+    ],
+    "thresholdAtBestPath": 0.19601,
+    "worstPathEPh": 0.068641,
+    "delta": {
+      "ellBefore": 86.76195473383196,
+      "ellAfter": 329.4439353916687,
+      "delta": 242.68198065783673,
+      "admit": true,
+      "pooledEPh": 0.047748,
+      "analyticThreshold": 0.19601,
+      "analyticSaysAdmit": true
+    },
+    "headroom": 2.86,
+    "rule": "e_b < e* = ē + (1 − h₂(ē)) / log₂((1−ē)/ē)"
+  },
+  "hybrid": {
+    "ok": true,
+    "plan": {
+      "feasible": true,
+      "mode": "probe",
+      "nSigma": 3,
+      "expectedS": 2.671919261396499,
+      "chshRoundsNeeded": 177,
+      "pairsNeeded": 177,
+      "pairsNeededIfFullE91": 399
+    },
+    "monitor": {
+      "divertedPairs": 312,
+      "divertedFraction": 0.03036,
+      "mode": "probe",
+      "plannedPairs": 177,
+      "pairsIfFullE91": 399,
+      "adaptiveSteps": 4,
+      "ladder": [
+        {
+          "divert": 177,
+          "S": 2.28237,
+          "sigma": 1.17
+        },
+        {
+          "divert": 222,
+          "S": 2.35976,
+          "sigma": 1.72
+        },
+        {
+          "divert": 267,
+          "S": 2.52558,
+          "sigma": 2.88
+        },
+        {
+          "divert": 312,
+          "S": 2.53035,
+          "sigma": 3.11
+        }
+      ],
+      "sessionCoverage": 0.9926,
+      "firstTMs": 3.29,
+      "lastTMs": 1364.72,
+      "reachedTarget": true,
+      "S": 2.53035,
+      "standardError": 0.17041,
+      "sigma": 3.11,
+      "violated": true,
+      "chshRoundsUsed": 312
+    },
+    "key": {
+      "pairs": 8883,
+      "ell": 532,
+      "ePh": 0.045921,
+      "nZ": 2189,
+      "leakEC": 5,
+      "rateBps": 575.14,
+      "closedAtMs": 925,
+      "closeReason": "marjinal kural: ℓ̂′(T) < ℓ̂(T)/T"
+    },
+    "withoutMonitor": {
+      "ell": 563,
+      "rateBps": 608.65,
+      "closedAtMs": 925
+    },
+    "cost": {
+      "ellLost": 31,
+      "ellLostPct": 5.51,
+      "rateLostPct": 5.51
+    },
+    "costModel": {
+      "divertedFractionPct": 3.04,
+      "predictedLossPct": 5.19,
+      "measuredLossPct": 5.51,
+      "superlinearityFactor": 1.71,
+      "note": "Kayıp/çift-oranı > 1 olması ℓ'nin n'de süper-doğrusal olmasındandır — havuzlamayı kazandıran etkinin AYNISI, ters yönde."
+    }
+  },
+  "hybridFullE91Monitor": {
+    "divertedPairs": 699,
+    "divertedFraction": 0.06802,
+    "sigma": 3.57,
+    "rateLostPct": 14.4
+  },
+  "allChecksPassed": true
+}
