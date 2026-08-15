@@ -1,0 +1,315 @@
+{
+  "methodologyNote": "ŞEKİL 'QKD Total Graph_data.dat' (KMS-genelinde kümülatif ham anahtar-malzemesi büyüme eğrisi, ns-3.46 + QKDNetSim gerçek koşumu) kaynaklıdır; bu, uygulama katmanına (ETSI-014 enc_keys/dec_keys ile) TESLİM EDİLEN anahtarlardan FARKLI bir metriktir (KMS iç arabellek/QKD-katmanı üretimi). OLAY SAYISI ise, aynı koşumun log'undaki GERÇEK 'Served (bits)' satır sayısına (uygulama katmanına fiilen teslim edilen anahtar sayısı) göre normalize edilmiştir. Yani: eğrinin ŞEKLİ (yoğunluk deseni, ne zaman patlama olduğu) gerçek fizik-katmanı verisinden, olay SAYISI ise gerçek uygulama-katmanı teslim verisinden geliyor — ikisi karıştırılmadan, açıkça etiketlenerek birleştirildi.",
+  "sourceFiles": {
+    "dat": "/tmp/qkdnetsim_build/ns-3-dev/QKD Total Graph_data.dat",
+    "log": "/tmp/qkd_etsi014_full.log"
+  },
+  "regeneratedBy": "bb84/tools/extract_qkdnetsim_profile.js",
+  "simDurationS": 500,
+  "nBins": 50,
+  "totalKeyEvents": 28140,
+  "avgKeySizeBits": 130.67,
+  "totalServedBits": 3677184,
+  "bins": [
+    {
+      "tStart": 0,
+      "tEnd": 10,
+      "rawBitDelta": 4096,
+      "keyEvents": 20
+    },
+    {
+      "tStart": 10,
+      "tEnd": 20,
+      "rawBitDelta": 131072,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 20,
+      "tEnd": 30,
+      "rawBitDelta": 262144,
+      "keyEvents": 1253
+    },
+    {
+      "tStart": 30,
+      "tEnd": 40,
+      "rawBitDelta": 131072,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 40,
+      "tEnd": 50,
+      "rawBitDelta": 131072,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 50,
+      "tEnd": 60,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 60,
+      "tEnd": 70,
+      "rawBitDelta": 140800,
+      "keyEvents": 677
+    },
+    {
+      "tStart": 70,
+      "tEnd": 80,
+      "rawBitDelta": 131072,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 80,
+      "tEnd": 90,
+      "rawBitDelta": 262140,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 90,
+      "tEnd": 100,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 100,
+      "tEnd": 110,
+      "rawBitDelta": 8710,
+      "keyEvents": 42
+    },
+    {
+      "tStart": 110,
+      "tEnd": 120,
+      "rawBitDelta": 131070,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 120,
+      "tEnd": 130,
+      "rawBitDelta": 262140,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 130,
+      "tEnd": 140,
+      "rawBitDelta": 131080,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 140,
+      "tEnd": 150,
+      "rawBitDelta": 131070,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 150,
+      "tEnd": 160,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 160,
+      "tEnd": 170,
+      "rawBitDelta": 140800,
+      "keyEvents": 677
+    },
+    {
+      "tStart": 170,
+      "tEnd": 180,
+      "rawBitDelta": 131070,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 180,
+      "tEnd": 190,
+      "rawBitDelta": 262140,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 190,
+      "tEnd": 200,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 200,
+      "tEnd": 210,
+      "rawBitDelta": 9220,
+      "keyEvents": 44
+    },
+    {
+      "tStart": 210,
+      "tEnd": 220,
+      "rawBitDelta": 262140,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 220,
+      "tEnd": 230,
+      "rawBitDelta": 131080,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 230,
+      "tEnd": 240,
+      "rawBitDelta": 131070,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 240,
+      "tEnd": 250,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 250,
+      "tEnd": 260,
+      "rawBitDelta": 140800,
+      "keyEvents": 677
+    },
+    {
+      "tStart": 260,
+      "tEnd": 270,
+      "rawBitDelta": 131070,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 270,
+      "tEnd": 280,
+      "rawBitDelta": 262140,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 280,
+      "tEnd": 290,
+      "rawBitDelta": 131080,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 290,
+      "tEnd": 300,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 300,
+      "tEnd": 310,
+      "rawBitDelta": 8700,
+      "keyEvents": 42
+    },
+    {
+      "tStart": 310,
+      "tEnd": 320,
+      "rawBitDelta": 262140,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 320,
+      "tEnd": 330,
+      "rawBitDelta": 131080,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 330,
+      "tEnd": 340,
+      "rawBitDelta": 131070,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 340,
+      "tEnd": 350,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 350,
+      "tEnd": 360,
+      "rawBitDelta": 141310,
+      "keyEvents": 679
+    },
+    {
+      "tStart": 360,
+      "tEnd": 370,
+      "rawBitDelta": 131070,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 370,
+      "tEnd": 380,
+      "rawBitDelta": 262150,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 380,
+      "tEnd": 390,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 390,
+      "tEnd": 400,
+      "rawBitDelta": 8700,
+      "keyEvents": 42
+    },
+    {
+      "tStart": 400,
+      "tEnd": 410,
+      "rawBitDelta": 262140,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 410,
+      "tEnd": 420,
+      "rawBitDelta": 131080,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 420,
+      "tEnd": 430,
+      "rawBitDelta": 262140,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 430,
+      "tEnd": 440,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 440,
+      "tEnd": 450,
+      "rawBitDelta": 9730,
+      "keyEvents": 47
+    },
+    {
+      "tStart": 450,
+      "tEnd": 460,
+      "rawBitDelta": 131070,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 460,
+      "tEnd": 470,
+      "rawBitDelta": 262140,
+      "keyEvents": 1260
+    },
+    {
+      "tStart": 470,
+      "tEnd": 480,
+      "rawBitDelta": 131080,
+      "keyEvents": 630
+    },
+    {
+      "tStart": 480,
+      "tEnd": 490,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    },
+    {
+      "tStart": 490,
+      "tEnd": 500,
+      "rawBitDelta": 0,
+      "keyEvents": 0
+    }
+  ]
+}
