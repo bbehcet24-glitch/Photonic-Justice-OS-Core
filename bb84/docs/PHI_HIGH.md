@@ -17,9 +17,10 @@ Ham veri: `bb84/reports/phi_high_tuning.json`
 | `φ < φ_high` | **ÜRETİM** — blok, boş alanın izin verdiği en uzun hâline çıkar (hız maksimize edilir) |
 | `φ ≥ φ_high` | **KISMA** — üretim durur, depo talep tarafından `φ_high`'a inene kadar beklenir |
 
-Mod değişimi `±0,08` histerezis bandıyla geciktirilir. Histerezis kapatılınca
-mod değişimi 9 → 17'ye çıkıyor (×1,9 chatter) — her mevduat eşiği yukarı,
-her talep aşağı ittiği için.
+Mod değişimi `±h = ±0,08` histerezis bandıyla geciktirilir; yani gerçekte
+**iki eşik** vardır (`φ_low = 0,72`, `φ_up = 0,88`). Bant kapatılınca mod
+değişimi 6 noktalık ızgara ortalamasında 9,0 → 20,3'e çıkıyor (**×2,3
+chatter**). Bandın kendisi de ölçülerek gerekçelendirildi — bkz. **§8**.
 
 φ_high **yalnızca** iki şeyi ayarlar: ne kadar fiziksel kaynak tasarruf
 edildiği ve ani talep sıçramasında elde ne kadar yedek bulunduğu.
@@ -142,7 +143,9 @@ tarayabilirsiniz.
    φ_high'la uğraşma.
 4. Talep sıçraması riskin ana kaynağıysa `dayanıklılık-önce` (0,90),
    kaynak maliyeti baskınsa `verimlilik-önce` (0,50) profiline geç.
-5. Histerezisi **açık bırak** (varsayılan 0,08).
+5. Histerezisi **açık bırak** (varsayılan `h = 0,08`). Profil
+   değiştirdiyseniz sert kısıtı yeniden hesapla: `h < 1 − φ_high`
+   (φ = 0,90 için h < 0,10) — bkz. §8.
 
 ---
 
@@ -151,3 +154,69 @@ tarayabilirsiniz.
 Geri-basınç **israfı önler, kapasite yaratmaz.** Talep azami üretimi aşarsa
 (ölçülen: üretimin %130'u) ret oranı %25,3'e çıkar ve hiçbir φ_high bunu
 kurtarmaz. `R(T_b) > D` koşulu her zaman geçerlidir.
+
+---
+
+## 8. Histerezis bandı — `h = 0,08`
+
+Kodda: `bb84/qkd_backpressure.js` → `HYSTERESIS_BAND`
+Doğrulama: `bb84/hysteresis_band_test.js` (9/9) · Ham veri: `reports/hysteresis_band.json`
+
+### İki eşik, tek bant
+
+Arayüzde tek sayı (φ_high) var ama denetleyici **iki eşikle** çalışır:
+
+```
+φ_up  = φ_high + h = 0,88   → bu seviyenin ÜSTÜNDE üretim DURUR
+φ_low = φ_high − h = 0,72   → bu seviyenin ALTINDA üretim GERİ BAŞLAR
+```
+
+Arada kalan bantta mevcut mod korunur. Kararsızlık (chatter) tam olarak
+buradan çıkar: bant olmazsa her mevduat doluluğu eşiğin üstüne, her talep
+altına iter.
+
+### Ölçülen zorunluluk
+
+6 çalışma noktasının ortalaması (talep/üretim 0,3–0,7 × depo 1–2 × S_min):
+
+| h | φ_low / φ_up | mod değişimi | blok başına | tasarruf | ret |
+|---|---|---|---|---|---|
+| 0,00 | 0,80 / 0,80 | **20,3** | 1,26 | %25,1 | %0 |
+| 0,02 | 0,78 / 0,82 | 17,0 | 1,08 | %25,5 | %0 |
+| 0,04 | 0,76 / 0,84 | 14,3 | 0,90 | %26,0 | %0 |
+| 0,06 | 0,74 / 0,86 | 10,3 | 0,63 | %25,2 | %0 |
+| **0,08** | **0,72 / 0,88** | **9,0** | **0,58** | **%25,3** | %0 |
+| 0,12 | 0,68 / 0,92 | 4,7 | 0,25 | %19,2 | %0 |
+| 0,16 | 0,64 / 0,96 | 3,8 | 0,15 | %15,9 | %0 |
+| 0,20 | 0,60 / 1,00 | 0,3 | 0,01 | **%9,7** | %0 |
+
+Bantsız çalıştırmak anahtarlamayı **×2,3** artırıyor (tek noktadaki
+"17 → 9" ölçümü ızgarada 20,3 → 9,0 olarak doğrulandı).
+
+### Reddedilen ölçüt
+
+İlk ölçüt *"anahtarlamayı tabana indiren en dar bant"* idi. **Dejenere
+çıktı:** anahtarlama h ile monoton azalıyor (20,3 → 17,0 → 14,3 → 10,3 →
+9,0 → 4,7 → 3,8 → 0,3), hiç dip yapmıyor; dolayısıyla ölçüt her zaman
+taranan en geniş bandı seçiyor.
+
+### Kabul edilen ölçüt
+
+*"Tasarrufu düşürmeye başlamadan önceki **en geniş** bant."*
+Tasarruf h ≤ 0,08'e kadar sabit (%25–26), h = 0,12'de %19,2'ye düşüyor.
+Yani 0,08'e kadarki anahtarlama azalması **bedava**; ötesi değil.
+
+> Not: "geniş bant depo salınımını açar" diye varsaymıştım; **veri
+> çürüttü** (salınım %25,4 → %24,0, yani daralıyor). Bandın gerçek
+> bedeli tasarrufta.
+
+### Sert kısıt
+
+```
+h  <  1 − φ_high        (φ_high = 0,80 için h < 0,20)
+```
+
+Aksi hâlde φ_up ≥ 1 olur ve **kısma hiç tetiklenmez** — depo doluluğu
+%100'ü aşamayacağı için üretim hiç durmaz. h = 0,20'de ölçüldü: tasarruf
+%25,3'ten %9,7'ye düştü. Profil değiştirirken bu kısıt yeniden
+hesaplanmalıdır: `dayanıklılık-önce` (φ = 0,90) için h < 0,10.

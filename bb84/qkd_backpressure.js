@@ -91,10 +91,18 @@ class ProductionThrottle {
   constructor(opts = {}) {
     const {
       capacityBits, demandBps, ellModel,
-      lowFill = 0.25, highFill = 0.75, hysteresis = 0.08,
+      highFill = RECOMMENDED_PHI_HIGH, hysteresis = HYSTERESIS_BAND,
       maxBlockMs = 10000, minEll = 128, useHysteresis = true, headroomMargin = 0.90,
     } = opts;
-    Object.assign(this, { capacityBits, demandBps, ellModel, lowFill, highFill, hysteresis, maxBlockMs, minEll, useHysteresis, headroomMargin });
+    Object.assign(this, { capacityBits, demandBps, ellModel, highFill, hysteresis, maxBlockMs, minEll, useHysteresis, headroomMargin });
+    // İKİ EŞİK, TEK BANT. Kullanıcı arayüzünde tek sayı (φ_high) var ama
+    // denetleyici iki eşikle çalışır — histerezis tam olarak budur:
+    //     φ_up  = φ_high + h   → bu seviyenin ÜSTÜNDE üretim DURUR
+    //     φ_low = φ_high − h   → bu seviyenin ALTINDA üretim GERİ BAŞLAR
+    // Arada kalan bantta mevcut mod KORUNUR; kararsızlık buradan çıkar.
+    const h = useHysteresis ? hysteresis : 0;
+    this.phiUp = Math.min(0.999, highFill + h);
+    this.phiLow = Math.max(0.001, highFill - h);
     // En kısa ÜRETKEN blok TÜRETİLİR: sonlu-anahtar uçurumunun altında
     // blok sıfır bit verir, yani "kısalt" emri körü körüne uygulanamaz.
     this.minBlockMs = blockForEll(ellModel, minEll) ?? maxBlockMs;
@@ -102,10 +110,9 @@ class ProductionThrottle {
     this.modeSwitches = 0;
   }
   _region(fill) {
-    const h = this.useHysteresis ? this.hysteresis : 0;
-    // İki bölge + histerezis bandı: banttayken MEVCUT mod korunur.
-    if (this.mode === "KISMA") return fill <= this.highFill - h ? "ÜRETİM" : "KISMA";
-    return fill >= this.highFill + h ? "KISMA" : "ÜRETİM";
+    // Banttayken (φ_low < fill < φ_up) MEVCUT mod korunur.
+    if (this.mode === "KISMA") return fill <= this.phiLow ? "ÜRETİM" : "KISMA";
+    return fill >= this.phiUp ? "KISMA" : "ÜRETİM";
   }
   /** @returns {{mode, blockMs, idleMs, headroomBits, fill}} */
   next(levelBits) {
@@ -306,6 +313,22 @@ const PHI_PROFILES = {
   "dayanıklılık-önce": 0.90,
 };
 const RECOMMENDED_PHI_HIGH = 0.80;
+/**
+ * HİSTEREZİS BANDI: h = 0,08  (φ_low = 0,72 · φ_up = 0,88)
+ *
+ * Tek eşikli bir denetleyici eşiğin etrafında GİDİP GELİR: her mevduat
+ * doluluğu eşiğin üstüne, her talep altına iter. Bant, mod değişimini
+ * geciktirerek bunu keser.
+ *
+ * BANT GENİŞLİĞİ DE ÖLÇÜLDÜ (bkz. hysteresis_band_test.js). İki yönlü
+ * bir maliyeti var ve ikisi de gerçek:
+ *   h çok küçük → chatter; her blok bir mod değişimi doğurur.
+ *   h çok büyük → denetleyici geç tepki verir: üstte φ_up'a kadar
+ *                 üretmeye devam edip TAŞIRIR, altta φ_low'a kadar
+ *                 beklediği için depo gereğinden çok boşalır.
+ * Seçim ölçütü: anahtarlamayı taban seviyesine indiren EN DAR bant.
+ */
+const HYSTERESIS_BAND = 0.08;
 const EXCHANGE_COLLAPSE_RATIO = 0.1;   // 1 puan tasarruf başına <0,1 puan ret azalması = çöküş
 
 function recommendPhiHigh(opts = {}) {
@@ -338,5 +361,5 @@ function recommendPhiHigh(opts = {}) {
 
 module.exports = {
   makeEllModel, blockForEll, blockForHeadroom, ProductionThrottle, runControlled,
-  recommendPhiHigh, RECOMMENDED_PHI_HIGH, PHI_PROFILES, EXCHANGE_COLLAPSE_RATIO,
+  recommendPhiHigh, RECOMMENDED_PHI_HIGH, PHI_PROFILES, EXCHANGE_COLLAPSE_RATIO, HYSTERESIS_BAND,
 };
