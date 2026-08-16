@@ -38,7 +38,15 @@ const EPOCHS = 12;
 const SEED = 0x51D3C0DE;
 const REQUEST_BITS = 128;
 const FIXED_BLOCK_MS = 5000;
-const BANDS = [0, 0.02, 0.04, 0.06, 0.08, 0.12, 0.16, 0.20];
+// Her profilin sert kısıtı FARKLI (h < 1 − φ_high), o yüzden bant
+// kümesi de profile göre kurulur; her kümede kısıtı AŞAN en az bir
+// nokta bilerek bırakılır ki kısıt ölçümle görünsün.
+const PROFILES = [
+  { name: "verimlilik-önce", phi: 0.50, bands: [0, 0.04, 0.08, 0.16, 0.28, 0.40, 0.50] },
+  { name: "dengeli", phi: 0.80, bands: [0, 0.02, 0.04, 0.06, 0.08, 0.12, 0.16, 0.20] },
+  { name: "dayanıklılık-önce", phi: 0.90, bands: [0, 0.01, 0.02, 0.04, 0.06, 0.08, 0.10] },
+];
+const BANDS = PROFILES[1].bands;
 
 function main() {
   const out = { generatedAt: new Date().toISOString(), checks: [] };
@@ -69,7 +77,7 @@ function main() {
     }
   }
 
-  const sweep = BANDS.map(h => {
+  const sweepFor = (phiHigh, bands) => bands.map(h => {
     const per = points.map(pt => {
       const common = {
         sessionMs, capacityBits: pt.CAP, requestBits: REQUEST_BITS, ellModel,
@@ -77,7 +85,7 @@ function main() {
       };
       const th = new BP.ProductionThrottle({
         capacityBits: pt.CAP, demandBps: pt.DEMAND, ellModel,
-        highFill: BP.RECOMMENDED_PHI_HIGH, hysteresis: h,
+        highFill: phiHigh, hysteresis: h,
         useHysteresis: h > 0, maxBlockMs: 10000, minEll: 128,
       });
       const r = BP.runControlled(pairs, { ...common, throttle: th });
@@ -94,13 +102,39 @@ function main() {
     });
     const m = (k) => +(per.reduce((s, p) => s + p[k], 0) / per.length).toFixed(3);
     return {
-      band: h, phiLow: +(BP.RECOMMENDED_PHI_HIGH - h).toFixed(2), phiUp: +(BP.RECOMMENDED_PHI_HIGH + h).toFixed(2),
+      band: h, phiLow: +(phiHigh - h).toFixed(2), phiUp: +(phiHigh + h).toFixed(2),
       switches: m("switches"), switchesPerBlock: m("switchesPerBlock"),
       savingsPct: m("savingsPct"), discardedPct: m("discardedPct"), denialPct: m("denialPct"),
       swingPct: +(100 * (per.reduce((s, p) => s + ((p.maxFill ?? 0) - (p.minFill ?? 0)), 0) / per.length)).toFixed(2),
       per,
     };
   });
+
+  // ── ÜÇ PROFİLİN DE BANDI TARANIR ──
+  // Sert kısıt (h < 1 − φ_high) her profilde farklı; ayrıca kısıtın
+  // YETERLİ olup olmadığı da profil profil sınanır.
+  const TOL = 1.0;                                    // puan (tasarruf)
+  const deriveBand = (rows) => {
+    const base = rows[0];
+    const affordable = rows.filter(r => r.savingsPct >= base.savingsPct - TOL);
+    return { base, affordable, widest: affordable.reduce((a, b) => (b.band > a.band ? b : a)) };
+  };
+  const profiles = PROFILES.map(P => {
+    const rows = sweepFor(P.phi, P.bands);
+    const cap = +(1 - P.phi).toFixed(3);
+    const d = deriveBand(rows);
+    const overCap = rows.filter(r => r.band >= cap);
+    return {
+      ...P, hardCapBand: cap, rows,
+      derivedBand: d.widest.band, affordableBands: d.affordable.map(a => a.band),
+      noBandSavingsPct: d.base.savingsPct,
+      atDerived: d.widest, overCap,
+      capIsBinding: d.widest.band >= cap - 1e-9,
+    };
+  });
+  out.profiles = profiles;
+  const dengeli = profiles.find(p => p.name === "dengeli");
+  const sweep = dengeli.rows;
   out.sweep = sweep;
 
   const noBand = sweep[0], rec = sweep.find(s => s.band === BP.HYSTERESIS_BAND);
@@ -167,6 +201,29 @@ function main() {
     rec.denialPct <= noBand.denialPct + 0.5 && rec.discardedPct <= noBand.discardedPct + 0.5,
     `ret %${rec.denialPct} (h=0'da %${noBand.denialPct}) · taşma %${rec.discardedPct} (h=0'da %${noBand.discardedPct}) · ` +
     `tasarruf %${rec.savingsPct}`);
+  // ══ PROFİL BAZINDA DOĞRULAMA ══
+  for (const P of profiles) {
+    const cap = P.hardCapBand;
+    const over = P.overCap[0];
+    chk(`SERT KISIT ÖLÇÜLDÜ — ${P.name} (φ=${P.phi}): h = ${cap}'te kısma tetiklenmiyor`,
+      over != null && over.savingsPct < P.noBandSavingsPct * 0.6,
+      `1 − φ_high = ${cap} · h = ${over?.band} → φ_up = ${over?.phiUp} ≥ 1 · ` +
+      `tasarruf %${P.noBandSavingsPct} → %${over?.savingsPct} (kısma hiç tetiklenmiyor)`);
+    chk(`Türetilen bant — ${P.name} (φ=${P.phi}) → h = ${P.derivedBand}`,
+      P.derivedBand > 0 && P.derivedBand < cap,
+      `bantsız tasarruf %${P.noBandSavingsPct} · ${TOL} puan içinde kalanlar ` +
+      `{${P.affordableBands.join(", ")}} · en geniş = ${P.derivedBand} (sert kısıt ${cap}) · ` +
+      `mod değişimi ${P.rows[0].switches} → ${P.atDerived.switches}`);
+  }
+  const dayan = profiles.find(p => p.name === "dayanıklılık-önce");
+  chk("Sert kısıt GEREKLİ AMA YETERLİ DEĞİL: dayanıklılık-önce profilinde bağlayıcı olan tasarruf ölçütü",
+    dayan.derivedBand < dayan.hardCapBand,
+    `φ=0,90 için sert kısıt h < ${dayan.hardCapBand} · ama tasarruf ölçütü daha erken bağlıyor: ` +
+    `h = ${dayan.derivedBand}. Yani "h < 1 − φ_high" tek başına yeterli bir kural DEĞİL`);
+  chk("Önerilen bant profile göre DEĞİŞİYOR — tek bir h bütün profillere uymuyor",
+    new Set(profiles.map(p => p.derivedBand)).size > 1,
+    profiles.map(p => `${p.name} (φ=${p.phi}) → h=${p.derivedBand}`).join(" · "));
+
   chk("İki eşik açıkça türetiliyor: φ_low ve φ_up",
     rec.phiLow === +(BP.RECOMMENDED_PHI_HIGH - BP.HYSTERESIS_BAND).toFixed(2) &&
     rec.phiUp === +(BP.RECOMMENDED_PHI_HIGH + BP.HYSTERESIS_BAND).toFixed(2),
@@ -184,6 +241,11 @@ function main() {
   console.log("     h    φ_low  φ_up   mod değ.  blok başına   salınım%   tasarruf%   taşma%   ret%");
   for (const s of sweep)
     console.log(`  ${pad(trn(s.band, 2), 5)} ${pad(trn(s.phiLow, 2), 6)} ${pad(trn(s.phiUp, 2), 6)} ${pad(trn(s.switches, 1), 9)} ${pad(trn(s.switchesPerBlock, 2), 13)} ${pad(trn(s.swingPct, 1), 10)} ${pad(trn(s.savingsPct, 1), 11)} ${pad(trn(s.discardedPct, 2), 8)} ${pad(trn(s.denialPct, 2), 6)}${s.band === BP.HYSTERESIS_BAND ? "  ← ÖNERİLEN" : ""}`);
+  console.log("\n  PROFİL BAZINDA BANT");
+  console.log("    profil               φ_high   sert kısıt   türetilen h   φ_low/φ_up    mod değ.   tasarruf%");
+  for (const P of profiles)
+    console.log(`    ${P.name.padEnd(20)} ${pad(trn(P.phi, 2), 6)} ${pad("h < " + trn(P.hardCapBand, 2), 12)} ${pad(trn(P.derivedBand, 2), 13)} ` +
+      `${pad(trn(P.atDerived.phiLow, 2) + "/" + trn(P.atDerived.phiUp, 2), 12)} ${pad(trn(P.rows[0].switches, 1) + "→" + trn(P.atDerived.switches, 1), 11)} ${pad(trn(P.atDerived.savingsPct, 1), 10)}`);
   console.log(`\n  Reddedilen ölçüt ("tabana indiren en dar bant") ${trn(naive.band, 2)} seçiyordu — dejenere.`);
   console.log(`  Kabul edilen ölçüt: tasarrufu düşürmeden alınabilen en geniş bant = ${trn(widestFree.band, 2)}`);
   console.log(`  Sert kısıt: h < 1 − φ_high = ${trn(hardCap, 2)}`);

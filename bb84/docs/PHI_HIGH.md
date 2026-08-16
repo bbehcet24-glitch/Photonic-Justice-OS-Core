@@ -143,9 +143,10 @@ tarayabilirsiniz.
    φ_high'la uğraşma.
 4. Talep sıçraması riskin ana kaynağıysa `dayanıklılık-önce` (0,90),
    kaynak maliyeti baskınsa `verimlilik-önce` (0,50) profiline geç.
-5. Histerezisi **açık bırak** (varsayılan `h = 0,08`). Profil
-   değiştirdiyseniz sert kısıtı yeniden hesapla: `h < 1 − φ_high`
-   (φ = 0,90 için h < 0,10) — bkz. §8.
+5. Histerezisi **açık bırak**. Bandı elle verme — `ProductionThrottle`
+   φ_high'tan çözer (0,50 → 0,28 · 0,80 → 0,08 · 0,90 → 0,02).
+   Ölçülmemiş bir φ_high kullanıyorsanız `recommendHysteresis()`
+   `measured: false` döner; bandı taramadan üretime almayın — bkz. §8.
 
 ---
 
@@ -160,7 +161,7 @@ kurtarmaz. `R(T_b) > D` koşulu her zaman geçerlidir.
 ## 8. Histerezis bandı — `h = 0,08`
 
 Kodda: `bb84/qkd_backpressure.js` → `HYSTERESIS_BAND`
-Doğrulama: `bb84/hysteresis_band_test.js` (9/9) · Ham veri: `reports/hysteresis_band.json`
+Doğrulama: `bb84/hysteresis_band_test.js` (16/16) · Ham veri: `reports/hysteresis_band.json`
 
 ### İki eşik, tek bant
 
@@ -210,13 +211,49 @@ Yani 0,08'e kadarki anahtarlama azalması **bedava**; ötesi değil.
 > çürüttü** (salınım %25,4 → %24,0, yani daralıyor). Bandın gerçek
 > bedeli tasarrufta.
 
-### Sert kısıt
+### Sert kısıt — gerekli ama **yeterli değil**
 
 ```
 h  <  1 − φ_high        (φ_high = 0,80 için h < 0,20)
 ```
 
 Aksi hâlde φ_up ≥ 1 olur ve **kısma hiç tetiklenmez** — depo doluluğu
-%100'ü aşamayacağı için üretim hiç durmaz. h = 0,20'de ölçüldü: tasarruf
-%25,3'ten %9,7'ye düştü. Profil değiştirirken bu kısıt yeniden
-hesaplanmalıdır: `dayanıklılık-önce` (φ = 0,90) için h < 0,10.
+%100'ü aşamayacağı için üretim hiç durmaz. Üç profilde de ölçüldü:
+
+| profil | φ_high | h = 1−φ_high'ta tasarruf |
+|---|---|---|
+| verimlilik-önce | 0,50 | %41,1 → **%13,7** |
+| dengeli | 0,80 | %25,1 → **%9,7** |
+| dayanıklılık-önce | 0,90 | %14,1 → **%4,7** |
+
+> **Bu doküman önce şöyle diyordu:** *"φ = 0,90 için h < 0,10."* Doğru ama
+> **eksik.** h = 0,08 o kısıtı sağlıyor — yine de o profilde tasarrufu
+> düşürüyor. Bağlayıcı olan sert kısıt değil, tasarruf ölçütüdür.
+
+### Bant profile bağlıdır — ölçülen değerler
+
+Aynı ölçüt ("tasarrufu düşürmeden alınabilen en geniş bant") üç profilde
+de çalıştırıldı:
+
+| profil | φ_high | sert kısıt | **ölçülen h** | φ_low / φ_up | mod değişimi |
+|---|---|---|---|---|---|
+| verimlilik-önce | 0,50 | h < 0,50 | **0,28** | 0,22 / 0,78 | 13,5 → 4,3 |
+| **dengeli** | 0,80 | h < 0,20 | **0,08** | 0,72 / 0,88 | 20,3 → 9,0 |
+| dayanıklılık-önce | 0,90 | h < 0,10 | **0,02** | 0,88 / 0,92 | 19,5 → 12,0 |
+
+**Bant, φ_high yükseldikçe daralıyor**: üst bandın bıraktığı boşluk
+küçüldüğü için geniş bant kısmayı devre dışı bırakmaya yaklaşır.
+Tek bir h bütün profillere uymaz.
+
+Kodda `HYSTERESIS_BANDS` olarak tutulur ve `ProductionThrottle`, bant
+açıkça verilmediyse **φ_high'tan otomatik çözer** — φ = 0,90 seçen biri
+sessizce 0,08 almaz:
+
+```js
+BP.recommendHysteresis(0.90)
+// → { band: 0.02, hardCap: 0.1, measured: true, phiLow: 0.88, phiUp: 0.92 }
+
+BP.recommendHysteresis(0.85)          // ölçülmemiş φ
+// → { band: 0.06, hardCap: 0.15, measured: false,
+//     warning: "φ_high = 0.85 için bant ÖLÇÜLMEDİ … hysteresis_band_test.js ile taranmalıdır." }
+```
