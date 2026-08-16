@@ -96,7 +96,13 @@ class ProductionThrottle {
     } = opts;
     // Bant AÇIKÇA verilmediyse profilden çözülür: φ_high = 0,90 seçen
     // biri sessizce 0,08 almamalı (o bant orada tasarrufu düşürüyor).
-    const band = hysteresis != null ? hysteresis : recommendHysteresis(highFill).band;
+    // Ölçüm aralığı dışındaki φ için recommendHysteresis band=null döner:
+    // sessizce bir sayı uydurmaktansa açıkça hata vermek doğrusu.
+    const band = hysteresis != null ? hysteresis : (() => {
+      const r = recommendHysteresis(highFill);
+      if (r.band == null) throw new Error(r.warning + " (açık `hysteresis` verin)");
+      return r.band;
+    })();
     Object.assign(this, { capacityBits, demandBps, ellModel, highFill, hysteresis: band, maxBlockMs, minEll, useHysteresis, headroomMargin });
     // İKİ EŞİK, TEK BANT. Kullanıcı arayüzünde tek sayı (φ_high) var ama
     // denetleyici iki eşikle çalışır — histerezis tam olarak budur:
@@ -341,34 +347,58 @@ const HYSTERESIS_BAND = 0.08;
  * sağlıyor olmasına rağmen tasarrufu düşürüyor. Üç profil de tarandı ve
  * bağlayıcı olanın tasarruf ölçütü olduğu görüldü:
  *
- *   profil             φ_high   sert kısıt   ÖLÇÜLEN h   φ_up    mod değ.
- *   verimlilik-önce     0,50     h < 0,50      0,28       0,78   13,5 → 4,3
- *   dengeli             0,80     h < 0,20      0,08       0,88   20,3 → 9,0
- *   ara nokta           0,85     h < 0,15      0,04       0,89   22,0 → 13,2
- *   dayanıklılık-önce   0,90     h < 0,10      0,02       0,92   19,5 → 12,0
+ *   profil             φ_high   sert kısıt   ÖLÇÜLEN h   φ_low/φ_up   bağlayıcı
+ *   verimlilik-önce     0,50     h < 0,50      0,08      0,42/0,58      ret
+ *   ara nokta           0,60     h < 0,40      0,16      0,44/0,76      ret
+ *   ara nokta           0,70     h < 0,30      0,16      0,54/0,86    tasarruf
+ *   dengeli             0,80     h < 0,20      0,08      0,72/0,88    tasarruf
+ *   ara nokta           0,85     h < 0,15      0,06      0,79/0,91    tasarruf
+ *   dayanıklılık-önce   0,90     h < 0,10      0,02      0,88/0,92    tasarruf
  *
- * Bant φ_high yükseldikçe DARALIYOR: üst bandın bıraktığı boşluk
- * küçüldüğü için geniş bant kısmayı devre dışı bırakmaya yaklaşıyor.
- * Tek bir h bütün profillere uymaz.
+ * DİKKAT — bu tablo bir ÖNCEKİ sürümü DÜZELTİYOR. Önceden yalnız 0,50 /
+ * 0,80 / 0,85 / 0,90 taranmıştı ve "bant φ_high yükseldikçe monoton
+ * daralır" denmişti. 0,60 ile 0,70 eklenince bunun YANLIŞ olduğu görüldü:
+ * bant MONOTON DEĞİL, φ ≈ 0,60–0,70'te TEPE yapıyor. Sebebi, bandı iki
+ * ayrı mekanizmanın sıkıştırması:
+ *   • düşük φ'de geniş bant φ_low = φ_high − h'yi dibe indirir, depo
+ *     boşalır → RET oranı yükselir (φ=0,50'de h=0,16 reti %0,64 → %3,70);
+ *   • yüksek φ'de geniş bant φ_up = φ_high + h'yi 1'e iter, kısma hiç
+ *     tetiklenmez → TASARRUF çöker.
+ * Eski 0,50 → 0,28 değeri de bu yüzden hatalıydı: ret kısıtı yalnızca
+ * "dengeli" profiline uygulanıyordu, 0,50'de hiç denetlenmemişti.
  */
 const HYSTERESIS_BANDS = {
-  0.50: 0.28,
+  0.50: 0.08,
+  0.60: 0.16,
+  0.70: 0.16,
   0.80: 0.08,
-  0.85: 0.04,
+  0.85: 0.06,
   0.90: 0.02,
 };
 
 /**
- * ÖLÇÜLMEMİŞ φ İÇİN BAŞLANGIÇ TAHMİNİ — formül DEĞİL, sezgisel.
- * Dört ölçüm noktası şu örüntüyü gösteriyor (c = 1 − φ_high):
- *      c=0,50 → 0,28   c=0,20 → 0,08   c=0,15 → 0,04   c=0,10 → 0,02
- * Yüksek φ'de h ≈ 2c² iyi oturuyor (0,08 / 0,045 / 0,02), düşük φ'de
- * aşıyor; bu yüzden c/2 ile kırpılıyor:
- *      ĥ = min(c/2, 2c²)
- * DÖRT NOKTAYA UYAN BİR SEZGİSEL, KANIT DEĞİL. Bu yüzden buradan gelen
- * değer measured:false ile işaretlenir — üretime almadan önce taranmalı.
+ * ÖLÇÜLMEMİŞ φ İÇİN BAŞLANGIÇ TAHMİNİ.
+ *
+ * ÖNCEKİ SÜRÜMDEKİ ĥ = min(c/2, 2c²) SEZGİSELİ KALDIRILDI. O sezgisel
+ * c = 1 − φ_high'te MONOTON'du; 0,60 ve 0,70 ölçülünce bandın monoton
+ * OLMADIĞI (φ ≈ 0,65'te tepe yaptığı) görüldü, dolayısıyla hiçbir monoton
+ * fonksiyon bu altı noktaya uyamaz. Uydurma bir eğri yerine:
+ *   • ölçülen iki nokta ARASINDA kalan φ için doğrusal ara değer,
+ *   • ölçüm aralığının DIŞINDA tahmin YOK (extrapolasyon reddedilir).
+ * Her iki hâlde de sonuç measured:false ile işaretlenir.
  */
-const guessBand = (cap) => +Math.min(cap / 2, 2 * cap * cap).toFixed(4);
+const BAND_KNOTS = Object.keys(HYSTERESIS_BANDS).map(Number).sort((a, b) => a - b);
+function interpolateBand(phiHigh) {
+  const lo = BAND_KNOTS[0], hi = BAND_KNOTS[BAND_KNOTS.length - 1];
+  if (phiHigh < lo || phiHigh > hi) return null;          // extrapolasyon YOK
+  let i = 0;
+  while (i < BAND_KNOTS.length - 1 && BAND_KNOTS[i + 1] < phiHigh) i++;
+  const a = BAND_KNOTS[i], b = BAND_KNOTS[i + 1];
+  const t = (phiHigh - a) / (b - a);
+  const v = HYSTERESIS_BANDS[a] + t * (HYSTERESIS_BANDS[b] - HYSTERESIS_BANDS[a]);
+  // Sert kısıt her hâlükârda korunur.
+  return +Math.min(v, 0.9 * (1 - phiHigh)).toFixed(4);
+}
 
 /** Bilinen profil için ölçülmüş bant; bilinmeyende sert kısıt + uyarı. */
 function recommendHysteresis(phiHigh) {
@@ -379,13 +409,22 @@ function recommendHysteresis(phiHigh) {
     return { band: HYSTERESIS_BANDS[key], hardCap: cap, measured: true,
       phiLow: +(phiHigh - HYSTERESIS_BANDS[key]).toFixed(4), phiUp: +(phiHigh + HYSTERESIS_BANDS[key]).toFixed(4) };
   }
-  // Ölçülmemiş φ: sezgisel bir başlangıç ver ama ÖLÇÜLMEDİĞİNİ söyle.
-  const guess = guessBand(cap);
+  // Ölçülmemiş φ: ölçüm aralığı İÇİNDE ara değer, DIŞINDA tahmin yok.
+  const guess = interpolateBand(phiHigh);
+  if (guess == null) {
+    return {
+      band: null, hardCap: cap, measured: false, phiLow: null, phiUp: null,
+      warning: `φ_high = ${phiHigh} ölçüm aralığının (${BAND_KNOTS[0]}–${BAND_KNOTS[BAND_KNOTS.length - 1]}) ` +
+        "DIŞINDA. Bant monoton olmadığı için extrapolasyon yapılmıyor — " +
+        "bb84/hysteresis_band_test.js ile bu φ taranmadan üretime alınmamalı.",
+    };
+  }
   return {
-    band: +guess.toFixed(4), hardCap: cap, measured: false,
+    band: guess, hardCap: cap, measured: false,
     phiLow: +(phiHigh - guess).toFixed(4), phiUp: +(phiHigh + guess).toFixed(4),
-    warning: `φ_high = ${phiHigh} için bant ÖLÇÜLMEDİ. Sert kısıt h < ${cap} sağlanıyor ama ` +
-      "bağlayıcı olan tasarruf ölçütüdür — bb84/hysteresis_band_test.js ile taranmalıdır.",
+    warning: `φ_high = ${phiHigh} için bant ÖLÇÜLMEDİ; komşu ölçüm noktaları arasında ara değer. ` +
+      `Sert kısıt h < ${cap} sağlanıyor ama bağlayıcı olan ret/tasarruf ölçütüdür — ` +
+      "bb84/hysteresis_band_test.js ile taranmalıdır.",
   };
 }
 const EXCHANGE_COLLAPSE_RATIO = 0.1;   // 1 puan tasarruf başına <0,1 puan ret azalması = çöküş

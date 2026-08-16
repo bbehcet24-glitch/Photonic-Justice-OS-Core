@@ -42,14 +42,23 @@ const FIXED_BLOCK_MS = 5000;
 // kümesi de profile göre kurulur; her kümede kısıtı AŞAN en az bir
 // nokta bilerek bırakılır ki kısıt ölçümle görünsün.
 const PROFILES = [
-  { name: "verimlilik-önce", phi: 0.50, bands: [0, 0.04, 0.08, 0.16, 0.28, 0.40, 0.50] },
+  // Izgara SIKLAŞTIRILDI: türetilen bant "test edilen en geniş uygun
+  // nokta"dır, yani seyrek ızgara cevabı OLDUĞUNDAN DAR gösterebilir.
+  // Her profilde uygun/uygun-değil sınırının iki yanında komşu nokta var.
+  { name: "verimlilik-önce", phi: 0.50, bands: [0, 0.04, 0.08, 0.16, 0.24, 0.28, 0.32, 0.36, 0.40, 0.50] },
+  // 0,60 ve 0,70 de adlandırılmış profil değil — sezgiselin en zayıf
+  // olduğu aralık burasıydı (c/2 kırpması ile 2c² kolunun kesiştiği yer),
+  // o yüzden tarandı.
+  { name: "ara nokta φ=0,60", phi: 0.60, bands: [0, 0.04, 0.08, 0.12, 0.16, 0.20, 0.22, 0.24, 0.28, 0.32, 0.40] },
+  { name: "ara nokta φ=0,70", phi: 0.70, bands: [0, 0.02, 0.04, 0.06, 0.08, 0.12, 0.16, 0.18, 0.20, 0.22, 0.30] },
   { name: "dengeli", phi: 0.80, bands: [0, 0.02, 0.04, 0.06, 0.08, 0.12, 0.16, 0.20] },
   // 0,85 adlandırılmış bir profil DEĞİL, ara bir çalışma noktası —
   // recommendHysteresis() onu "ölçülmedi" diye işaretliyordu, tarandı.
   { name: "ara nokta φ=0,85", phi: 0.85, bands: [0, 0.01, 0.02, 0.03, 0.04, 0.06, 0.08, 0.12, 0.15] },
   { name: "dayanıklılık-önce", phi: 0.90, bands: [0, 0.01, 0.02, 0.04, 0.06, 0.08, 0.10] },
 ];
-const BANDS = PROFILES[1].bands;
+// İndeksle değil ADLA seçilir: araya profil eklendiğinde indeks kayar.
+const BANDS = PROFILES.find(P => P.name === "dengeli").bands;
 
 function main() {
   const out = { generatedAt: new Date().toISOString(), checks: [] };
@@ -116,22 +125,61 @@ function main() {
   // ── ÜÇ PROFİLİN DE BANDI TARANIR ──
   // Sert kısıt (h < 1 − φ_high) her profilde farklı; ayrıca kısıtın
   // YETERLİ olup olmadığı da profil profil sınanır.
-  const TOL = 1.0;                                    // puan (tasarruf)
-  const deriveBand = (rows) => {
+  // ── ÖLÇÜT v2 ──
+  // v1 ("tasarrufu 1 puandan fazla düşürmeyen en geniş bant") ızgara
+  // sıklaştırılınca ÇÖKTÜ: düşük φ'de tasarruf eğrisi gürültülü ve 1
+  // puanlık sabit tolerans gürültünün ALTINDA kaldığı için uygun küme
+  // BİTİŞİK ÇIKMIYOR (φ=0,50'de 0,24 eleniyor ama 0,28 ve 0,36 geçiyor).
+  // "En geniş uygun nokta" böyle bir kümede deliğin öbür tarafından okur.
+  // v2 üç düzeltme getiriyor:
+  //   (1) sabit tolerans yerine EŞLEŞTİRİLMİŞ fark + kendi SE'si
+  //       (aynı çalışma noktasında bant-bantsız), eşik |Δ| > 2·SE;
+  //   (2) h=0'dan yürüyüp İLK anlamlı bozulmada durulur → küme tanımı
+  //       gereği bitişik, gürültüdeki tek bir çukur sonucu kaydırmaz;
+  //   (3) tasarrufun YANINDA ret oranı da kısıt — v1 bunu yalnızca
+  //       "dengeli" profiline uyguluyordu, diğer profiller hiç
+  //       denetlenmemişti (φ=0,50 → 0,28 bandı reti %0,64'ten %4,07'ye
+  //       çıkarıyordu ve bu hiç görülmemişti).
+  const mean = (a) => a.reduce((s, x) => s + x, 0) / a.length;
+  const pairedDelta = (row, base, key) => {
+    const d = row.per.map((p, i) => p[key] - base.per[i][key]);
+    const m = mean(d);
+    const sd = Math.sqrt(d.reduce((s, x) => s + (x - m) ** 2, 0) / Math.max(1, d.length - 1));
+    return { delta: +m.toFixed(3), se: +(sd / Math.sqrt(d.length)).toFixed(3) };
+  };
+  const DENIAL_FLOOR = 0.25;      // puan — 2·SE'ye ek mutlak taban (gürültü koruması)
+  const deriveBand = (rows, cap) => {
     const base = rows[0];
-    const affordable = rows.filter(r => r.savingsPct >= base.savingsPct - TOL);
-    return { base, affordable, widest: affordable.reduce((a, b) => (b.band > a.band ? b : a)) };
+    const stats = rows.slice(1).map(r => {
+      const sav = pairedDelta(r, base, "savingsPct");
+      const den = pairedDelta(r, base, "denialPct");
+      const savingsDrop = sav.delta < -2 * sav.se;
+      const denialWorse = den.delta > 2 * den.se && den.delta > DENIAL_FLOOR;
+      const overCap = r.band >= cap - 1e-9;
+      return { band: r.band, sav, den, savingsDrop, denialWorse, overCap,
+        stop: savingsDrop || denialWorse || overCap,
+        reason: overCap ? "sert kısıt" : denialWorse ? "ret" : savingsDrop ? "tasarruf" : null };
+    });
+    const firstStop = stats.find(s => s.stop) || null;
+    const ok = stats.filter(s => !firstStop || s.band < firstStop.band);
+    const widestBand = ok.length ? ok[ok.length - 1].band : 0;
+    return {
+      base, stats, firstStop, affordable: [0, ...ok.map(s => s.band)],
+      widest: rows.find(r => r.band === widestBand),
+      bindingConstraint: firstStop ? firstStop.reason : "taranan aralıkta bağlayıcı kısıt yok",
+    };
   };
   const profiles = PROFILES.map(P => {
     const rows = sweepFor(P.phi, P.bands);
     const cap = +(1 - P.phi).toFixed(3);
-    const d = deriveBand(rows);
+    const d = deriveBand(rows, cap);
     const overCap = rows.filter(r => r.band >= cap);
     return {
       ...P, hardCapBand: cap, rows,
-      derivedBand: d.widest.band, affordableBands: d.affordable.map(a => a.band),
-      noBandSavingsPct: d.base.savingsPct,
-      atDerived: d.widest, overCap,
+      derivedBand: d.widest.band, affordableBands: d.affordable,
+      noBandSavingsPct: d.base.savingsPct, noBandDenialPct: d.base.denialPct,
+      atDerived: d.widest, overCap, stats: d.stats,
+      firstStop: d.firstStop, bindingConstraint: d.bindingConstraint,
       capIsBinding: d.widest.band >= cap - 1e-9,
     };
   });
@@ -163,14 +211,15 @@ function main() {
   // varsaymıştım, veri tersini söyledi), KAYNAK TASARRUFUDUR:
   // φ_up = φ_high + h olduğu için geniş bant kısmayı geç tetikler,
   // h → 1 − φ_high olduğunda φ_up → 1 ve kısma HİÇ tetiklenmez.
-  const tolerance = 1.0;                                   // puan
-  const affordable = sweep.filter(s => s.savingsPct >= noBand.savingsPct - tolerance);
-  const widestFree = affordable.reduce((a, b) => (b.band > a.band ? b : a));
+  const affordable = dengeli.affordableBands;
+  const widestFree = dengeli.atDerived;
   const hardCap = +(1 - BP.RECOMMENDED_PHI_HIGH).toFixed(3);
   out.derived = {
-    criterion: `tasarruf, bantsız tabandan ${tolerance} puandan fazla düşmeden önceki en geniş bant`,
-    noBandSavingsPct: noBand.savingsPct, affordableBands: affordable.map(a => a.band),
+    criterion: "h=0'dan yürünür; tasarrufta veya ret oranında İLK anlamlı " +
+      "bozulmadan (|Δ| > 2·SE, eşleştirilmiş) önceki en geniş bant",
+    noBandSavingsPct: noBand.savingsPct, affordableBands: affordable,
     widestFreeBand: widestFree.band, recommendedBand: BP.HYSTERESIS_BAND,
+    bindingConstraint: dengeli.bindingConstraint,
     hardCapBand: hardCap,
     hardCapNote: "h ≥ 1 − φ_high olursa φ_up ≥ 1 ve kısma hiç tetiklenmez",
   };
@@ -187,10 +236,11 @@ function main() {
   chk("Anahtarlama bant genişledikçe monoton AZALIYOR",
     sweep.every((s, i) => i === 0 || s.switches <= sweep[i - 1].switches + 0.34),
     sweep.map(s => `h=${s.band}→${s.switches}`).join(" · "));
-  chk(`Önerilen bant (${BP.HYSTERESIS_BAND}), tasarrufu düşürmeden alınabilen EN GENİŞ bant`,
+  chk(`Önerilen bant (${BP.HYSTERESIS_BAND}), ilk anlamlı bozulmadan önceki EN GENİŞ bant`,
     widestFree.band === BP.HYSTERESIS_BAND,
-    `bantsız tasarruf %${noBand.savingsPct} · ${tolerance} puan içinde kalanlar {${affordable.map(a => a.band).join(", ")}} · ` +
-    `en geniş = ${widestFree.band} · bir sonraki adımda tasarruf %${(sweep[sweep.indexOf(widestFree) + 1] ?? {}).savingsPct} 'e düşüyor`);
+    `bantsız tasarruf %${noBand.savingsPct} · bozulmadan geçilenler {${affordable.join(", ")}} · ` +
+    `en geniş = ${widestFree.band} · ilk duraklama h=${dengeli.firstStop?.band} ` +
+    `(${dengeli.bindingConstraint}: Δtasarruf ${dengeli.firstStop?.sav.delta} ± ${dengeli.firstStop?.sav.se})`);
   chk("Bandın gerçek maliyeti TASARRUFTA — geniş bant kısmayı geç tetikliyor",
     sweep[sweep.length - 1].savingsPct < rec.savingsPct * 0.6,
     `h=${BP.HYSTERESIS_BAND} → tasarruf %${rec.savingsPct} · h=${sweep[sweep.length - 1].band} → %${sweep[sweep.length - 1].savingsPct} ` +
@@ -212,29 +262,69 @@ function main() {
       over != null && over.savingsPct < P.noBandSavingsPct * 0.6,
       `1 − φ_high = ${cap} · h = ${over?.band} → φ_up = ${over?.phiUp} ≥ 1 · ` +
       `tasarruf %${P.noBandSavingsPct} → %${over?.savingsPct} (kısma hiç tetiklenmiyor)`);
-    chk(`Türetilen bant — ${P.name} (φ=${P.phi}) → h = ${P.derivedBand}`,
+    chk(`Türetilen bant — ${P.name} (φ=${P.phi}) → h = ${P.derivedBand} · bağlayıcı: ${P.bindingConstraint}`,
       P.derivedBand > 0 && P.derivedBand < cap,
-      `bantsız tasarruf %${P.noBandSavingsPct} · ${TOL} puan içinde kalanlar ` +
-      `{${P.affordableBands.join(", ")}} · en geniş = ${P.derivedBand} (sert kısıt ${cap}) · ` +
-      `mod değişimi ${P.rows[0].switches} → ${P.atDerived.switches}`);
+      `bantsız tasarruf %${P.noBandSavingsPct}, ret %${P.noBandDenialPct} · bozulmadan geçilenler ` +
+      `{${P.affordableBands.join(", ")}} · ilk duraklama h=${P.firstStop?.band} ` +
+      `(Δtasarruf ${P.firstStop?.sav.delta}±${P.firstStop?.sav.se} · Δret ${P.firstStop?.den.delta}±${P.firstStop?.den.se}) · ` +
+      `en geniş = ${P.derivedBand} (sert kısıt ${cap}) · mod değişimi ${P.rows[0].switches} → ${P.atDerived.switches}`);
+    // Küme BİTİŞİK olmalı — v1'i çökerten şey tam olarak buydu.
+    chk(`Uygun küme BİTİŞİK — ${P.name} (φ=${P.phi})`,
+      P.affordableBands.every((b, i) => i === 0 || b === P.bands[i]),
+      `{${P.affordableBands.join(", ")}} ızgaranın kesintisiz ön eki ` +
+      `({${P.bands.slice(0, P.affordableBands.length).join(", ")}})`);
   }
   const dayan = profiles.find(p => p.name === "dayanıklılık-önce");
-  chk("Sert kısıt GEREKLİ AMA YETERLİ DEĞİL: dayanıklılık-önce profilinde bağlayıcı olan tasarruf ölçütü",
-    dayan.derivedBand < dayan.hardCapBand,
-    `φ=0,90 için sert kısıt h < ${dayan.hardCapBand} · ama tasarruf ölçütü daha erken bağlıyor: ` +
-    `h = ${dayan.derivedBand}. Yani "h < 1 − φ_high" tek başına yeterli bir kural DEĞİL`);
-  // Ölçülmemiş φ için kullanılan sezgisel (ĥ = min(c/2, 2c²)) gerçekten
-  // ölçüm noktalarını yeniden üretiyor mu? Üretmiyorsa o sezgiselle
-  // ölçülmemiş bir φ'ye gitmek yanlış olurdu.
-  const heur = profiles.map(P => {
-    const g = BP.recommendHysteresis(P.phi + 1e-7);      // haritayı ıskala → sezgisele düş
-    return { phi: P.phi, measured: P.derivedBand, guess: g.band, isGuess: g.measured === false };
-  });
-  out.heuristicCheck = heur;
-  chk("Ölçülmemiş φ sezgiseli, ölçüm noktalarını yeniden üretiyor (±0,04)",
-    heur.every(h => h.isGuess && Math.abs(h.guess - h.measured) <= 0.04),
-    heur.map(h => `φ=${h.phi}: ĥ=${h.guess} vs ölçülen ${h.measured}`).join(" · ") +
-    " — dört noktaya uyan bir SEZGİSEL, kanıt değil; measured:false ile işaretleniyor");
+  chk("Sert kısıt GEREKLİ AMA YETERLİ DEĞİL: hiçbir profilde bağlayıcı olan sert kısıt değil",
+    profiles.every(p => p.derivedBand < p.hardCapBand),
+    profiles.map(p => `φ=${p.phi}: h=${p.derivedBand} < ${p.hardCapBand} (bağlayıcı: ${p.bindingConstraint})`).join(" · ") +
+    ` — "h < 1 − φ_high" tek başına yeterli bir kural DEĞİL`);
+  // ── BANT MONOTON DEĞİL: İKİ TARAFTAN SIKIŞIYOR ──
+  // 0,60 ve 0,70 taranınca eski "h, φ_high ile monoton daralır" hikâyesi
+  // ÇÖKTÜ. İki ayrı mekanizma var: düşük φ'de geniş bant φ_low'u dibe
+  // indirip depoyu boşaltıyor → RET; yüksek φ'de φ_up'ı 1'e itip kısmayı
+  // devre dışı bırakıyor → TASARRUF. Bant ortada en geniş.
+  const byPhi = [...profiles].sort((a, b) => a.phi - b.phi);
+  const peak = byPhi.reduce((a, b) => (b.derivedBand > a.derivedBand ? b : a));
+  out.nonMonotone = {
+    series: byPhi.map(p => ({ phi: p.phi, band: p.derivedBand, binding: p.bindingConstraint })),
+    peakPhi: peak.phi, peakBand: peak.derivedBand,
+  };
+  chk("Bant φ_high'te MONOTON DEĞİL — iç tepe var, iki taraftan farklı kısıt sıkıyor",
+    peak.phi > byPhi[0].phi && peak.phi < byPhi[byPhi.length - 1].phi &&
+    byPhi[0].bindingConstraint === "ret" && byPhi[byPhi.length - 1].bindingConstraint === "tasarruf",
+    byPhi.map(p => `φ=${p.phi}→h=${p.derivedBand} (${p.bindingConstraint})`).join(" · ") +
+    ` — tepe φ=${peak.phi}'te h=${peak.derivedBand}. Düşük φ'de RET, yüksek φ'de TASARRUF bağlıyor; ` +
+    `eski "monoton daralır" ifadesi 0,50/0,80/0,85/0,90 dört noktasının yanıltmasıymış`);
+  // ── ESKİ SEZGİSEL ÇÜRÜTÜLDÜ ──
+  // ĥ = min(c/2, 2c²) monoton bir fonksiyondu; ölçülen seri monoton
+  // OLMADIĞI için hiçbir monoton eğri altı noktaya birden uyamaz. Bunu
+  // ölçümle gösteriyoruz ki sezgiselin neden kaldırıldığı kayda geçsin.
+  const oldGuess = (c) => +Math.min(c / 2, 2 * c * c).toFixed(4);
+  const oldErr = profiles.map(P => ({
+    phi: P.phi, measured: P.derivedBand, oldGuess: oldGuess(+(1 - P.phi).toFixed(4)),
+  }));
+  out.rejectedHeuristic = { form: "ĥ = min(c/2, 2c²)", points: oldErr };
+  chk("ESKİ SEZGİSEL (ĥ = min(c/2, 2c²)) ÇÜRÜTÜLDÜ — monoton, ölçüm ise değil",
+    oldErr.some(h => Math.abs(h.oldGuess - h.measured) > 0.04),
+    oldErr.map(h => `φ=${h.phi}: ĥ=${h.oldGuess} vs ölçülen ${h.measured}`).join(" · ") +
+    ` — en büyük sapma ${Math.max(...oldErr.map(h => Math.abs(h.oldGuess - h.measured))).toFixed(3)}; ` +
+    "monoton bir eğri iç tepeyi yakalayamaz, sezgisel kaldırıldı");
+  // Yerine gelen: ölçüm noktaları arasında ara değer, dışında TAHMİN YOK.
+  const mid = BP.recommendHysteresis(0.75);
+  const outside = BP.recommendHysteresis(0.95);
+  out.interpolation = { mid, outside };
+  chk("Ölçülmemiş φ: aralık İÇİNDE ara değer, DIŞINDA tahmin reddediliyor",
+    mid.band != null && mid.measured === false &&
+    mid.band >= Math.min(0.16, 0.08) && mid.band <= 0.16 &&
+    outside.band === null && /DIŞINDA/.test(outside.warning || ""),
+    `φ=0,75 → ĥ=${mid.band} (0,70→0,16 ile 0,80→0,08 arası, measured:${mid.measured}) · ` +
+    `φ=0,95 → band=${outside.band} (ölçüm aralığı ${0.5}–${0.9} dışında, extrapolasyon YOK)`);
+  chk("Ölçüm aralığı dışında kısıcı, sayı uydurmak yerine HATA veriyor",
+    (() => { try { new BP.ProductionThrottle({ capacityBits: 1e6, demandBps: 1e3,
+      ellModel: () => 1e3, highFill: 0.95 }); return false; } catch (e) { return /DIŞINDA/.test(e.message); } })(),
+    "highFill=0,95 ile açık hysteresis verilmeden kurulan ProductionThrottle throw ediyor — " +
+    "sessizce uydurulmuş bir bantla üretime çıkmak engelleniyor");
 
   chk("Önerilen bant profile göre DEĞİŞİYOR — tek bir h bütün profillere uymuyor",
     new Set(profiles.map(p => p.derivedBand)).size > 1,

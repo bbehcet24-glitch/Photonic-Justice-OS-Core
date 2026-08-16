@@ -144,9 +144,11 @@ tarayabilirsiniz.
 4. Talep sıçraması riskin ana kaynağıysa `dayanıklılık-önce` (0,90),
    kaynak maliyeti baskınsa `verimlilik-önce` (0,50) profiline geç.
 5. Histerezisi **açık bırak**. Bandı elle verme — `ProductionThrottle`
-   φ_high'tan çözer (0,50 → 0,28 · 0,80 → 0,08 · 0,90 → 0,02).
-   Ölçülmemiş bir φ_high kullanıyorsanız `recommendHysteresis()`
-   `measured: false` döner; bandı taramadan üretime almayın — bkz. §8.
+   φ_high'tan çözer (0,50 → 0,08 · 0,60 → 0,16 · 0,70 → 0,16 ·
+   0,80 → 0,08 · 0,85 → 0,06 · 0,90 → 0,02 — **monoton değil**, ortada
+   tepe yapar). Ölçülmemiş bir φ_high kullanıyorsanız
+   `recommendHysteresis()` `measured: false` döner; 0,50–0,90 aralığının
+   dışındaysa `band: null` döner ve kısıcı hata fırlatır — bkz. §8.
 
 ---
 
@@ -161,7 +163,7 @@ kurtarmaz. `R(T_b) > D` koşulu her zaman geçerlidir.
 ## 8. Histerezis bandı — `h = 0,08`
 
 Kodda: `bb84/qkd_backpressure.js` → `HYSTERESIS_BAND`
-Doğrulama: `bb84/hysteresis_band_test.js` (16/16) · Ham veri: `reports/hysteresis_band.json`
+Doğrulama: `bb84/hysteresis_band_test.js` (29/29) · Ham veri: `reports/hysteresis_band.json`
 
 ### İki eşik, tek bant
 
@@ -232,52 +234,70 @@ Aksi hâlde φ_up ≥ 1 olur ve **kısma hiç tetiklenmez** — depo doluluğu
 
 ### Bant profile bağlıdır — ölçülen değerler
 
-Aynı ölçüt ("tasarrufu düşürmeden alınabilen en geniş bant") üç profilde
-de çalıştırıldı:
+Aynı ölçüt **altı** çalışma noktasında koşturuldu:
 
-| profil | φ_high | sert kısıt | **ölçülen h** | φ_low / φ_up | mod değişimi | tasarruf |
+| profil | φ_high | sert kısıt | **ölçülen h** | φ_low / φ_up | mod değişimi | bağlayıcı kısıt |
 |---|---|---|---|---|---|---|
-| verimlilik-önce | 0,50 | h < 0,50 | **0,28** | 0,22 / 0,78 | 13,5 → 4,3 | %40,3 |
-| **dengeli** | 0,80 | h < 0,20 | **0,08** | 0,72 / 0,88 | 20,3 → 9,0 | %25,3 |
-| ara nokta | 0,85 | h < 0,15 | **0,04** | 0,81 / 0,89 | 22,0 → 13,2 | %20,7 |
-| dayanıklılık-önce | 0,90 | h < 0,10 | **0,02** | 0,88 / 0,92 | 19,5 → 12,0 | %13,4 |
+| verimlilik-önce | 0,50 | h < 0,50 | **0,08** | 0,42 / 0,58 | 13,5 → 9,5 | ret |
+| ara nokta | 0,60 | h < 0,40 | **0,16** | 0,44 / 0,76 | 15,2 → 7,3 | ret |
+| ara nokta | 0,70 | h < 0,30 | **0,16** | 0,54 / 0,86 | 17,3 → 6,3 | tasarruf |
+| **dengeli** | 0,80 | h < 0,20 | **0,08** | 0,72 / 0,88 | 20,3 → 9,0 | tasarruf |
+| ara nokta | 0,85 | h < 0,15 | **0,06** | 0,79 / 0,91 | 22,0 → 8,8 | tasarruf |
+| dayanıklılık-önce | 0,90 | h < 0,10 | **0,02** | 0,88 / 0,92 | 19,5 → 12,0 | tasarruf |
 
-**Bant, φ_high yükseldikçe daralıyor**: üst bandın bıraktığı boşluk
-küçüldüğü için geniş bant kısmayı devre dışı bırakmaya yaklaşır.
-Tek bir h bütün profillere uymaz.
+> **DÜZELTME.** Bu doküman önce şöyle diyordu: *"Bant, φ_high yükseldikçe
+> daralıyor."* 0,60 ve 0,70 taranınca bu **YANLIŞ** çıktı. Bant monoton
+> değil, **φ ≈ 0,60–0,70'te tepe yapıyor.** Sebebi bandı iki ayrı
+> mekanizmanın sıkıştırması:
+>
+> * **düşük φ'de** geniş bant φ_low'u dibe indirir, depo boşalır →
+>   **ret** yükselir (φ=0,50'de h=0,16 reti %0,64 → %3,70 yapıyor);
+> * **yüksek φ'de** geniş bant φ_up'ı 1'e iter, kısma hiç tetiklenmez →
+>   **tasarruf** çöker.
+>
+> Eski **0,50 → 0,28** değeri de hatalıydı: ret kısıtı yalnızca *dengeli*
+> profiline uygulanıyordu, 0,50'de hiç denetlenmemişti. Doğrusu **0,08**.
+> Eski **0,85 → 0,04** değeri de anlamlılık ölçütüyle **0,06**'ya taşındı.
 
-Kodda `HYSTERESIS_BANDS` olarak tutulur ve `ProductionThrottle`, bant
-açıkça verilmediyse **φ_high'tan otomatik çözer** — φ = 0,90 seçen biri
-sessizce 0,08 almaz:
+### Ölçüt v2 — neden değişti
+
+v1: *"tasarrufu 1 puandan fazla düşürmeyen en geniş bant."* Izgara
+sıklaştırılınca **çöktü**: düşük φ'de tasarruf eğrisi gürültülü ve sabit
+1 puanlık tolerans gürültünün altında kaldığı için uygun küme **bitişik
+çıkmıyordu** (φ=0,50'de 0,24 eleniyor ama 0,28 ve 0,36 geçiyordu).
+"En geniş uygun nokta" böyle bir kümede deliğin öbür tarafından okur.
+
+v2 üç düzeltme getiriyor:
+
+1. sabit tolerans yerine **eşleştirilmiş fark + kendi SE'si** (aynı
+   çalışma noktasında bantlı − bantsız), eşik `|Δ| > 2·SE`;
+2. h = 0'dan yürünüp **ilk** anlamlı bozulmada durulur → küme tanımı
+   gereği bitişik, tek bir gürültü çukuru sonucu kaydırmaz;
+3. tasarrufun yanında **ret oranı da kısıt** — v1 bunu yalnızca *dengeli*
+   profiline uyguluyordu.
+
+Testte her profil için "uygun küme bitişiktir" ayrı bir öz-test olarak
+sınanıyor.
+
+### Ölçülmemiş φ — sezgisel KALDIRILDI
+
+Önceki sürümde `ĥ = min(c/2, 2c²)` sezgiseli vardı. Bu fonksiyon
+c = 1 − φ_high'te **monoton**; ölçülen seri monoton olmadığı için hiçbir
+monoton eğri altı noktaya birden uyamaz (en büyük sapma 0,17). Testte
+açıkça çürütülüyor ve kaldırıldı. Yerine:
+
+* ölçüm noktaları **arasında** doğrusal ara değer → `measured: false`;
+* ölçüm aralığının (**0,50–0,90**) **dışında tahmin yok** → `band: null`,
+  ve `ProductionThrottle` açık bir `hysteresis` verilmediyse **hata
+  fırlatır**. Sessizce uydurulmuş bir bantla üretime çıkılmaz.
 
 ```js
 BP.recommendHysteresis(0.90)
 // → { band: 0.02, hardCap: 0.1, measured: true, phiLow: 0.88, phiUp: 0.92 }
 
-BP.recommendHysteresis(0.85)          // artık ölçüldü
-// → { band: 0.04, hardCap: 0.15, measured: true, phiLow: 0.81, phiUp: 0.89 }
+BP.recommendHysteresis(0.75)          // ölçülmedi, ama aralık içinde
+// → { band: 0.12, measured: false, warning: "… komşu ölçüm noktaları arasında ara değer …" }
 
-BP.recommendHysteresis(0.70)          // hâlâ ölçülmemiş
-// → { band: 0.15, hardCap: 0.30, measured: false,
-//     warning: "φ_high = 0.7 için bant ÖLÇÜLMEDİ … hysteresis_band_test.js ile taranmalıdır." }
+BP.recommendHysteresis(0.95)          // aralık dışında
+// → { band: null, warning: "… ölçüm aralığının DIŞINDA … extrapolasyon yapılmıyor …" }
 ```
-
-### Ölçülmemiş φ için başlangıç tahmini
-
-Dört ölçüm noktası bir örüntü gösteriyor (c = 1 − φ_high):
-
-```
-ĥ  =  min( c/2 ,  2c² )
-```
-
-| c | ĥ (sezgisel) | ölçülen |
-|---|---|---|
-| 0,50 | 0,25 | 0,28 |
-| 0,20 | 0,08 | 0,08 |
-| 0,15 | 0,045 | 0,04 |
-| 0,10 | 0,02 | 0,02 |
-
-**Bu bir formül değil, dört noktaya uyan bir sezgiseldir.** Testte
-doğrulanıyor (ölçüm noktalarını ±0,04 içinde yeniden üretiyor) ve
-`recommendHysteresis()` bu yoldan gelen değeri `measured: false` ile
-işaretler. Ölçmeden üretime almayın.
