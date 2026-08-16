@@ -1,0 +1,423 @@
+{
+  "generatedAt": "2026-08-16T13:17:00.214Z",
+  "checks": [
+    {
+      "name": "OLAY YENİDEN ÜRETİLDİ: sadakat çöküşü ret oranını fırlatıyor",
+      "ok": true,
+      "detail": "F 0,9820 → 0,8450 · e_ph 0.018308 → 0.156098 · üretim 2126.8 → 904.9 bit/s (×0.4255) · ret %0 → %50.41"
+    },
+    {
+      "name": "BANT SANIK DEĞİL: ret oranı h'ye neredeyse duyarsız",
+      "ok": true,
+      "detail": "çöküş altında h süpürmesi: h=0.02→ret %51.49 · h=0.04→ret %51.22 · h=0.08→ret %51.35 · h=0.16→ret %50.41 · h=0.24→ret %50.41 — bandın yarattığı fark 1.08 puan, çöküşün yarattığı 50.41 puan. Bant, ret oranının sürücüsü DEĞİL"
+    },
+    {
+      "name": "KISMA TETİKLENEMİYOR ÇÜNKÜ DEPO BOŞ — bu arıza değil, tasarım",
+      "ok": true,
+      "detail": "çöküş altında KISMA bloğu 0, en düşük doluluk %0.5. Kısma yalnız depo DOLU iken israfı önlemek için vardır; boş depoda üretimi kısmak açlığı derinleştirirdi. Kontrolcü sürekli ÜRETİM kipinde — doğru davranış"
+    },
+    {
+      "name": "TELEMETRİ KENDİ İÇİNDE TUTARSIZ: φ=0,60 ile h=0,04 birlikte olamaz",
+      "ok": true,
+      "detail": "haritada φ=0,60 → h=0.16 (ölçülmüş). Bildirilen h=0,04 hiçbir ölçüm noktasına karşılık gelmiyor (ara değerle h=0,04 ≈ φ 0,87 civarı). Yani ya φ okuması ya h okuması bayat/yanlış — \"bant çöktü\" ifadesi bir ÖLÇÜM değil, bir OKUMA HATASI olabilir"
+    },
+    {
+      "name": "AYIRT EDİCİ TANI: yol-bazlı e_ph yayılımı küresel/yerel ayrımını veriyor",
+      "ok": true,
+      "detail": "küresel bozulmada yollar birlikte kayıyor (yayılım 0.0357), yola özgü bozulmada ayrışıyor (yayılım 0.1756, bozulan: A→R4→B). İLK BAKILACAK EKRAN BU — yeniden yönlendirme yalnız ikinci hâlde işe yarar"
+    },
+    {
+      "name": "YOLU DÜŞÜRMEK YANLIŞ — hacim kaybı sadakat kazancından pahalı",
+      "ok": true,
+      "detail": "bozulan yol akışta: ret %3.65 · yol devre dışı: %7.3 (çift 877371 → 709329, %19.2 hacim kaybı). F = %84,5'lik yol hâlâ ölüm eşiğinin (%54) çok üstünde ve anahtar üretiyor — onu atmak paralel yönlendirme kazancını geri veriyor"
+    },
+    {
+      "name": "AYRI HAVUZLAMA DA YANLIŞ — havuzlama kazancı hatayı izole etmeyi yeniyor",
+      "ok": true,
+      "detail": "tek havuz: 93518 bit (ret %3.65) · yola göre ayrı havuz: 69179 bit (ret %18.51) · yolu düşür: 78550 bit (ret %7.3). Hipotezim \"kirli yol temiz yolların anahtarını yakıyor\" idi; ÇÜRÜDÜ. Ayırmanın bedeli her alt bloğun kendi COR/PA giderini ödemesi ve n küçüldüğü için μ ∼ 1/√n'in büyümesidir. Paralel yönlendirmede ölçülen havuzlama kazancı (ℓ ×8,78) burada da baskın: KARIŞIK SADAKATTE BİLE HAVUZLAMAK DOĞRU"
+    },
+    {
+      "name": "KURULUN İMA ETTİĞİ MÜDAHALE (bandı aç) HİÇBİR ŞEY YAPMIYOR",
+      "ok": true,
+      "detail": "müdahale yok → ret %50.41 · bant açık (h=0,24) → %50.41. Fark 0.00 puan. Bant bir ARZ kolu değil, İSRAF kolu; depo boşken hiçbir tutamağı yok"
+    },
+    {
+      "name": "KONTROL KATMANINDA HİÇBİR AYAR ARZ AÇIĞINI KAPATMIYOR",
+      "ok": true,
+      "detail": "en iyi kol \"e_ph modelini yeniden kalibre et\" → ret %49.05; müdahale yok → %50.41. Sıralama: e_ph modelini yeniden kalibre et %49.05 · müdahale yok %50.41 · bandı aç (h=0,24) — kurulun ima ettiği %50.41 · φ_high → 0,85 %50.41. Arz ×0.4255'e düştüğünde depo/kısma/bant/model ayarları bunu KAPATAMAZ — kapatabilecek tek şey ya arzı geri getirmek (yönlendirme) ya talebi düşürmektir"
+    },
+    {
+      "name": "BAZ YANLILIĞI BU BLOK BOYUTUNDA KAZANÇ VERMİYOR — hipotezim çürüdü",
+      "ok": true,
+      "detail": "blok başına p* ile üretilen anahtar 41264 → 41264 bit. Yanlılığın kazancı k = N(1−p)²'nin PE için yeterli kalmasına bağlıdır; bu blok boyutunda optimum p simetriğe geri çöküyor. Yanlılık UZUN blokla anlamlı, tek başına değil"
+    },
+    {
+      "name": "YÜK ATMA ÇALIŞIYOR ve sürdürülebilir seviye ÖLÇÜLDÜ",
+      "ok": true,
+      "detail": "%100 talep (1519 bit/s) → ret %50.41 · %80 talep (1215 bit/s) → ret %37.61 · %60 talep (911 bit/s) → ret %12.79 · %50 talep (760 bit/s) → ret %0 · %40 talep (608 bit/s) → ret %0 · %30 talep (456 bit/s) → ret %0 — ret ≤ %1 kalan en yüksek seviye: talebin %50'i (760 bit/s). 30 saniyelik pencerede yapılabilecek TEK etkili müdahale bu"
+    },
+    {
+      "name": "\"%80 kritik eşik\" FİZİKSEL BİR UÇURUM DEĞİL — işletme politikası",
+      "ok": true,
+      "detail": "F=%80'de CHSH S = 2.263 > 2 (ihlal SÜRÜYOR) ve ℓ hâlâ pozitif. Gerçek sertifikasyon eşiği F > 70.71% (S = 2), anahtarın öldüğü yer F ≈ %53.96. %80, ikisinin de ÜSTÜNDE — muhafazakâr bir kesme, fizik değil"
+    },
+    {
+      "name": "Çöküş anında güvenlik İHLAL EDİLMİŞ DEĞİL",
+      "ok": true,
+      "detail": "F = %84,5 → S = 2.3900 > 2. Bell sertifikasyonu AYAKTA. Yaşanan bir GÜVENLİK olayı değil, bir KAPASİTE olayı — anahtar üretimi ×0.4255'e düşmüş durumda"
+    }
+  ],
+  "setup": {
+    "sessionMs": 81600,
+    "totalPairs": 877371,
+    "paths": [
+      "A→R1→B",
+      "A→R2→R3→B",
+      "A→R4→B"
+    ],
+    "epochs": 24,
+    "fNominal": 0.982,
+    "fCollapsed": 0.845,
+    "ePhNominal": 0.018308,
+    "ePhCollapsed": 0.156098,
+    "rateNominalBps": 2126.8,
+    "rateCollapsedBps": 904.9,
+    "supplyRatio": 0.4255,
+    "leakPerBit": 0.00129,
+    "demandBps": 1519,
+    "capacityBits": 21106,
+    "collapseRampMs": [
+      4896,
+      12240
+    ],
+    "measureWindowMs": [
+      12240,
+      81600
+    ],
+    "productionBlockwiseBps": 1599.1,
+    "pooledRateNote": "rateNominalBps havuzlanmış (tek blok) hızdır; işletme hızı blok-bazlıdır"
+  },
+  "incident": {
+    "baseline": {
+      "denialPct": 0,
+      "savingsPct": 6.73,
+      "discardedPct": 0,
+      "switches": 2,
+      "blocks": 16,
+      "kismaBlocks": 0,
+      "minFill": 0.4376,
+      "maxFill": 0.726,
+      "totalEll": 104599
+    },
+    "incident": {
+      "denialPct": 50.41,
+      "savingsPct": 0,
+      "discardedPct": 0,
+      "switches": 0,
+      "blocks": 18,
+      "kismaBlocks": 0,
+      "minFill": 0.005,
+      "maxFill": 0.3935,
+      "totalEll": 41264
+    },
+    "bandSweep": [
+      {
+        "h": 0.02,
+        "denialPct": 51.49,
+        "savingsPct": 2.35,
+        "discardedPct": 0,
+        "switches": 2,
+        "blocks": 18,
+        "kismaBlocks": 0,
+        "minFill": 0.0054,
+        "maxFill": 0.4068,
+        "totalEll": 42056
+      },
+      {
+        "h": 0.04,
+        "denialPct": 51.22,
+        "savingsPct": 2.96,
+        "discardedPct": 0,
+        "switches": 2,
+        "blocks": 17,
+        "kismaBlocks": 0,
+        "minFill": 0.0077,
+        "maxFill": 0.3655,
+        "totalEll": 42198
+      },
+      {
+        "h": 0.08,
+        "denialPct": 51.35,
+        "savingsPct": 3.57,
+        "discardedPct": 0,
+        "switches": 2,
+        "blocks": 17,
+        "kismaBlocks": 0,
+        "minFill": 0.0108,
+        "maxFill": 0.3671,
+        "totalEll": 41480
+      },
+      {
+        "h": 0.16,
+        "denialPct": 50.41,
+        "savingsPct": 0,
+        "discardedPct": 0,
+        "switches": 0,
+        "blocks": 18,
+        "kismaBlocks": 0,
+        "minFill": 0.005,
+        "maxFill": 0.3935,
+        "totalEll": 41264
+      },
+      {
+        "h": 0.24,
+        "denialPct": 50.41,
+        "savingsPct": 0,
+        "discardedPct": 0,
+        "switches": 0,
+        "blocks": 18,
+        "kismaBlocks": 0,
+        "minFill": 0.005,
+        "maxFill": 0.3935,
+        "totalEll": 41264
+      }
+    ],
+    "denialSpreadOverBands": 1.08,
+    "denialJumpFromCollapse": 50.41
+  },
+  "telemetryConsistency": {
+    "reportedPhi": 0.6,
+    "reportedBand": 0.04,
+    "mapBandAtPhi": 0.16,
+    "phiThatWouldGive004": []
+  },
+  "diagnosis": {
+    "perPathEPhGlobal": {
+      "A→R1→B": 0.15485,
+      "A→R2→R3→B": 0.14818,
+      "A→R4→B": 0.18392
+    },
+    "perPathEPhLocal": {
+      "A→R1→B": 0.01524,
+      "A→R2→R3→B": 0.00836,
+      "A→R4→B": 0.18392
+    },
+    "spreadGlobal": 0.03574,
+    "spreadLocal": 0.17556,
+    "degradedPath": "A→R4→B"
+  },
+  "reroute": {
+    "pooled": {
+      "denialPct": 3.65,
+      "savingsPct": 6.04,
+      "discardedPct": 0,
+      "switches": 2,
+      "blocks": 14,
+      "kismaBlocks": 0,
+      "minFill": 0.3248,
+      "maxFill": 0.5358,
+      "totalEll": 93518
+    },
+    "dropPath": {
+      "denialPct": 7.3,
+      "savingsPct": 0,
+      "discardedPct": 0,
+      "switches": 0,
+      "blocks": 20,
+      "kismaBlocks": 0,
+      "minFill": 0.0268,
+      "maxFill": 0.6316,
+      "totalEll": 78550
+    },
+    "perPathPools": {
+      "denialPct": 18.51,
+      "savingsPct": 0,
+      "discardedPct": 0,
+      "switches": 0,
+      "blocks": 18,
+      "kismaBlocks": 0,
+      "minFill": 0.0045,
+      "maxFill": 0.6573,
+      "totalEll": 69179
+    },
+    "degradedPath": "A→R4→B"
+  },
+  "interventions": {
+    "biasPlan": {
+      "p": 0.84522,
+      "ellPredicted": 69661,
+      "keyRoundFraction": 0.71439,
+      "peRoundFraction": 0.02396,
+      "nPredicted": 266661,
+      "kPredicted": 8942,
+      "muPredicted": 0.05159
+    },
+    "ranked": [
+      {
+        "key": "modeli kalibre et",
+        "label": "e_ph modelini yeniden kalibre et",
+        "denialPct": 49.05,
+        "totalEll": 42599
+      },
+      {
+        "key": "hiçbir şey",
+        "label": "müdahale yok",
+        "denialPct": 50.41,
+        "totalEll": 41264
+      },
+      {
+        "key": "bandı aç",
+        "label": "bandı aç (h=0,24) — kurulun ima ettiği",
+        "denialPct": 50.41,
+        "totalEll": 41264
+      },
+      {
+        "key": "φ yükselt",
+        "label": "φ_high → 0,85",
+        "denialPct": 50.41,
+        "totalEll": 41264
+      },
+      {
+        "key": "baz yanlılığı",
+        "label": "baz yanlılığı (blok başına p*)",
+        "denialPct": 50.41,
+        "totalEll": 41264
+      },
+      {
+        "key": "depo x2",
+        "label": "depoyu iki katına çıkar",
+        "denialPct": 50.81,
+        "totalEll": 40282
+      },
+      {
+        "key": "depo x4",
+        "label": "depoyu dört katına çıkar",
+        "denialPct": 50.81,
+        "totalEll": 40282
+      },
+      {
+        "key": "blok 15s",
+        "label": "blok tavanı 10 s → 15 s",
+        "denialPct": 51.49,
+        "totalEll": 42014
+      },
+      {
+        "key": "bandı kapat",
+        "label": "bandı kapat (h=0)",
+        "denialPct": 52.03,
+        "totalEll": 42264
+      },
+      {
+        "key": "φ düşür",
+        "label": "φ_high → 0,50",
+        "denialPct": 52.16,
+        "totalEll": 40261
+      }
+    ],
+    "bestKey": "modeli kalibre et"
+  },
+  "loadShedding": {
+    "sweep": [
+      {
+        "frac": 1,
+        "demandBps": 1519,
+        "denialPct": 50.41,
+        "savingsPct": 0,
+        "discardedPct": 0,
+        "switches": 0,
+        "blocks": 18,
+        "kismaBlocks": 0,
+        "minFill": 0.005,
+        "maxFill": 0.3935,
+        "totalEll": 41264
+      },
+      {
+        "frac": 0.8,
+        "demandBps": 1215,
+        "denialPct": 37.61,
+        "savingsPct": 0,
+        "discardedPct": 0,
+        "switches": 0,
+        "blocks": 18,
+        "kismaBlocks": 0,
+        "minFill": 0.0029,
+        "maxFill": 0.552,
+        "totalEll": 42233
+      },
+      {
+        "frac": 0.6,
+        "demandBps": 911,
+        "denialPct": 12.79,
+        "savingsPct": 0,
+        "discardedPct": 0,
+        "switches": 0,
+        "blocks": 17,
+        "kismaBlocks": 0,
+        "minFill": 0.0022,
+        "maxFill": 0.6495,
+        "totalEll": 41905
+      },
+      {
+        "frac": 0.5,
+        "demandBps": 760,
+        "denialPct": 0,
+        "savingsPct": 0,
+        "discardedPct": 0,
+        "switches": 0,
+        "blocks": 16,
+        "kismaBlocks": 0,
+        "minFill": 0.4204,
+        "maxFill": 0.6814,
+        "totalEll": 41956
+      },
+      {
+        "frac": 0.4,
+        "demandBps": 608,
+        "denialPct": 0,
+        "savingsPct": 14.21,
+        "discardedPct": 0,
+        "switches": 2,
+        "blocks": 13,
+        "kismaBlocks": 0,
+        "minFill": 0.4382,
+        "maxFill": 0.642,
+        "totalEll": 37073
+      },
+      {
+        "frac": 0.3,
+        "demandBps": 456,
+        "denialPct": 0,
+        "savingsPct": 41.11,
+        "discardedPct": 0,
+        "switches": 4,
+        "blocks": 10,
+        "kismaBlocks": 3,
+        "minFill": 0.4382,
+        "maxFill": 0.7792,
+        "totalEll": 21776
+      }
+    ],
+    "sustainable": {
+      "frac": 0.5,
+      "demandBps": 760,
+      "denialPct": 0,
+      "savingsPct": 0,
+      "discardedPct": 0,
+      "switches": 0,
+      "blocks": 16,
+      "kismaBlocks": 0,
+      "minFill": 0.4204,
+      "maxFill": 0.6814,
+      "totalEll": 41956
+    }
+  },
+  "thresholds": {
+    "reportedCliff": 0.8,
+    "bellCertificationF": 0.7071,
+    "keyDeathF": 0.5396,
+    "sAtCollapse": 2.39,
+    "sAt080": 2.2627,
+    "sAtBell": 2
+  },
+  "allChecksPassed": true
+}

@@ -150,6 +150,16 @@ class ProductionThrottle {
     // bunu karşılamıyorsa kısaltmak İŞE YARAMAZ (hızı düşürür, açığı
     // büyütür) — o durumda tam uzunlukta üretip en hızlı toparlanma
     // seçilir.
+    //
+    // BU DAL BİR KEZ "DÜZELTİLMEYE" ÇALIŞILDI VE GERİ ALINDI.
+    // fidelity_collapse_drill.js'te büyük depoda tek dev blok görülüp
+    // "soğuk başlangıçta koruma devre dışı kalıyor" diye teşhis edilmişti.
+    // Gerçek sebep tatbikatın maxBlockMs'i (40 s) oturum süresinden
+    // (27,2 s) BÜYÜK seçmesiydi — mimari değil, senaryo hatası. Boş
+    // depoda minBlockMs'e kenetleme denendi: kısa blok sonlu-anahtar
+    // giderini ödeyemediği için depo hiç dolmadı, tasarruf %25 → %0 ve
+    // ret %0 → %61 oldu. Regresyon paketi yakaladı. Aşağıdaki mantık
+    // DOĞRU; dokunmayın.
     if (this.demandBps > 0) {
       const coverMs = (levelBits / this.demandBps) * 1000;
       if (coverMs >= this.minBlockMs) blockMs = Math.min(blockMs, Math.max(this.minBlockMs, coverMs));
@@ -177,7 +187,12 @@ function runControlled(pairs, opts = {}) {
     sessionMs, capacityBits, demandAt, requestBits = 128,
     ellModel, throttle = null, fixedBlockMs = 5000,
     seed = 0xB4C4B4C4, leakPerBit = 0.02, warmupMs = 0,
+    // Blok gerçekleyici ENJEKTE EDİLEBİLİR. Varsayılan davranış aynı;
+    // tatbikatlarda (bkz. fidelity_collapse_drill.js) baz-yanlı eleme
+    // gibi alternatif üretim kipleri bu kancadan denenir.
+    realise = null,
   } = opts;
+  const realiseFn = realise || C.realiseBlock;
   const sorted = [...pairs].sort((a, b) => a.t - b.t);
   const alloc = new K.KeyAllocator("A-B", { capacityBits });
   const rng = mulberry32(seed >>> 0);
@@ -234,7 +249,7 @@ function runControlled(pairs, opts = {}) {
     for (let i = a; i < b; i++) slice[i - a] = { ...sorted[i], t: sorted[i].t - cursor };
     let ell = 0;
     if (slice.length > 32) {
-      const real = C.realiseBlock(slice, end - cursor, (seed + blocks.length * 7919) >>> 0);
+      const real = realiseFn(slice, end - cursor, (seed + blocks.length * 7919) >>> 0);
       ell = real.ell;
     }
     serveUntil(end);
