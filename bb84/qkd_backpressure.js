@@ -344,6 +344,7 @@ const HYSTERESIS_BAND = 0.08;
  *   profil             φ_high   sert kısıt   ÖLÇÜLEN h   φ_up    mod değ.
  *   verimlilik-önce     0,50     h < 0,50      0,28       0,78   13,5 → 4,3
  *   dengeli             0,80     h < 0,20      0,08       0,88   20,3 → 9,0
+ *   ara nokta           0,85     h < 0,15      0,04       0,89   22,0 → 13,2
  *   dayanıklılık-önce   0,90     h < 0,10      0,02       0,92   19,5 → 12,0
  *
  * Bant φ_high yükseldikçe DARALIYOR: üst bandın bıraktığı boşluk
@@ -353,8 +354,21 @@ const HYSTERESIS_BAND = 0.08;
 const HYSTERESIS_BANDS = {
   0.50: 0.28,
   0.80: 0.08,
+  0.85: 0.04,
   0.90: 0.02,
 };
+
+/**
+ * ÖLÇÜLMEMİŞ φ İÇİN BAŞLANGIÇ TAHMİNİ — formül DEĞİL, sezgisel.
+ * Dört ölçüm noktası şu örüntüyü gösteriyor (c = 1 − φ_high):
+ *      c=0,50 → 0,28   c=0,20 → 0,08   c=0,15 → 0,04   c=0,10 → 0,02
+ * Yüksek φ'de h ≈ 2c² iyi oturuyor (0,08 / 0,045 / 0,02), düşük φ'de
+ * aşıyor; bu yüzden c/2 ile kırpılıyor:
+ *      ĥ = min(c/2, 2c²)
+ * DÖRT NOKTAYA UYAN BİR SEZGİSEL, KANIT DEĞİL. Bu yüzden buradan gelen
+ * değer measured:false ile işaretlenir — üretime almadan önce taranmalı.
+ */
+const guessBand = (cap) => +Math.min(cap / 2, 2 * cap * cap).toFixed(4);
 
 /** Bilinen profil için ölçülmüş bant; bilinmeyende sert kısıt + uyarı. */
 function recommendHysteresis(phiHigh) {
@@ -365,8 +379,8 @@ function recommendHysteresis(phiHigh) {
     return { band: HYSTERESIS_BANDS[key], hardCap: cap, measured: true,
       phiLow: +(phiHigh - HYSTERESIS_BANDS[key]).toFixed(4), phiUp: +(phiHigh + HYSTERESIS_BANDS[key]).toFixed(4) };
   }
-  // Ölçülmemiş φ: kaba bir başlangıç ver ama ÖLÇÜLMEDİĞİNİ söyle.
-  const guess = Math.min(HYSTERESIS_BAND, cap * 0.4);
+  // Ölçülmemiş φ: sezgisel bir başlangıç ver ama ÖLÇÜLMEDİĞİNİ söyle.
+  const guess = guessBand(cap);
   return {
     band: +guess.toFixed(4), hardCap: cap, measured: false,
     phiLow: +(phiHigh - guess).toFixed(4), phiUp: +(phiHigh + guess).toFixed(4),

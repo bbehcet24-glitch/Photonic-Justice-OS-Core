@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-16T11:58:23.709Z",
+  "generatedAt": "2026-08-16T12:05:48.692Z",
   "checks": [
     {
       "name": "İlk ölçüt DEJENERE — anahtarlama monoton azaldığı için hep en genişi seçiyor",
@@ -62,6 +62,16 @@
       "detail": "bantsız tasarruf %25.093 · 1 puan içinde kalanlar {0, 0.02, 0.04, 0.06, 0.08} · en geniş = 0.08 (sert kısıt 0.2) · mod değişimi 20.333 → 9"
     },
     {
+      "name": "SERT KISIT ÖLÇÜLDÜ — ara nokta φ=0,85 (φ=0.85): h = 0.15'te kısma tetiklenmiyor",
+      "ok": true,
+      "detail": "1 − φ_high = 0.15 · h = 0.15 → φ_up = 1 ≥ 1 · tasarruf %20.208 → %8.417 (kısma hiç tetiklenmiyor)"
+    },
+    {
+      "name": "Türetilen bant — ara nokta φ=0,85 (φ=0.85) → h = 0.04",
+      "ok": true,
+      "detail": "bantsız tasarruf %20.208 · 1 puan içinde kalanlar {0, 0.01, 0.02, 0.03, 0.04} · en geniş = 0.04 (sert kısıt 0.15) · mod değişimi 22 → 13.167"
+    },
+    {
       "name": "SERT KISIT ÖLÇÜLDÜ — dayanıklılık-önce (φ=0.9): h = 0.1'te kısma tetiklenmiyor",
       "ok": true,
       "detail": "1 − φ_high = 0.1 · h = 0.1 → φ_up = 1 ≥ 1 · tasarruf %14.112 → %4.672 (kısma hiç tetiklenmiyor)"
@@ -77,9 +87,14 @@
       "detail": "φ=0,90 için sert kısıt h < 0.1 · ama tasarruf ölçütü daha erken bağlıyor: h = 0.02. Yani \"h < 1 − φ_high\" tek başına yeterli bir kural DEĞİL"
     },
     {
+      "name": "Ölçülmemiş φ sezgiseli, ölçüm noktalarını yeniden üretiyor (±0,04)",
+      "ok": true,
+      "detail": "φ=0.5: ĥ=0.25 vs ölçülen 0.28 · φ=0.8: ĥ=0.08 vs ölçülen 0.08 · φ=0.85: ĥ=0.045 vs ölçülen 0.04 · φ=0.9: ĥ=0.02 vs ölçülen 0.02 — dört noktaya uyan bir SEZGİSEL, kanıt değil; measured:false ile işaretleniyor"
+    },
+    {
       "name": "Önerilen bant profile göre DEĞİŞİYOR — tek bir h bütün profillere uymuyor",
       "ok": true,
-      "detail": "verimlilik-önce (φ=0.5) → h=0.28 · dengeli (φ=0.8) → h=0.08 · dayanıklılık-önce (φ=0.9) → h=0.02"
+      "detail": "verimlilik-önce (φ=0.5) → h=0.28 · dengeli (φ=0.8) → h=0.08 · ara nokta φ=0,85 (φ=0.85) → h=0.04 · dayanıklılık-önce (φ=0.9) → h=0.02"
     },
     {
       "name": "İki eşik açıkça türetiliyor: φ_low ve φ_up",
@@ -1542,6 +1557,839 @@
       "capIsBinding": false
     },
     {
+      "name": "ara nokta φ=0,85",
+      "phi": 0.85,
+      "bands": [
+        0,
+        0.01,
+        0.02,
+        0.03,
+        0.04,
+        0.06,
+        0.08,
+        0.12,
+        0.15
+      ],
+      "hardCapBand": 0.15,
+      "rows": [
+        {
+          "band": 0,
+          "phiLow": 0.85,
+          "phiUp": 0.85,
+          "switches": 22,
+          "switchesPerBlock": 1.09,
+          "savingsPct": 20.208,
+          "discardedPct": 0,
+          "denialPct": 0,
+          "swingPct": 20.17,
+          "per": [
+            {
+              "switches": 39,
+              "blocks": 29,
+              "switchesPerBlock": 1.345,
+              "savingsPct": 33.06,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.764,
+              "maxFill": 0.9746
+            },
+            {
+              "switches": 29,
+              "blocks": 15,
+              "switchesPerBlock": 1.933,
+              "savingsPct": 44.15,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7542,
+              "maxFill": 0.9571
+            },
+            {
+              "switches": 25,
+              "blocks": 28,
+              "switchesPerBlock": 0.893,
+              "savingsPct": 13.84,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7026,
+              "maxFill": 0.9254
+            },
+            {
+              "switches": 25,
+              "blocks": 16,
+              "switchesPerBlock": 1.563,
+              "savingsPct": 22.69,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.8088,
+              "maxFill": 0.9111
+            },
+            {
+              "switches": 4,
+              "blocks": 22,
+              "switchesPerBlock": 0.182,
+              "savingsPct": 1.39,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.5792,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 10,
+              "blocks": 16,
+              "switchesPerBlock": 0.625,
+              "savingsPct": 6.12,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7667,
+              "maxFill": 0.9127
+            }
+          ]
+        },
+        {
+          "band": 0.01,
+          "phiLow": 0.84,
+          "phiUp": 0.86,
+          "switches": 19.5,
+          "switchesPerBlock": 0.961,
+          "savingsPct": 20.463,
+          "discardedPct": 0,
+          "denialPct": 0,
+          "swingPct": 19.68,
+          "per": [
+            {
+              "switches": 38,
+              "blocks": 29,
+              "switchesPerBlock": 1.31,
+              "savingsPct": 33.38,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.764,
+              "maxFill": 0.9746
+            },
+            {
+              "switches": 26,
+              "blocks": 15,
+              "switchesPerBlock": 1.733,
+              "savingsPct": 44.91,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7542,
+              "maxFill": 0.9571
+            },
+            {
+              "switches": 22,
+              "blocks": 28,
+              "switchesPerBlock": 0.786,
+              "savingsPct": 13.8,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7121,
+              "maxFill": 0.9181
+            },
+            {
+              "switches": 21,
+              "blocks": 16,
+              "switchesPerBlock": 1.313,
+              "savingsPct": 22.82,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.8121,
+              "maxFill": 0.9119
+            },
+            {
+              "switches": 2,
+              "blocks": 22,
+              "switchesPerBlock": 0.091,
+              "savingsPct": 1.24,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.5843,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 8,
+              "blocks": 15,
+              "switchesPerBlock": 0.533,
+              "savingsPct": 6.63,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7717,
+              "maxFill": 0.9127
+            }
+          ]
+        },
+        {
+          "band": 0.02,
+          "phiLow": 0.83,
+          "phiUp": 0.87,
+          "switches": 16.5,
+          "switchesPerBlock": 0.823,
+          "savingsPct": 20.813,
+          "discardedPct": 0,
+          "denialPct": 0,
+          "swingPct": 21.14,
+          "per": [
+            {
+              "switches": 32,
+              "blocks": 28,
+              "switchesPerBlock": 1.143,
+              "savingsPct": 34.34,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7239,
+              "maxFill": 0.9793
+            },
+            {
+              "switches": 22,
+              "blocks": 15,
+              "switchesPerBlock": 1.467,
+              "savingsPct": 44.93,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7991,
+              "maxFill": 0.9487
+            },
+            {
+              "switches": 18,
+              "blocks": 28,
+              "switchesPerBlock": 0.643,
+              "savingsPct": 13.76,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.6805,
+              "maxFill": 0.9236
+            },
+            {
+              "switches": 17,
+              "blocks": 16,
+              "switchesPerBlock": 1.063,
+              "savingsPct": 22.49,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.8053,
+              "maxFill": 0.9383
+            },
+            {
+              "switches": 2,
+              "blocks": 22,
+              "switchesPerBlock": 0.091,
+              "savingsPct": 1.48,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.58,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 8,
+              "blocks": 15,
+              "switchesPerBlock": 0.533,
+              "savingsPct": 7.88,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7499,
+              "maxFill": 0.9127
+            }
+          ]
+        },
+        {
+          "band": 0.03,
+          "phiLow": 0.82,
+          "phiUp": 0.88,
+          "switches": 14.333,
+          "switchesPerBlock": 0.693,
+          "savingsPct": 20.47,
+          "discardedPct": 0,
+          "denialPct": 0,
+          "swingPct": 19.45,
+          "per": [
+            {
+              "switches": 28,
+              "blocks": 29,
+              "switchesPerBlock": 0.966,
+              "savingsPct": 33.82,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7611,
+              "maxFill": 0.9455
+            },
+            {
+              "switches": 20,
+              "blocks": 15,
+              "switchesPerBlock": 1.333,
+              "savingsPct": 44.43,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.8029,
+              "maxFill": 0.9487
+            },
+            {
+              "switches": 18,
+              "blocks": 28,
+              "switchesPerBlock": 0.643,
+              "savingsPct": 13.71,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.6818,
+              "maxFill": 0.9217
+            },
+            {
+              "switches": 14,
+              "blocks": 16,
+              "switchesPerBlock": 0.875,
+              "savingsPct": 23.59,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7845,
+              "maxFill": 0.9344
+            },
+            {
+              "switches": 2,
+              "blocks": 22,
+              "switchesPerBlock": 0.091,
+              "savingsPct": 1.48,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.58,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 4,
+              "blocks": 16,
+              "switchesPerBlock": 0.25,
+              "savingsPct": 5.79,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.79,
+              "maxFill": 0.9127
+            }
+          ]
+        },
+        {
+          "band": 0.04,
+          "phiLow": 0.81,
+          "phiUp": 0.89,
+          "switches": 13.167,
+          "switchesPerBlock": 0.657,
+          "savingsPct": 20.65,
+          "discardedPct": 0,
+          "denialPct": 0,
+          "swingPct": 20.66,
+          "per": [
+            {
+              "switches": 27,
+              "blocks": 29,
+              "switchesPerBlock": 0.931,
+              "savingsPct": 33.1,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7651,
+              "maxFill": 0.9562
+            },
+            {
+              "switches": 19,
+              "blocks": 14,
+              "switchesPerBlock": 1.357,
+              "savingsPct": 45.67,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7791,
+              "maxFill": 0.9659
+            },
+            {
+              "switches": 14,
+              "blocks": 29,
+              "switchesPerBlock": 0.483,
+              "savingsPct": 12.87,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.6818,
+              "maxFill": 0.9325
+            },
+            {
+              "switches": 13,
+              "blocks": 16,
+              "switchesPerBlock": 0.813,
+              "savingsPct": 23.91,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.789,
+              "maxFill": 0.9329
+            },
+            {
+              "switches": 2,
+              "blocks": 22,
+              "switchesPerBlock": 0.091,
+              "savingsPct": 1.72,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.5766,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 4,
+              "blocks": 15,
+              "switchesPerBlock": 0.267,
+              "savingsPct": 6.63,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7734,
+              "maxFill": 0.9127
+            }
+          ]
+        },
+        {
+          "band": 0.06,
+          "phiLow": 0.79,
+          "phiUp": 0.91,
+          "switches": 8.833,
+          "switchesPerBlock": 0.428,
+          "savingsPct": 19.052,
+          "discardedPct": 0,
+          "denialPct": 0,
+          "swingPct": 22.16,
+          "per": [
+            {
+              "switches": 18,
+              "blocks": 30,
+              "switchesPerBlock": 0.6,
+              "savingsPct": 33.83,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7127,
+              "maxFill": 0.9798
+            },
+            {
+              "switches": 15,
+              "blocks": 16,
+              "switchesPerBlock": 0.938,
+              "savingsPct": 42.9,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7695,
+              "maxFill": 0.9696
+            },
+            {
+              "switches": 7,
+              "blocks": 31,
+              "switchesPerBlock": 0.226,
+              "savingsPct": 10.26,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7308,
+              "maxFill": 0.9758
+            },
+            {
+              "switches": 11,
+              "blocks": 16,
+              "switchesPerBlock": 0.688,
+              "savingsPct": 22.8,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7689,
+              "maxFill": 0.934
+            },
+            {
+              "switches": 0,
+              "blocks": 23,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.5926,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 2,
+              "blocks": 17,
+              "switchesPerBlock": 0.118,
+              "savingsPct": 4.52,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7727,
+              "maxFill": 0.9127
+            }
+          ]
+        },
+        {
+          "band": 0.08,
+          "phiLow": 0.77,
+          "phiUp": 0.93,
+          "switches": 6.667,
+          "switchesPerBlock": 0.285,
+          "savingsPct": 16.597,
+          "discardedPct": 0,
+          "denialPct": 0,
+          "swingPct": 23.32,
+          "per": [
+            {
+              "switches": 16,
+              "blocks": 30,
+              "switchesPerBlock": 0.533,
+              "savingsPct": 33.83,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.6824,
+              "maxFill": 0.9787
+            },
+            {
+              "switches": 13,
+              "blocks": 17,
+              "switchesPerBlock": 0.765,
+              "savingsPct": 41.18,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7565,
+              "maxFill": 0.9716
+            },
+            {
+              "switches": 6,
+              "blocks": 33,
+              "switchesPerBlock": 0.182,
+              "savingsPct": 8.91,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.6912,
+              "maxFill": 0.9758
+            },
+            {
+              "switches": 5,
+              "blocks": 22,
+              "switchesPerBlock": 0.227,
+              "savingsPct": 15.66,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7665,
+              "maxFill": 0.9511
+            },
+            {
+              "switches": 0,
+              "blocks": 23,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.5926,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 0,
+              "blocks": 20,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.8105,
+              "maxFill": 0.9173
+            }
+          ]
+        },
+        {
+          "band": 0.12,
+          "phiLow": 0.73,
+          "phiUp": 0.97,
+          "switches": 2.5,
+          "switchesPerBlock": 0.096,
+          "savingsPct": 11.76,
+          "discardedPct": 0,
+          "denialPct": 0,
+          "swingPct": 23.53,
+          "per": [
+            {
+              "switches": 4,
+              "blocks": 45,
+              "switchesPerBlock": 0.089,
+              "savingsPct": 19.57,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.6793,
+              "maxFill": 0.9928
+            },
+            {
+              "switches": 8,
+              "blocks": 20,
+              "switchesPerBlock": 0.4,
+              "savingsPct": 42.01,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.6999,
+              "maxFill": 0.9911
+            },
+            {
+              "switches": 2,
+              "blocks": 36,
+              "switchesPerBlock": 0.056,
+              "savingsPct": 5.34,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7056,
+              "maxFill": 0.9758
+            },
+            {
+              "switches": 1,
+              "blocks": 34,
+              "switchesPerBlock": 0.029,
+              "savingsPct": 3.64,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.862,
+              "maxFill": 0.98
+            },
+            {
+              "switches": 0,
+              "blocks": 23,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.5926,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 0,
+              "blocks": 20,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.8105,
+              "maxFill": 0.9173
+            }
+          ]
+        },
+        {
+          "band": 0.15,
+          "phiLow": 0.7,
+          "phiUp": 1,
+          "switches": 0.667,
+          "switchesPerBlock": 0.018,
+          "savingsPct": 8.417,
+          "discardedPct": 0.015,
+          "denialPct": 0,
+          "swingPct": 25.07,
+          "per": [
+            {
+              "switches": 2,
+              "blocks": 45,
+              "switchesPerBlock": 0.044,
+              "savingsPct": 20.12,
+              "discardedPct": 0.06,
+              "denialPct": 0,
+              "minFill": 0.5942,
+              "maxFill": 1
+            },
+            {
+              "switches": 2,
+              "blocks": 32,
+              "switchesPerBlock": 0.063,
+              "savingsPct": 27.94,
+              "discardedPct": 0.03,
+              "denialPct": 0,
+              "minFill": 0.6865,
+              "maxFill": 1
+            },
+            {
+              "switches": 0,
+              "blocks": 40,
+              "switchesPerBlock": 0,
+              "savingsPct": 2.44,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7279,
+              "maxFill": 0.9758
+            },
+            {
+              "switches": 0,
+              "blocks": 37,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.862,
+              "maxFill": 0.98
+            },
+            {
+              "switches": 0,
+              "blocks": 23,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.5926,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 0,
+              "blocks": 20,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.8105,
+              "maxFill": 0.9173
+            }
+          ]
+        }
+      ],
+      "derivedBand": 0.04,
+      "affordableBands": [
+        0,
+        0.01,
+        0.02,
+        0.03,
+        0.04
+      ],
+      "noBandSavingsPct": 20.208,
+      "atDerived": {
+        "band": 0.04,
+        "phiLow": 0.81,
+        "phiUp": 0.89,
+        "switches": 13.167,
+        "switchesPerBlock": 0.657,
+        "savingsPct": 20.65,
+        "discardedPct": 0,
+        "denialPct": 0,
+        "swingPct": 20.66,
+        "per": [
+          {
+            "switches": 27,
+            "blocks": 29,
+            "switchesPerBlock": 0.931,
+            "savingsPct": 33.1,
+            "discardedPct": 0,
+            "denialPct": 0,
+            "minFill": 0.7651,
+            "maxFill": 0.9562
+          },
+          {
+            "switches": 19,
+            "blocks": 14,
+            "switchesPerBlock": 1.357,
+            "savingsPct": 45.67,
+            "discardedPct": 0,
+            "denialPct": 0,
+            "minFill": 0.7791,
+            "maxFill": 0.9659
+          },
+          {
+            "switches": 14,
+            "blocks": 29,
+            "switchesPerBlock": 0.483,
+            "savingsPct": 12.87,
+            "discardedPct": 0,
+            "denialPct": 0,
+            "minFill": 0.6818,
+            "maxFill": 0.9325
+          },
+          {
+            "switches": 13,
+            "blocks": 16,
+            "switchesPerBlock": 0.813,
+            "savingsPct": 23.91,
+            "discardedPct": 0,
+            "denialPct": 0,
+            "minFill": 0.789,
+            "maxFill": 0.9329
+          },
+          {
+            "switches": 2,
+            "blocks": 22,
+            "switchesPerBlock": 0.091,
+            "savingsPct": 1.72,
+            "discardedPct": 0,
+            "denialPct": 0,
+            "minFill": 0.5766,
+            "maxFill": 0.9046
+          },
+          {
+            "switches": 4,
+            "blocks": 15,
+            "switchesPerBlock": 0.267,
+            "savingsPct": 6.63,
+            "discardedPct": 0,
+            "denialPct": 0,
+            "minFill": 0.7734,
+            "maxFill": 0.9127
+          }
+        ]
+      },
+      "overCap": [
+        {
+          "band": 0.15,
+          "phiLow": 0.7,
+          "phiUp": 1,
+          "switches": 0.667,
+          "switchesPerBlock": 0.018,
+          "savingsPct": 8.417,
+          "discardedPct": 0.015,
+          "denialPct": 0,
+          "swingPct": 25.07,
+          "per": [
+            {
+              "switches": 2,
+              "blocks": 45,
+              "switchesPerBlock": 0.044,
+              "savingsPct": 20.12,
+              "discardedPct": 0.06,
+              "denialPct": 0,
+              "minFill": 0.5942,
+              "maxFill": 1
+            },
+            {
+              "switches": 2,
+              "blocks": 32,
+              "switchesPerBlock": 0.063,
+              "savingsPct": 27.94,
+              "discardedPct": 0.03,
+              "denialPct": 0,
+              "minFill": 0.6865,
+              "maxFill": 1
+            },
+            {
+              "switches": 0,
+              "blocks": 40,
+              "switchesPerBlock": 0,
+              "savingsPct": 2.44,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.7279,
+              "maxFill": 0.9758
+            },
+            {
+              "switches": 0,
+              "blocks": 37,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.862,
+              "maxFill": 0.98
+            },
+            {
+              "switches": 0,
+              "blocks": 23,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.5926,
+              "maxFill": 0.9046
+            },
+            {
+              "switches": 0,
+              "blocks": 20,
+              "switchesPerBlock": 0,
+              "savingsPct": 0,
+              "discardedPct": 0,
+              "denialPct": 0,
+              "minFill": 0.8105,
+              "maxFill": 0.9173
+            }
+          ]
+        }
+      ],
+      "capIsBinding": false
+    },
+    {
       "name": "dayanıklılık-önce",
       "phi": 0.9,
       "bands": [
@@ -2831,5 +3679,31 @@
     "hardCapBand": 0.2,
     "hardCapNote": "h ≥ 1 − φ_high olursa φ_up ≥ 1 ve kısma hiç tetiklenmez"
   },
+  "heuristicCheck": [
+    {
+      "phi": 0.5,
+      "measured": 0.28,
+      "guess": 0.25,
+      "isGuess": true
+    },
+    {
+      "phi": 0.8,
+      "measured": 0.08,
+      "guess": 0.08,
+      "isGuess": true
+    },
+    {
+      "phi": 0.85,
+      "measured": 0.04,
+      "guess": 0.045,
+      "isGuess": true
+    },
+    {
+      "phi": 0.9,
+      "measured": 0.02,
+      "guess": 0.02,
+      "isGuess": true
+    }
+  ],
   "allChecksPassed": true
 }

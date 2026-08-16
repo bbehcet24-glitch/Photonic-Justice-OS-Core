@@ -235,11 +235,12 @@ Aksi hâlde φ_up ≥ 1 olur ve **kısma hiç tetiklenmez** — depo doluluğu
 Aynı ölçüt ("tasarrufu düşürmeden alınabilen en geniş bant") üç profilde
 de çalıştırıldı:
 
-| profil | φ_high | sert kısıt | **ölçülen h** | φ_low / φ_up | mod değişimi |
-|---|---|---|---|---|---|
-| verimlilik-önce | 0,50 | h < 0,50 | **0,28** | 0,22 / 0,78 | 13,5 → 4,3 |
-| **dengeli** | 0,80 | h < 0,20 | **0,08** | 0,72 / 0,88 | 20,3 → 9,0 |
-| dayanıklılık-önce | 0,90 | h < 0,10 | **0,02** | 0,88 / 0,92 | 19,5 → 12,0 |
+| profil | φ_high | sert kısıt | **ölçülen h** | φ_low / φ_up | mod değişimi | tasarruf |
+|---|---|---|---|---|---|---|
+| verimlilik-önce | 0,50 | h < 0,50 | **0,28** | 0,22 / 0,78 | 13,5 → 4,3 | %40,3 |
+| **dengeli** | 0,80 | h < 0,20 | **0,08** | 0,72 / 0,88 | 20,3 → 9,0 | %25,3 |
+| ara nokta | 0,85 | h < 0,15 | **0,04** | 0,81 / 0,89 | 22,0 → 13,2 | %20,7 |
+| dayanıklılık-önce | 0,90 | h < 0,10 | **0,02** | 0,88 / 0,92 | 19,5 → 12,0 | %13,4 |
 
 **Bant, φ_high yükseldikçe daralıyor**: üst bandın bıraktığı boşluk
 küçüldüğü için geniş bant kısmayı devre dışı bırakmaya yaklaşır.
@@ -253,7 +254,30 @@ sessizce 0,08 almaz:
 BP.recommendHysteresis(0.90)
 // → { band: 0.02, hardCap: 0.1, measured: true, phiLow: 0.88, phiUp: 0.92 }
 
-BP.recommendHysteresis(0.85)          // ölçülmemiş φ
-// → { band: 0.06, hardCap: 0.15, measured: false,
-//     warning: "φ_high = 0.85 için bant ÖLÇÜLMEDİ … hysteresis_band_test.js ile taranmalıdır." }
+BP.recommendHysteresis(0.85)          // artık ölçüldü
+// → { band: 0.04, hardCap: 0.15, measured: true, phiLow: 0.81, phiUp: 0.89 }
+
+BP.recommendHysteresis(0.70)          // hâlâ ölçülmemiş
+// → { band: 0.15, hardCap: 0.30, measured: false,
+//     warning: "φ_high = 0.7 için bant ÖLÇÜLMEDİ … hysteresis_band_test.js ile taranmalıdır." }
 ```
+
+### Ölçülmemiş φ için başlangıç tahmini
+
+Dört ölçüm noktası bir örüntü gösteriyor (c = 1 − φ_high):
+
+```
+ĥ  =  min( c/2 ,  2c² )
+```
+
+| c | ĥ (sezgisel) | ölçülen |
+|---|---|---|
+| 0,50 | 0,25 | 0,28 |
+| 0,20 | 0,08 | 0,08 |
+| 0,15 | 0,045 | 0,04 |
+| 0,10 | 0,02 | 0,02 |
+
+**Bu bir formül değil, dört noktaya uyan bir sezgiseldir.** Testte
+doğrulanıyor (ölçüm noktalarını ±0,04 içinde yeniden üretiyor) ve
+`recommendHysteresis()` bu yoldan gelen değeri `measured: false` ile
+işaretler. Ölçmeden üretime almayın.

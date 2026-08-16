@@ -44,6 +44,9 @@ const FIXED_BLOCK_MS = 5000;
 const PROFILES = [
   { name: "verimlilik-önce", phi: 0.50, bands: [0, 0.04, 0.08, 0.16, 0.28, 0.40, 0.50] },
   { name: "dengeli", phi: 0.80, bands: [0, 0.02, 0.04, 0.06, 0.08, 0.12, 0.16, 0.20] },
+  // 0,85 adlandırılmış bir profil DEĞİL, ara bir çalışma noktası —
+  // recommendHysteresis() onu "ölçülmedi" diye işaretliyordu, tarandı.
+  { name: "ara nokta φ=0,85", phi: 0.85, bands: [0, 0.01, 0.02, 0.03, 0.04, 0.06, 0.08, 0.12, 0.15] },
   { name: "dayanıklılık-önce", phi: 0.90, bands: [0, 0.01, 0.02, 0.04, 0.06, 0.08, 0.10] },
 ];
 const BANDS = PROFILES[1].bands;
@@ -220,6 +223,19 @@ function main() {
     dayan.derivedBand < dayan.hardCapBand,
     `φ=0,90 için sert kısıt h < ${dayan.hardCapBand} · ama tasarruf ölçütü daha erken bağlıyor: ` +
     `h = ${dayan.derivedBand}. Yani "h < 1 − φ_high" tek başına yeterli bir kural DEĞİL`);
+  // Ölçülmemiş φ için kullanılan sezgisel (ĥ = min(c/2, 2c²)) gerçekten
+  // ölçüm noktalarını yeniden üretiyor mu? Üretmiyorsa o sezgiselle
+  // ölçülmemiş bir φ'ye gitmek yanlış olurdu.
+  const heur = profiles.map(P => {
+    const g = BP.recommendHysteresis(P.phi + 1e-7);      // haritayı ıskala → sezgisele düş
+    return { phi: P.phi, measured: P.derivedBand, guess: g.band, isGuess: g.measured === false };
+  });
+  out.heuristicCheck = heur;
+  chk("Ölçülmemiş φ sezgiseli, ölçüm noktalarını yeniden üretiyor (±0,04)",
+    heur.every(h => h.isGuess && Math.abs(h.guess - h.measured) <= 0.04),
+    heur.map(h => `φ=${h.phi}: ĥ=${h.guess} vs ölçülen ${h.measured}`).join(" · ") +
+    " — dört noktaya uyan bir SEZGİSEL, kanıt değil; measured:false ile işaretleniyor");
+
   chk("Önerilen bant profile göre DEĞİŞİYOR — tek bir h bütün profillere uymuyor",
     new Set(profiles.map(p => p.derivedBand)).size > 1,
     profiles.map(p => `${p.name} (φ=${p.phi}) → h=${p.derivedBand}`).join(" · "));
