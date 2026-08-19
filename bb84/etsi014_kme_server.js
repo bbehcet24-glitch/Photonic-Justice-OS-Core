@@ -196,15 +196,43 @@ class KMEKeyStore {
     return [strip(saeA), strip(saeB)].sort().join("-");
   }
 
-  loadFromExport(exportObj) {
+  loadFromExport(exportObj, opts = {}) {
     // PhotonNet2.jsx KeyDeliveryStore.exportForKME() çıktısı: { routes: { routeKey: [entry,...] } }
     if (!exportObj || !exportObj.routes) throw new Error("Geçersiz KME içe aktarım biçimi: 'routes' alanı bulunamadı");
+    // RESYNC İDEMPOTENSİ DÜZELTMESİ (async_sync_drill.js buldu).
+    // ═════════════════════════════════════════════════════════════════
+    // Eski davranış (merge:false) her içe aktarımda rota Map'ini SIFIRDAN
+    // kuruyor ve TÜM kayıtları issuedToMaster/Slave=false yapıyordu. Bir
+    // "resync protokolü" (deponun yeniden içe aktarılması) uçuştaki bir el
+    // sıkışmayı EZİYORDU:
+    //   • master'a ZATEN teslim edilmiş (enc) ama slave'in geç dec ettiği
+    //     anahtar, resync'ten sonra "henüz master'a teslim edilmemiş" diye
+    //     REDDEDİLİR → GEÇERLİ paket, durum kayması yüzünden düşürülür;
+    //   • dahası aynı anahtar TEKRAR enc edilebilir → ÇİFT TESLİM, yani
+    //     replay koruması resync ile KIRILIR (güvenlik açığı).
+    //
+    // Düzeltme: içe aktarım MERGE'dir (varsayılan). Var olan key_ID'nin
+    // issued/slave bayrakları KORUNUR ve un-issued kuyruğuna YENİDEN
+    // eklenmez; yalnızca GERÇEKTEN YENİ key_ID'ler eklenir. Böylece resync
+    // idempotenttir: uçuştaki teslim hayatta kalır, çift teslim olmaz.
+    //
+    // NOT: Zaten teslim edilip zeroize edilen (silinen) anahtarlar Map'te
+    // değildir; DOĞRU üreten taraf (PhotonNet, tüketilen kaydı budar) bu
+    // anahtarları export'a KOYMAZ — dolayısıyla merge onları diriltmez.
+    // merge:false yalnız eski davranışı yeniden üretmek (kıyas) içindir.
+    const { merge = true } = opts;
     for (const [routeKey, entries] of Object.entries(exportObj.routes)) {
-      this.routes[routeKey] = new Map(); this.unissued[routeKey] = [];
-      for (const e of entries || []) this._add(routeKey, {
-        key_ID: e.key_ID, key: e.key, sizeBits: e.sizeBits, blockIndex: e.blockIndex,
-        issuedToMaster: false, issuedToSlave: false,
-      });
+      if (!merge || !this.routes[routeKey]) {
+        this.routes[routeKey] = new Map(); this.unissued[routeKey] = [];
+      }
+      const map = this.routes[routeKey];
+      for (const e of entries || []) {
+        if (map.has(e.key_ID)) continue;          // var olan durumu KORU (merge)
+        this._add(routeKey, {
+          key_ID: e.key_ID, key: e.key, sizeBits: e.sizeBits, blockIndex: e.blockIndex,
+          issuedToMaster: false, issuedToSlave: false,
+        });
+      }
     }
   }
 
