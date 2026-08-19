@@ -102,6 +102,8 @@ const DRILLS = [
     what: "Durum şişirmesi: geçerli mikro-isteklerle geçmiş sızıntısı (+1 kayıt/işlem, heap sınırsız) ve KME O(n) taraması. İkisi de katmanda kapatıldı; kritik eşik ölçüldü (düzeltmesiz kararlı çizgiye oturmuyor)." },
   { f: "async_sync_drill.js", rep: "async_sync.json",
     what: "Asimetrik senkronizasyon: skew/jitter/drift. Zaman-penceresi tasarımı 0,40 ms/paket driftinde canlı-kilide giriyor; durum-tabanlı mimari bağışık. Resync idempotensi açığı bulundu ve kapatıldı (merge)." },
+  { f: "resonance_drill.js", rep: "resonance.json",
+    what: "Kararlılık sınırı rezonansı: dengeleme döngüsü doğal frekansında (f_r≈0,06 Hz) sürüldü. Bang-bang röle döngüsü kenetli — genlik büyümüyor, anahtarlama blok ritmine doyuyor (keskin Q-tepesi yok). Histerezis bandı geçiş yükünü sınırlıyor; 'ζ<1 ⇒ felaket' varsayımı ölçümle çürütüldü." },
 ];
 
 const CROSS = [
@@ -113,7 +115,7 @@ const CROSS = [
   {
     name: "Raporlama ve görselleştirme", col: "var(--k3)",
     what: "Her katmanın çıktısı için tek dosyalık, açık/karanlık modlu, palet doğrulamalı görseller ve istemci raporları.",
-    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
+    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
   },
 ];
 
@@ -274,6 +276,8 @@ ${LAYERS.map(L => `<tr><td><b>${L.id}</b> ${esc(L.name)}</td><td>${L.mods.length
 <summary>Bu seansın commit'leri (yeniden eskiye)</summary>
 <table><thead><tr><th>Commit</th><th>Ne</th></tr></thead><tbody>
 ${[
+    ["(bu commit)", "kararlılık sınırı rezonansı tatbikatı — röle döngüsü kenetli, felaket yok"],
+    ["146b878", "katman haritası güncellendi — oturumun düzeltmeleri ve tatbikatları"],
     ["cb1a0c2", "asimetrik senkronizasyon tatbikatı — resync idempotensi açığı kapatıldı (merge)"],
     ["7bf8b9a", "durum şişirmesi tatbikatı — geçmiş sızıntısı budandı + KME O(1) indeks"],
     ["a024fc4", "sadakat çöküşü tatbikatı — kapasite olayı tanısı, üç düzeltme çürütüldü"],

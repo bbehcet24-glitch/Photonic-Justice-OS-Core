@@ -1,0 +1,235 @@
+{
+  "generatedAt": "2026-08-19T23:43:09.853Z",
+  "checks": [
+    {
+      "name": "DOĞAL LİMİT-ÇEVRİM ÖLÇÜLDÜ: sabit talepte kendiliğinden salınım",
+      "ok": true,
+      "detail": "sabit talep 783 bit/s (üretim 1306) · 20 mod değişimi · doğal periyot ~16320 ms → f_r ≈ 0.0613 Hz · çevrim genliği ~%92.0 (band 2h = %32 civarı)"
+    },
+    {
+      "name": "REZONANS TEPESİ YOK: anahtarlama hızı doyuyor (blok ritmi tavanı)",
+      "ok": true,
+      "detail": "0.125×f_r→2.21/dk · 0.25×f_r→2.21/dk · 0.5×f_r→4.04/dk · 1×f_r→6.99/dk · 2×f_r→6.62/dk · 4×f_r→6.99/dk · 8×f_r→7.35/dk — düşük frekansta 2.21/dk, f_r ve üstünde ~7.0/dk'da DÜZLEŞİYOR (en yüksek/en düşük ×1.11, blok tavanı ~7.72/dk). Bang-bang döngüsü keskin Q-tepesi vermiyor: hızlı zorlamak bloktan hızlı anahtarlatamaz"
+    },
+    {
+      "name": "GENLİK KENETLİ: doluluk salınımı BÜYÜMÜYOR, %100'ü aşmıyor",
+      "ok": true,
+      "detail": "0.125×→genlik %93/maxDol %93 · 0.25×→genlik %92/maxDol %92 · 0.5×→genlik %93/maxDol %93 · 1×→genlik %94/maxDol %94 · 2×→genlik %92/maxDol %92 · 4×→genlik %93/maxDol %93 · 8×→genlik %94/maxDol %94 — güçlü zorlama depoyu tüm [0, kapasite] aralığında gezdiriyor (genlik büyük) ama doluluk HİÇBİR yerde %100'ü aşmıyor: kapasite kenedi genliğin üst sınırı. Rezonans HIZI vuruyor, genliği ŞİŞİREMİYOR"
+    },
+    {
+      "name": "SÖNÜMLEME SAĞLAM: rezonansta çevrim genliği BÜYÜMÜYOR (eğim ≈ 0)",
+      "ok": true,
+      "detail": "rezonansta çevrim genlikleri (20 çevrim) doğrusal eğim -0.00717/çevrim (≈0, hatta hafif azalan), en yüksek doluluk %93.9 ≤ %100. Genlik [0, kapasite] aralığına kenetli olduğu için sürekli büyüyen rezonans felaketi OLUŞAMAZ"
+    },
+    {
+      "name": "KIYAS: yalnız KENETSİZ + SÖNÜMSÜZ (ζ=0) rezonatör patlıyor — röle değil",
+      "ok": true,
+      "detail": "ζ=0 kenetsiz rezonatör aynı frekansta ×3.9 genlik büyümesi (zarf ∝ t, sürekli açılıyor). Oysa ζ=0,03 (az sönümlü, <1) zaten patlamıyor, tepe 1.76'de OTURUYOR — \"ζ<1 ⇒ felaket\" varsayımı yanlış, felaket ζ=0 ister. Röle döngüsünde kenet ζ=0'da bile büyümeyi keser"
+    },
+    {
+      "name": "HİSTEREZİS BANDI REZONANS SAVUNMASIDIR: h büyüdükçe tepe anahtarlama düşüyor",
+      "ok": true,
+      "detail": "h=0→14.34/dk · h=0.02→13.97/dk · h=0.08→9.93/dk · h=0.16→7.35/dk · h=0.24→5.15/dk — bandsız (h=0) rezonansta chatter fırtınası (14.34/dk); bant genişledikçe tepe anahtarlama hızı düşüyor (h=0.24→5.15/dk). Geçiş yükü rezonansını sınırlayan şey tam da bandın kendisi"
+    }
+  ],
+  "natural": {
+    "periodMs": 16320,
+    "frHz": 0.0613,
+    "switchesConst": 20,
+    "amplitudeConst": 0.9199,
+    "prodBps": 1306,
+    "demandBps": 783,
+    "capacityBits": 12078,
+    "band": 0.16,
+    "phi": 0.6
+  },
+  "sweep": {
+    "baseBps": 914,
+    "ampBps": 718,
+    "rows": [
+      {
+        "ratio": 0.125,
+        "freqHz": 0.0077,
+        "switchRatePerMin": 2.21,
+        "blockRatePerMin": 8.46,
+        "amplitude": 0.9261,
+        "maxFill": 0.9261,
+        "denialPct": 28.62
+      },
+      {
+        "ratio": 0.25,
+        "freqHz": 0.0153,
+        "switchRatePerMin": 2.21,
+        "blockRatePerMin": 8.82,
+        "amplitude": 0.9229,
+        "maxFill": 0.9229,
+        "denialPct": 26.75
+      },
+      {
+        "ratio": 0.5,
+        "freqHz": 0.0306,
+        "switchRatePerMin": 4.04,
+        "blockRatePerMin": 7.35,
+        "amplitude": 0.9309,
+        "maxFill": 0.9309,
+        "denialPct": 27.59
+      },
+      {
+        "ratio": 1,
+        "freqHz": 0.0613,
+        "switchRatePerMin": 6.99,
+        "blockRatePerMin": 7.72,
+        "amplitude": 0.941,
+        "maxFill": 0.941,
+        "denialPct": 24.35
+      },
+      {
+        "ratio": 2,
+        "freqHz": 0.1225,
+        "switchRatePerMin": 6.62,
+        "blockRatePerMin": 9.56,
+        "amplitude": 0.9232,
+        "maxFill": 0.9232,
+        "denialPct": 9.44
+      },
+      {
+        "ratio": 4,
+        "freqHz": 0.2451,
+        "switchRatePerMin": 6.99,
+        "blockRatePerMin": 8.46,
+        "amplitude": 0.9337,
+        "maxFill": 0.9337,
+        "denialPct": 7.83
+      },
+      {
+        "ratio": 8,
+        "freqHz": 0.4902,
+        "switchRatePerMin": 7.35,
+        "blockRatePerMin": 7.72,
+        "amplitude": 0.9391,
+        "maxFill": 0.9391,
+        "denialPct": 5.62
+      }
+    ],
+    "peak": {
+      "ratio": 8,
+      "freqHz": 0.4902,
+      "switchRatePerMin": 7.35,
+      "blockRatePerMin": 7.72,
+      "amplitude": 0.9391,
+      "maxFill": 0.9391,
+      "denialPct": 5.62
+    },
+    "resonanceRatio": 8,
+    "plateauPerMin": 6.99,
+    "plateauSpread": 1.11,
+    "blockCeilingPerMin": 7.72
+  },
+  "damping": {
+    "cycleAmp": [
+      0.9199,
+      0.4875,
+      0.3724,
+      0.371,
+      0.3433,
+      0.3391,
+      0.3702,
+      0.3709,
+      0.5018,
+      0.5087,
+      0.4895,
+      0.4875,
+      0.3572,
+      0.3497,
+      0.3832,
+      0.3922,
+      0.3408,
+      0.3391,
+      0.4587,
+      0.4557
+    ],
+    "amplitudeSlopePerCycle": -0.00717,
+    "maxFill": 0.9391,
+    "linearUndampedEnvelope": [
+      0,
+      0.6622,
+      1.3243,
+      1.9865,
+      2.6486,
+      3.3108,
+      3.9729,
+      4.6351,
+      5.2972,
+      5.9593,
+      6.6214,
+      7.2836,
+      7.9457,
+      8.6078,
+      9.2699,
+      9.9319,
+      10.594,
+      11.2561,
+      11.9182,
+      12.5802,
+      13.2423,
+      13.9043,
+      14.5664,
+      15.2284,
+      15.8904,
+      16.5524,
+      17.2144,
+      17.8764,
+      18.5384,
+      19.2004,
+      19.8624,
+      20.5244,
+      21.1863,
+      21.8483,
+      22.5102,
+      23.1722,
+      23.8341,
+      24.496,
+      25.158,
+      25.8199
+    ],
+    "linearUndampedGrowthRatio": 3.9,
+    "linearUnderdampedMax": 1.757,
+    "linearUndampedMax": 26.495
+  },
+  "bandDamping": {
+    "atResonanceRatio": 8,
+    "rows": [
+      {
+        "band": 0,
+        "switchRatePerMin": 14.34,
+        "blockRatePerMin": 8.09,
+        "amplitude": 0.9199
+      },
+      {
+        "band": 0.02,
+        "switchRatePerMin": 13.97,
+        "blockRatePerMin": 8.09,
+        "amplitude": 0.9375
+      },
+      {
+        "band": 0.08,
+        "switchRatePerMin": 9.93,
+        "blockRatePerMin": 7.72,
+        "amplitude": 0.9199
+      },
+      {
+        "band": 0.16,
+        "switchRatePerMin": 7.35,
+        "blockRatePerMin": 7.72,
+        "amplitude": 0.9391
+      },
+      {
+        "band": 0.24,
+        "switchRatePerMin": 5.15,
+        "blockRatePerMin": 8.82,
+        "amplitude": 0.9741
+      }
+    ]
+  },
+  "allChecksPassed": true
+}
