@@ -112,7 +112,7 @@ function runElastic(pairs, opts = {}) {
  */
 class KeyAllocator {
   constructor(routeKey = "A-B", opts = {}) {
-    const { capacityBits = Infinity, idSeed = 0x0B0BB1E5 } = opts;
+    const { capacityBits = Infinity, idSeed = 0x0B0BB1E5, pruneHistory = true } = opts;
     this.store = new KeyDeliveryStore();
     this.routeKey = routeKey;
     this.capacityBits = capacityBits;
@@ -123,6 +123,24 @@ class KeyAllocator {
     this.servedCount = 0; this.deniedCount = 0;
     this.ageSum = 0; this.ageSamples = 0; this.maxAgeMs = 0;
     this.fifo = [];                       // {bits, tMs} — yaş takibi için
+    // DURUM SIZINTISI DÜZELTMESİ (state_poisoning_drill.js buldu).
+    // Çekirdeğin KeyDeliveryStore.byRoute dizisi HER mevduatta bir kayıt
+    // ekler ama tüketilen kaydı ASLA silmez: levelBits ve fifo sıfıra
+    // dönse bile (sağlık göstergesi düz görünür) geçmiş kaydı sınırsız
+    // büyür, heap doğrusal tırmanır. Sürekli çalışan sistemde bu, tarif
+    // edilen "kümülatif şişme → kilitlenme"nin ta kendisidir.
+    //
+    // Çözüm ÇEKİRDEĞE dokunmaz: allocator kendi FIFO'su ile çekirdek
+    // deposunun byRoute dizisini AYNI sırada tutar (ikisi de mevduat başına
+    // bir öğe). Bir FIFO parçası tümüyle tüketilince ona karşılık gelen en
+    // eski depo kaydı da baştan atılır → byRoute canlı envanteri yansıtır
+    // (kapasiteyle sınırlı), denetim SAYACI (totalDelivered) monoton kalır.
+    this.pruneHistory = pruneHistory;
+    this.historyHighWater = 0;
+  }
+  _liveHistory() {
+    const arr = this.store.byRoute[this.routeKey];
+    return arr ? arr.length : 0;
   }
   /** Üretim bloğu deposu besler. Kapasite aşılırsa FAZLASI ATILIR (ve sayılır). */
   deposit(bits, tMs, blockIndex) {
@@ -139,6 +157,8 @@ class KeyAllocator {
       this.fifo.push({ bits: stored, tMs });
       this.levelBits += stored;
       this.depositedBits += stored;
+      const live = this._liveHistory();
+      if (live > this.historyHighWater) this.historyHighWater = live;
     }
     this.discardedBits += discarded;
     return { stored, discarded };
@@ -150,6 +170,7 @@ class KeyAllocator {
       this.deniedBits += bits; this.deniedCount++;
       return { ok: false, error: "key_unavailable", requested: bits, available: this.levelBits, latencyMs: null };
     }
+    const histArr = this.pruneHistory ? this.store.byRoute[this.routeKey] : null;
     let need = bits;
     while (need > 0 && this.fifo.length) {
       const head = this.fifo[0];
@@ -158,11 +179,17 @@ class KeyAllocator {
       this.ageSum += age * take; this.ageSamples += take;
       if (age > this.maxAgeMs) this.maxAgeMs = age;
       head.bits -= take; need -= take;
-      if (head.bits === 0) this.fifo.shift();
+      if (head.bits === 0) {
+        this.fifo.shift();
+        // Tüketilen mevduata karşılık gelen en eski depo kaydını at.
+        // FIFO ile byRoute aynı sırada büyüdüğü için baştan atmak doğru
+        // kaydı hedefler ve O(1) amortize maliyetlidir.
+        if (histArr && histArr.length) histArr.shift();
+      }
     }
     this.levelBits -= bits;
     this.servedBits += bits; this.servedCount++;
-    return { ok: true, bits, latencyMs: 0, storedKeys: this.store.routeStoredCount(this.routeKey) };
+    return { ok: true, bits, latencyMs: 0, storedKeys: this._liveHistory() };
   }
   stats() {
     return {
@@ -174,7 +201,10 @@ class KeyAllocator {
       finalLevelBits: this.levelBits,
       meanKeyAgeMs: this.ageSamples ? +(this.ageSum / this.ageSamples).toFixed(1) : null,
       maxKeyAgeMs: +this.maxAgeMs.toFixed(1),
-      keyIdsIssued: this.store.totalDelivered,
+      keyIdsIssued: this.store.totalDelivered,   // monoton denetim SAYACI (bellek değil)
+      liveHistoryEntries: this._liveHistory(),   // canlı kayıt (kapasiteyle sınırlı)
+      historyHighWaterEntries: this.historyHighWater,
+      historyPruned: this.pruneHistory,
     };
   }
 }

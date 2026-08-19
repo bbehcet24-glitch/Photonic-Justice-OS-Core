@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-15T14:47:41.932Z",
+  "generatedAt": "2026-08-19T22:56:48.682Z",
   "checks": [
     {
       "name": "Sert 200 ms SLA sistemi KİLİTLİYOR (taban)",
@@ -149,6 +149,9 @@
     "meanKeyAgeMs": 18191.4,
     "maxKeyAgeMs": 35491.4,
     "keyIdsIssued": 13,
+    "liveHistoryEntries": 7,
+    "historyHighWaterEntries": 8,
+    "historyPruned": true,
     "demandBps": 656,
     "requestBits": 128,
     "lambdaPerSec": 5.125,
@@ -658,6 +661,9 @@
     "meanKeyAgeMs": 1974.8,
     "maxKeyAgeMs": 5186,
     "keyIdsIssued": 13,
+    "liveHistoryEntries": 1,
+    "historyHighWaterEntries": 2,
+    "historyPruned": true,
     "demandBps": 1706,
     "requestBits": 128,
     "lambdaPerSec": 13.328,

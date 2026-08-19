@@ -162,9 +162,31 @@ let MTLS_ENABLED = false; // --cert/--key/--ca üçü birlikte verildiğinde tru
 //                               issuedToMaster:bool, issuedToSlave:bool}]
 class KMEKeyStore {
   constructor() {
-    this.routes = {};       // routeKey -> [entry,...]
+    // DURUM ŞİŞİRMESİ DÜZELTMESİ (state_poisoning_drill.js buldu).
+    // Önceki tasarım rota deposunu DÜZ DİZİ tutuyordu; her dec_keys iki
+    // kez `findIndex` (O(n)) + `splice` (O(n)) yapıyordu. Yarı-açık el
+    // sıkışmalarla (enc var, dec yok) depo büyüdükçe, GEÇERLİ her dec
+    // isteğinin maliyeti doğrusal artıyordu: n=1k→80k'da 12→913 μs/dec
+    // ölçüldü. Yani saldırgan O(1) iş yapıp sunucuya O(n) iş yaptırıyor —
+    // "anlamlı trafiğe ayrılan bant genişliği" kayıt sayısıyla eriyor.
+    //
+    // Çözüm: rota deposu artık key_ID → entry MAP'i (ekleme sırası
+    // korunur = FIFO). get/delete O(1). Ayrıca un-issued key_ID'ler için
+    // ayrı bir FIFO kuyruğu tutulur ki takeForMaster ön-uçtan O(1)
+    // ayırsın (yarı-açık kayıtlar ön-ucu tıkamasın).
+    this.routes = {};           // routeKey -> Map<key_ID, entry>
+    this.unissued = {};         // routeKey -> [key_ID, ...]  (issuedToMaster=false, FIFO)
     this.deliveredCount = 0;
     this.destroyedCount = 0; // her iki SAE'ye de teslim edilip bellekten SİLİNEN anahtar sayısı (denetim istatistiği)
+  }
+
+  _ensure(routeKey) {
+    if (!this.routes[routeKey]) { this.routes[routeKey] = new Map(); this.unissued[routeKey] = []; }
+    return this.routes[routeKey];
+  }
+  _add(routeKey, entry) {
+    this._ensure(routeKey).set(entry.key_ID, entry);
+    this.unissued[routeKey].push(entry.key_ID);
   }
 
   static routeKeyFromSAEPair(saeA, saeB) {
@@ -178,10 +200,11 @@ class KMEKeyStore {
     // PhotonNet2.jsx KeyDeliveryStore.exportForKME() çıktısı: { routes: { routeKey: [entry,...] } }
     if (!exportObj || !exportObj.routes) throw new Error("Geçersiz KME içe aktarım biçimi: 'routes' alanı bulunamadı");
     for (const [routeKey, entries] of Object.entries(exportObj.routes)) {
-      this.routes[routeKey] = (entries || []).map(e => ({
+      this.routes[routeKey] = new Map(); this.unissued[routeKey] = [];
+      for (const e of entries || []) this._add(routeKey, {
         key_ID: e.key_ID, key: e.key, sizeBits: e.sizeBits, blockIndex: e.blockIndex,
         issuedToMaster: false, issuedToSlave: false,
-      }));
+      });
     }
   }
 
@@ -189,11 +212,10 @@ class KMEKeyStore {
     // Sentetik ama GERÇEK rastgele (crypto.randomBytes) anahtarlarla — yalnızca
     // sunucunun kendi kendini test etmesi için, PhotonNet'in ürettiği GERÇEK
     // finite-key-kanıtlı anahtarların YERİNE GEÇMEZ.
-    this.routes[routeKey] = this.routes[routeKey] || [];
     for (let i = 0; i < count; i++) {
       const byteLen = Math.ceil(sizeBits / 8);
       const key = crypto.randomBytes(byteLen).toString("base64");
-      this.routes[routeKey].push({
+      this._add(routeKey, {
         key_ID: crypto.randomUUID(), key, sizeBits, blockIndex: i + 1,
         issuedToMaster: false, issuedToSlave: false,
       });
@@ -201,25 +223,27 @@ class KMEKeyStore {
   }
 
   availableCount(routeKey) {
-    const arr = this.routes[routeKey] || [];
-    return arr.filter(e => !e.issuedToMaster).length;
+    // Bakımlı sayaç — O(1). Eskiden O(n) filter idi.
+    return (this.unissued[routeKey] || []).length;
   }
 
   // Master SAE çağırır (enc_keys) — henüz kimseye verilmemiş `n` anahtarı
   // FIFO sırayla ayırır ve issuedToMaster=true işaretler.
   takeForMaster(routeKey, n, sizeBits) {
-    const arr = this.routes[routeKey] || [];
-    const avail = arr.filter(e => !e.issuedToMaster);
-    if (sizeBits != null) {
-      const mismatch = avail.find(e => e.sizeBits !== sizeBits);
-      if (mismatch) {
-        throw new KMEError(400, `İstenen anahtar boyutu (${sizeBits} bit) depodaki anahtar boyutuyla (${mismatch.sizeBits} bit) eşleşmiyor — bu referans KME, ZATEN ÜRETİLMİŞ sabit-boyutlu finite-key bloklarını dinamik olarak yeniden boyutlandırmaz (gerçek KME'ler XOR-birleştirme ile bunu destekleyebilir, bu basitleştirilmiş demo desteklemiyor)`);
+    const map = this.routes[routeKey] || new Map();
+    const queue = this.unissued[routeKey] || [];
+    if (sizeBits != null && queue.length) {
+      // Boyut homojen — ilk un-issued kaydı kontrol etmek yeterli.
+      const first = map.get(queue[0]);
+      if (first && first.sizeBits !== sizeBits) {
+        throw new KMEError(400, `İstenen anahtar boyutu (${sizeBits} bit) depodaki anahtar boyutuyla (${first.sizeBits} bit) eşleşmiyor — bu referans KME, ZATEN ÜRETİLMİŞ sabit-boyutlu finite-key bloklarını dinamik olarak yeniden boyutlandırmaz (gerçek KME'ler XOR-birleştirme ile bunu destekleyebilir, bu basitleştirilmiş demo desteklemiyor)`);
       }
     }
-    if (avail.length < n) {
-      throw new KMEError(503, `Yetersiz anahtar stoku: istenen=${n}, mevcut=${avail.length} (rota=${routeKey}) — PhotonNet tarayıcısında daha fazla blok tamamlanmasını bekleyin ve KME deposunu yeniden dışa aktarın`);
+    if (queue.length < n) {
+      throw new KMEError(503, `Yetersiz anahtar stoku: istenen=${n}, mevcut=${queue.length} (rota=${routeKey}) — PhotonNet tarayıcısında daha fazla blok tamamlanmasını bekleyin ve KME deposunu yeniden dışa aktarın`);
     }
-    const chosen = avail.slice(0, n);
+    const ids = queue.splice(0, n);             // FIFO ön-uçtan O(n_taken)
+    const chosen = ids.map(id => map.get(id));
     for (const e of chosen) e.issuedToMaster = true;
     this.deliveredCount += chosen.length;
     return chosen;
@@ -230,12 +254,11 @@ class KMEKeyStore {
   // teslim edilen anahtar, GÜVENLİK GEREĞİ depodan SİLİNİR (bir daha asla
   // servis edilemez — replay/çift-kullanım engellenir).
   takeForSlave(routeKey, keyIds) {
-    const arr = this.routes[routeKey] || [];
+    const map = this.routes[routeKey] || new Map();
     const results = [];
     for (const id of keyIds) {
-      const idx = arr.findIndex(e => e.key_ID === id);
-      if (idx === -1) throw new KMEError(400, `key_ID bulunamadı (rota=${routeKey}): ${id}`);
-      const entry = arr[idx];
+      const entry = map.get(id);               // O(1) — eskiden O(n) findIndex
+      if (!entry) throw new KMEError(400, `key_ID bulunamadı (rota=${routeKey}): ${id}`);
       if (!entry.issuedToMaster) throw new KMEError(400, `key_ID henüz master SAE'ye teslim edilmemiş, slave tarafından çekilemez: ${id}`);
       if (entry.issuedToSlave) throw new KMEError(400, `key_ID DAHA ÖNCE slave SAE'ye teslim edilmiş — TEKRAR KULLANIM (replay) reddedildi: ${id}`);
       entry.issuedToSlave = true;
@@ -243,9 +266,9 @@ class KMEKeyStore {
     }
     // Her iki tarafa da teslim edilenleri depodan kalıcı olarak sil (zeroize).
     for (const id of keyIds) {
-      const idx = arr.findIndex(e => e.key_ID === id);
-      if (idx !== -1 && arr[idx].issuedToSlave) {
-        arr.splice(idx, 1);
+      const entry = map.get(id);
+      if (entry && entry.issuedToSlave) {
+        map.delete(id);                        // O(1) — eskiden O(n) splice
         this.destroyedCount++;
       }
     }
@@ -265,7 +288,7 @@ if (args["seed-demo"]) {
 } else if (args.keystore) {
   const raw = JSON.parse(fs.readFileSync(args.keystore, "utf8"));
   store.loadFromExport(raw);
-  const routeCounts = Object.entries(store.routes).map(([k, v]) => `${k}:${v.length}`).join(", ");
+  const routeCounts = Object.entries(store.routes).map(([k, v]) => `${k}:${v.size}`).join(", ");
   console.log(`[KME] '${args.keystore}' içe aktarıldı — rotalar: ${routeCounts || "(boş)"}`);
 } else {
   console.log("[KME] UYARI: --keystore veya --seed-demo verilmedi, depo BOŞ başlıyor. Anahtar eklemek için PhotonNet'in '🔐 KME Anahtar Deposu' JSON'unu --keystore ile verin.");

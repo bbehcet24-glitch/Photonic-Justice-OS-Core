@@ -1,0 +1,209 @@
+{
+  "generatedAt": "2026-08-19T22:56:26.058Z",
+  "checks": [
+    {
+      "name": "SIZINTI YENİDEN ÜRETİLDİ: geçmiş kaydı doğrusal, SINIRSIZ büyüyor",
+      "ok": true,
+      "detail": "düzeltmesiz: mevduat başına +1 kayıt (≈1, yani hiç temizlenmiyor), 120000 mevduatta 114001 canlı kayıt, heap +62.9 MB. Oysa envanter DÜZ: son levelBits 0 — sağlık göstergesi hiç kıpırdamıyor"
+    },
+    {
+      "name": "SAĞLIK GÖSTERGESİ YANILTIYOR: levelBits düz ama geçmiş şişiyor",
+      "ok": true,
+      "detail": "arz = talep olduğu için levelBits ~0 (son 0 bit) — klasik doluluk/QBER göstergeleri temiz. Sızıntı yalnız kayıt SAYISINDA (114001) görünüyor; bu yüzden saldırı \"geçersiz veri\" alarmına yakalanmaz"
+    },
+    {
+      "name": "DÜZELTME: geçmiş kaydı SINIRLI — eğim ≈ 0, kararlı çizgi",
+      "ok": true,
+      "detail": "düzeltmeli: mevduat başına +0 kayıt (≈0), en yüksek canlı kayıt 1 (kapasite sınırı ≈ 667), heap +-1.5 MB. Aynı 120000 mevduat, aynı iş — durum yükü SIKIŞTIRILDI, kilitlenme yok"
+    },
+    {
+      "name": "DENETİM İZİ KORUNDU: monoton sayaç kalıyor, silinen bellek",
+      "ok": true,
+      "detail": "üretilen key_ID sayısı iki modda da 120000 (denetim için gereken monoton SAYAÇ — bir tamsayı, bellek değil). Silinen şey tüketilmiş kayıtların NESNELERİ. Yani sızıntı kapatılırken denetlenebilirlik kaybedilmedi"
+    },
+    {
+      "name": "ESKİ KME dec maliyeti O(n): depo büyüdükçe GEÇERLİ istek yavaşlıyor",
+      "ok": true,
+      "detail": "n=1000: 25.46 μs · n=5000: 109.31 μs · n=20000: 282.06 μs · n=60000: 831.4 μs — depo 60× büyüyünce dec 32.7× yavaşlıyor (doğrusal). Saldırgan O(1) enc gönderip sunucuya O(n) iş yaptırıyor"
+    },
+    {
+      "name": "YENİ KME dec maliyeti O(1): depo boyutundan bağımsız (Map indeksi)",
+      "ok": true,
+      "detail": "n=1000: 1.142 μs · n=5000: 1.781 μs · n=20000: 1.765 μs · n=60000: 1.828 μs — en büyük/en küçük oranı ×1.6 (düz). En büyük depoda 831.4 μs → 1.828 μs (×455 hızlanma)"
+    },
+    {
+      "name": "YARI-AÇIK EL SIKIŞMA SINIRLI: saldırgan kayıt üretemez, yalnız tüketir",
+      "ok": true,
+      "detail": "500 anahtarlık envanter → 500 enc sonra 503 (stok bitti), pin'lenen kayıt 500 ≤ 500. Bu vektör envanterle SINIRLI. Kurulun tarif ettiği SINIRSIZ şişme (A) idi — bu değil. İki tehdidi ayırt etmek müdahaleyi doğru yere koymak için şart"
+    }
+  ],
+  "historyLeak": {
+    "depositsProcessed": 120000,
+    "chunkBits": 300,
+    "capacityBits": 200000,
+    "leak": {
+      "slopePerDeposit": 1,
+      "finalLiveEntries": 114001,
+      "heapGrowthMB": 62.9,
+      "keyIdsIssued": 120000,
+      "finalLevelBits": 0
+    },
+    "fixed": {
+      "slopePerDeposit": 0,
+      "finalLiveEntries": 0,
+      "highWaterEntries": 1,
+      "heapGrowthMB": -1.5,
+      "keyIdsIssued": 120000
+    },
+    "series": {
+      "xs": [
+        0,
+        6000,
+        12000,
+        18000,
+        24000,
+        30000,
+        36000,
+        42000,
+        48000,
+        54000,
+        60000,
+        66000,
+        72000,
+        78000,
+        84000,
+        90000,
+        96000,
+        102000,
+        108000,
+        114000
+      ],
+      "leakLive": [
+        1,
+        6001,
+        12001,
+        18001,
+        24001,
+        30001,
+        36001,
+        42001,
+        48001,
+        54001,
+        60001,
+        66001,
+        72001,
+        78001,
+        84001,
+        90001,
+        96001,
+        102001,
+        108001,
+        114001
+      ],
+      "fixedLive": [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "leakHeap": [
+        7.6,
+        10.9,
+        16,
+        21.2,
+        20,
+        33.6,
+        26.3,
+        31.3,
+        36.3,
+        41.9,
+        46.9,
+        40.8,
+        45.8,
+        51.6,
+        56.6,
+        61.6,
+        55.6,
+        60.5,
+        65.5,
+        70.5
+      ],
+      "fixedHeap": [
+        76.8,
+        69.7,
+        71.1,
+        72.3,
+        73.5,
+        74.6,
+        75.8,
+        77,
+        78.1,
+        79.3,
+        80.5,
+        81.7,
+        82.8,
+        68.3,
+        69.4,
+        70.6,
+        71.8,
+        73,
+        74.1,
+        75.3
+      ]
+    }
+  },
+  "kmeScan": {
+    "sizes": [
+      1000,
+      5000,
+      20000,
+      60000
+    ],
+    "repetitions": 1500,
+    "rows": [
+      {
+        "n": 1000,
+        "oldUsPerDec": 25.46,
+        "newUsPerDec": 1.142
+      },
+      {
+        "n": 5000,
+        "oldUsPerDec": 109.31,
+        "newUsPerDec": 1.781
+      },
+      {
+        "n": 20000,
+        "oldUsPerDec": 282.06,
+        "newUsPerDec": 1.765
+      },
+      {
+        "n": 60000,
+        "oldUsPerDec": 831.4,
+        "newUsPerDec": 1.828
+      }
+    ]
+  },
+  "boundedness": {
+    "seededInventory": 500,
+    "encBeforeExhaustion": 500,
+    "pinnedEntries": 500,
+    "note": "yarı-açık pin envanterle sınırlı; sınırsız olan geçmiş sızıntısıydı (A)"
+  },
+  "allChecksPassed": true
+}
