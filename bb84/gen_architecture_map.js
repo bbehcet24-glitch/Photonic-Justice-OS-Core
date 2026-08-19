@@ -75,20 +75,33 @@ const LAYERS = [
     reps: ["continuous_stream.json"],
   },
   {
-    id: "L6", name: "Anahtar tedariki ve geri-basınç", tag: "yeni",
-    what: "Üretim gecikmesini teslim gecikmesinden ayıran depo, ve depo doluluğunu üretime geri besleyen geri-basınç. Tüketici gecikmesi 0 ms; israf %34,9 → %0.",
-    gives: ["runElastic (elastik pencere)", "KeyAllocator (core KeyDeliveryStore üstünde)", "runTieredSupply", "requiredStoreBits (D·T_b + 3σ)", "ProductionThrottle + bant kuralı", "recommendPhiHigh (φ = 0,80)"],
-    mods: [{ f: "qkd_key_supply.js", r: "depo + tahsis" }, { f: "qkd_backpressure.js", r: "throttle + öneri" }],
-    tests: [{ f: "key_supply_test.js", rep: "key_supply.json" }, { f: "backpressure_test.js", rep: "backpressure.json" }, { f: "phi_high_tuning_test.js", rep: "phi_high_tuning.json" }],
+    id: "L6", name: "Anahtar tedariki ve geri-basınç", tag: "geçmiş budama",
+    what: "Üretim gecikmesini teslim gecikmesinden ayıran depo, ve depo doluluğunu üretime geri besleyen geri-basınç. Tüketici gecikmesi 0 ms; israf %34,9 → %0. Histerezis bandı φ_high boyunca ölçüldü (monoton değil, φ≈0,60–0,70'te tepe). Durum şişirmesi tatbikatı geçmiş sızıntısını buldu: tahsis artık tüketilen kaydı budar (byRoute sınırlı, denetim sayacı monoton korunur).",
+    gives: ["runElastic (elastik pencere)", "KeyAllocator (budamalı — core KeyDeliveryStore üstünde)", "runTieredSupply", "requiredStoreBits (D·T_b + 3σ)", "ProductionThrottle + bant kuralı", "recommendPhiHigh (φ = 0,80)", "recommendHysteresis (ölçülü harita + ara değer)"],
+    mods: [{ f: "qkd_key_supply.js", r: "depo + tahsis (budamalı)" }, { f: "qkd_backpressure.js", r: "throttle + histerezis" }],
+    tests: [{ f: "key_supply_test.js", rep: "key_supply.json" }, { f: "backpressure_test.js", rep: "backpressure.json" }, { f: "phi_high_tuning_test.js", rep: "phi_high_tuning.json" }, { f: "hysteresis_band_test.js", rep: "hysteresis_band.json" }],
     docs: ["docs/PHI_HIGH.md"],
   },
   {
-    id: "L7", name: "Dış entegrasyon", tag: "",
-    what: "Üretilen anahtarın sistem dışına taşınması: ETSI GS QKD 014 KME sunucusu, IBM mTLS istemcisi, QKDNetSim trafik köprüsü.",
-    gives: ["ETSI 014 enc_keys / dec_keys", "mTLS + sertifika rotasyonu/iptali", "QKDNetSim profil köprüsü"],
-    mods: [{ f: "etsi014_kme_server.js", r: "KME sunucusu" }, { f: "mock_ibm_client.js", r: "IBM mTLS istemcisi" }, { f: "qkdnetsim_traffic_bridge.js", r: "QKDNetSim köprüsü" }, { f: "build_production_server.js", r: "üretim derlemesi" }],
+    id: "L7", name: "Dış entegrasyon", tag: "O(1) + idempotent resync",
+    what: "Üretilen anahtarın sistem dışına taşınması: ETSI GS QKD 014 KME sunucusu, IBM mTLS istemcisi, QKDNetSim trafik köprüsü. KME deposu artık key_ID→Map indeksi (dec O(n)→O(1), ×455) ve içe aktarım birleştirmeli (resync uçuştaki teslimi ezmiyor, çift teslim yok).",
+    gives: ["ETSI 014 enc_keys / dec_keys (Map indeksi)", "loadFromExport (idempotent/merge)", "mTLS + sertifika rotasyonu/iptali", "QKDNetSim profil köprüsü"],
+    mods: [{ f: "etsi014_kme_server.js", r: "KME sunucusu (Map + merge)" }, { f: "mock_ibm_client.js", r: "IBM mTLS istemcisi" }, { f: "qkdnetsim_traffic_bridge.js", r: "QKDNetSim köprüsü" }, { f: "build_production_server.js", r: "üretim derlemesi" }],
     tests: [{ f: "buffer_starvation_test.js" }, { f: "ibm_math_audit.js" }],
   },
+];
+
+// ── KIRMIZI TAKIM TATBİKATLARI (katmanlara dik, canlı sistem üzerinde) ──
+// Kurul senaryolarının uçtan uca koşumu. Her biri bir tehdit modeli
+// ölçüp ya mimarinin bağışıklığını kanıtlar ya da bir açık bulup katmanda
+// (çekirdeğe dokunmadan) kapatır. Öz-test sayımına dahil edilir.
+const DRILLS = [
+  { f: "fidelity_collapse_drill.js", rep: "fidelity_collapse_drill.json",
+    what: "Sadakat çöküşü: F %98,2→%84,5 pik yükte. Tanı ölçümle — kapasite olayı, güvenlik değil (S=2,39 ayakta); bant sanık değil; tek etkili kol yük atma. Üç 'bariz' düzeltme çürütüldü." },
+  { f: "state_poisoning_drill.js", rep: "state_poisoning.json",
+    what: "Durum şişirmesi: geçerli mikro-isteklerle geçmiş sızıntısı (+1 kayıt/işlem, heap sınırsız) ve KME O(n) taraması. İkisi de katmanda kapatıldı; kritik eşik ölçüldü (düzeltmesiz kararlı çizgiye oturmuyor)." },
+  { f: "async_sync_drill.js", rep: "async_sync.json",
+    what: "Asimetrik senkronizasyon: skew/jitter/drift. Zaman-penceresi tasarımı 0,40 ms/paket driftinde canlı-kilide giriyor; durum-tabanlı mimari bağışık. Resync idempotensi açığı bulundu ve kapatıldı (merge)." },
 ];
 
 const CROSS = [
@@ -100,7 +113,7 @@ const CROSS = [
   {
     name: "Raporlama ve görselleştirme", col: "var(--k3)",
     what: "Her katmanın çıktısı için tek dosyalık, açık/karanlık modlu, palet doğrulamalı görseller ve istemci raporları.",
-    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
+    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
   },
 ];
 
@@ -119,11 +132,16 @@ function build() {
     L.checkOk = [...(L.tests ?? []).map(t => t.checks), ...L.extraChecks].filter(Boolean).every(c => c.ok);
   }
   for (const C of CROSS) C.modLines = C.mods.reduce((s, m) => s + lines(m), 0);
+  // Tatbikatlar: satır + rapor kontrolleri.
+  for (const D of DRILLS) { D.lines = lines(D.f); D.checks = checks(D.rep); }
+  const drillLines = DRILLS.reduce((s, D) => s + D.lines, 0);
 
   const coreLines = LAYERS[0].modLines;
   const stackLines = LAYERS.slice(1).reduce((s, L) => s + L.modLines + L.testLines, 0);
   const crossLines = CROSS.reduce((s, c) => s + c.modLines, 0);
-  const allChecks = LAYERS.flatMap(L => [...(L.tests ?? []).map(t => t.checks), ...(L.extraChecks ?? [])].filter(Boolean));
+  const layerChecks = LAYERS.flatMap(L => [...(L.tests ?? []).map(t => t.checks), ...(L.extraChecks ?? [])].filter(Boolean));
+  const drillChecks = DRILLS.map(D => D.checks).filter(Boolean);
+  const allChecks = [...layerChecks, ...drillChecks];
   const totalChecks = allChecks.reduce((s, c) => s + c.n, 0);
   const allPass = allChecks.every(c => c.ok);
   const reportCount = allChecks.length;
@@ -155,6 +173,11 @@ function build() {
     <div class="chead">${esc(c.name)} <span class="lloc">${tr(c.modLines)} satır · ${c.mods.length} dosya</span></div>
     <p class="lwhat">${esc(c.what)}</p>
     <div class="chips">${c.mods.map(m => `<span class="chip s">${esc(m)} <u>${tr(lines(m))}</u></span>`).join("")}</div>
+  </div>`).join("");
+
+  const drillCards = DRILLS.map(D => `<div class="cross" style="border-left-color:var(--k2)">
+    <div class="chead">${esc(D.f)} <span class="lloc">${tr(D.lines)} satır${D.checks ? ` · ${D.checks.n} test ${D.checks.ok ? "✓" : "✗"}` : ""}</span></div>
+    <p class="lwhat">${esc(D.what)}</p>
   </div>`).join("");
 
   return `<!doctype html>
@@ -224,7 +247,7 @@ function build() {
   <div class="tile"><div class="l">katman</div><div class="v">8</div></div>
   <div class="tile"><div class="l">çekirdek (dokunulmadı)</div><div class="v">${tr(coreLines)}</div></div>
   <div class="tile"><div class="l">üstteki yığın</div><div class="v">${tr(stackLines)}</div></div>
-  <div class="tile"><div class="l">dik kesen katmanlar</div><div class="v">${tr(crossLines)}</div></div>
+  <div class="tile"><div class="l">dik kesen + tatbikat</div><div class="v">${tr(crossLines + drillLines)}</div></div>
   <div class="tile"><div class="l">öz-test (${reportCount} rapor)</div><div class="v">${allPass ? `<span style="color:var(--k1)">${totalChecks}/${totalChecks}</span>` : totalChecks}</div></div>
 </div>
 
@@ -233,6 +256,10 @@ ${layerCards}
 
 <h2>Katmanlara dik kesenler</h2>
 ${crossCards}
+
+<h2>Kırmızı takım tatbikatları <span class="lloc" style="font-weight:400">${tr(drillLines)} satır · canlı sistem üzerinde</span></h2>
+<p class="sub">Kurul senaryolarının uçtan uca koşumu. Her tatbikat bir tehdit modelini ölçer; ya mimarinin bağışıklığını kanıtlar ya da bir açık bulup katmanda — çekirdeğe dokunmadan — kapatır. Öz-test sayısına dahildir.</p>
+${drillCards}
 
 <div class="callout ok"><b>Bu seansta değişmeyen şey:</b> <code>photonnet_core.js</code>'in tek satırı. Cascade, Serfling/GLLP sonlu-anahtar kanıtı, Toeplitz, OTP, ETSI-014 <code>KeyDeliveryStore</code>, Wegman–Carter kimlik doğrulaması, topoloji ve rota hesabı — hepsi <b>çağrıldı, yeniden yazılmadı</b>. Yeni davranışlar hep üstüne kondu. Örneğin depo tahsis politikası çekirdeğin <code>KeyDeliveryStore</code>'unun üstüne yazıldı, o sınıf değiştirilmedi.</div>
 
@@ -247,6 +274,14 @@ ${LAYERS.map(L => `<tr><td><b>${L.id}</b> ${esc(L.name)}</td><td>${L.mods.length
 <summary>Bu seansın commit'leri (yeniden eskiye)</summary>
 <table><thead><tr><th>Commit</th><th>Ne</th></tr></thead><tbody>
 ${[
+    ["cb1a0c2", "asimetrik senkronizasyon tatbikatı — resync idempotensi açığı kapatıldı (merge)"],
+    ["7bf8b9a", "durum şişirmesi tatbikatı — geçmiş sızıntısı budandı + KME O(1) indeks"],
+    ["a024fc4", "sadakat çöküşü tatbikatı — kapasite olayı tanısı, üç düzeltme çürütüldü"],
+    ["682bfca", "histerezis bandı 0,60/0,70 tarandı — bant monoton değil, harita düzeltildi"],
+    ["3fa0f4b", "histerezis bandı φ=0,85 için tarandı (h=0,04)"],
+    ["3064bc7", "histerezis bandı üç profilde ölçüldü — profile bağlı"],
+    ["55b3b2e", "histerezis bandı gerekçelendirildi — iki eşik açık"],
+    ["6d7d59a", "sistem katman haritası üreteci"],
     ["8d303df", "φ_high üretim ayarı sabitlendi ve dokümante edildi (0,80)"],
     ["02c1a5e", "depo doluluğuna göre üretim geri-basıncı (backpressure/throttling)"],
     ["9a299b3", "BB84/E91 hibrit görev döngüsü — yanlı baz + Bell sertifikası"],
