@@ -172,21 +172,45 @@ class KMEKeyStore {
     //
     // Çözüm: rota deposu artık key_ID → entry MAP'i (ekleme sırası
     // korunur = FIFO). get/delete O(1). Ayrıca un-issued key_ID'ler için
-    // ayrı bir FIFO kuyruğu tutulur ki takeForMaster ön-uçtan O(1)
-    // ayırsın (yarı-açık kayıtlar ön-ucu tıkamasın).
+    // ayrı bir FIFO kuyruğu tutulur ki takeForMaster ön-uçtan ayırsın
+    // (yarı-açık kayıtlar ön-ucu tıkamasın).
+    //
+    // ENC O(n) DÜZELTMESİ (layer_stress_campaign.js buldu). İlk sürüm
+    // kuyruktan `splice(0,n)` ile ayırıyordu — dizi ön-ucundan silme
+    // O(kalan)'dır, yani büyük depoda her enc bütün kuyruğu kaydırıyordu
+    // (10k→160k'da 4→479 μs/enc ölçüldü). Çözüm: silme yerine BAŞ
+    // İŞARETÇİSİ (this.head) — dequeue O(1); kuyruğun tüketilen ön yarısı
+    // bir eşik aşınca bir kez sıkıştırılır (amortize O(1)).
     this.routes = {};           // routeKey -> Map<key_ID, entry>
     this.unissued = {};         // routeKey -> [key_ID, ...]  (issuedToMaster=false, FIFO)
+    this.head = {};             // routeKey -> tüketilmiş ön-ek işaretçisi
     this.deliveredCount = 0;
     this.destroyedCount = 0; // her iki SAE'ye de teslim edilip bellekten SİLİNEN anahtar sayısı (denetim istatistiği)
   }
 
   _ensure(routeKey) {
-    if (!this.routes[routeKey]) { this.routes[routeKey] = new Map(); this.unissued[routeKey] = []; }
+    if (!this.routes[routeKey]) { this.routes[routeKey] = new Map(); this.unissued[routeKey] = []; this.head[routeKey] = 0; }
     return this.routes[routeKey];
   }
   _add(routeKey, entry) {
     this._ensure(routeKey).set(entry.key_ID, entry);
     this.unissued[routeKey].push(entry.key_ID);
+  }
+  // Baş-işaretçili O(1) dequeue: `n` un-issued key_ID döndürür. Baş,
+  // dizinin yarısını geçince bir kez sıkıştırılır (amortize O(1)).
+  _dequeue(routeKey, n) {
+    const q = this.unissued[routeKey] || [];
+    let h = this.head[routeKey] || 0;
+    const out = q.slice(h, h + n);
+    h += out.length;
+    if (h > 4096 && h * 2 >= q.length) {           // yarıdan çoğu tüketildi → sıkıştır
+      this.unissued[routeKey] = q.slice(h); h = 0;
+    }
+    this.head[routeKey] = h;
+    return out;
+  }
+  _available(routeKey) {
+    return (this.unissued[routeKey]?.length || 0) - (this.head[routeKey] || 0);
   }
 
   static routeKeyFromSAEPair(saeA, saeB) {
@@ -223,7 +247,7 @@ class KMEKeyStore {
     const { merge = true } = opts;
     for (const [routeKey, entries] of Object.entries(exportObj.routes)) {
       if (!merge || !this.routes[routeKey]) {
-        this.routes[routeKey] = new Map(); this.unissued[routeKey] = [];
+        this.routes[routeKey] = new Map(); this.unissued[routeKey] = []; this.head[routeKey] = 0;
       }
       const map = this.routes[routeKey];
       for (const e of entries || []) {
@@ -251,26 +275,28 @@ class KMEKeyStore {
   }
 
   availableCount(routeKey) {
-    // Bakımlı sayaç — O(1). Eskiden O(n) filter idi.
-    return (this.unissued[routeKey] || []).length;
+    // Baş-işaretçili bakımlı sayaç — O(1).
+    return this._available(routeKey);
   }
 
   // Master SAE çağırır (enc_keys) — henüz kimseye verilmemiş `n` anahtarı
-  // FIFO sırayla ayırır ve issuedToMaster=true işaretler.
+  // FIFO sırayla ayırır ve issuedToMaster=true işaretler. Baş-işaretçili
+  // dequeue sayesinde O(n_taken) — depo boyutundan BAĞIMSIZ.
   takeForMaster(routeKey, n, sizeBits) {
     const map = this.routes[routeKey] || new Map();
-    const queue = this.unissued[routeKey] || [];
-    if (sizeBits != null && queue.length) {
+    const avail = this._available(routeKey);
+    if (sizeBits != null && avail > 0) {
       // Boyut homojen — ilk un-issued kaydı kontrol etmek yeterli.
-      const first = map.get(queue[0]);
+      const firstId = this.unissued[routeKey][this.head[routeKey] || 0];
+      const first = map.get(firstId);
       if (first && first.sizeBits !== sizeBits) {
         throw new KMEError(400, `İstenen anahtar boyutu (${sizeBits} bit) depodaki anahtar boyutuyla (${first.sizeBits} bit) eşleşmiyor — bu referans KME, ZATEN ÜRETİLMİŞ sabit-boyutlu finite-key bloklarını dinamik olarak yeniden boyutlandırmaz (gerçek KME'ler XOR-birleştirme ile bunu destekleyebilir, bu basitleştirilmiş demo desteklemiyor)`);
       }
     }
-    if (queue.length < n) {
-      throw new KMEError(503, `Yetersiz anahtar stoku: istenen=${n}, mevcut=${queue.length} (rota=${routeKey}) — PhotonNet tarayıcısında daha fazla blok tamamlanmasını bekleyin ve KME deposunu yeniden dışa aktarın`);
+    if (avail < n) {
+      throw new KMEError(503, `Yetersiz anahtar stoku: istenen=${n}, mevcut=${avail} (rota=${routeKey}) — PhotonNet tarayıcısında daha fazla blok tamamlanmasını bekleyin ve KME deposunu yeniden dışa aktarın`);
     }
-    const ids = queue.splice(0, n);             // FIFO ön-uçtan O(n_taken)
+    const ids = this._dequeue(routeKey, n);     // O(n_taken), depo boyutundan bağımsız
     const chosen = ids.map(id => map.get(id));
     for (const e of chosen) e.issuedToMaster = true;
     this.deliveredCount += chosen.length;

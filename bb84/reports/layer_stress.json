@@ -1,0 +1,341 @@
+{
+  "generatedAt": "2026-08-20T00:50:39.385Z",
+  "checks": [
+    {
+      "name": "L1 fiber: mesafe arttıkça verim ZARİFÇE sıfıra iniyor (çökme yok)",
+      "ok": true,
+      "detail": "10km→η 0.631/verim %12.2 · 20km→η 0.3981/verim %5.4 · 30km→η 0.2512/verim %1.6 · 40km→η 0.1585/verim %0.4 · 50km→η 0.1/verim %0 · 60km→η 0.0631/verim %0 — verim monoton azalıyor, ~40km'de %0,5 altına iniyor; hiçbir koşumda guard/çökme yok"
+    },
+    {
+      "name": "L2 atlama: gereken segment sadakati monoton → 1, olanaksızlık DUVARI temiz",
+      "ok": true,
+      "detail": "2h→F* 0.91833 · 3h→F* 0.94395 · 5h→F* 0.96557 · 8h→F* 0.9782 · 12h→F* 0.98536 · 20h→F* 0.99116 · 30h→F* 0.99409 · 40h→F* 0.99556 ✗ · 60h→F* 0.99704 ✗ — hedef %85 için tavan 0.995 altında en çok 30 atlama olanaklı; ötesi keskin bir duvar (çökme değil, olanaksızlık)"
+    },
+    {
+      "name": "L3 yönlendirme: tüm yollar doyurulunca hiçbir kenar AŞILMIYOR (residual ≥ 0)",
+      "ok": true,
+      "detail": "5 yol (5 uygun) tıka basa tahsis edildi → 10220 çift (60000 birim) · en düşük kenar artığı 0 (≥0: hiçbir bağ kapasitesi aşılmadı) · 8 kenar. Doygunlukta bile invaryant korunuyor"
+    },
+    {
+      "name": "L4 güvenlik: e_ph ve n zorlanınca ℓ SIFIRA kenetleniyor (asla negatif)",
+      "ok": true,
+      "detail": "faz duvarı: e=0.02→ℓ 9436 · e=0.05→ℓ 3988 · e=0.08→ℓ 0 · e=0.11→ℓ 0 · e=0.13→ℓ 0 · e=0.16→ℓ 0 (ℓ=0 duvarı e_ph≈0.08) · sonlu-anahtar: n=200→ℓ 0 · n=1000→ℓ 0 · n=3000→ℓ 349 · n=5000→ℓ 1025 · n=10000→ℓ 3007 · n=40000→ℓ 17150 (en küçük uygulanabilir n=3000). ℓ hiçbir yerde negatif değil — güvenlik kanıtı temiz abort ediyor"
+    },
+    {
+      "name": "L5 kontrolcü: kabul eşiği monoton+kenetli, bozulmuş akışta ilerliyor (negatif ℓ yok)",
+      "ok": true,
+      "detail": "e* teğet eşiği monoton ve ≤0,5 kenetli (ē=0.01→e* 0.14866 · ē=0.03→e* 0.19064 · ē=0.06→e* 0.22943 · ē=0.1→e* 0.26751…) · ağır bozulmuş akışta (F %86) 136 blok üretildi, negatif ℓ 0, toplam ℓ 0. Bıçak sırtında bile ilerleme var, geçersiz çıktı yok"
+    },
+    {
+      "name": "L6 geri-basınç: ×10 talep patlamasında ret ARZ AÇIĞINA doyuyor (öngörülebilir, sınırlı)",
+      "ok": true,
+      "detail": "×1→ret %12.05 (öngörü %0) · ×2→ret %58.29 (öngörü %50) · ×5→ret %81.59 (öngörü %80) · ×10→ret %89.33 (öngörü %90) — ret, 1−arz/talep açığını izliyor; ×10'da %89.33 (öngörü %90). Kontrolcü canlı, denial %100'e patlamıyor: aşırı yükte bile öngörülebilir bozulma"
+    },
+    {
+      "name": "L7 KME: ölçekte churn O(1) (depo boyutundan bağımsız), bellek sınırlı, replay reddi tam",
+      "ok": true,
+      "detail": "n=5000: 26.74μs/op, kalan 1000, replay 4000/4000 · n=20000: 11.57μs/op, kalan 16000, replay 4000/4000 · n=80000: 9.26μs/op, kalan 76000, replay 4000/4000 — churn süresi depo boyutundan bağımsız (en büyük/küçük ×2.89), her replay reddedildi, tüketilen anahtar bellekten silindi (depo sınırlı)"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 kampanya boyunca değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… kampanya öncesi = sonrası. Yedi katman da çekirdeği yalnızca ÇAĞIRDI, hiçbiri değiştirmedi — stres uçtan uca koştu, çekirdek bit düzeyinde aynı"
+    }
+  ],
+  "L1": {
+    "rows": [
+      {
+        "km": 10,
+        "transmittance": 0.631,
+        "yieldPct": 12.2,
+        "finalPairs": 122,
+        "guardHit": false,
+        "makespanMs": 24
+      },
+      {
+        "km": 20,
+        "transmittance": 0.3981,
+        "yieldPct": 5.4,
+        "finalPairs": 54,
+        "guardHit": false,
+        "makespanMs": 49
+      },
+      {
+        "km": 30,
+        "transmittance": 0.2512,
+        "yieldPct": 1.6,
+        "finalPairs": 16,
+        "guardHit": false,
+        "makespanMs": 73
+      },
+      {
+        "km": 40,
+        "transmittance": 0.1585,
+        "yieldPct": 0.4,
+        "finalPairs": 4,
+        "guardHit": false,
+        "makespanMs": 98
+      },
+      {
+        "km": 50,
+        "transmittance": 0.1,
+        "yieldPct": 0,
+        "finalPairs": 0,
+        "guardHit": false,
+        "makespanMs": 122
+      },
+      {
+        "km": 60,
+        "transmittance": 0.0631,
+        "yieldPct": 0,
+        "finalPairs": 0,
+        "guardHit": false,
+        "makespanMs": 147
+      }
+    ],
+    "breakingKm": 40
+  },
+  "L2": {
+    "targetFinal": 0.85,
+    "ceiling": 0.995,
+    "rows": [
+      {
+        "nSegments": 2,
+        "requiredSegmentFidelity": 0.91833,
+        "feasible": true
+      },
+      {
+        "nSegments": 3,
+        "requiredSegmentFidelity": 0.94395,
+        "feasible": true
+      },
+      {
+        "nSegments": 5,
+        "requiredSegmentFidelity": 0.96557,
+        "feasible": true
+      },
+      {
+        "nSegments": 8,
+        "requiredSegmentFidelity": 0.9782,
+        "feasible": true
+      },
+      {
+        "nSegments": 12,
+        "requiredSegmentFidelity": 0.98536,
+        "feasible": true
+      },
+      {
+        "nSegments": 20,
+        "requiredSegmentFidelity": 0.99116,
+        "feasible": true
+      },
+      {
+        "nSegments": 30,
+        "requiredSegmentFidelity": 0.99409,
+        "feasible": true
+      },
+      {
+        "nSegments": 40,
+        "requiredSegmentFidelity": 0.99556,
+        "feasible": false
+      },
+      {
+        "nSegments": 60,
+        "requiredSegmentFidelity": 0.99704,
+        "feasible": false
+      }
+    ],
+    "maxFeasibleHops": 30
+  },
+  "L3": {
+    "pathCount": 5,
+    "feasiblePaths": 5,
+    "greedyPairs": 10220,
+    "minResidual": 0,
+    "edges": 8,
+    "allocatedUnits": 60000
+  },
+  "L4": {
+    "phaseWall": {
+      "rows": [
+        {
+          "ePh": 0.02,
+          "ell": 9436,
+          "secure": true
+        },
+        {
+          "ePh": 0.05,
+          "ell": 3988,
+          "secure": true
+        },
+        {
+          "ePh": 0.08,
+          "ell": 0,
+          "secure": false
+        },
+        {
+          "ePh": 0.11,
+          "ell": 0,
+          "secure": false
+        },
+        {
+          "ePh": 0.13,
+          "ell": 0,
+          "secure": false
+        },
+        {
+          "ePh": 0.16,
+          "ell": 0,
+          "secure": false
+        }
+      ],
+      "wallEPh": 0.08
+    },
+    "finiteKeyWall": {
+      "rows": [
+        {
+          "n": 200,
+          "mu": 0.4811,
+          "ell": 0
+        },
+        {
+          "n": 1000,
+          "mu": 0.2147,
+          "ell": 0
+        },
+        {
+          "n": 3000,
+          "mu": 0.1239,
+          "ell": 349
+        },
+        {
+          "n": 5000,
+          "mu": 0.096,
+          "ell": 1025
+        },
+        {
+          "n": 10000,
+          "mu": 0.0679,
+          "ell": 3007
+        },
+        {
+          "n": 40000,
+          "mu": 0.0339,
+          "ell": 17150
+        }
+      ],
+      "minViableN": 3000
+    }
+  },
+  "L5": {
+    "admissionThreshold": [
+      {
+        "eBar": 0.01,
+        "eStar": 0.14866
+      },
+      {
+        "eBar": 0.03,
+        "eStar": 0.19064
+      },
+      {
+        "eBar": 0.06,
+        "eStar": 0.22943
+      },
+      {
+        "eBar": 0.1,
+        "eStar": 0.26751
+      },
+      {
+        "eBar": 0.2,
+        "eStar": 0.33904
+      },
+      {
+        "eBar": 0.4,
+        "eStar": 0.44966
+      },
+      {
+        "eBar": 0.49,
+        "eStar": 0.495
+      }
+    ],
+    "monotoneClamped": true,
+    "degradedRun": {
+      "blocks": 136,
+      "ell": 0,
+      "negativeEllBlocks": 0,
+      "deadBlocks": 136
+    }
+  },
+  "L6": {
+    "productionBps": 1290,
+    "rows": [
+      {
+        "overload": 1,
+        "demandBps": 1290,
+        "denialPct": 12.05,
+        "predictedDenialPct": 0,
+        "modeSwitches": 2,
+        "alive": true
+      },
+      {
+        "overload": 2,
+        "demandBps": 2580,
+        "denialPct": 58.29,
+        "predictedDenialPct": 50,
+        "modeSwitches": 5,
+        "alive": true
+      },
+      {
+        "overload": 5,
+        "demandBps": 6450,
+        "denialPct": 81.59,
+        "predictedDenialPct": 80,
+        "modeSwitches": 7,
+        "alive": true
+      },
+      {
+        "overload": 10,
+        "demandBps": 12901,
+        "denialPct": 89.33,
+        "predictedDenialPct": 90,
+        "modeSwitches": 2,
+        "alive": true
+      }
+    ]
+  },
+  "L7": {
+    "rows": [
+      {
+        "seeded": 5000,
+        "churnOps": 4000,
+        "usPerChurn": 26.74,
+        "finalStoreSize": 1000,
+        "destroyed": 4000,
+        "replayRejected": 4000
+      },
+      {
+        "seeded": 20000,
+        "churnOps": 4000,
+        "usPerChurn": 11.57,
+        "finalStoreSize": 16000,
+        "destroyed": 4000,
+        "replayRejected": 4000
+      },
+      {
+        "seeded": 80000,
+        "churnOps": 4000,
+        "usPerChurn": 9.26,
+        "finalStoreSize": 76000,
+        "destroyed": 4000,
+        "replayRejected": 4000
+      }
+    ],
+    "usSpread": 2.89
+  },
+  "coreIntegrity": {
+    "sha256Before": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05",
+    "sha256After": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05",
+    "unchanged": true
+  },
+  "allChecksPassed": true
+}
