@@ -1,0 +1,165 @@
+{
+  "generatedAt": "2026-08-23T12:37:42.387Z",
+  "checks": [
+    {
+      "name": "(1) GÜVENLİK PAYI %0 DEĞİL: döngü e_ph sapmasını GENİŞ marjla yutuyor",
+      "ok": true,
+      "detail": "taban ret %11.84; faz hatası e_ph ×6'ya (0.3253, güvenlik duvarına yakın) itilse bile ret %12.25 — \"en ufak sapma kırar\" ölçümle YANLIŞ. Fotonik kusurun faz hatasını KATLAMASI gerekirdi ve döngü yine sağlam"
+    },
+    {
+      "name": "(1) ÜRETİM DÜŞÜŞÜNE DAYANIKLILIK: kristal verimi −%40'a kadar döngü sağlam",
+      "ok": true,
+      "detail": "×1→ret %11.84 · ×0.95→ret %12.25 · ×0.9→ret %12.25 · ×0.8→ret %12.25 · ×0.7→ret %12.25 · ×0.6→ret %12.25 — üretim %40'a kadar düşse de ret eşiği hiç aşmıyor. Marj tek bir sayı değil, geniş bir plato"
+    },
+    {
+      "name": "(1) MARJI YARATAN ŞEY BANDIN KENDİSİ: bant kapalıyken döngü kırılganlaşıyor",
+      "ok": true,
+      "detail": "bant açık (h=0,16): 4 mod değişimi · bant KAPALI (h=0): 10 (×2.5 chatter). \"Sönümleme döngüsünü kıran sapma\" ancak bandı KALDIRIRSAN oluşur — yani güvenlik payını sağlayan tam da eleştirilen histerezis"
+    },
+    {
+      "name": "(2) 50 Gbit/s BİR DUVAR DEĞİL: tavan çoğullama (M) ile DOĞRUSAL ölçekleniyor",
+      "ok": true,
+      "detail": "tek pipeline tavanı 50 Gbit/s = P_cold 1W ÷ E_op 2e-11 J. M paralel mod (motorda 'multiplexing' zaten var) → M×50 Gbit/s. 10 THz'i soğuk-yazmak için M=200 pipeline; tavan sabit değil, PROVİZYON parametresi"
+    },
+    {
+      "name": "(2) \"%99,5 İSRAF\" HATALI: girişin yarısı kaçınılmaz protokol elemesi",
+      "ok": true,
+      "detail": "10 THz girişin %50'si baz-uyuşmazlığı (BBM92 sifting) — HER donanımda, her protokolde atılır, \"israf\" değil kaçınılmaz. Kalan %50 yararlı (anahtar %25 + faz kestirimi %25). \"%99,5 donanım israfı\" hesabı protokol elemesini donanım israfı sayıyor — kategori hatası"
+    },
+    {
+      "name": "(2) PROVİZYONLANAN DONANIM YÜKSEK VERİMLE ÇALIŞIYOR (boşa gitmiyor)",
+      "ok": true,
+      "detail": "anahtar akışını (2497 Gbit/s) karşılamak için 50 pipeline provizyonlanır (2500 Gbit/s kapasite) → kullanım %100. Provizyonlanan donanımın ~tamamı iş yapıyor; \"israf\" provizyonlanmamış AKIŞTIR, atıl donanım değil"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — düzeltme yalnız katmanda (qkd_key_supply provisionForRate)"
+    }
+  ],
+  "margin": {
+    "baseDenialPct": 11.84,
+    "failThresholdPct": 16.84,
+    "ePhSweep": [
+      {
+        "mult": 1,
+        "ePh": 0.0542,
+        "denialPct": 11.84,
+        "switches": 4,
+        "blocks": 6
+      },
+      {
+        "mult": 1.25,
+        "ePh": 0.0678,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 5
+      },
+      {
+        "mult": 1.5,
+        "ePh": 0.0813,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 5
+      },
+      {
+        "mult": 2,
+        "ePh": 0.1084,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 5
+      },
+      {
+        "mult": 3,
+        "ePh": 0.1626,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 4
+      },
+      {
+        "mult": 4,
+        "ePh": 0.2168,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 4
+      },
+      {
+        "mult": 6,
+        "ePh": 0.3253,
+        "denialPct": 12.25,
+        "switches": 3,
+        "blocks": 3
+      }
+    ],
+    "ePhToleranceMult": 6,
+    "prodSweep": [
+      {
+        "mult": 1,
+        "denialPct": 11.84,
+        "switches": 4,
+        "blocks": 6
+      },
+      {
+        "mult": 0.95,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 6
+      },
+      {
+        "mult": 0.9,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 5
+      },
+      {
+        "mult": 0.8,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 5
+      },
+      {
+        "mult": 0.7,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 5
+      },
+      {
+        "mult": 0.6,
+        "denialPct": 12.25,
+        "switches": 4,
+        "blocks": 4
+      }
+    ],
+    "prodToleranceFrac": 0.4
+  },
+  "bandIsTheMargin": {
+    "noBandSwitches": 10,
+    "withBandSwitches": 4,
+    "chatterRatio": 2.5
+  },
+  "bandwidth": {
+    "intakeBps": 10000000000000,
+    "siftFrac": 0.4997,
+    "keyFrac": 0.2497,
+    "peFrac": 0.2506,
+    "perPipeBps": 50000000000,
+    "inherentSiftBps": 4997000000000,
+    "usefulFluxBps": 5003000000000,
+    "keyFluxBps": 2497000000000,
+    "provisionPipelines": 50,
+    "provisionedCapacityBps": 2500000000000,
+    "provisionedUtilisationPct": 99.9,
+    "pipelinesFor10THz": 200
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "params": {
+    "nominalEPh": 0.054209,
+    "productionBps": 1300,
+    "demandBps": 910,
+    "capacityBits": 13680
+  },
+  "allChecksPassed": true
+}

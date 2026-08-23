@@ -77,7 +77,7 @@ const LAYERS = [
   {
     id: "L6", name: "Anahtar tedariki ve geri-basınç", tag: "geçmiş budama",
     what: "Üretim gecikmesini teslim gecikmesinden ayıran depo, ve depo doluluğunu üretime geri besleyen geri-basınç. Tüketici gecikmesi 0 ms; israf %34,9 → %0. Histerezis bandı φ_high boyunca ölçüldü (monoton değil, φ≈0,60–0,70'te tepe). Durum şişirmesi tatbikatı geçmiş sızıntısını buldu: tahsis artık tüketilen kaydı budar (byRoute sınırlı, denetim sayacı monoton korunur).",
-    gives: ["runElastic (elastik pencere)", "KeyAllocator (budamalı — core KeyDeliveryStore üstünde)", "runTieredSupply", "requiredStoreBits (D·T_b + 3σ)", "ProductionThrottle + bant kuralı", "recommendPhiHigh (φ = 0,80)", "recommendHysteresis (ölçülü harita + ara değer)"],
+    gives: ["runElastic (elastik pencere)", "KeyAllocator (budamalı — core KeyDeliveryStore üstünde)", "runTieredSupply", "requiredStoreBits (D·T_b + 3σ)", "ProductionThrottle + bant kuralı", "recommendPhiHigh (φ = 0,80)", "recommendHysteresis (ölçülü harita + ara değer)", "provisionForRate (tahliye tavanı = M·P/E)"],
     mods: [{ f: "qkd_key_supply.js", r: "depo + tahsis (budamalı)" }, { f: "qkd_backpressure.js", r: "throttle + histerezis" }],
     tests: [{ f: "key_supply_test.js", rep: "key_supply.json" }, { f: "backpressure_test.js", rep: "backpressure.json" }, { f: "phi_high_tuning_test.js", rep: "phi_high_tuning.json" }, { f: "hysteresis_band_test.js", rep: "hysteresis_band.json" }],
     docs: ["docs/PHI_HIGH.md"],
@@ -108,6 +108,8 @@ const DRILLS = [
     what: "Yedi katmanın hepsi uçtan uca kırılma noktasına kadar zorlandı: L1 fiber duvarı (~40 km), L2 atlama duvarı (30), L3 doygunlukta kenar aşımı yok, L4 QBER/sonlu-anahtar (ℓ asla negatif), L5 kabul eşiği bıçak sırtı, L6 ×10 talep, L7 churn. Hepsi zarifçe bozuluyor; çekirdek SHA-256 değişmedi. KME enc'te O(n)→O(1) açığı bulunup kapatıldı." },
   { f: "landauer_choke_drill.js", rep: "landauer_choke.json",
     what: "Radyatif bilgi tıkanması (THz FSO uydu hattı): naif düğüm gelen her biti soğuk belleğe yazıp silince ısınıp saf→karışık çöküyor. Landauer tabanı bağlayıcı değil (gerçek dağılımın ×5·10¹¹ altında). PhotonNet entropiyi ısıya değil IŞIĞA veriyor: reddi soğuğa yazmadan ele (sifting %50 sıcakta), tutulanı sinyal olarak dışa aktar (%50), girişi tahliye hızına kıs (geri-basınç) → saflık taban sabit. Gerçek k_B + motorun ölçülü oranları." },
+  { f: "safety_margin_drill.js", rep: "safety_margin.json",
+    what: "İki eleştiri ölçüldü: (1) 'güvenlik payı %0' YANLIŞ — döngü e_ph ×6 ve üretim −%40 sapmayı platoyla yutuyor (ret %11,8→%12,3); kırılganlığı yaratan tek şey histerezis bandını KALDIRMAK. (2) '50 Gbit/s kelepçe, %99,5 israf' — 50 Gbit/s tek-pipeline tavanı, çoğullamayla (M) doğrusal ölçekleniyor (10 THz için M=200); girişin %50'si kaçınılmaz protokol elemesi. Düzeltme: provisionForRate() (qkd_key_supply)." },
 ];
 
 const CROSS = [
@@ -119,7 +121,7 @@ const CROSS = [
   {
     name: "Raporlama ve görselleştirme", col: "var(--k3)",
     what: "Her katmanın çıktısı için tek dosyalık, açık/karanlık modlu, palet doğrulamalı görseller ve istemci raporları.",
-    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_landauer_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
+    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_landauer_chart.js", "gen_safety_margin_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
   },
 ];
 
@@ -280,6 +282,7 @@ ${LAYERS.map(L => `<tr><td><b>${L.id}</b> ${esc(L.name)}</td><td>${L.mods.length
 <summary>Bu seansın commit'leri (yeniden eskiye)</summary>
 <table><thead><tr><th>Commit</th><th>Ne</th></tr></thead><tbody>
 ${[
+    ["2bd948d", "güvenlik payı + bant genişliği illüzyonu — iki eleştiri çürütüldü, provisionForRate"],
     ["cdc0193", "radyatif bilgi tıkanması — entropi ısıya değil ışığa; saflık sabit"],
     ["aeaeae5", "katman stres kampanyası — 7 katman kırılma noktasına; KME enc O(n)→O(1)"],
     ["e794e03", "kararlılık sınırı rezonansı tatbikatı — röle döngüsü kenetli, felaket yok"],

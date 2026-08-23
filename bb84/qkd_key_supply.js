@@ -280,4 +280,32 @@ function requiredStoreBits(demandBps, blockMs, requestBits = 256, z = 3) {
   return Math.ceil(demandBps * T + z * requestBits * Math.sqrt(lambda * T));
 }
 
-module.exports = { runElastic, KeyAllocator, runTieredSupply, requiredStoreBits };
+/**
+ * TAHLİYE TAVANI PROVİZYONU (safety_margin_drill.js — "bant genişliği
+ * illüzyonu" eleştirisinin düzeltmesi).
+ *
+ * Termal geri-basınç, soğuk-belleğe yazma hızını soğutucu gücüne kenetler:
+ *      R_pipe = P_cold / E_op        (tek soğuk-pipeline tavanı, bit/s)
+ * BU BİR SİSTEM DUVARI DEĞİLDİR. Gerçek tekrarlayıcı düğümleri tek-modlu
+ * değildir: frekans/zaman/uzamsal M paralel mod (motorun 'multiplexing'
+ * parametresi) her biri kendi soğutma bütçesiyle çalışır. Toplam tavan:
+ *      R_evac(M) = M · P_cold / E_op
+ * Yani "50 Gbit/s" sabit bir kelepçe değil, PROVİZYON parametresidir:
+ * hedef anahtar hızına göre M pipeline boyutlandırılır. Bu fonksiyon,
+ * bir hedef bit/s için gereken M'i ve toplam kapasiteyi döndürür.
+ *
+ * @param {number} targetBps  karşılanmak istenen soğuk-yazma hızı (bit/s)
+ * @param {object} opts  { pColdW: soğutucu gücü/pipeline (W),
+ *                          eOpJ: işlem başına dağılım (J) }
+ * @returns {{perPipeBps, pipelines, capacityBps, utilisation}}
+ */
+function provisionForRate(targetBps, opts = {}) {
+  const { pColdW = 1.0, eOpJ = 20e-12 } = opts;
+  const perPipeBps = pColdW / eOpJ;
+  const pipelines = targetBps > 0 ? Math.ceil(targetBps / perPipeBps) : 0;
+  const capacityBps = pipelines * perPipeBps;
+  return { perPipeBps, pipelines, capacityBps,
+    utilisation: capacityBps > 0 ? +(targetBps / capacityBps).toFixed(4) : 0 };
+}
+
+module.exports = { runElastic, KeyAllocator, runTieredSupply, requiredStoreBits, provisionForRate };

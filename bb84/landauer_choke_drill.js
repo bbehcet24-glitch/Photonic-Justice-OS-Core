@@ -96,7 +96,11 @@ function main() {
 
   // ── GİRİŞ TARAMASI: GHz → 10 THz ──
   const rates = [1e9, 1e10, 5e10, 1e11, 5e11, 1e12, 5e12, 1e13];
-  const R_evac = P_COLD / E_OP_COLD;   // soğuk-yazma tavanı (bit/s)
+  // Soğuk-yazma tavanı: TEK pipeline (M=1). Bu bir sistem duvarı DEĞİL —
+  // çoğullama (M paralel mod) ile doğrusal ölçeklenir; hedef hıza göre
+  // qkd_key_supply.provisionForRate() ile M boyutlandırılır (bkz.
+  // safety_margin_drill.js — "bant genişliği illüzyonu" düzeltmesi).
+  const R_evac = P_COLD / E_OP_COLD;   // = provisionForRate(...).perPipeBps
   const sweep = rates.map(Rin => {
     // NAİF düğüm: her giriş biti soğuk belleğe yazılır, hatalı silinir.
     const dNaive = Rin * E_OP_COLD;                         // W
