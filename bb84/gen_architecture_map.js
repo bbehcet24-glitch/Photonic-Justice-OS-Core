@@ -82,6 +82,13 @@ const LAYERS = [
     tests: [{ f: "predictive_jitter_test.js", rep: "predictive_jitter.json" }],
   },
   {
+    id: "L5.6", name: "Kuantum geciktirme hattı (ODLS)", tag: "yeni · optik tampon",
+    what: "Predictor'ın 9-adımlık geçiş evresinde pencereyi aşan paketleri düşürmek yerine recirculating fiber döngüde (2×2 anahtar) geçici DONDURUP toparlanınca bırakır. Ama bedava değil: fiberde ışığı tutmanın kaçınılmaz bedeli α·v=40,8 dB/ms — 3 dB bütçe ⇒ en çok ~73 μs. İki bütçe farklı ölçekte bağlar: μs fiber döngüde KAYIP, ms gerçek kuantum bellekte FAZ. Ayar: döngüyü pencereye eşle (n=1) → anahtar ek yükü en az. Sonuç: %100 zaman-aşımı kaybı → bütçesi ayarlı ~%42 insertion-loss; sadakat Bell üstünde. L5.5'in μs hızı ODLS'nin ön koşulu.",
+    gives: ["OpticalDelayLine (hold / lossBudget / phaseBudget / budget)", "bridgeTransient (geçiş köprüleme)", "tuneLoopForWindow (kayıp ayrışması: fiber tabanı + anahtar)"],
+    mods: [{ f: "optical_delay_line.js", r: "optik tampon + bütçe ayarı" }],
+    tests: [{ f: "optical_delay_line_test.js", rep: "optical_delay_line.json" }],
+  },
+  {
     id: "L6", name: "Anahtar tedariki ve geri-basınç", tag: "geçmiş budama",
     what: "Üretim gecikmesini teslim gecikmesinden ayıran depo, ve depo doluluğunu üretime geri besleyen geri-basınç. Tüketici gecikmesi 0 ms; israf %34,9 → %0. Histerezis bandı φ_high boyunca ölçüldü (monoton değil, φ≈0,60–0,70'te tepe). Durum şişirmesi tatbikatı geçmiş sızıntısını buldu: tahsis artık tüketilen kaydı budar (byRoute sınırlı, denetim sayacı monoton korunur).",
     gives: ["runElastic (elastik pencere)", "KeyAllocator (budamalı — core KeyDeliveryStore üstünde)", "runTieredSupply", "requiredStoreBits (D·T_b + 3σ)", "ProductionThrottle + bant kuralı", "recommendPhiHigh (φ = 0,80)", "recommendHysteresis (ölçülü harita + ara değer)", "provisionForRate (tahliye tavanı = M·P/E)"],
@@ -128,7 +135,7 @@ const CROSS = [
   {
     name: "Raporlama ve görselleştirme", col: "var(--k3)",
     what: "Her katmanın çıktısı için tek dosyalık, açık/karanlık modlu, palet doğrulamalı görseller ve istemci raporları.",
-    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_landauer_chart.js", "gen_safety_margin_chart.js", "gen_predictive_jitter_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
+    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_landauer_chart.js", "gen_safety_margin_chart.js", "gen_predictive_jitter_chart.js", "gen_optical_delay_line_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
   },
 ];
 

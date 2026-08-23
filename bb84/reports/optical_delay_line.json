@@ -1,0 +1,234 @@
+{
+  "generatedAt": "2026-08-23T14:02:02.087Z",
+  "checks": [
+    {
+      "name": "(A) ODLS OLMADAN: 9-adımlık geçişte pencere paketleri TAMAMEN düşer",
+      "ok": true,
+      "detail": "9 adım × 6 μs = 54 μs geçiş penceresi · zaman-penceresi alıcısı skew aşımında 10000 paketin %100'ünü zaman-aşımından düşürür — köprülenecek kayıp bu"
+    },
+    {
+      "name": "(B) ODLS: zaman-aşımı düşüşü → 0; teslim insertion-loss bütçesinde, sadakat Bell üstünde",
+      "ok": true,
+      "detail": "ayarlı döngü 11.0278 km (1 geçiş) · geçiş penceresi dondurulup toparlanınca bırakıldı: zaman-aşımı düşüşü 10000→0. Kayıp bütçesi 2.356 dB (fiber tabanı 2.2056 + anahtar 0.15) ⇒ en kötü %58 sağ kalır (5814 paket), tekdüze varışta beklenen %58 (5814 paket). Sadakat 0.979974 ≥ Bell 0.707 — durum dekoheransa uğramadan tutuldu"
+    },
+    {
+      "name": "(C) BÜTÇE REJİMİ: μs fiber döngüde KAYIP bağlar (faz bol bol boşta), ms bellekte FAZ bağlar",
+      "ok": true,
+      "detail": "fiber döngü: bağlayan=kayıp, kayıp limiti 1 geçiş ≪ faz limiti 15.565 geçiş — μs ölçeğinde faz tamamen boşta. Karşıt (ms tutma, gerçek kuantum bellek t₂=50 ms): bağlayan=faz — orada faz bağlar. İki bütçe farklı zaman ölçeğinde bağlar; fiber ODLS kayıp rejiminde çalışır"
+    },
+    {
+      "name": "(D) FİZİKSEL ZARF: hızlı μs toparlanma bütçeye sığar, yavaş ms resync sığmaz",
+      "ok": true,
+      "detail": "3 dB fiber tabanı ⇒ 9 adım için cliff = adım başına 8.2 μs. Predictor'ın HIZLI toparlaması (9×6 μs = 54 μs) sığar ✓; eski TEPKİSEL resync (40×2 ms = 80 ms) 3268 dB gerektirir — imkânsız ✗. ⇒ L5.5'in μs hızında toparlaması, ODLS'nin fiziksel ÖN KOŞULUDUR (yoksa kuantum bellek gerekir)"
+    },
+    {
+      "name": "(E) AYAR: döngüyü pencereye eşlemek (n=1) anahtar ek yükünü amorti eder",
+      "ok": true,
+      "detail": "aynı 54 μs tutma: fiber tabanı 2.21 dB SABİT. n=1 eşlenmiş döngü (11.028 km) → 2.356 dB, %58 sağ kalır ✓; ayarsız n=56 küçük döngü (0.197 km) → her geçiş anahtarı tekrar öder → 10.606 dB, bütçe patlar ✗. Anahtar ek yükü = n × 0.15 dB; en az geçişte (n=1) en az"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — ODLS bağımsız L5.6, fizik motordan (entanglement_swap_scheduler) alınır"
+    }
+  ],
+  "fiber": {
+    "vKmPerMs": 204.22,
+    "alphaDbPerKm": 0.2,
+    "fiberFloorDbPerMs": 40.84,
+    "maxHoldMsAt3dB": 0.07345,
+    "fBell": 0.7071
+  },
+  "withoutOdls": {
+    "steps": 9,
+    "stepMs": 0.006,
+    "holdMs": 0.054,
+    "packetsInWindow": 10000,
+    "droppedPackets": 10000,
+    "delivered": 0,
+    "lossPct": 100
+  },
+  "withOdls": {
+    "tunedLoopKm": 11.0278,
+    "passes": 1,
+    "worstCaseSurvival": 0.581358,
+    "worstCaseDelivered": 5814,
+    "expectedSurvival": 0.581358,
+    "expectedDelivered": 5814,
+    "heldFidelity": 0.979974,
+    "heldLossDb": 2.356,
+    "fiberFloorDb": 2.2056,
+    "switchOverheadDb": 0.15,
+    "withinBudget": true,
+    "timeoutDropsWithOdls": 0,
+    "droppedWithoutOdls": 10000
+  },
+  "regime": {
+    "fiberLoop": {
+      "boundBy": "kayıp",
+      "lossLimitPasses": 1,
+      "phaseLimitPasses": 15565,
+      "maxHoldMs": 0.054
+    },
+    "quantumMemory": {
+      "boundBy": "faz",
+      "lossLimitPasses": 150,
+      "phaseLimitPasses": 42,
+      "maxHoldMs": 41.1325
+    }
+  },
+  "envelope": {
+    "steps": 9,
+    "cliffStepMs": 0.00816,
+    "fastRecovery": {
+      "stepMs": 0.006,
+      "holdMs": 0.054,
+      "withinBudget": true
+    },
+    "slowReactive": {
+      "steps": 40,
+      "stepMs": 2,
+      "holdMs": 80,
+      "lossDb": 3267.6,
+      "withinBudget": false
+    },
+    "sweep": [
+      {
+        "stepMs": 0.002,
+        "holdMs": 0.018,
+        "totalLossDb": 0.8852,
+        "survival": 0.815608,
+        "withinBudget": true
+      },
+      {
+        "stepMs": 0.004,
+        "holdMs": 0.036,
+        "totalLossDb": 1.6204,
+        "survival": 0.688593,
+        "withinBudget": true
+      },
+      {
+        "stepMs": 0.006,
+        "holdMs": 0.054,
+        "totalLossDb": 2.3556,
+        "survival": 0.581359,
+        "withinBudget": true
+      },
+      {
+        "stepMs": 0.008,
+        "holdMs": 0.072,
+        "totalLossDb": 3.0907,
+        "survival": 0.490824,
+        "withinBudget": false
+      },
+      {
+        "stepMs": 0.01,
+        "holdMs": 0.09,
+        "totalLossDb": 3.8259,
+        "survival": 0.414388,
+        "withinBudget": false
+      },
+      {
+        "stepMs": 0.02,
+        "holdMs": 0.18,
+        "totalLossDb": 7.5019,
+        "survival": 0.177752,
+        "withinBudget": false
+      },
+      {
+        "stepMs": 0.05,
+        "holdMs": 0.45,
+        "totalLossDb": 18.5296,
+        "survival": 0.014029,
+        "withinBudget": false
+      },
+      {
+        "stepMs": 0.1,
+        "holdMs": 0.9,
+        "totalLossDb": 36.9093,
+        "survival": 0.000204,
+        "withinBudget": false
+      },
+      {
+        "stepMs": 0.5,
+        "holdMs": 4.5,
+        "totalLossDb": 183.9465,
+        "survival": 0,
+        "withinBudget": false
+      },
+      {
+        "stepMs": 2,
+        "holdMs": 18,
+        "totalLossDb": 735.3359,
+        "survival": 0,
+        "withinBudget": false
+      }
+    ]
+  },
+  "tuning": {
+    "holdMs": 0.054,
+    "fiberFloorDb": 2.206,
+    "switchLossDb": 0.15,
+    "rows": [
+      {
+        "passes": 1,
+        "loopKm": 11.028,
+        "totalLossDb": 2.356,
+        "survival": 0.5814,
+        "withinBudget": true
+      },
+      {
+        "passes": 2,
+        "loopKm": 5.514,
+        "totalLossDb": 2.506,
+        "survival": 0.5616,
+        "withinBudget": true
+      },
+      {
+        "passes": 4,
+        "loopKm": 2.757,
+        "totalLossDb": 2.806,
+        "survival": 0.5241,
+        "withinBudget": true
+      },
+      {
+        "passes": 8,
+        "loopKm": 1.378,
+        "totalLossDb": 3.406,
+        "survival": 0.4565,
+        "withinBudget": false
+      },
+      {
+        "passes": 16,
+        "loopKm": 0.689,
+        "totalLossDb": 4.606,
+        "survival": 0.3463,
+        "withinBudget": false
+      },
+      {
+        "passes": 32,
+        "loopKm": 0.345,
+        "totalLossDb": 7.006,
+        "survival": 0.1993,
+        "withinBudget": false
+      },
+      {
+        "passes": 56,
+        "loopKm": 0.197,
+        "totalLossDb": 10.606,
+        "survival": 0.087,
+        "withinBudget": false
+      }
+    ]
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "params": {
+    "steps": 9,
+    "stepMs": 0.006,
+    "packets": 10000
+  },
+  "allChecksPassed": true
+}
