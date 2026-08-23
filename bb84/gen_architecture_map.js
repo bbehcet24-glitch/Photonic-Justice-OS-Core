@@ -75,6 +75,13 @@ const LAYERS = [
     reps: ["continuous_stream.json"],
   },
   {
+    id: "L5.5", name: "Tahminsel jitter hizalama", tag: "yeni · öngörücü",
+    what: "Hatlar arası zamanlama fluluğunu (skew/drift/termal) çevrimiçi Kalman saat kestiricisiyle önceden öğrenip ön-beslemeli düzeltir — PTP/GPS disiplininin yerleşik tekniği. async_sync'in bulduğu canlı-kilit uçurumunu kaldırır: bir zaman-penceresi alıcısı bile drift altında %0 drop. Dürüst sınır: yalnız öngörülebilir yapıyı siler, saf jitter'da yapı uydurmaz.",
+    gives: ["JitterPredictor (constant-velocity Kalman)", "makeSkewSource", "runAligned (ön-besleme + artık ölçümü)"],
+    mods: [{ f: "predictive_jitter_alignment.js", r: "Kalman kestirici + hizalama" }],
+    tests: [{ f: "predictive_jitter_test.js", rep: "predictive_jitter.json" }],
+  },
+  {
     id: "L6", name: "Anahtar tedariki ve geri-basınç", tag: "geçmiş budama",
     what: "Üretim gecikmesini teslim gecikmesinden ayıran depo, ve depo doluluğunu üretime geri besleyen geri-basınç. Tüketici gecikmesi 0 ms; israf %34,9 → %0. Histerezis bandı φ_high boyunca ölçüldü (monoton değil, φ≈0,60–0,70'te tepe). Durum şişirmesi tatbikatı geçmiş sızıntısını buldu: tahsis artık tüketilen kaydı budar (byRoute sınırlı, denetim sayacı monoton korunur).",
     gives: ["runElastic (elastik pencere)", "KeyAllocator (budamalı — core KeyDeliveryStore üstünde)", "runTieredSupply", "requiredStoreBits (D·T_b + 3σ)", "ProductionThrottle + bant kuralı", "recommendPhiHigh (φ = 0,80)", "recommendHysteresis (ölçülü harita + ara değer)", "provisionForRate (tahliye tavanı = M·P/E)"],
@@ -121,7 +128,7 @@ const CROSS = [
   {
     name: "Raporlama ve görselleştirme", col: "var(--k3)",
     what: "Her katmanın çıktısı için tek dosyalık, açık/karanlık modlu, palet doğrulamalı görseller ve istemci raporları.",
-    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_landauer_chart.js", "gen_safety_margin_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
+    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_landauer_chart.js", "gen_safety_margin_chart.js", "gen_predictive_jitter_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
   },
 ];
 
@@ -252,7 +259,7 @@ function build() {
 <p class="sub">Envanter hafızadan değil, dosyaların <b>gerçek require kenarlarından</b> çıkarıldı; satır ve öz-test sayıları koşum anında dosyalardan ve raporlardan okunuyor. Bağımlılık yönü tek yönlü: her katman yalnızca altındakileri çağırıyor.</p>
 
 <div class="tiles">
-  <div class="tile"><div class="l">katman</div><div class="v">8</div></div>
+  <div class="tile"><div class="l">katman</div><div class="v">${LAYERS.length}</div></div>
   <div class="tile"><div class="l">çekirdek (dokunulmadı)</div><div class="v">${tr(coreLines)}</div></div>
   <div class="tile"><div class="l">üstteki yığın</div><div class="v">${tr(stackLines)}</div></div>
   <div class="tile"><div class="l">dik kesen + tatbikat</div><div class="v">${tr(crossLines + drillLines)}</div></div>
