@@ -84,7 +84,7 @@ const LAYERS = [
   {
     id: "L5.6", name: "Kuantum geciktirme hattı (ODLS)", tag: "yeni · optik tampon",
     what: "Predictor'ın 9-adımlık geçiş evresinde pencereyi aşan paketleri düşürmek yerine recirculating fiber döngüde (2×2 anahtar) geçici DONDURUP toparlanınca bırakır. Ama bedava değil: fiberde ışığı tutmanın kaçınılmaz bedeli α·v=40,8 dB/ms — 3 dB bütçe ⇒ en çok ~73 μs. İki bütçe farklı ölçekte bağlar: μs fiber döngüde KAYIP, ms gerçek kuantum bellekte FAZ. Ayar: döngüyü pencereye eşle (n=1) → anahtar ek yükü en az. Sonuç: %100 zaman-aşımı kaybı → bütçesi ayarlı ~%42 insertion-loss; sadakat Bell üstünde. L5.5'in μs hızı ODLS'nin ön koşulu.",
-    gives: ["OpticalDelayLine (hold / lossBudget / phaseBudget / budget)", "bridgeTransient (geçiş köprüleme)", "tuneLoopForWindow (kayıp ayrışması: fiber tabanı + anahtar)"],
+    gives: ["OpticalDelayLine (hold / lossBudget / phaseBudget / budget)", "bridgeTransient (geçiş köprüleme)", "tuneLoopForWindow (kayıp ayrışması: fiber tabanı + anahtar)", "MEDIA + mediumFloor (α·v taban karşılaştırması)", "holdForRecoverySteps (PJA adım → tutma)"],
     mods: [{ f: "optical_delay_line.js", r: "optik tampon + bütçe ayarı" }],
     tests: [{ f: "optical_delay_line_test.js", rep: "optical_delay_line.json" }],
   },
@@ -124,6 +124,8 @@ const DRILLS = [
     what: "Radyatif bilgi tıkanması (THz FSO uydu hattı): naif düğüm gelen her biti soğuk belleğe yazıp silince ısınıp saf→karışık çöküyor. Landauer tabanı bağlayıcı değil (gerçek dağılımın ×5·10¹¹ altında). PhotonNet entropiyi ısıya değil IŞIĞA veriyor: reddi soğuğa yazmadan ele (sifting %50 sıcakta), tutulanı sinyal olarak dışa aktar (%50), girişi tahliye hızına kıs (geri-basınç) → saflık taban sabit. Gerçek k_B + motorun ölçülü oranları." },
   { f: "safety_margin_drill.js", rep: "safety_margin.json",
     what: "İki eleştiri ölçüldü: (1) 'güvenlik payı %0' YANLIŞ — döngü e_ph ×6 ve üretim −%40 sapmayı platoyla yutuyor (ret %11,8→%12,3); kırılganlığı yaratan tek şey histerezis bandını KALDIRMAK. (2) '50 Gbit/s kelepçe, %99,5 israf' — 50 Gbit/s tek-pipeline tavanı, çoğullamayla (M) doğrusal ölçekleniyor (10 THz için M=200); girişin %50'si kaçınılmaz protokol elemesi. Düzeltme: provisionForRate() (qkd_key_supply)." },
+  { f: "odls_optimization_drill.js", rep: "odls_optimization.json",
+    what: "ODLS taban kaybını (α·v·tutma) düşürmenin iki yolu ölçüldü. İZ 1 (PJA'yı agresifleştir): 9→5 adım tutmayı 54→30 μs, tabanı 2,21→1,23 dB'ye indirir (doğrusal), uçurum payını ×2,2 açar — dar-pencere bedeli yalnız %1,3, nerdeyse bedava; ama sweet-spot ~5 adım (ötesinde bedel süper-doğrusal, model tabanı 2 adım). İZ 2 (ortam) önermesi TERS: depolamada dB/METRE değil dB/ZAMAN=α·v önemli; SMF zaten 0,0002 dB/m (en düşük), Si₃N₄ çip 0,1 dB/m → taban ×386 KÖTÜ (çip ayak izinde kazanır). Tabanı gerçekten düşüren: hollow-core NANF ×1,7. Kriyo silika α'sını açmaz (Rayleigh donmuş); payı kuantum bellek T2'sinde — o da tabanı büsbütün aşar ama faz/T2 duvarına çarpar. Sentez: 5-adım PJA × hollow-core → sağkalım %58→%82." },
 ];
 
 const CROSS = [
@@ -135,7 +137,7 @@ const CROSS = [
   {
     name: "Raporlama ve görselleştirme", col: "var(--k3)",
     what: "Her katmanın çıktısı için tek dosyalık, açık/karanlık modlu, palet doğrulamalı görseller ve istemci raporları.",
-    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_landauer_chart.js", "gen_safety_margin_chart.js", "gen_predictive_jitter_chart.js", "gen_optical_delay_line_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
+    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_landauer_chart.js", "gen_safety_margin_chart.js", "gen_predictive_jitter_chart.js", "gen_optical_delay_line_chart.js", "gen_odls_optimization_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
   },
 ];
 

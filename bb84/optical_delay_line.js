@@ -35,6 +35,40 @@ const SW = require("./entanglement_swap_scheduler.js");
 
 const F_BELL = 1 / Math.SQRT2;          // Bell sertifikasyon eşiği (S=2) ≈ 0.7071
 const F_KEYDEATH = 0.5568;              // anahtarın öldüğü sadakat (landauer tatbikatından)
+const V_SILICA_KM_PER_MS = 1 / SW.fiberDelayMs(1);   // ≈ 204.2 (motordan)
+
+/**
+ * ORTAM (medium) tablosu — insertion-loss TABANI α·v ile belirlenir.
+ * KRİTİK: depolamada önemli olan dB/METRE değil, dB/ZAMAN'dır (= α·v).
+ * SMF-28, bilinen EN DÜŞÜK kayıplı optik ortamdır; çip dalga kılavuzları
+ * KAYIPTA değil AYAK İZİNDE kazanır (α'ları SMF'ten 100–1000× büyük).
+ *   alphaDbPerKm — sönümleme; vKmPerMs — grup hızı (c/n_g).
+ */
+const MEDIA = {
+  smf:        { name: "SMF-28 standart fiber",   alphaDbPerKm: 0.2,    vKmPerMs: V_SILICA_KM_PER_MS,
+    note: "referans; Rayleigh saçılması taban" },
+  ullFiber:   { name: "Ultra-düşük-kayıp silika", alphaDbPerKm: 0.14,   vKmPerMs: V_SILICA_KM_PER_MS,
+    note: "rekor silika α; ×1.4 taban" },
+  hollowCore: { name: "Hollow-core NANF",         alphaDbPerKm: 0.08,   vKmPerMs: 2.998e8 / 1.0003 / 1e6,
+    note: "hava çekirdek: düşük α + v≈c; ×1.7 taban" },
+  si3n4:      { name: "Si₃N₄ dalga kılavuzu (iyi)", alphaDbPerKm: 0.1 * 1000, vKmPerMs: 2.998e8 / 1.9 / 1e6,
+    note: "rekor 0.1 dB/m = 100 dB/km → ×386 DAHA KÖTÜ; kazancı ayak izi" },
+  siWire:     { name: "Si tel dalga kılavuzu",     alphaDbPerKm: 100 * 1000, vKmPerMs: 2.998e8 / 4.2 / 1e6,
+    note: "1 dB/cm; depolama için kullanılamaz" },
+};
+
+/** Bir ortamın insertion-loss tabanı: dB/ms ve 3 dB'de en çok tutma. */
+function mediumFloor(m, maxLossDb = 3) {
+  const spec = typeof m === "string" ? MEDIA[m] : m;
+  const floorDbPerMs = spec.alphaDbPerKm * spec.vKmPerMs;   // (dB/km)·(km/ms) = dB/ms
+  return { name: spec.name, alphaDbPerKm: spec.alphaDbPerKm, vKmPerMs: +spec.vKmPerMs.toFixed(2),
+    floorDbPerMs: +floorDbPerMs.toFixed(3), maxHoldUsAt3dB: +(maxLossDb / floorDbPerMs * 1000).toFixed(3),
+    note: spec.note };
+}
+
+/** PJA yakınsama adımı → köprülenecek tutma süresi (ms). Taban α·v ile
+ *  DOĞRUSAL olduğundan, adım sayısını düşürmek kaybı doğrudan düşürür. */
+function holdForRecoverySteps(recoverySteps, stepMs) { return recoverySteps * stepMs; }
 
 /**
  * Recirculating optik geciktirme hattı.
@@ -44,11 +78,14 @@ const F_KEYDEATH = 0.5568;              // anahtarın öldüğü sadakat (landau
  * @param opts.attenuationDbPerKm — fiber sönümlemesi (varsayılan SMF-28)
  */
 class OpticalDelayLine {
-  constructor({ loopKm = 0.2, switchLossDb = 0.15, t2Ms = 1000, attenuationDbPerKm = 0.2 } = {}) {
+  constructor({ loopKm = 0.2, switchLossDb = 0.15, t2Ms = 1000, attenuationDbPerKm = 0.2,
+    vKmPerMs = V_SILICA_KM_PER_MS } = {}) {
     this.loopKm = loopKm;
     this.switchLossDb = switchLossDb;
     this.t2Ms = t2Ms;
-    this.perPassDelayMs = SW.fiberDelayMs(loopKm);
+    this.vKmPerMs = vKmPerMs;
+    // Grup hızından geçiş gecikmesi (silika varsayılanı motorla birebir aynı).
+    this.perPassDelayMs = loopKm / vKmPerMs;
     this.perPassLossDb = attenuationDbPerKm * loopKm + switchLossDb;
     this.perPassSurvival = Math.pow(10, -this.perPassLossDb / 10);
   }
@@ -148,4 +185,5 @@ function bridgeTransient({ packets, recoverySteps, stepMs, odls, fInitial = 0.98
   };
 }
 
-module.exports = { OpticalDelayLine, bridgeTransient, tuneLoopForWindow, F_BELL, F_KEYDEATH };
+module.exports = { OpticalDelayLine, bridgeTransient, tuneLoopForWindow,
+  MEDIA, mediumFloor, holdForRecoverySteps, V_SILICA_KM_PER_MS, F_BELL, F_KEYDEATH };

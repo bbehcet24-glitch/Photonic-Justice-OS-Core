@@ -1,0 +1,205 @@
+{
+  "generatedAt": "2026-08-23T14:22:01.498Z",
+  "checks": [
+    {
+      "name": "(İZ 1) PJA agresifleştirme: 5-6 adım ULAŞILABİLİR, taban ~yarıya iner, uçurum payı ×2+",
+      "ok": true,
+      "detail": "senaryo tabanı 9 adım / 54 μs → ölçülen ulaşılabilir 5 adım / 30 μs (q=0.0005): taban kaybı 2.21→1.23 dB (~yarı), uçurum payı 19.5→43.5 μs (×2.2). Kararlı-durum bedeli (dar pencere drop) yalnız %1.27 — nerdeyse bedava. Doğru değişken vuruldu: taban tutma SÜRESİYLE doğrusal, adım↓ ⇒ kayıp↓"
+    },
+    {
+      "name": "(İZ 1 SINIR) Sınırsız agresiflik YOK: adım kazancı doyar, kararlı-durum bedeli süper-doğrusal tırmanır",
+      "ok": true,
+      "detail": "5 adımdan sonra: q'yu 0.0005→0.1'e itmek tutmayı yalnız 30→12 μs kısaltır (18 μs, azalan getiri) ama dar-pencere drop'u %1.27→%9.47 (×7) patlatır. Model tabanı ~2 adım: sabit-hızlı Kalman sıçrama sonrası drift'i yeniden kestirmek için ≥2 ölçüm ister — daha ilerisi q'yu değil MODELİ (ivme durumu) değiştirmeyi gerektirir. Pratik sweet-spot ~5 adım"
+    },
+    {
+      "name": "(İZ 2) ORTAM ÖNERMESİ TERS: çip dalga kılavuzu tabanı DÜŞÜRMEZ, ×100+ YÜKSELTİR",
+      "ok": true,
+      "detail": "depolamada önemli olan dB/METRE değil dB/ZAMAN = α·v. SMF α = 0,0002 dB/m (bilinen EN düşük). Si₃N₄ \"iyi\" 0,1 dB/m = 100 dB/km → taban ×386.32 DAHA KÖTÜ (0.19 μs tutma). Çip kayıpta değil AYAK İZİNDE kazanır. Tabanı GERÇEKTEN düşüren: ULL silika ×0.7 (α↓), hollow-core NANF ×0.59 (α↓ + v≈c) — ama yalnız ×1.4–1.7, mucize değil"
+    },
+    {
+      "name": "(CRYO) Kriyojenik soğutma silika KAYBINI düşürmez — payı T2'de, fiberde değil",
+      "ok": true,
+      "detail": "silika α'sının ~%96'ı Rayleigh (çekimde DONMUŞ, çalışma T'sinden bağımsız). Kriyo yalnız ~%4 soğurma kuyruğunu kıpırdatır → taban ~40,8→40.03 dB/ms (kayda değmez). Kriyonun GERÇEK payı: bir kuantum belleğin T2'sini (faz tutarlılığı) uzatmak ve dedektör gürültüsü — fiber α'sı değil"
+    },
+    {
+      "name": "(KAÇIŞ) Kuantum bellek α·v tabanını AŞAR: kayıp rejiminden faz/T2 rejimine geçer",
+      "ok": true,
+      "detail": "gerçek kuantum bellek (atom topluluğu / REI kristali): depolama propagasyonla DEĞİL → optik kayıp tabanı YOK. Tutma artık FAZ/T2 ile bağlı: t₂=50 ms'de ~42 ms tutabilir — fiberin 73 μs tavanının ×572 üstü. Bedel: yazma/okuma verimi (~3 dB sabit) + dekoherans duvarı. Bu tam olarak check-C'deki 'faz bağlar' rejimi — ODLS'nin karşı ölçeği"
+    },
+    {
+      "name": "(SENTEZ) İki GERÇEK kaldıraç yığılınca: sağkalım %58→%82",
+      "ok": true,
+      "detail": "agresif PJA (5 adım, 30 μs) × hollow-core NANF (23.977 dB/ms): taban 0.72 + anahtar 0,15 = 0.87 dB ⇒ sağkalım %82 (senaryo tabanı 9-adım/SMF %58'ten). Çip DEĞİL — çip tabanı ×386 kötüleştirirdi. İki kaldıraç: süreyi kısalt + α'yı düşür"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası"
+    }
+  ],
+  "track1": {
+    "stepMs": 0.006,
+    "cliffUs": 73.5,
+    "floorDbPerMs": 40.84,
+    "baseline": {
+      "recoverySteps": 9,
+      "holdUs": 54,
+      "floorDb": 2.21,
+      "totalDb": 2.36,
+      "survivalPct": 58,
+      "cliffMarginUs": 19.5
+    },
+    "rows": [
+      {
+        "q": 0.0001,
+        "recoverySteps": 8,
+        "ssDropTightPct": 0.47,
+        "holdUs": 48,
+        "floorDb": 1.96,
+        "totalDb": 2.11,
+        "survivalPct": 62,
+        "cliffMarginUs": 25.5
+      },
+      {
+        "q": 0.0005,
+        "recoverySteps": 5,
+        "ssDropTightPct": 1.27,
+        "holdUs": 30,
+        "floorDb": 1.23,
+        "totalDb": 1.38,
+        "survivalPct": 73,
+        "cliffMarginUs": 43.5
+      },
+      {
+        "q": 0.001,
+        "recoverySteps": 4,
+        "ssDropTightPct": 1.6,
+        "holdUs": 24,
+        "floorDb": 0.98,
+        "totalDb": 1.13,
+        "survivalPct": 77,
+        "cliffMarginUs": 49.5
+      },
+      {
+        "q": 0.005,
+        "recoverySteps": 3,
+        "ssDropTightPct": 3.34,
+        "holdUs": 18,
+        "floorDb": 0.74,
+        "totalDb": 0.89,
+        "survivalPct": 82,
+        "cliffMarginUs": 55.5
+      },
+      {
+        "q": 0.03,
+        "recoverySteps": 2,
+        "ssDropTightPct": 6.27,
+        "holdUs": 12,
+        "floorDb": 0.49,
+        "totalDb": 0.64,
+        "survivalPct": 86,
+        "cliffMarginUs": 61.5
+      },
+      {
+        "q": 0.1,
+        "recoverySteps": 2,
+        "ssDropTightPct": 9.47,
+        "holdUs": 12,
+        "floorDb": 0.49,
+        "totalDb": 0.64,
+        "survivalPct": 86,
+        "cliffMarginUs": 61.5
+      }
+    ],
+    "target": {
+      "q": 0.0005,
+      "recoverySteps": 5,
+      "ssDropTightPct": 1.27,
+      "holdUs": 30,
+      "floorDb": 1.23,
+      "totalDb": 1.38,
+      "survivalPct": 73,
+      "cliffMarginUs": 43.5
+    }
+  },
+  "track2": {
+    "rows": [
+      {
+        "key": "smf",
+        "name": "SMF-28 standart fiber",
+        "alphaDbPerKm": 0.2,
+        "alphaDbPerM": 0.0002,
+        "floorDbPerMs": 40.844,
+        "maxHoldUs": 73.451,
+        "vsSmf": 1,
+        "note": "referans; Rayleigh saçılması taban"
+      },
+      {
+        "key": "ullFiber",
+        "name": "Ultra-düşük-kayıp silika",
+        "alphaDbPerKm": 0.14,
+        "alphaDbPerM": 0.00014,
+        "floorDbPerMs": 28.591,
+        "maxHoldUs": 104.93,
+        "vsSmf": 0.7,
+        "note": "rekor silika α; ×1.4 taban"
+      },
+      {
+        "key": "hollowCore",
+        "name": "Hollow-core NANF",
+        "alphaDbPerKm": 0.08,
+        "alphaDbPerM": 0.00008,
+        "floorDbPerMs": 23.977,
+        "maxHoldUs": 125.121,
+        "vsSmf": 0.59,
+        "note": "hava çekirdek: düşük α + v≈c; ×1.7 taban"
+      },
+      {
+        "key": "si3n4",
+        "name": "Si₃N₄ dalga kılavuzu (iyi)",
+        "alphaDbPerKm": 100,
+        "alphaDbPerM": 0.1,
+        "floorDbPerMs": 15778.947,
+        "maxHoldUs": 0.19,
+        "vsSmf": 386.32,
+        "note": "rekor 0.1 dB/m = 100 dB/km → ×386 DAHA KÖTÜ; kazancı ayak izi"
+      },
+      {
+        "key": "siWire",
+        "name": "Si tel dalga kılavuzu",
+        "alphaDbPerKm": 100000,
+        "alphaDbPerM": 100,
+        "floorDbPerMs": 7138095.238,
+        "maxHoldUs": 0,
+        "vsSmf": 174764.84,
+        "note": "1 dB/cm; depolama için kullanılamaz"
+      }
+    ]
+  },
+  "cryo": {
+    "rayleighFraction": 0.96,
+    "alphaReducibleByCryoPct": 4,
+    "floorAfterCryoDbPerMs": 40.03
+  },
+  "qmemory": {
+    "t2Ms": 50,
+    "writeReadDb": 3,
+    "phaseBoundHoldMs": 42,
+    "phaseBoundHoldVsFiberUs": 42000,
+    "regime": "faz/T2"
+  },
+  "synthesis": {
+    "steps": 5,
+    "holdUs": 30,
+    "medium": "Hollow-core NANF",
+    "floorDb": 0.72,
+    "totalDb": 0.87,
+    "survivalPct": 82,
+    "baselineSurvivalPct": 58
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
