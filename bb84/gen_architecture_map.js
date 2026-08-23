@@ -106,6 +106,8 @@ const DRILLS = [
     what: "Kararlılık sınırı rezonansı: dengeleme döngüsü doğal frekansında (f_r≈0,06 Hz) sürüldü. Bang-bang röle döngüsü kenetli — genlik büyümüyor, anahtarlama blok ritmine doyuyor (keskin Q-tepesi yok). Histerezis bandı geçiş yükünü sınırlıyor; 'ζ<1 ⇒ felaket' varsayımı ölçümle çürütüldü." },
   { f: "layer_stress_campaign.js", rep: "layer_stress.json",
     what: "Yedi katmanın hepsi uçtan uca kırılma noktasına kadar zorlandı: L1 fiber duvarı (~40 km), L2 atlama duvarı (30), L3 doygunlukta kenar aşımı yok, L4 QBER/sonlu-anahtar (ℓ asla negatif), L5 kabul eşiği bıçak sırtı, L6 ×10 talep, L7 churn. Hepsi zarifçe bozuluyor; çekirdek SHA-256 değişmedi. KME enc'te O(n)→O(1) açığı bulunup kapatıldı." },
+  { f: "landauer_choke_drill.js", rep: "landauer_choke.json",
+    what: "Radyatif bilgi tıkanması (THz FSO uydu hattı): naif düğüm gelen her biti soğuk belleğe yazıp silince ısınıp saf→karışık çöküyor. Landauer tabanı bağlayıcı değil (gerçek dağılımın ×5·10¹¹ altında). PhotonNet entropiyi ısıya değil IŞIĞA veriyor: reddi soğuğa yazmadan ele (sifting %50 sıcakta), tutulanı sinyal olarak dışa aktar (%50), girişi tahliye hızına kıs (geri-basınç) → saflık taban sabit. Gerçek k_B + motorun ölçülü oranları." },
 ];
 
 const CROSS = [
@@ -117,7 +119,7 @@ const CROSS = [
   {
     name: "Raporlama ve görselleştirme", col: "var(--k3)",
     what: "Her katmanın çıktısı için tek dosyalık, açık/karanlık modlu, palet doğrulamalı görseller ve istemci raporları.",
-    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
+    mods: ["client_network_report.js", "gen_client_report_html.js", "gen_entanglement_charts.js", "gen_memory_threshold_chart.js", "gen_qkd_flow_chart.js", "gen_attenuation_chart.js", "gen_qkd_limit_chart.js", "gen_network_routing_chart.js", "gen_qkd_rate_chart.js", "gen_controller_chart.js", "gen_continuous_chart.js", "gen_ceiling_chart.js", "gen_key_supply_chart.js", "gen_duty_cycle_chart.js", "gen_backpressure_chart.js", "gen_hysteresis_band_chart.js", "gen_collapse_drill_chart.js", "gen_state_poisoning_chart.js", "gen_async_sync_chart.js", "gen_resonance_chart.js", "gen_layer_stress_chart.js", "gen_landauer_chart.js", "gen_qkdnetsim_bridge_report_html.js", "gen_architecture_map.js"],
   },
 ];
 
@@ -278,7 +280,8 @@ ${LAYERS.map(L => `<tr><td><b>${L.id}</b> ${esc(L.name)}</td><td>${L.mods.length
 <summary>Bu seansın commit'leri (yeniden eskiye)</summary>
 <table><thead><tr><th>Commit</th><th>Ne</th></tr></thead><tbody>
 ${[
-    ["(bu commit)", "katman stres kampanyası — 7 katman kırılma noktasına; KME enc O(n)→O(1)"],
+    ["(bu commit)", "radyatif bilgi tıkanması — entropi ısıya değil ışığa; saflık sabit"],
+    ["aeaeae5", "katman stres kampanyası — 7 katman kırılma noktasına; KME enc O(n)→O(1)"],
     ["e794e03", "kararlılık sınırı rezonansı tatbikatı — röle döngüsü kenetli, felaket yok"],
     ["146b878", "katman haritası güncellendi — oturumun düzeltmeleri ve tatbikatları"],
     ["cb1a0c2", "asimetrik senkronizasyon tatbikatı — resync idempotensi açığı kapatıldı (merge)"],

@@ -1,0 +1,185 @@
+{
+  "generatedAt": "2026-08-23T12:18:26.151Z",
+  "checks": [
+    {
+      "name": "(A) LANDAUER TABANI BAĞLAYICI DEĞİL: gerçek dağılım ondan ~10 kat büyük",
+      "ok": true,
+      "detail": "k_B·T·ln2 = 2.87e-21 J @300K (bilinen 2,87×10⁻²¹ ✓) · @4K 3.83e-23 J. Gerçek işlem dağılımı 2.0e-11 J = Landauer'in ×5.2e+11 katı. Asıl duvar Landauer DEĞİL, soğutucu gücü vs gerçek dağılım"
+    },
+    {
+      "name": "(B1) NAİF DÜĞÜM: THz'de saf → karışık çöküyor (bilgi tıkanması)",
+      "ok": true,
+      "detail": "1G→T 4K/saflık 0.9094 · 10G→T 4K/saflık 0.9094 · 50G→T 4K/saflık 0.9094 · 100G→T 8K/saflık 0.6009 · 500G→T 40K/saflık 0.5 · 1000G→T 80K/saflık 0.5 · 5000G→T 400K/saflık 0.5 · 10000G→T 800K/saflık 0.5 — soğutucu 1W'ı aşan dağılım soğuk belleği ısıtıyor; saflık 500 Gbit/s'te %60 altına, en yüksek girişte 0.5 (tam karışık). Klasik Landauer tıkanması"
+    },
+    {
+      "name": "(B2) REDDİ SICAK DEDEKTÖRDE ELE: eleme soğuk yükü siliyor, Landauer bedeli yok",
+      "ok": true,
+      "detail": "motorda ölçülü baz-uyuşmazlığı %50: bu bitler SICAK dedektörde ölçülüp atılır, ısıları sıcak radyatörden gider (5.008W ≤ 500W bütçe). Soğuk kuantum belleğe hiç girmedikleri için SİLİNMEZLER — yazılmayan bitin Landauer bedeli yoktur"
+    },
+    {
+      "name": "(B3) GERİ-BASINÇ: soğuk-belleğe yazma hızı soğutucu gücüne kenetli (birikim yok)",
+      "ok": true,
+      "detail": "soğuk-yazma tavanı R_evac = 50.0 Gbit/s (= 1W ÷ 2e-11 J). 1000G→soğuk 1W · 5000G→soğuk 1W · 10000G→soğuk 1W — soğuk dağılım HER girişte ≤ 1W; giriş tavanı aşınca fazlası geri-basınçla ertelenir (ölçülü sınırlı), soğuk stage hiç birikmez"
+    },
+    {
+      "name": "(B4) ENTROPİYİ IŞIKLA DIŞA AKTAR: sinyal olarak çıkan bit, soğukta silinenden ×25+ fazla",
+      "ok": true,
+      "detail": "dışa aktarılan 24.96 Gbit/s (anahtar + duyurulan faz kestirimi, indiş hattından IŞIK) · soğukta silinen 1.00 Gbit/s (yalnız reset artığı ~%2). Oran ×25: entropi düğümden ağırlıkla SİNYAL olarak çıkıyor, yerel ısıya çevrilmiyor. 2. yasa aşılmıyor — erazür ZATEN yapılmıyor"
+    },
+    {
+      "name": "(B5) NET SONUÇ: PhotonNet saflığı TABANDA sabit tutuyor (naif çökerken)",
+      "ok": true,
+      "detail": "1G→PN 0.9094 · 10G→PN 0.9094 · 50G→PN 0.9094 · 100G→PN 0.9094 · 500G→PN 0.9094 · 1000G→PN 0.9094 · 5000G→PN 0.9094 · 10000G→PN 0.9094 — PhotonNet saflığı taban 0.909'te SABİT (soğuk stage 4K'da, girişten bağımsız); aynı en yüksek girişte naif 0.5 (tam karışık). Duvar 2. yasayı yenerek DEĞİL, erazürü hiç yapmadan geçildi: reddet-yazma + sinyalle-aktar + kıs"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — tatbikat çekirdeği yalnızca çağırdı"
+    }
+  ],
+  "engine": {
+    "totalRounds": 219481,
+    "siftDiscardFrac": 0.5008,
+    "keyFrac": 0.2497,
+    "peFrac": 0.2495,
+    "note": "baz-uyuşmazlığı ölçümde atılır (soğuk belleğe girmez); anahtar turu dışa aktarılır"
+  },
+  "landauer": {
+    "eLandAt300K": 2.870978885078724e-21,
+    "eLandAt4K": 3.8279718467716317e-23,
+    "eOpCold": 2e-11,
+    "opOverLandauer": 522000000000,
+    "knownRef300K": 2.87e-21
+  },
+  "sweep": {
+    "R_evacBps": 50000000000,
+    "rows": [
+      {
+        "Rin": 1000000000,
+        "dNaiveW": 0.02,
+        "tNaiveK": 4,
+        "purityNaive": 0.9094,
+        "coldWrittenBps": 499200000,
+        "dPnColdW": 0.01,
+        "tPnK": 4,
+        "purityPn": 0.9094,
+        "dWarmW": 0.001,
+        "warmOK": true,
+        "exportedBps": 124650240
+      },
+      {
+        "Rin": 10000000000,
+        "dNaiveW": 0.2,
+        "tNaiveK": 4,
+        "purityNaive": 0.9094,
+        "coldWrittenBps": 4992000000,
+        "dPnColdW": 0.0998,
+        "tPnK": 4,
+        "purityPn": 0.9094,
+        "dWarmW": 0.005,
+        "warmOK": true,
+        "exportedBps": 1246502400
+      },
+      {
+        "Rin": 50000000000,
+        "dNaiveW": 1,
+        "tNaiveK": 4,
+        "purityNaive": 0.9094,
+        "coldWrittenBps": 24960000000,
+        "dPnColdW": 0.4992,
+        "tPnK": 4,
+        "purityPn": 0.9094,
+        "dWarmW": 0.025,
+        "warmOK": true,
+        "exportedBps": 6232512000
+      },
+      {
+        "Rin": 100000000000,
+        "dNaiveW": 2,
+        "tNaiveK": 8,
+        "purityNaive": 0.6009,
+        "coldWrittenBps": 49920000000,
+        "dPnColdW": 0.9984,
+        "tPnK": 4,
+        "purityPn": 0.9094,
+        "dWarmW": 0.05,
+        "warmOK": true,
+        "exportedBps": 12465024000
+      },
+      {
+        "Rin": 500000000000,
+        "dNaiveW": 10,
+        "tNaiveK": 40,
+        "purityNaive": 0.5,
+        "coldWrittenBps": 50000000000,
+        "dPnColdW": 1,
+        "tPnK": 4,
+        "purityPn": 0.9094,
+        "dWarmW": 0.25,
+        "warmOK": true,
+        "exportedBps": 12485000000
+      },
+      {
+        "Rin": 1000000000000,
+        "dNaiveW": 20,
+        "tNaiveK": 80,
+        "purityNaive": 0.5,
+        "coldWrittenBps": 50000000000,
+        "dPnColdW": 1,
+        "tPnK": 4,
+        "purityPn": 0.9094,
+        "dWarmW": 0.501,
+        "warmOK": true,
+        "exportedBps": 12485000000
+      },
+      {
+        "Rin": 5000000000000,
+        "dNaiveW": 100,
+        "tNaiveK": 400,
+        "purityNaive": 0.5,
+        "coldWrittenBps": 50000000000,
+        "dPnColdW": 1,
+        "tPnK": 4,
+        "purityPn": 0.9094,
+        "dWarmW": 2.504,
+        "warmOK": true,
+        "exportedBps": 12485000000
+      },
+      {
+        "Rin": 10000000000000,
+        "dNaiveW": 200,
+        "tNaiveK": 800,
+        "purityNaive": 0.5,
+        "coldWrittenBps": 50000000000,
+        "dPnColdW": 1,
+        "tPnK": 4,
+        "purityPn": 0.9094,
+        "dWarmW": 5.008,
+        "warmOK": true,
+        "exportedBps": 12485000000
+      }
+    ]
+  },
+  "entropyRouting": {
+    "exportedAsSignalBps": 24960000000,
+    "erasedInColdBps": 1000000000,
+    "exportOverErase": 25
+  },
+  "baselinePurity": 0.9094,
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "params": {
+    "kB": 1.380649e-23,
+    "T_BASE": 4,
+    "T_DECOHERE": 15,
+    "P_COLD": 1,
+    "P_WARM": 500,
+    "E_OP_COLD": 2e-11,
+    "E_OP_WARM": 1e-12,
+    "DWELL_MS": 200,
+    "T2_0_MS": 1000
+  },
+  "allChecksPassed": true
+}
