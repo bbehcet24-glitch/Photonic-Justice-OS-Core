@@ -280,7 +280,7 @@ ${LAYERS.map(L => `<tr><td><b>${L.id}</b> ${esc(L.name)}</td><td>${L.mods.length
 <summary>Bu seansın commit'leri (yeniden eskiye)</summary>
 <table><thead><tr><th>Commit</th><th>Ne</th></tr></thead><tbody>
 ${[
-    ["(bu commit)", "radyatif bilgi tıkanması — entropi ısıya değil ışığa; saflık sabit"],
+    ["cdc0193", "radyatif bilgi tıkanması — entropi ısıya değil ışığa; saflık sabit"],
     ["aeaeae5", "katman stres kampanyası — 7 katman kırılma noktasına; KME enc O(n)→O(1)"],
     ["e794e03", "kararlılık sınırı rezonansı tatbikatı — röle döngüsü kenetli, felaket yok"],
     ["146b878", "katman haritası güncellendi — oturumun düzeltmeleri ve tatbikatları"],
