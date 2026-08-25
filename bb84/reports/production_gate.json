@@ -1,0 +1,115 @@
+{
+  "generatedAt": "2026-08-25T09:27:04.531Z",
+  "checks": [
+    {
+      "name": "(A) KLASİK KANAL MAC: çekirdek primitifi ZAYIF (tahrifat ~%41 kaçar), standart MAC ~%0",
+      "ok": true,
+      "detail": "çekirdek ClassicalAuthChannel._computeTag: tahrifat kaçırma %41.46 (bit-bit imul polinom hash, çift-katsayıda yüksek-konum çevirmeleri mod 2³² kaybolur) — aktif MITM uzlaşma mesajını %41.46 fark edilmeden değiştirir. Katman-içi GF(2⁶¹−1) polinom MAC: kaçırma %0 (gerçek Wegman-Carter). Kapı çekirdek primitifini BLOKLAR, standart MAC ister"
+    },
+    {
+      "name": "(B) YAN-KANAL MONİTÖRÜ: uyumsuzluk (QBER-görünmez) + casus alarmı; temiz hatta sessiz",
+      "ok": true,
+      "detail": "temiz hat: alarm yok ✓ · Faz 3 verim uyumsuzluğu (asimetri %25,6, QBER %2,8): \"verim-uyumsuzluğu/time-shift\" alarmı (QBER düşük olsa da yakalandı — sınırın körü olduğu yan kanal) · casus (QBER %26): \"eavesdrop/senkron\" alarmı"
+    },
+    {
+      "name": "(C) QRNG SAĞLIK KAPISI: mulberry32 REDDEDİLİR (tekrarlanabilir); crypto entropi uygun",
+      "ok": true,
+      "detail": "mulberry32: iki taze örnek AYNI dizi → deterministik/tekrarlanabilir (32-bit tohum kaba-kuvvetle kırılır, bkz. ibm_math_audit) → anahtar için UYGUNSUZ → UYGUNSUZ ✗ · crypto.randomBytes: taze örnekler farklı → uygun ✓ (ama ÜRETİM için sertifikalı DONANIM QRNG gerekir — bkz. kapı kriteri)"
+    },
+    {
+      "name": "(D) GO/NO-GO: sertleştirilmiş durum → YAZILIM KAPISI GEÇER; kalan engeller DONANIM",
+      "ok": true,
+      "detail": "sertleştirilmiş (standart MAC + monitör + crypto QRNG + ℓ>0@%2.8 + casus-iptal + ETSI): yazılım kriterleri GEÇTİ, engel yok. Kalan 2 DONANIM kriteri: Anahtar QRNG (donanım entropisi); Dedektör kalibrasyonu (gerçek donanım)"
+    },
+    {
+      "name": "(E) FAIL-CLOSED: tek bir güvenlik değişmezi bozulunca kapı BLOKLAR (üretime izin yok)",
+      "ok": true,
+      "detail": "zayıf MAC → BLOKLANDI (\"Klasik kanal kimlik doğrulama (MAC)\") · mulberry32 anahtar → BLOKLANDI (\"Anahtar QRNG (donanım entropisi)\") · ℓ≤0 → BLOKLANDI (\"Sonlu-anahtar güvenliği (gerçek QBER)\"). Kapı fail-closed: şüphede REDDEDER"
+    },
+    {
+      "name": "(F) DÜRÜST DONANIM SINIRI: yazılımın kapatamadığı kriterler 'hardware' işaretli (yeşile boyanmaz)",
+      "ok": true,
+      "detail": "kapı, yazılımın tek başına kapatamadığını AÇIKÇA ayırıyor: Anahtar QRNG (donanım entropisi); Dedektör kalibrasyonu (gerçek donanım) → \"hardware\". Verdict: \"YAZILIM KAPISI GEÇTİ — kalan engeller DONANIM (QRNG cihazı, dedektör kalibrasyonu)\". Kapı ÜRETİME HAZIR demiyor; gerçek QRNG cihazı + dedektör kalibrasyonu bekliyor"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — MAC düzeltmesi KATMANDA (strongTag), çekirdek sabit"
+    }
+  ],
+  "mac": {
+    "coreMissPct": 41.46,
+    "strongMissPct": 0
+  },
+  "monitor": {
+    "clean": true,
+    "mismatchAlarms": 1,
+    "eveAlarms": 1,
+    "mismatchType": "verim-uyumsuzluğu/time-shift",
+    "eveType": "eavesdrop/senkron"
+  },
+  "qrng": {
+    "mulberryFit": false,
+    "cryptoFit": true
+  },
+  "gateHardened": {
+    "pass": true,
+    "verdict": "YAZILIM KAPISI GEÇTİ — kalan engeller DONANIM (QRNG cihazı, dedektör kalibrasyonu)",
+    "blockers": 0,
+    "hardware": [
+      "Anahtar QRNG (donanım entropisi)",
+      "Dedektör kalibrasyonu (gerçek donanım)"
+    ],
+    "criteria": [
+      {
+        "name": "Klasik kanal kimlik doğrulama (MAC)",
+        "status": "pass",
+        "detail": "tahrifat kaçırma oranı %0 (gerçek MAC ~0). standart MAC"
+      },
+      {
+        "name": "Yan-kanal monitörü (verim-uyumsuzluğu)",
+        "status": "pass",
+        "detail": "dedektör asimetrisi + QBER canlı izleniyor"
+      },
+      {
+        "name": "Anahtar QRNG (donanım entropisi)",
+        "status": "hardware",
+        "detail": "CSPRNG uygun; ÜRETİM için sertifikalı donanım QRNG gerekir"
+      },
+      {
+        "name": "Sonlu-anahtar güvenliği (gerçek QBER)",
+        "status": "pass",
+        "detail": "ℓ>0 gerçek QBER %2.78'de"
+      },
+      {
+        "name": "Casus-iptal (QBER eşiği)",
+        "status": "pass",
+        "detail": "QBER > eşik → anahtar iptal; saat kurtarma casusu maskelemiyor"
+      },
+      {
+        "name": "ETSI 014 uyumu (KME)",
+        "status": "pass",
+        "detail": "vendor-neutral istemci uçtan uca geçti (Faz 0)"
+      },
+      {
+        "name": "Dedektör kalibrasyonu (gerçek donanım)",
+        "status": "hardware",
+        "detail": "afterpulsing/verim-uyumsuzluğu sayıları emülatörden; ÜRETİM gerçek dedektör verisiyle kalibrasyon gerektirir"
+      }
+    ]
+  },
+  "failClosed": {
+    "weakMac": true,
+    "mulberry": true,
+    "insecure": true
+  },
+  "hardwareBoundary": [
+    "Anahtar QRNG (donanım entropisi)",
+    "Dedektör kalibrasyonu (gerçek donanım)"
+  ],
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
