@@ -64,6 +64,9 @@ class TimeTagEmulator {
   constructor(opts = {}) {
     this.o = Object.assign({ pulses: 100000, periodPs: 1000, efficiency: 0.12, darkProb: 5e-4,
       jitterPs: 80, deadTimePs: 0, eDetect: 0.01, eavesdrop: false, physSeed: 1 }, opts);
+    // Bob saat kayması (Faz 2): tüm Bob zaman etiketlerine yuvaya bağlı bir
+    // offset ekler. Varsayılan yok (Faz 1 davranışı birebir korunur).
+    this.clockOffsetPs = opts.clockOffsetPs || (() => 0);
     this.qrng = opts.qrng || cryptoQrng();
     this.rnd = mulberry32(this.o.physSeed >>> 0);
   }
@@ -84,7 +87,7 @@ class TimeTagEmulator {
     for (let i = 0; i < o.pulses; i++) {
       const aB = this.qrng.bit() ? X : Z, aBit = this.qrng.bit();
       aliceBasis[i] = aB; aliceBit[i] = aBit;
-      const slotT = i * o.periodPs;
+      const slotT = i * o.periodPs + this.clockOffsetPs(i);   // Bob saat kayması dahil
       // Alice'in yolladığı foton durumu (casus varsa değiştirilir)
       let phB = aB, phBit = aBit;
       if (o.eavesdrop) {                                 // intercept-resend
