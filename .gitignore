@@ -5,3 +5,9 @@
 bb84/dist/
 
 node_modules/
+
+# QuKayDee gizli config + sertifikalar (A1)
+bb84/qukaydee.config.json
+qukaydee.config.json
+bb84/certs/
+certs/

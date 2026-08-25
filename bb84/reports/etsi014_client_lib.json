@@ -1,0 +1,31 @@
+{
+  "generatedAt": "2026-08-25T14:21:32.081Z",
+  "checks": [
+    {
+      "name": "Yerel KME mTLS ucu ayağa kalktı (loopback)",
+      "ok": true,
+      "detail": "https://localhost:9444 · route 'ANK-MASTER'"
+    },
+    {
+      "name": "(1) GET status — §6.1 Status şeması geçerli",
+      "ok": true,
+      "detail": "HTTP 200 · stored_key_count=8 · key_size=256 · KME=PhotonNet-KME-1"
+    },
+    {
+      "name": "(2) POST enc_keys — master N anahtar+key_ID alır, §6.2 Key container geçerli",
+      "ok": true,
+      "detail": "HTTP 200 · 3 anahtar · key_ID UUID, key base64/32 bayt"
+    },
+    {
+      "name": "(3) POST dec_keys — slave AYNI anahtarları key_ID ile çeker, master ile BİREBİR",
+      "ok": true,
+      "detail": "HTTP 200 · 3/3 · master.key === slave.key TÜM key_ID'lerde ✓"
+    },
+    {
+      "name": "Genelleştirilmiş istemci uçtan uca GEÇTİ (QuKayDee'ye config-hazır)",
+      "ok": true,
+      "detail": "master===slave 3/3 · lib runFlow tüm §6 kontrolleri geçti ✓ — QuKayDee'ye geçiş yalnız config (URL+sertifika) değişimi"
+    }
+  ],
+  "allChecksPassed": true
+}

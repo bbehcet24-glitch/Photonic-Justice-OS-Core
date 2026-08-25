@@ -1,0 +1,19 @@
+{
+  "_comment": "QuKayDee ETSI-014 config şablonu. Kopyala: cp qukaydee.config.example.json qukaydee.config.json ve ACCOUNT_ID + sertifika yollarını doldur. accountId, QuKayDee hesabındaki numaradır (URL'lerdeki acct-N ve CA dosya adındaki N).",
+  "accountId": "ACCOUNT_ID",
+  "serverCaPath": "./certs/account-ACCOUNT_ID-server-ca-qukaydee-com.crt",
+  "number": 3,
+  "size": null,
+  "master": {
+    "baseUrl": "https://kme-1.acct-ACCOUNT_ID.etsi-qkd-api.qukaydee.com",
+    "saeId": "sae-1",
+    "certPath": "./certs/sae-1.crt",
+    "keyPath": "./certs/sae-1.key"
+  },
+  "slave": {
+    "baseUrl": "https://kme-2.acct-ACCOUNT_ID.etsi-qkd-api.qukaydee.com",
+    "saeId": "sae-2",
+    "certPath": "./certs/sae-2.crt",
+    "keyPath": "./certs/sae-2.key"
+  }
+}
