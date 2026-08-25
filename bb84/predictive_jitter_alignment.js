@@ -130,4 +130,60 @@ function runAligned({ N, windowMs, skewSource, predict = true, q = 1e-4, r = 1.0
     finalOffset: +kf.b.toFixed(4), finalDrift: +kf.d.toFixed(5) };
 }
 
-module.exports = { JitterPredictor, makeSkewSource, runAligned };
+/**
+ * Bir q için ani yeniden-yönlendirme (offset sıçraması) sonrası TOPARLANMA
+ * ölçümü + dar-pencerede KARARLI-DURUM bedeli. odls_optimization'daki
+ * bias-variance dengesini kütüphaneye taşır.
+ * @returns {{q, recoverySteps, steadyDropPct}}
+ */
+function measureRecovery({ q = 1e-4, r = 1.0, window = 5, stepSize = 30, N = 6000,
+  stepAt = 3000, driftPerStep = 0.02, jitter = 1.5, seed = 41, tightWindow = 2 } = {}) {
+  function run(W) {
+    const kf = new JitterPredictor({ q, r });
+    const src = makeSkewSource({ driftPerStep, jitter, seed });
+    let rec = null; let ssDrop = 0, ssN = 0;
+    for (let k = 0; k < N; k++) {
+      const trueSkew = src(k) + (k >= stepAt ? stepSize : 0);
+      const res = Math.abs(trueSkew - kf.predict());
+      if (k >= stepAt && rec === null && k > stepAt + 1 && res < W) rec = k - stepAt;
+      if (k > N * 0.75) { ssN++; if (res > W) ssDrop++; }
+      kf.update(trueSkew);
+    }
+    return { rec, dropPct: 100 * ssDrop / ssN };
+  }
+  return { q, recoverySteps: run(window).rec, steadyDropPct: +run(tightWindow).dropPct.toFixed(2) };
+}
+
+/**
+ * targetSteps'e ULAŞAN en AZ agresif q'yu ÖLÇÜMLE bulur (sabit sayı YOK).
+ * En düşük q (en düşük kararlı-durum bedeli) tercih edilir. Hedef pratik
+ * model tabanının (~2 adım) altındaysa uyarır — daha ilerisi q'yu değil
+ * modeli (ivme durumu) değiştirmeyi gerektirir.
+ * @returns seçilen q + ölçülen metrikler + fizibilite bayrakları
+ */
+function calibrateQForSteps(targetSteps, { qGrid = [1e-5, 5e-5, 1e-4, 5e-4, 1e-3, 5e-3, 1e-2, 3e-2],
+  maxSteadyDropPct = 2, ...scenario } = {}) {
+  const measured = qGrid.map(q => measureRecovery({ q, ...scenario }));
+  // Hedefe ulaşan (adım ≤ target) VE bedeli kabul edilebilir olanlar.
+  const feasible = measured.filter(m => m.recoverySteps != null &&
+    m.recoverySteps <= targetSteps && m.steadyDropPct <= maxSteadyDropPct);
+  const modelFloorSteps = 2;   // sabit-hızlı Kalman: sıçrama sonrası drift için ≥2 ölçüm
+  if (feasible.length) {
+    const pick = feasible.reduce((a, b) => (a.q <= b.q ? a : b));   // en az agresif
+    return { targetSteps, recommendedQ: pick.q, achievedSteps: pick.recoverySteps,
+      steadyDropPct: pick.steadyDropPct, feasible: true,
+      belowModelFloor: targetSteps < modelFloorSteps, sweep: measured };
+  }
+  // Ulaşılamadıysa: en iyi çabayı (en az adım) döndür + bayrak.
+  const best = measured.filter(m => m.recoverySteps != null)
+    .reduce((a, b) => (a.recoverySteps <= b.recoverySteps ? a : b));
+  return { targetSteps, recommendedQ: best.q, achievedSteps: best.recoverySteps,
+    steadyDropPct: best.steadyDropPct, feasible: false,
+    belowModelFloor: targetSteps < modelFloorSteps,
+    reason: targetSteps < modelFloorSteps
+      ? `hedef ${targetSteps} < model tabanı ${modelFloorSteps} adım — modeli değiştir (ivme durumu)`
+      : `hedef ${targetSteps} adım ${maxSteadyDropPct}% bedel tavanında ulaşılamadı`,
+    sweep: measured };
+}
+
+module.exports = { JitterPredictor, makeSkewSource, runAligned, measureRecovery, calibrateQForSteps };

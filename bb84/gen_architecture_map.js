@@ -77,16 +77,16 @@ const LAYERS = [
   {
     id: "L5.5", name: "Tahminsel jitter hizalama", tag: "yeni · öngörücü",
     what: "Hatlar arası zamanlama fluluğunu (skew/drift/termal) çevrimiçi Kalman saat kestiricisiyle önceden öğrenip ön-beslemeli düzeltir — PTP/GPS disiplininin yerleşik tekniği. async_sync'in bulduğu canlı-kilit uçurumunu kaldırır: bir zaman-penceresi alıcısı bile drift altında %0 drop. Dürüst sınır: yalnız öngörülebilir yapıyı siler, saf jitter'da yapı uydurmaz.",
-    gives: ["JitterPredictor (constant-velocity Kalman)", "makeSkewSource", "runAligned (ön-besleme + artık ölçümü)"],
+    gives: ["JitterPredictor (constant-velocity Kalman)", "makeSkewSource", "runAligned (ön-besleme + artık ölçümü)", "measureRecovery + calibrateQForSteps (ölçülü q ayarı, sabit sayı yok)"],
     mods: [{ f: "predictive_jitter_alignment.js", r: "Kalman kestirici + hizalama" }],
     tests: [{ f: "predictive_jitter_test.js", rep: "predictive_jitter.json" }],
   },
   {
     id: "L5.6", name: "Kuantum geciktirme hattı (ODLS)", tag: "yeni · optik tampon",
     what: "Predictor'ın 9-adımlık geçiş evresinde pencereyi aşan paketleri düşürmek yerine recirculating fiber döngüde (2×2 anahtar) geçici DONDURUP toparlanınca bırakır. Ama bedava değil: fiberde ışığı tutmanın kaçınılmaz bedeli α·v=40,8 dB/ms — 3 dB bütçe ⇒ en çok ~73 μs. İki bütçe farklı ölçekte bağlar: μs fiber döngüde KAYIP, ms gerçek kuantum bellekte FAZ. Ayar: döngüyü pencereye eşle (n=1) → anahtar ek yükü en az. Sonuç: %100 zaman-aşımı kaybı → bütçesi ayarlı ~%42 insertion-loss; sadakat Bell üstünde. L5.5'in μs hızı ODLS'nin ön koşulu.",
-    gives: ["OpticalDelayLine (hold / lossBudget / phaseBudget / budget)", "bridgeTransient (geçiş köprüleme)", "tuneLoopForWindow (kayıp ayrışması: fiber tabanı + anahtar)", "MEDIA + mediumFloor (α·v taban karşılaştırması)", "holdForRecoverySteps (PJA adım → tutma)"],
+    gives: ["OpticalDelayLine (hold / lossBudget / phaseBudget / budget)", "bridgeTransient (geçiş köprüleme)", "tuneLoopForWindow (kayıp ayrışması: fiber tabanı + anahtar)", "MEDIA + mediumFloor (α·v taban karşılaştırması)", "provisionOdls (adım + ortam → tam tanı, fizibilite bayrağı)"],
     mods: [{ f: "optical_delay_line.js", r: "optik tampon + bütçe ayarı" }],
-    tests: [{ f: "optical_delay_line_test.js", rep: "optical_delay_line.json" }],
+    tests: [{ f: "optical_delay_line_test.js", rep: "optical_delay_line.json" }, { f: "odls_provision_test.js", rep: "odls_provision.json" }],
   },
   {
     id: "L6", name: "Anahtar tedariki ve geri-basınç", tag: "geçmiş budama",

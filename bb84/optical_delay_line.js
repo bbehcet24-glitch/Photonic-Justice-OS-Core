@@ -185,5 +185,40 @@ function bridgeTransient({ packets, recoverySteps, stepMs, odls, fInitial = 0.98
   };
 }
 
-module.exports = { OpticalDelayLine, bridgeTransient, tuneLoopForWindow,
+/**
+ * TAM PROVİZYON — iki kaldıracı tek çağrıda birleştirir: bir toparlanma
+ * penceresini (recoverySteps × stepMs) verilen ORTAMDA köprülemek için
+ * eşlenmiş döngüyü boyutlar, kayıp (fiber tabanı + anahtar) ve faz
+ * bütçelerini birlikte değerlendirir. odls_optimization tatbikatının
+ * bulgularını çalıştırılabilir bir operatör çağrısına dönüştürür.
+ *
+ * @returns tutma, döngü, kayıp dökümü, sağkalım, sadakat, bağlayan bütçe.
+ */
+function provisionOdls({ recoverySteps, stepMs, medium = "smf", passes = 1,
+  switchLossDb = 0.15, maxLossDb = 3, fThreshold = F_BELL, fInitial = 0.98, t2Ms = 1000 } = {}) {
+  const spec = typeof medium === "string" ? MEDIA[medium] : medium;
+  if (!spec) throw new Error("bilinmeyen ortam: " + medium);
+  const holdMs = holdForRecoverySteps(recoverySteps, stepMs);
+  const tune = tuneLoopForWindow(holdMs, { passes, switchLossDb,
+    attenuationDbPerKm: spec.alphaDbPerKm, vKmPerMs: spec.vKmPerMs, maxLossDb });
+  // Faz bütçesi: bu ortamın grup hızıyla bir ODLS örneği üzerinden ölç.
+  const odls = new OpticalDelayLine({ loopKm: tune.loopKm, switchLossDb, t2Ms,
+    attenuationDbPerKm: spec.alphaDbPerKm, vKmPerMs: spec.vKmPerMs });
+  const st = SW.bellState(fInitial, 0, 0, 1 - fInitial);
+  const held = odls.hold(st, passes);
+  const withinPhase = held.fidelity >= fThreshold;
+  const boundBy = !tune.withinBudget ? "kayıp"
+    : (!withinPhase ? "faz" : "ikisi de bütçede");
+  return {
+    medium: spec.name, recoverySteps, stepMs, holdUs: +(holdMs * 1000).toFixed(2),
+    loopKm: tune.loopKm, passes,
+    fiberFloorDb: tune.fiberFloorDb, switchOverheadDb: tune.switchOverheadDb, totalLossDb: tune.totalLossDb,
+    survival: tune.survival, survivalPct: +(100 * tune.survival).toFixed(1),
+    fidelity: held.fidelity, withinLossBudget: tune.withinBudget, withinPhaseBudget: withinPhase,
+    feasible: tune.withinBudget && withinPhase, boundBy,
+    maxHoldUsAtBudget: +(tune.maxHoldMsAtBudget * 1000).toFixed(2),
+  };
+}
+
+module.exports = { OpticalDelayLine, bridgeTransient, tuneLoopForWindow, provisionOdls,
   MEDIA, mediumFloor, holdForRecoverySteps, V_SILICA_KM_PER_MS, F_BELL, F_KEYDEATH };

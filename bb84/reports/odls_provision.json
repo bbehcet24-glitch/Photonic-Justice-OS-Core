@@ -1,0 +1,111 @@
+{
+  "generatedAt": "2026-08-25T04:23:24.982Z",
+  "checks": [
+    {
+      "name": "(A) provisionOdls SMF/9-adım L5.6 senaryosuyla birebir (~2,36 dB, ~%58)",
+      "ok": true,
+      "detail": "9 adım × 6 μs = 54 μs, eşlenmiş döngü 11.0278 km · kayıp 2.3556 dB (taban 2.2056 + anahtar 0.15) ⇒ sağkalım %58.1, sadakat 0.979974 · bağlayan: ikisi de bütçede"
+    },
+    {
+      "name": "(B) provisionOdls 5-adım × hollow-core sentezle birebir (~0,87 dB, ~%82)",
+      "ok": true,
+      "detail": "5 adım × hollow-core NANF → 30 μs, döngü 8.9913 km · kayıp 0.8693 dB ⇒ sağkalım %81.9 (SMF/9-adım %58.1'ten). İki gerçek kaldıraç yığılı"
+    },
+    {
+      "name": "(C) provisionOdls Si₃N₄ çip FİZİBİL DEĞİL — taban ×386, bütçe patlar",
+      "ok": true,
+      "detail": "aynı 5 adım Si₃N₄ çipte: kayıp 474 dB (fiber tabanı 473), bütçe-dışı ✗ — çip ayak izinde kazanır, kayıpta değil. provisionOdls bunu fizibilite bayrağıyla reddediyor"
+    },
+    {
+      "name": "(D) calibrateQForSteps(5): ÖLÇÜMLE ulaşılabilir, q sabit değil, bedel düşük",
+      "ok": true,
+      "detail": "5-adım hedefi için ölçülen en az agresif q = 0.0005 → 5 adım, dar-pencere bedeli %1.27. q sabit KODLANMADI — senaryoda taranıp seçildi"
+    },
+    {
+      "name": "(E) calibrateQForSteps(1): model tabanı altı → uyarır (q ile değil model ile çözülür)",
+      "ok": true,
+      "detail": "1-adım hedefi: hedef 1 < model tabanı 2 adım — modeli değiştir (ivme durumu) — en iyi çaba 2 adım. Sabit-hızlı Kalman sıçrama sonrası drift için ≥2 ölçüm ister; daha ilerisi modeli değiştirmeyi gerektirir"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası"
+    }
+  ],
+  "smf9": {
+    "medium": "SMF-28 standart fiber",
+    "recoverySteps": 9,
+    "stepMs": 0.006,
+    "holdUs": 54,
+    "loopKm": 11.0278,
+    "passes": 1,
+    "fiberFloorDb": 2.2056,
+    "switchOverheadDb": 0.15,
+    "totalLossDb": 2.3556,
+    "survival": 0.581359,
+    "survivalPct": 58.1,
+    "fidelity": 0.979974,
+    "withinLossBudget": true,
+    "withinPhaseBudget": true,
+    "feasible": true,
+    "boundBy": "ikisi de bütçede",
+    "maxHoldUsAtBudget": 73.45
+  },
+  "hollow5": {
+    "medium": "Hollow-core NANF",
+    "recoverySteps": 5,
+    "stepMs": 0.006,
+    "holdUs": 30,
+    "loopKm": 8.9913,
+    "passes": 1,
+    "fiberFloorDb": 0.7193,
+    "switchOverheadDb": 0.15,
+    "totalLossDb": 0.8693,
+    "survival": 0.818596,
+    "survivalPct": 81.9,
+    "fidelity": 0.979986,
+    "withinLossBudget": true,
+    "withinPhaseBudget": true,
+    "feasible": true,
+    "boundBy": "ikisi de bütçede",
+    "maxHoldUsAtBudget": 125.12
+  },
+  "si3n4_5": {
+    "medium": "Si₃N₄ dalga kılavuzu (iyi)",
+    "recoverySteps": 5,
+    "stepMs": 0.006,
+    "holdUs": 30,
+    "loopKm": 4.7337,
+    "passes": 1,
+    "fiberFloorDb": 473.3684,
+    "switchOverheadDb": 0.15,
+    "totalLossDb": 473.5184,
+    "survival": 0,
+    "survivalPct": 0,
+    "fidelity": 0.979986,
+    "withinLossBudget": false,
+    "withinPhaseBudget": true,
+    "feasible": false,
+    "boundBy": "kayıp",
+    "maxHoldUsAtBudget": 0.19
+  },
+  "calibrate5": {
+    "targetSteps": 5,
+    "recommendedQ": 0.0005,
+    "achievedSteps": 5,
+    "steadyDropPct": 1.27,
+    "feasible": true
+  },
+  "calibrate1": {
+    "targetSteps": 1,
+    "feasible": false,
+    "belowModelFloor": true,
+    "achievedSteps": 2,
+    "reason": "hedef 1 < model tabanı 2 adım — modeli değiştir (ivme durumu)"
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
