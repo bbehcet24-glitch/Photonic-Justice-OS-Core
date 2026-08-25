@@ -1,0 +1,75 @@
+{
+  "generatedAt": "2026-08-25T14:29:28.260Z",
+  "checks": [
+    {
+      "name": "(A) TAHRİFAT TESPİTİ: WC kanalı ~%0 kaçırır (çekirdek MAC %41)",
+      "ok": true,
+      "detail": "20000 denemede WC tahrifat kaçırma %0 (gerçek MAC ~2⁻⁶¹) vs çekirdek _computeTag %41.46. Aktif MITM artık uzlaşma mesajını fark edilmeden değiştiremiyor"
+    },
+    {
+      "name": "(B) SAHTECİLİK DİRENCİ: anahtarsız saldırgan geçerli tag üretemez",
+      "ok": true,
+      "detail": "10000 sahtecilik denemesi (saldırgan paylaşılan anahtarı bilmiyor) → 0 kabul (~2⁻⁶¹ beklenen ≈ 0). Wegman–Carter bilgi-teorik kimlik doğrulama"
+    },
+    {
+      "name": "(C) TEKRAR (REPLAY) KORUMASI: görülmüş (seq,mesaj,tag) reddedilir",
+      "ok": true,
+      "detail": "ilk teslim kabul ✓ · aynı seq tekrar → RED (\"replay (seq zaten görüldü)\"). Monoton seq + görülen küme replay'i engelliyor"
+    },
+    {
+      "name": "(D) TEK-SEFERLİK MASKE: her mesaj taze maske + monoton seq (maske tekrarı YOK)",
+      "ok": true,
+      "detail": "100 mesaj: seq monoton artıyor (0,1,2,…) ✓, maskeler benzersiz ✓. WC güvenliği maske tekrarına karşı hassas (tag_i⊕tag_j sızdırır); tasarım seq ile tekrarı fiziksel engelliyor"
+    },
+    {
+      "name": "(E) UÇTAN UCA AKIŞ: MITM'in çevirdiği tek mesaj yakalanır, kalanı doğrulanır",
+      "ok": true,
+      "detail": "500 uzlaşma mesajı · MITM #137'de bir biti çevirdi → YAKALANDI (1 red), kalan 499 mesaj doğrulandı. Kanal fail-closed: bozuk mesaj protokole geçmez"
+    },
+    {
+      "name": "(F) HAVUZ TÜKENMESİ: maske bitince kimliklendirme REDDEDİLİR (maske tekrarı yok)",
+      "ok": true,
+      "detail": "havuz 5 maske · 5 mesaj kimliklendirildi, 6.'da FAIL-CLOSED (\"kimlik doğrulama maske havuzu tükendi — FAIL-CLO…\"). Maske tekrarı yerine reddediyor — WC güvenliği korunuyor"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — düzeltme KATMANDA (authenticated_channel), çekirdek sabit"
+    }
+  ],
+  "tamper": {
+    "wcMissPct": 0,
+    "coreMissPct": 41.46,
+    "trials": 20000
+  },
+  "forgery": {
+    "accepted": 0,
+    "trials": 10000
+  },
+  "replay": {
+    "firstOk": true,
+    "replayRejected": true,
+    "reason": "replay (seq zaten görüldü)"
+  },
+  "oneTime": {
+    "monotonic": true,
+    "uniqueMasks": true,
+    "count": 100
+  },
+  "stream": {
+    "messages": 500,
+    "delivered": 499,
+    "caught": 1,
+    "tamperAt": 137
+  },
+  "poolExhaust": {
+    "poolSize": 5,
+    "sent": 5,
+    "threw": true
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
