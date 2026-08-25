@@ -1,0 +1,82 @@
+{
+  "generatedAt": "2026-08-25T16:05:45.498Z",
+  "checks": [
+    {
+      "name": "(A) İSTEMCİMİZ ↔ BİZİM KME: §6 akışı geçiyor (key_size 256), master===slave",
+      "ok": true,
+      "detail": "key_size 256 · 3/3 anahtar · master===slave ✓"
+    },
+    {
+      "name": "(B) İSTEMCİMİZ ↔ BAĞIMSIZ REFERANS KME: farklı satıcı/key_size'a UYUM sağlıyor (vendor-neutral)",
+      "ok": true,
+      "detail": "bağımsız KME (vendor=\"reference-clean-room\", key_size 128, farklı rota şeması) · istemci status'tan key_size okuyup uyum sağladı, 3/3 master===slave ✓ — istemci KENDİ sunucumuza bağlı DEĞİL, standarda bağlı"
+    },
+    {
+      "name": "(C) UYUMLULUK PROBLARI ↔ BİZİM KME: kenar/hata durumları spec-uyumlu",
+      "ok": true,
+      "detail": "status GET 200 · number=0→400 · number=99999→400 · bilinmeyen key_ID→400 · boş key_IDs→400 · bilinmeyen uç→404 (hepsi beklenen)"
+    },
+    {
+      "name": "(D) AYNI PROBLAR ↔ REFERANS KME: bağımsız KME de aynı spec davranışını gösteriyor",
+      "ok": true,
+      "detail": "status GET 200 · number=0→400 · number=99999→400 · bilinmeyen key_ID→400 · boş key_IDs→400 · bilinmeyen uç→404 — iki KME hata davranışında hemfikir"
+    },
+    {
+      "name": "(E) İNTEROP MATRİSİ: her iki yön × iki bağımsız KME çalışıyor",
+      "ok": true,
+      "detail": "istemci↔bizim ✓ · istemci↔referans ✓ · problar↔bizim ✓ · problar↔referans ✓. Ne istemcimiz kendi sunucumuza, ne KME'miz kendi istemcimize bağlı — üçü de STANDARDA bağlı"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… — referans KME çekirdeği require ETMEZ (gerçekten bağımsız)"
+    }
+  ],
+  "ourFlow": {
+    "passed": true,
+    "keySize": 256,
+    "match": {
+      "requested": 3,
+      "delivered": 3,
+      "allMatch": true
+    }
+  },
+  "refFlow": {
+    "passed": true,
+    "keySize": 128,
+    "vendor": "reference-clean-room",
+    "match": {
+      "requested": 3,
+      "delivered": 3,
+      "allMatch": true
+    }
+  },
+  "ourProbes": {
+    "statusGet": 200,
+    "numberZero": 400,
+    "numberOver": 400,
+    "unknownKeyId": 400,
+    "emptyKeyIds": 400,
+    "unknownPath": 404
+  },
+  "refProbes": {
+    "statusGet": 200,
+    "numberZero": 400,
+    "numberOver": 400,
+    "unknownKeyId": 400,
+    "emptyKeyIds": 400,
+    "unknownPath": 404
+  },
+  "matrix": {
+    "clientVsOur": true,
+    "clientVsRef": true,
+    "probesVsOur": true,
+    "probesVsRef": true,
+    "interop": true
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
