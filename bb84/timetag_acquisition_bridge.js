@@ -67,6 +67,12 @@ class TimeTagEmulator {
     // Bob saat kayması (Faz 2): tüm Bob zaman etiketlerine yuvaya bağlı bir
     // offset ekler. Varsayılan yok (Faz 1 davranışı birebir korunur).
     this.clockOffsetPs = opts.clockOffsetPs || (() => 0);
+    // Faz 3 gerçek dedektör kusurları (varsayılan KAPALI → Faz 1/2 birebir):
+    //   afterpulseProb — bir tıklamadan sonraki kapıda sahte afterpulse olasılığı
+    //   detEff — dedektör başına GÖRECELİ verim [H,V,D,A] (uyumsuzluk)
+    this.afterpulseProb = opts.afterpulseProb || 0;
+    this.detEff = opts.detEff || [1, 1, 1, 1];
+    this.hasEffMismatch = this.detEff.some(e => e !== 1);
     this.qrng = opts.qrng || cryptoQrng();
     this.rnd = mulberry32(this.o.physSeed >>> 0);
   }
@@ -79,7 +85,8 @@ class TimeTagEmulator {
     const aliceBasis = new Uint8Array(o.pulses), aliceBit = new Uint8Array(o.pulses);
     const events = [];                                   // {tPs, det}
     const lastClickPs = [-1e18, -1e18, -1e18, -1e18];    // ölü zaman izleme
-    let darkClicks = 0, signalClicks = 0;
+    let darkClicks = 0, signalClicks = 0, afterpulses = 0;
+    const firedPrev = [false, false, false, false];       // afterpulsing durumu
     const tryClick = (det, tPs) => {
       if (tPs - lastClickPs[det] < o.deadTimePs) return false;  // ölü zaman
       lastClickPs[det] = tPs; events.push({ tPs, det }); return true;
@@ -88,6 +95,17 @@ class TimeTagEmulator {
       const aB = this.qrng.bit() ? X : Z, aBit = this.qrng.bit();
       aliceBasis[i] = aB; aliceBit[i] = aBit;
       const slotT = i * o.periodPs + this.clockOffsetPs(i);   // Bob saat kayması dahil
+      const firedThis = [false, false, false, false];
+      // AFTERPULSING (Faz 3): önceki kapıda ateşleyen dedektör bu kapıda
+      // sahte bir tıklama üretebilir — sinyalle korelasyonsuz → hata katkısı.
+      if (this.afterpulseProb > 0) {
+        for (let d = 0; d < 4; d++) {
+          if (firedPrev[d] && this.rnd() < this.afterpulseProb) {
+            const t = slotT + this._gauss(o.jitterPs);
+            if (tryClick(d, t)) { afterpulses++; firedThis[d] = true; }
+          }
+        }
+      }
       // Alice'in yolladığı foton durumu (casus varsa değiştirilir)
       let phB = aB, phBit = aBit;
       if (o.eavesdrop) {                                 // intercept-resend
@@ -101,19 +119,26 @@ class TimeTagEmulator {
         let bBit;
         if (bB === phB) { bBit = (this.rnd() < o.eDetect) ? (phBit ^ 1) : phBit; }  // uyumlu baz + hizasızlık
         else { bBit = this.rnd() < 0.5 ? 1 : 0; }        // uyumsuz baz → rastgele
-        const t = slotT + this._gauss(o.jitterPs);
-        if (tryClick(detOf(bB, bBit), t)) signalClicks++;
+        const det = detOf(bB, bBit);
+        // VERİM UYUMSUZLUĞU (Faz 3): dedektör başına göreceli verim < 1 ise
+        // bu tıklama ek olarak elenebilir (dedektörler eşit verimli değil).
+        const accepted = !this.hasEffMismatch || this.rnd() < this.detEff[det];
+        if (accepted) {
+          const t = slotT + this._gauss(o.jitterPs);
+          if (tryClick(det, t)) { signalClicks++; firedThis[det] = true; }
+        }
       }
       // Karanlık sayımlar (her dedektör bağımsız)
       for (let d = 0; d < 4; d++) {
         if (this.rnd() < o.darkProb) {
           const t = slotT + (this.rnd() - 0.5) * o.periodPs;  // kapı içinde rastgele
-          if (tryClick(d, t)) darkClicks++;
+          if (tryClick(d, t)) { darkClicks++; firedThis[d] = true; }
         }
       }
+      for (let d = 0; d < 4; d++) firedPrev[d] = firedThis[d];   // afterpulsing için
     }
     return { aliceBasis, aliceBit, events, pulses: o.pulses, periodPs: o.periodPs,
-      darkClicks, signalClicks };
+      darkClicks, signalClicks, afterpulses };
   }
 }
 
@@ -165,7 +190,7 @@ function acquire({ windowPs, ...emuOpts }) {
   const s = sift(acq, co.slots);
   return { ...s, windowPs: windowPs ?? acq.periodPs * 0.3,
     admitted: co.admitted, rejected: co.rejected,
-    darkClicks: acq.darkClicks, signalClicks: acq.signalClicks,
+    darkClicks: acq.darkClicks, signalClicks: acq.signalClicks, afterpulses: acq.afterpulses || 0,
     secure: s.qber < QBER_ABORT };
 }
 

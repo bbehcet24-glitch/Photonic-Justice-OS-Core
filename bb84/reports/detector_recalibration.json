@@ -1,0 +1,114 @@
+{
+  "generatedAt": "2026-08-25T07:04:51.914Z",
+  "checks": [
+    {
+      "name": "(A) İDEAL vs GERÇEK: gerçek dedektör kusurları QBER'i ideal tahminin ÜSTÜNE çıkarır",
+      "ok": true,
+      "detail": "idealize model QBER %1.457 → gerçek dedektör (afterpulsing + verim uyumsuzluğu) QBER %2.781 (×1.9). İdealize kalibrasyon İYİMSERDİ — Faz 1/2'nin sayıları optimistik"
+    },
+    {
+      "name": "(B) KUSUR AYRIŞTIRMASI: QBER = hizasızlık + karanlık + afterpulsing (baskın); uyumsuzluk ~0",
+      "ok": true,
+      "detail": "hizasızlık %1.064 + karanlık %0.354 + afterpulsing %1.276 ≈ gerçek %2.781. Afterpulsing, hizasızlık kadar (hatta daha) BASKIN bir gerçek-dedektör katkısı; verim uyumsuzluğu QBER'e %0 (~0)"
+    },
+    {
+      "name": "(C) SONLU-ANAHTAR REKALİBRASYONU: gerçek QBER güvenli-anahtar oranını (ℓ/n) düşürür",
+      "ok": true,
+      "detail": "n=1e+4: ℓ/n %52.36→%38.86 · n=1e+5: ℓ/n %67.84→%53.04 · n=1e+6: ℓ/n %73.47→%58 — çekirdek sonlu-anahtar kanıtına gerçek QBER beslenince güvenli oran n=10⁶'da %73.47→%58 (−15.47 puan). Hâlâ güvenli ama marj küçüldü"
+    },
+    {
+      "name": "(D) VERİM UYUMSUZLUĞU: QBER'e ~0 katkı AMA anahtar yanlılığı + dedektör asimetrisi (QBER-sınırı KÖR)",
+      "ok": true,
+      "detail": "verim uyumsuzluğu QBER'e %0 (~0) ekliyor → sonlu-anahtar sınırı bunu GÖRMEZ. Ama elenmiş anahtar YANLI: bit-1 oranı %43.9 (ideal %49.9), dedektör algılama asimetrisi %25.6 (eşit dedektörde %2.2). Bu bir YAN KANAL (verim-uyumsuzluğu/time-shift saldırısı) — rekalibrasyon bunu AYRI gözlemlenebilir olarak izlemeli"
+    },
+    {
+      "name": "(E) REKALİBRE MARJ: güvenlik uçurumuna (ℓ→0) mesafe gerçek QBER'de daha DAR",
+      "ok": true,
+      "detail": "güvenlik uçurumu (ℓ→0) QBER ≈ %9.59 (n=10⁶). İdeal QBER'in marjı 8.1 puan; gerçek QBER'in marjı 6.8 puan — dürüst güvenlik payı 16% daha küçük"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — yalnız QKDSecurityProof.secureKeyLength çağrıldı"
+    }
+  ],
+  "decomposition": {
+    "misalignment": 1.064,
+    "dark": 0.354,
+    "afterpulse": 1.276,
+    "mismatch": 0,
+    "idealQber": 1.457,
+    "realQber": 2.781
+  },
+  "finiteKey": [
+    {
+      "n": 10000,
+      "idealCompR": 52.36,
+      "idealEll": 5236,
+      "idealSecure": true,
+      "realCompR": 38.86,
+      "realEll": 3886,
+      "realSecure": true,
+      "lossPts": 13.5
+    },
+    {
+      "n": 100000,
+      "idealCompR": 67.84,
+      "idealEll": 67842,
+      "idealSecure": true,
+      "realCompR": 53.04,
+      "realEll": 53042,
+      "realSecure": true,
+      "lossPts": 14.8
+    },
+    {
+      "n": 1000000,
+      "idealCompR": 73.47,
+      "idealEll": 734687,
+      "idealSecure": true,
+      "realCompR": 58,
+      "realEll": 579962,
+      "realSecure": true,
+      "lossPts": 15.47
+    }
+  ],
+  "mismatch": {
+    "qberContribution": 0,
+    "keyBiasPct": 43.9,
+    "idealBiasPct": 49.9,
+    "detCountsMismatch": [
+      5530,
+      4398,
+      4844,
+      4112
+    ],
+    "detCountsEqual": [
+      5401,
+      5281,
+      5390,
+      5311
+    ],
+    "asymmetryPct": 25.6,
+    "equalAsymmetryPct": 2.2
+  },
+  "margin": {
+    "qberCliffPct": 9.59,
+    "idealMarginPts": 8.13,
+    "realMarginPts": 6.81
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "params": {
+    "pulses": 300000,
+    "afterpulseProb": 0.03,
+    "detEff": [
+      1,
+      0.8,
+      0.9,
+      0.75
+    ]
+  },
+  "allChecksPassed": true
+}
