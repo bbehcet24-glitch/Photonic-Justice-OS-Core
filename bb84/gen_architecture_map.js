@@ -101,7 +101,7 @@ const LAYERS = [
     what: "Üretilen anahtarın sistem dışına taşınması: ETSI GS QKD 014 KME sunucusu, IBM mTLS istemcisi, QKDNetSim trafik köprüsü. KME deposu artık key_ID→Map indeksi (dec O(n)→O(1), ×455) ve içe aktarım birleştirmeli (resync uçuştaki teslimi ezmiyor, çift teslim yok).",
     gives: ["ETSI 014 enc_keys / dec_keys (Map indeksi)", "loadFromExport (idempotent/merge)", "mTLS + sertifika rotasyonu/iptali", "QKDNetSim profil köprüsü"],
     mods: [{ f: "etsi014_kme_server.js", r: "KME sunucusu (Map + merge)" }, { f: "mock_ibm_client.js", r: "IBM mTLS istemcisi" }, { f: "qkdnetsim_traffic_bridge.js", r: "QKDNetSim köprüsü" }, { f: "build_production_server.js", r: "üretim derlemesi" }],
-    tests: [{ f: "buffer_starvation_test.js" }, { f: "ibm_math_audit.js" }],
+    tests: [{ f: "buffer_starvation_test.js" }, { f: "ibm_math_audit.js" }, { f: "etsi014_faz0_client.js", rep: "etsi014_faz0.json" }],
   },
 ];
 

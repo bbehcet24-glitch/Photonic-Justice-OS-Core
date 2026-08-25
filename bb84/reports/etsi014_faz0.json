@@ -1,0 +1,68 @@
+{
+  "generatedAt": "2026-08-25T05:01:45.279Z",
+  "endpoint": "https://localhost:9443",
+  "checks": [
+    {
+      "name": "KME mTLS sunucusu ayağa kalktı (ETSI-014 ucu dinliyor)",
+      "ok": true,
+      "detail": "https://localhost:9443 · keystore route 'ANK-MASTER' · 8 anahtar yüklü"
+    },
+    {
+      "name": "(1) GET STATUS: ETSI-014 §6.1 Status şeması geçerli, anahtar sayısı raporlanıyor",
+      "ok": true,
+      "detail": "HTTP 200 · stored_key_count=8 · key_size=256 · source_KME=PhotonNet-KME-1 · tüm zorunlu alanlar var/tipli"
+    },
+    {
+      "name": "(2) POST enc_keys: master N anahtar + key_ID alır, Key container §6.2 şeması geçerli",
+      "ok": true,
+      "detail": "HTTP 200 · 3 anahtar · key_ID'ler UUID, key'ler base64/32 bayt · ör. 876e907d…"
+    },
+    {
+      "name": "(3) POST dec_keys: slave AYNI anahtarları key_ID ile çeker — master ile BİREBİR eşleşiyor",
+      "ok": true,
+      "detail": "HTTP 200 · 3/3 anahtar · master.key === slave.key TÜM key_ID'lerde ✓ — iki-taraflı ETSI-014 teslim garantisi sağlandı"
+    },
+    {
+      "name": "(4) HATA: bilinmeyen key_ID teslim edilmez (spec-uyumlu ret)",
+      "ok": true,
+      "detail": "bilinmeyen key_ID → HTTP 400 (\"key_ID bulunamadı (rota=ANK-MASTER): 973b1baa-8995-49f8-a7a3-b30cc6927f40\") — var olmayan anahtar servis edilmiyor"
+    },
+    {
+      "name": "(5) HATA: number > 128 (max_key_per_request) → HTTP 400 (sınır dayatılıyor)",
+      "ok": true,
+      "detail": "number=999 → HTTP 400 (\"'number' 1-128 aralığında bir tam sayı olmalı (max_key_per_request)\") — max_key_per_request sınırı dayatılıyor"
+    },
+    {
+      "name": "(6) TEK-SEFERLİK TESLİM: teslim edilen anahtar tüketilir, tekrar servis edilmez (anahtar tekrar-kullanımı önlenir)",
+      "ok": true,
+      "detail": "zaten teslim edilmiş key_ID tekrar dec_keys → HTTP 400 (\"key_ID bulunamadı (rota=ANK-MASTER): 876e907d-b943-4c78-b06f-25f8b3f92c89\") — KME anahtarı tesliminde tüketiyor (one-time delivery). Bu güvenlik-doğru: anahtar tekrar-kullanımı bir açık olurdu. Uzlaşım: ağ kaybında slave anahtarı yeniden alamaz (güvenlik ↔ güvenilirlik dengesi — gerçek dağıtımlarda uygulama katmanında ele alınır)"
+    }
+  ],
+  "status": {
+    "source_KME_ID": "PhotonNet-KME-1",
+    "target_KME_ID": "PhotonNet-KME-1",
+    "master_SAE_ID": "SAE-MASTER",
+    "slave_SAE_ID": "SAE-ANK",
+    "key_size": 256,
+    "stored_key_count": 8,
+    "max_key_count": 100000,
+    "max_key_per_request": 128,
+    "max_key_size": 4096,
+    "min_key_size": 8,
+    "max_SAE_ID_count": 0,
+    "status_extension": {
+      "photonnet_note": "Bu KME yalnızca CascadeReconciliation.reconcile() ile residualErrors=0 doğrulanmış VE QKDSecurityProof.secureKeyLengthWithMu() ile ℓ>0 finite-key-kanıtlı bloklardan üretilmiş anahtarları servis eder."
+    }
+  },
+  "keyMatch": {
+    "requested": 3,
+    "delivered": 3,
+    "allMatch": true
+  },
+  "serverLogTail": [
+    "[KME] '/tmp/faz0_keystore.json' içe aktarıldı — rotalar: ANK-MASTER:8",
+    "[KME] ETSI GS QKD 014 referans sunucusu dinliyor: https://localhost:9443 — mod: https (GERÇEK mTLS ETKİN — istemciler CA-imzalı sertifika SUNMAK ZORUNDA)"
+  ],
+  "qukaydeeNote": "Aynı istemci gerçek QuKayDee'ye: ENDPOINT (host/port) + istemci sertifikası değişimi. PhotonNet KME'si burada standart ETSI-014 ucu olarak kullanıldı (hesap gerektirmeden, donanımsız).",
+  "allChecksPassed": true
+}
