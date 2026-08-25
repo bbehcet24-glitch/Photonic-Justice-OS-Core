@@ -1,0 +1,63 @@
+{
+  "generatedAt": "2026-08-25T15:41:36.962Z",
+  "checks": [
+    {
+      "name": "(A) ETSI-014 TESLİM: master ve slave AYNI QKD anahtarını key_ID ile alır",
+      "ok": true,
+      "detail": "key_ID e3350d04… · master.key === slave.key ✓ · 32 bayt (256-bit) PSK olarak hazır"
+    },
+    {
+      "name": "(B) TLS OTURUMU: QKD anahtarı PSK olarak gerçek TLS el sıkışmasını kuruyor, şifreli yük yankılanıyor",
+      "ok": true,
+      "detail": "TLSv1.2 · cipher ECDHE-PSK-CHACHA20-POLY1305 (AEAD) · şifreli yük gidip yankı olarak döndü ✓ — oturumun kökü QKD-teslim anahtarı"
+    },
+    {
+      "name": "(C) YANLIŞ ANAHTAR REDDİ: QKD anahtarı olmayan istemci el sıkışmayı GEÇEMEZ",
+      "ok": true,
+      "detail": "yanlış PSK ile istemci → el sıkışma BAŞARISIZ (\"sunucu TLS hatası: C07C8C33357F0000:error:0A…\"). Güvenliğin kökü gerçekten QKD anahtarı — anahtar olmadan oturum kurulamıyor"
+    },
+    {
+      "name": "(D) HİBRİT: ECDHE-PSK → efemer ECDHE ⊕ QKD PSK (ikisinden biri güvenliyse ayakta)",
+      "ok": true,
+      "detail": "cipher ECDHE-PSK-CHACHA20-POLY1305: efemer ECDHE ileri-gizlilik + QKD PSK birlikte. Klasik DH kırılsa QKD korur; QKD ele geçse ECDHE korur — QKD-KEM hibrit modeli"
+    },
+    {
+      "name": "(E) ANAHTAR TEL ÜSTÜNDE DEĞİL: pasif dinleyici ham QKD anahtarını GÖRMÜYOR",
+      "ok": true,
+      "detail": "pasif dinleyici 697 bayt el sıkışma kaydetti; ham 32-baytlık QKD anahtarı bu baytlarda YOK (yok ✓). PSK-TLS yalnız kimlik dizgesi + türetim gönderir, anahtarı değil"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — TLS/PSK katmanda, çekirdek sabit"
+    }
+  ],
+  "delivery": {
+    "key_ID": "e3350d04",
+    "same": true,
+    "pskBytes": 32
+  },
+  "tls": {
+    "ok": true,
+    "cipher": "ECDHE-PSK-CHACHA20-POLY1305",
+    "protocol": "TLSv1.2",
+    "echoed": true
+  },
+  "wrongKey": {
+    "ok": false,
+    "error": "sunucu TLS hatası: C07C8C33357F0000:error:0A000119:SSL routines:tls_get_more_records:decryption failed or bad record mac:../deps/openssl/openssl/ssl/record/methods/tls_common.c:868:\n"
+  },
+  "hybrid": {
+    "cipher": "ECDHE-PSK-CHACHA20-POLY1305",
+    "ecdhePsk": true
+  },
+  "wire": {
+    "recordedBytes": 697,
+    "keyOnWire": false
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
