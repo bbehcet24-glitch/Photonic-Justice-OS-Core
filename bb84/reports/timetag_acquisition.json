@@ -1,0 +1,142 @@
+{
+  "generatedAt": "2026-08-25T05:30:02.097Z",
+  "checks": [
+    {
+      "name": "(A) TEMİZ HAT: QBER optik hizasızlık tabanına (eDetect ~%1) oturuyor, anahtar güvenli",
+      "ok": true,
+      "detail": "QBER %1.02 ≈ eDetect %1 (az karanlıkla taban) · 8762 elenmiş bit · güvenli (QBER < %11 eşik). QBER modelin fiziksel hizasızlık parametresinden türedi"
+    },
+    {
+      "name": "(B) QBER FİZİKTEN GELİR: karanlık sayım ↑ → QBER öngörülebilir ↑ (sabit kodlu değil)",
+      "ok": true,
+      "detail": "0.0001→%1.03 · 0.0005→%1.06 · 0.001→%1.46 · 0.002→%1.98 · 0.004→%2.97 · 0.008→%5.1 — karanlık sayım oranıyla QBER %1.03→%5.1 yükseliyor. QBER bir sabit değil; dedektör fiziğinin (karanlık sayım) ölçülen sonucu"
+    },
+    {
+      "name": "(C) KOİNSİDANS PENCERESİ: genişledikçe verim ↑ AMA QBER ↑ (karanlık kabulü) — gerçek uzlaşım",
+      "ok": true,
+      "detail": "60ps: %1.62/QBER%2.5 · 120ps: %3.04/QBER%2.37 · 200ps: %4.58/QBER%2.69 · 300ps: %5.66/QBER%2.97 · 500ps: %6.31/QBER%3.75 · 800ps: %6.54/QBER%5.22 — dar pencere karanlığı dışlar (QBER↓) ama gerçek koinsidansı da keser (verim↓); geniş pencere tersine. Optimum ortada — bütçe ayarı gibi"
+    },
+    {
+      "name": "(D) CASUS YAKALANIR: intercept-resend → QBER ~%25 (BB84 imzası) → eşiği aşar → anahtar İPTAL",
+      "ok": true,
+      "detail": "intercept-resend casusu → QBER %26.2 (BB84 teorik ~%25 imzası) · %11 eşiğini aşıyor → güvenli=false (anahtar İPTAL). Köprü gerçekçi veri altında QKD'nin ölçünce-bozulma güvenliğini koruyor"
+    },
+    {
+      "name": "(E) QRNG SEAM: Alice baz/bit enjekte edilebilir kaynaktan (mulberry32 DEĞİL); QBER RNG'den bağımsız",
+      "ok": true,
+      "detail": "üç farklı QRNG kaynağı (tohumlu-101/202 + crypto.randomBytes) → QBER %1.26/%0.98/%1.13 (yayılım %0.28). QBER RNG seçiminden DEĞİL fizikten geliyor. Anahtar seçimi crypto entropiden (üretimde donanım QRNG buraya takılır); mulberry32 yalnız fiziksel gürültü için"
+    },
+    {
+      "name": "(F) FAZ 0 KÖPRÜSÜ: distile bitler KME route export biçimine paketlenip ETSI-014 ucuna takılabiliyor",
+      "ok": true,
+      "detail": "8762 elenmiş bit → 34 × 256-bit KME anahtarı (routes.ANK-MASTER[]) · key_ID UUID, key base64/32 bayt — Faz 0 KME loadFromExport biçimiyle birebir. (NOT: gerçek akışta önce L4 EC + PA çalışır; bu BİÇİM köprüsünü gösterir)"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — köprü bağımsız L(acq), yalnız mulberry32 fizik için"
+    }
+  ],
+  "clean": {
+    "qber": 1.02,
+    "siftYield": 4.38,
+    "sifted": 8762,
+    "secure": true,
+    "eDetectPct": 1
+  },
+  "darkSweep": [
+    {
+      "darkProb": 0.0001,
+      "qber": 1.03,
+      "darkClicks": 69,
+      "secure": true
+    },
+    {
+      "darkProb": 0.0005,
+      "qber": 1.06,
+      "darkClicks": 359,
+      "secure": true
+    },
+    {
+      "darkProb": 0.001,
+      "qber": 1.46,
+      "darkClicks": 797,
+      "secure": true
+    },
+    {
+      "darkProb": 0.002,
+      "qber": 1.98,
+      "darkClicks": 1550,
+      "secure": true
+    },
+    {
+      "darkProb": 0.004,
+      "qber": 2.97,
+      "darkClicks": 3131,
+      "secure": true
+    },
+    {
+      "darkProb": 0.008,
+      "qber": 5.1,
+      "darkClicks": 6292,
+      "secure": true
+    }
+  ],
+  "windowSweep": [
+    {
+      "windowPs": 60,
+      "qber": 2.5,
+      "siftYield": 1.62
+    },
+    {
+      "windowPs": 120,
+      "qber": 2.37,
+      "siftYield": 3.04
+    },
+    {
+      "windowPs": 200,
+      "qber": 2.69,
+      "siftYield": 4.58
+    },
+    {
+      "windowPs": 300,
+      "qber": 2.97,
+      "siftYield": 5.66
+    },
+    {
+      "windowPs": 500,
+      "qber": 3.75,
+      "siftYield": 6.31
+    },
+    {
+      "windowPs": 800,
+      "qber": 5.22,
+      "siftYield": 6.54
+    }
+  ],
+  "eve": {
+    "qber": 26.18,
+    "secure": false,
+    "thresholdPct": 11
+  },
+  "qrngSeam": {
+    "seed101": 1.26,
+    "seed202": 0.98,
+    "crypto": 1.13,
+    "spread": 0.28
+  },
+  "kmeBridge": {
+    "keys": 34,
+    "sample": "8818b96c"
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "params": {
+    "pulses": 200000,
+    "efficiency": 0.12,
+    "eDetectPct": 1
+  },
+  "allChecksPassed": true
+}
