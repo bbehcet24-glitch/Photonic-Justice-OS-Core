@@ -1,0 +1,214 @@
+{
+  "format": "qkdnetsim-v2-scenario",
+  "generatedBy": "photonnet-qkd_network_scale",
+  "nodes": [
+    {
+      "id": 0,
+      "name": "IST",
+      "type": "trusted-node"
+    },
+    {
+      "id": 1,
+      "name": "KOC",
+      "type": "trusted-node"
+    },
+    {
+      "id": 2,
+      "name": "BUR",
+      "type": "trusted-node"
+    },
+    {
+      "id": 3,
+      "name": "ESK",
+      "type": "trusted-node"
+    },
+    {
+      "id": 4,
+      "name": "ANK",
+      "type": "trusted-node"
+    },
+    {
+      "id": 5,
+      "name": "IZM",
+      "type": "trusted-node"
+    },
+    {
+      "id": 6,
+      "name": "BAL",
+      "type": "trusted-node"
+    },
+    {
+      "id": 7,
+      "name": "AFY",
+      "type": "trusted-node"
+    }
+  ],
+  "links": [
+    {
+      "a": "IST",
+      "b": "KOC",
+      "distanceKm": 90,
+      "qkdKeyRateBps": 792446.6,
+      "qkdBufferBits": 792447
+    },
+    {
+      "a": "KOC",
+      "b": "BUR",
+      "distanceKm": 70,
+      "qkdKeyRateBps": 1990535.9,
+      "qkdBufferBits": 1990536
+    },
+    {
+      "a": "KOC",
+      "b": "ESK",
+      "distanceKm": 110,
+      "qkdKeyRateBps": 315478.7,
+      "qkdBufferBits": 315479
+    },
+    {
+      "a": "BUR",
+      "b": "BAL",
+      "distanceKm": 95,
+      "qkdKeyRateBps": 629462.7,
+      "qkdBufferBits": 629463
+    },
+    {
+      "a": "BAL",
+      "b": "IZM",
+      "distanceKm": 85,
+      "qkdKeyRateBps": 997631.2,
+      "qkdBufferBits": 997631
+    },
+    {
+      "a": "ESK",
+      "b": "ANK",
+      "distanceKm": 100,
+      "qkdKeyRateBps": 500000,
+      "qkdBufferBits": 500000
+    },
+    {
+      "a": "ESK",
+      "b": "AFY",
+      "distanceKm": 75,
+      "qkdKeyRateBps": 1581138.8,
+      "qkdBufferBits": 1581139
+    },
+    {
+      "a": "AFY",
+      "b": "IZM",
+      "distanceKm": 120,
+      "qkdKeyRateBps": 199053.6,
+      "qkdBufferBits": 199054
+    },
+    {
+      "a": "AFY",
+      "b": "ANK",
+      "distanceKm": 105,
+      "qkdKeyRateBps": 397164.1,
+      "qkdBufferBits": 397164
+    },
+    {
+      "a": "BUR",
+      "b": "ESK",
+      "distanceKm": 100,
+      "qkdKeyRateBps": 500000,
+      "qkdBufferBits": 500000
+    },
+    {
+      "a": "IST",
+      "b": "BUR",
+      "distanceKm": 105,
+      "qkdKeyRateBps": 397164.1,
+      "qkdBufferBits": 397164
+    }
+  ],
+  "applications": [
+    {
+      "source": "BUR",
+      "destination": "KOC",
+      "demandBps": 400000,
+      "path": [
+        "BUR",
+        "KOC"
+      ],
+      "hops": 1,
+      "relayNodes": []
+    },
+    {
+      "source": "IST",
+      "destination": "ANK",
+      "demandBps": 2000000,
+      "path": [
+        "IST",
+        "KOC",
+        "ESK",
+        "ANK"
+      ],
+      "hops": 3,
+      "relayNodes": [
+        "KOC",
+        "ESK"
+      ]
+    },
+    {
+      "source": "IST",
+      "destination": "IZM",
+      "demandBps": 3000000,
+      "path": [
+        "IST",
+        "BUR",
+        "BAL",
+        "IZM"
+      ],
+      "hops": 3,
+      "relayNodes": [
+        "BUR",
+        "BAL"
+      ]
+    },
+    {
+      "source": "ANK",
+      "destination": "IZM",
+      "demandBps": 1500000,
+      "path": [
+        "ANK",
+        "AFY",
+        "IZM"
+      ],
+      "hops": 2,
+      "relayNodes": [
+        "AFY"
+      ]
+    },
+    {
+      "source": "IST",
+      "destination": "AFY",
+      "demandBps": 1000000,
+      "path": [
+        "IST",
+        "KOC",
+        "ESK",
+        "AFY"
+      ],
+      "hops": 3,
+      "relayNodes": [
+        "KOC",
+        "ESK"
+      ]
+    },
+    {
+      "source": "BAL",
+      "destination": "ESK",
+      "demandBps": 300000,
+      "path": [
+        "BAL",
+        "BUR",
+        "ESK"
+      ],
+      "hops": 2,
+      "relayNodes": [
+        "BUR"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,378 @@
+{
+  "generatedAt": "2026-09-04T12:28:08.555Z",
+  "checks": [
+    {
+      "name": "(A) FİZİK ANAHTAR HIZLARI: link hızı mesafeyle düşüyor (fiber geçirgenliği, L1)",
+      "ok": true,
+      "detail": "70 km link 1.99 Mbps vs 120 km link 0.20 Mbps (×10.0 fark). Hız fiberTransmittance ile üstel düşüyor — bu yüzden güvenilir-düğüm relay gerekir"
+    },
+    {
+      "name": "(B) ÇOK-ATLAMALI RELAY: uçtan uca talep her hop'ta anahtar tüketir, hız darboğaza bağlı",
+      "ok": true,
+      "detail": "IST→IZM: IST→BUR→BAL→IZM (3 hop) · her hop bir link anahtarı tüketir (güvenilir-düğüm relay) · teslim 0.31 Mbps ≤ yoldaki darboğaz link 0.40 Mbps"
+    },
+    {
+      "name": "(C) DARBOĞAZ + MAX-MIN ADALET: hiçbir link kapasiteyi aşmıyor, darboğaz payları eşit",
+      "ok": true,
+      "detail": "en yüksek kullanım %100 (≤%100, aşım yok) · 2 darboğaz link · darboğaz ESK|KOC'i paylaşan kısıtlı talepler eşit pay aldı (0.16, 0.16 Mbps) — max-min adil"
+    },
+    {
+      "name": "(D) QKDNetSim SENARYO: NS-3 QKDNetSim v2 uyumlu senaryo üretildi (düğüm/link/akış + relay)",
+      "ok": true,
+      "detail": "format=qkdnetsim-v2-scenario · 8 güvenilir-düğüm · 11 QKD link (hız+tampon) · 6 akış (yol + relay düğümleri). Gerçek NS-3 QKDNetSim modülü ingest edebilir (reports/qkdnetsim_scenario.json)"
+    },
+    {
+      "name": "(E) AĞ-ÖLÇEKLİ ÖZET: 8 düğüm / 11 link / karışık talep — bazısı karşılandı, bazısı darboğazda",
+      "ok": true,
+      "detail": "8 düğüm · 11 link · 6 talep · 2 karşılandı + 4 darboğazda kısıldı · toplam sunulan 8.2 → teslim 1.5 Mbps · 2 darboğaz link — ağ-ölçekli anahtar ekonomisi çalışıyor"
+    },
+    {
+      "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… — fizik L1 motorundan (fiberTransmittance), çekirdek sabit"
+    }
+  ],
+  "topology": {
+    "nodes": [
+      "IST",
+      "KOC",
+      "BUR",
+      "ESK",
+      "ANK",
+      "IZM",
+      "BAL",
+      "AFY"
+    ],
+    "coords": {
+      "IST": [
+        90,
+        40
+      ],
+      "KOC": [
+        170,
+        60
+      ],
+      "BUR": [
+        130,
+        130
+      ],
+      "ESK": [
+        250,
+        110
+      ],
+      "ANK": [
+        370,
+        95
+      ],
+      "IZM": [
+        70,
+        210
+      ],
+      "BAL": [
+        120,
+        190
+      ],
+      "AFY": [
+        290,
+        200
+      ]
+    },
+    "links": [
+      {
+        "a": "IST",
+        "b": "KOC",
+        "km": 90,
+        "rateMbps": 0.79
+      },
+      {
+        "a": "KOC",
+        "b": "BUR",
+        "km": 70,
+        "rateMbps": 1.99
+      },
+      {
+        "a": "KOC",
+        "b": "ESK",
+        "km": 110,
+        "rateMbps": 0.32
+      },
+      {
+        "a": "BUR",
+        "b": "BAL",
+        "km": 95,
+        "rateMbps": 0.63
+      },
+      {
+        "a": "BAL",
+        "b": "IZM",
+        "km": 85,
+        "rateMbps": 1
+      },
+      {
+        "a": "ESK",
+        "b": "ANK",
+        "km": 100,
+        "rateMbps": 0.5
+      },
+      {
+        "a": "ESK",
+        "b": "AFY",
+        "km": 75,
+        "rateMbps": 1.58
+      },
+      {
+        "a": "AFY",
+        "b": "IZM",
+        "km": 120,
+        "rateMbps": 0.2
+      },
+      {
+        "a": "AFY",
+        "b": "ANK",
+        "km": 105,
+        "rateMbps": 0.4
+      },
+      {
+        "a": "BUR",
+        "b": "ESK",
+        "km": 100,
+        "rateMbps": 0.5
+      },
+      {
+        "a": "IST",
+        "b": "BUR",
+        "km": 105,
+        "rateMbps": 0.4
+      }
+    ]
+  },
+  "result": {
+    "perDemand": [
+      {
+        "src": "BUR",
+        "dst": "KOC",
+        "demandBps": 400000,
+        "deliveredBps": 400000,
+        "hops": 1,
+        "totalKm": 70,
+        "path": "BUR→KOC",
+        "satisfied": true,
+        "deliveredMbps": 0.4,
+        "demandMbps": 0.4
+      },
+      {
+        "src": "IST",
+        "dst": "ANK",
+        "demandBps": 2000000,
+        "deliveredBps": 157739.3,
+        "hops": 3,
+        "totalKm": 300,
+        "path": "IST→KOC→ESK→ANK",
+        "satisfied": false,
+        "deliveredMbps": 0.158,
+        "demandMbps": 2
+      },
+      {
+        "src": "IST",
+        "dst": "IZM",
+        "demandBps": 3000000,
+        "deliveredBps": 314731.4,
+        "hops": 3,
+        "totalKm": 285,
+        "path": "IST→BUR→BAL→IZM",
+        "satisfied": false,
+        "deliveredMbps": 0.315,
+        "demandMbps": 3
+      },
+      {
+        "src": "ANK",
+        "dst": "IZM",
+        "demandBps": 1500000,
+        "deliveredBps": 199053.6,
+        "hops": 2,
+        "totalKm": 225,
+        "path": "ANK→AFY→IZM",
+        "satisfied": false,
+        "deliveredMbps": 0.199,
+        "demandMbps": 1.5
+      },
+      {
+        "src": "IST",
+        "dst": "AFY",
+        "demandBps": 1000000,
+        "deliveredBps": 157739.3,
+        "hops": 3,
+        "totalKm": 275,
+        "path": "IST→KOC→ESK→AFY",
+        "satisfied": false,
+        "deliveredMbps": 0.158,
+        "demandMbps": 1
+      },
+      {
+        "src": "BAL",
+        "dst": "ESK",
+        "demandBps": 300000,
+        "deliveredBps": 300000,
+        "hops": 2,
+        "totalKm": 195,
+        "path": "BAL→BUR→ESK",
+        "satisfied": true,
+        "deliveredMbps": 0.3,
+        "demandMbps": 0.3
+      }
+    ],
+    "perLink": [
+      {
+        "link": "IST|KOC",
+        "km": 90,
+        "capacityBps": 792446.6,
+        "usedBps": 315478.7,
+        "utilisation": 0.3981,
+        "demands": 2,
+        "capMbps": 0.79,
+        "usedMbps": 0.315
+      },
+      {
+        "link": "BUR|KOC",
+        "km": 70,
+        "capacityBps": 1990535.9,
+        "usedBps": 400000,
+        "utilisation": 0.201,
+        "demands": 1,
+        "capMbps": 1.99,
+        "usedMbps": 0.4
+      },
+      {
+        "link": "ESK|KOC",
+        "km": 110,
+        "capacityBps": 315478.7,
+        "usedBps": 315478.7,
+        "utilisation": 1,
+        "demands": 2,
+        "capMbps": 0.32,
+        "usedMbps": 0.315
+      },
+      {
+        "link": "BAL|BUR",
+        "km": 95,
+        "capacityBps": 629462.7,
+        "usedBps": 614731.4,
+        "utilisation": 0.9766,
+        "demands": 2,
+        "capMbps": 0.63,
+        "usedMbps": 0.615
+      },
+      {
+        "link": "BAL|IZM",
+        "km": 85,
+        "capacityBps": 997631.2,
+        "usedBps": 314731.4,
+        "utilisation": 0.3155,
+        "demands": 1,
+        "capMbps": 1,
+        "usedMbps": 0.315
+      },
+      {
+        "link": "ANK|ESK",
+        "km": 100,
+        "capacityBps": 500000,
+        "usedBps": 157739.3,
+        "utilisation": 0.3155,
+        "demands": 1,
+        "capMbps": 0.5,
+        "usedMbps": 0.158
+      },
+      {
+        "link": "AFY|ESK",
+        "km": 75,
+        "capacityBps": 1581138.8,
+        "usedBps": 157739.3,
+        "utilisation": 0.0998,
+        "demands": 1,
+        "capMbps": 1.58,
+        "usedMbps": 0.158
+      },
+      {
+        "link": "AFY|IZM",
+        "km": 120,
+        "capacityBps": 199053.6,
+        "usedBps": 199053.6,
+        "utilisation": 1,
+        "demands": 1,
+        "capMbps": 0.2,
+        "usedMbps": 0.199
+      },
+      {
+        "link": "AFY|ANK",
+        "km": 105,
+        "capacityBps": 397164.1,
+        "usedBps": 199053.6,
+        "utilisation": 0.5012,
+        "demands": 1,
+        "capMbps": 0.4,
+        "usedMbps": 0.199
+      },
+      {
+        "link": "BUR|ESK",
+        "km": 100,
+        "capacityBps": 500000,
+        "usedBps": 300000,
+        "utilisation": 0.6,
+        "demands": 1,
+        "capMbps": 0.5,
+        "usedMbps": 0.3
+      },
+      {
+        "link": "BUR|IST",
+        "km": 105,
+        "capacityBps": 397164.1,
+        "usedBps": 314731.4,
+        "utilisation": 0.7924,
+        "demands": 1,
+        "capMbps": 0.4,
+        "usedMbps": 0.315
+      }
+    ],
+    "offeredMbps": 8.2,
+    "deliveredMbps": 1.53,
+    "bottlenecks": [
+      "ESK|KOC",
+      "AFY|IZM"
+    ]
+  },
+  "fairness": {
+    "bottleneck": "ESK|KOC",
+    "throttledSharesMbps": [
+      0.158,
+      0.158
+    ],
+    "maxUtil": 1
+  },
+  "scenario": {
+    "format": "qkdnetsim-v2-scenario",
+    "nodes": 8,
+    "links": 11,
+    "apps": 6,
+    "sampleApp": {
+      "source": "IST",
+      "destination": "ANK",
+      "demandBps": 2000000,
+      "path": [
+        "IST",
+        "KOC",
+        "ESK",
+        "ANK"
+      ],
+      "hops": 3,
+      "relayNodes": [
+        "KOC",
+        "ESK"
+      ]
+    }
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
