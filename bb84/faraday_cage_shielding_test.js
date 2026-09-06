@@ -98,8 +98,10 @@ function main() {
     cage: { materialName: "copper", thicknessMm: 1.0, apertureMaxDimMm: 100, freqHz: 1e9, targetSeDb: 60 },
     observerDistanceM: 1, noiseFloorDbuVm: 20,
   });
-  out.detectability = { shielded: { detectable: shielded.detectable, receivedDbuVm: shielded.receivedDbuVm },
-    leaky: { detectable: leaky.detectable, receivedDbuVm: leaky.receivedDbuVm } };
+  out.detectability = {
+    shielded: { detectable: shielded.detectable, receivedDbuVm: shielded.receivedDbuVm, noiseFloorDbuVm: shielded.noiseFloorDbuVm },
+    leaky: { detectable: leaky.detectable, receivedDbuVm: leaky.receivedDbuVm, noiseFloorDbuVm: leaky.noiseFloorDbuVm },
+  };
   chk("(G) EMİSYON TESPİT EDİLEBİLİRLİĞİ: iyi kalkanlanmış kafes → gürültü tabanı altına düşer; büyük açıklıklı kafes → yakında hâlâ tespit edilebilir",
     !shielded.detectable && leaky.detectable,
     `iyi kalkanlanmış (açıklık yok, 100 MHz, 3 m): alınan ${shielded.receivedDbuVm} dBµV/m < gürültü tabanı ${shielded.noiseFloorDbuVm} dBµV/m → bastırılmış ✓ · ` +
