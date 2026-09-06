@@ -33,6 +33,18 @@ function build(D) {
   const seBarW = v => (Math.min(v, seMax) / seMax * 100).toFixed(1);
   const targetPct = (target / seMax * 100).toFixed(1);
 
+  // Senaryo 1.5: saat harmonikleri boyunca kalkanlama çöküşü (1→19 GHz)
+  const harm = D.clockHarmonics;
+  const harmMaxSe = Math.max(...harm.perHarmonic.map(p => p.combinedSeDb), target) * 1.1;
+  const harmBars = harm.perHarmonic.map(p => {
+    const hN = Math.round(p.freqHz / harm.fundamentalHz);
+    const wPct = (Math.max(p.combinedSeDb, 0) / harmMaxSe * 100).toFixed(1);
+    const bad = p.combinedSeDb < target;
+    return `<div class="hbar"><span class="hl">${hN}. harmonik (${(p.freqHz / 1e9).toFixed(0)} GHz)</span>
+      <div class="track htrack"><div class="fill" style="width:${wPct}%;background:${bad ? "var(--k2)" : "var(--k3)"}"></div><div class="tline" style="left:${(target / harmMaxSe * 100).toFixed(1)}%"></div></div>
+      <span class="v" style="color:${bad ? "var(--k2)" : "var(--k3)"}">${tr(p.combinedSeDb, 1)} dB</span></div>`;
+  }).join("");
+
   // Senaryo 2: kalkanlı vs sızdıran emisyon
   const sh = D.detectability.shielded, lk = D.detectability.leaky;
   const emMax = Math.max(lk.receivedDbuVm, lk.noiseFloorDbuVm) + 10;
@@ -84,6 +96,10 @@ function build(D) {
   .fill{height:100%;border-radius:6px;}
   .tline{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--amber);}
   .scenrow .v{font-size:13px;font-weight:640;font-variant-numeric:tabular-nums;white-space:nowrap;}
+  .hbar{display:grid;grid-template-columns:150px 1fr auto;gap:10px;align-items:center;margin:6px 0;}
+  .hbar .hl{font-size:11.5px;color:var(--text-secondary);}
+  .htrack{height:15px;}
+  .hbar .v{font-size:12px;font-weight:640;font-variant-numeric:tabular-nums;white-space:nowrap;}
   .tlabel{font-size:10.5px;color:var(--amber);font-weight:700;margin-top:2px;text-align:right;}
   .note{font-size:11.5px;color:var(--text-muted);line-height:1.6;margin:10px 0 0;}
   .callout{border-left:3px solid var(--k1);background:var(--surface-2);padding:11px 14px;border-radius:0 8px 8px 0;font-size:12.5px;line-height:1.6;margin:18px 0 0;}
@@ -109,6 +125,14 @@ function build(D) {
   <div class="tlabel">▎ hedef ${target} dB</div>
 </div>
 <p class="note">Aynı 1mm bakır duvar tek başına <code>${tr(D.apertureDominant.wallSeDb, 0)} dB</code> kalkanlama sağlıyor — ama 50mm'lik tek bir açıklık (kaynak, havalandırma, kablo geçişi) eklenince birleşik kalkanlama <b>${tr(apSe, 1)} dB</b>'ye çöküyor. EMC'nin temel kuralı doğrulandı: kafesin zayıf noktası duvar kalınlığı değil, en büyük açıklığın boyutudur.</p>
+
+<h2>Saat harmonikleri — 1 GHz'e kadar tarama neden yetersiz?</h2>
+<p class="sub" style="margin-top:0;">Proje kendi zamanlama modelinde (<code>timetag_acquisition_bridge.js</code>) lazer darbe tekrar frekansı olarak <b>1 GHz</b> (periodPs=1000 ps) kullanıyor. Ama bu periyodik bir DAR darbe treni — Fourier analizi gereği spektrumu temel frekansın tek katlarında (3, 5, 7… GHz) güçlü enerji taşır. Bu bir donanım varsayımı değil, matematiksel bir zorunluluk.</p>
+<div class="scen">
+  ${harmBars}
+  <div class="tlabel">▎ hedef ${target} dB</div>
+</div>
+<p class="note">Aynı kafes tasarımı (2mm çelik + 5mm açıklık) temel frekansta (1 GHz) zaten hedefin altında (<b>${tr(harm.combinedSeAt1GHzDb, 1)} dB</b>) — ama sadece 1 GHz'e kadar bakmak yanıltıcı: harmonik yükseldikçe açıklık kaynaklı sızıntı MONOTON kötüleşiyor, 19. harmonikte (19 GHz) <b>${tr(harm.worstCombinedSeDb, 1)} dB</b>'ye düşüyor. Sonuç: kafes tasarımı düzeltilmeli (açıklık küçültülmeli veya derinlikli honeycomb havalandırma filtresi eklenmeli) — düz bir 5mm delik hiçbir gerçekçi frekansta hedefi tutturmuyor.</p>
 
 <h2>Emisyon tespit edilebilirliği — kalkanlı vs sızdıran kafes</h2>
 <div class="scen">

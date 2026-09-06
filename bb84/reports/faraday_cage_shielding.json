@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-06T14:30:50.617Z",
+  "generatedAt": "2026-09-06T14:37:28.408Z",
   "checks": [
     {
       "name": "(A) DÜZ DUVAR BASKIN: 1mm bakır, açıklık yok, 100 kHz → çok yüksek SE (>150 dB), hedefi (60 dB) rahat aşar",
@@ -35,6 +35,11 @@
       "name": "(G) EMİSYON TESPİT EDİLEBİLİRLİĞİ: iyi kalkanlanmış kafes → gürültü tabanı altına düşer; büyük açıklıklı kafes → yakında hâlâ tespit edilebilir",
       "ok": true,
       "detail": "iyi kalkanlanmış (açıklık yok, 100 MHz, 3 m): alınan -1404 dBµV/m < gürültü tabanı 20 dBµV/m → bastırılmış ✓ · sızdıran (100mm açıklık, 1 GHz, 1 m): alınan 44 dBµV/m > gürültü tabanı 20 dBµV/m → hâlâ tespit edilebilir ✓"
+    },
+    {
+      "name": "(H) GERÇEKÇİ SAAT HARMONİKLERİ: 1 GHz temel + tek katları (3-19 GHz) — sadece 1 GHz'e kadar tarama YETERSİZ, gerçek en kötü durum daha yüksek harmonikte VE daha kötü",
+      "ok": true,
+      "detail": "temel 1 GHz'de birleşik SE 29.5 dB (zaten hedefin altında) → 19 GHz harmonikte 4.0 dB'ye DÜŞÜYOR. Bu donanım seçimine bağlı bir varsayım değil — periyodik dar darbe treninin Fourier spektrumu temel frekansın tek katlarında güçlü enerji taşır (matematiksel gerçek). SONUÇ: mevcut kafes tasarımı (2mm çelik + 5mm açıklık) ne 1 GHz'de ne de harmoniklerde hedefi (60 dB) tutturuyor — açıklık küçültülmeli veya derinlikli honeycomb filtre kullanılmalı (bkz. modül dürüstlük notu)"
     },
     {
       "name": "ÇEKİRDEĞE DOKUNULMADI: faraday_cage_shielding.js photonnet_core.js'i import ETMEZ VE dosyanın SHA-256'sı değişmedi",
@@ -88,6 +93,66 @@
       "receivedDbuVm": 44,
       "noiseFloorDbuVm": 20
     }
+  },
+  "clockHarmonics": {
+    "fundamentalHz": 1000000000,
+    "harmonicsTestedHz": [
+      1000000000,
+      2000000000,
+      3000000000,
+      5000000000,
+      7000000000,
+      9000000000,
+      11000000000,
+      13000000000,
+      15000000000,
+      19000000000
+    ],
+    "combinedSeAt1GHzDb": 29.54,
+    "worstCombinedSeDb": 3.96,
+    "worstFreqHz": 19000000000,
+    "perHarmonic": [
+      {
+        "freqHz": 1000000000,
+        "combinedSeDb": 29.54
+      },
+      {
+        "freqHz": 2000000000,
+        "combinedSeDb": 23.52
+      },
+      {
+        "freqHz": 3000000000,
+        "combinedSeDb": 19.99
+      },
+      {
+        "freqHz": 5000000000,
+        "combinedSeDb": 15.56
+      },
+      {
+        "freqHz": 7000000000,
+        "combinedSeDb": 12.63
+      },
+      {
+        "freqHz": 9000000000,
+        "combinedSeDb": 10.45
+      },
+      {
+        "freqHz": 11000000000,
+        "combinedSeDb": 8.71
+      },
+      {
+        "freqHz": 13000000000,
+        "combinedSeDb": 7.26
+      },
+      {
+        "freqHz": 15000000000,
+        "combinedSeDb": 6.01
+      },
+      {
+        "freqHz": 19000000000,
+        "combinedSeDb": 3.96
+      }
+    ]
   },
   "coreIntegrity": {
     "noCoreImport": true,

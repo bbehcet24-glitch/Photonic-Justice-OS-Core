@@ -34,6 +34,12 @@
  *   ve doyma ile GÜÇLÜ şekilde değişir; burada düşük-frekans/statik
  *   yaklaşık değerler kullanılmıştır. Gerçek bir kafes tasarımı için
  *   üreticinin ölçülmüş kalkanlama-etkinliği eğrileriyle doğrulanmalıdır.
+ *   AYRICA: apertureLeakageDb() basit "delik derinliği YOK" yaklaşımıdır —
+ *   gerçek dalga-kılavuzu-altı bal peteği (honeycomb) havalandırma
+ *   filtreleri, delik derinliği/çapı oranıyla EK zayıflama sağlar (bu
+ *   modelde YOK); yani bu fonksiyon düz bir deliğin EN KÖTÜ durumunu
+ *   verir, gerçek bir honeycomb filtre bundan DAHA İYİ (daha çok
+ *   zayıflatan) sonuç verebilir — bkz. faraday_cage_shielding_test.js (H).
  *
  * Bu modül photonnet_core.js'ten HİÇBİR ŞEY import ETMEZ ve çekirdeği
  * hiçbir şekilde değiştirmez — bağımsız, kendi başına test edilebilir
