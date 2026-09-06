@@ -32,6 +32,13 @@
  *       altındayken (29,5 dB < 60 dB), 19. harmonikte (19 GHz) DAHA DA
  *       kötüleşir — açıklık kaynaklı sızıntı frekansla birlikte MONOTON
  *       kötüleşir (rezonansa kadar, bkz. apertureLeakageDb).
+ *   (I) DÜZELTİLMİŞ TASARIM: (H)'de bulunan açığı KAPATIYOR — sadece
+ *       açıklığı küçültmek (honeycomb olmadan) 19 GHz'de 60 dB için ~8
+ *       mikrometreye inmeyi gerektirir (PRATİK DEĞİL). Bunun yerine
+ *       gerçekçi bir açıklık (3mm) + honeycomb dalga-kılavuzu-altı
+ *       tünel derinliği (9mm, 3:1 oran — gerçek EMC honeycomb vent
+ *       panellerinde yaygın kullanılan oran) eklenince AYNI 1-19 GHz
+ *       harmonik taramasında hedef (60 dB) RAHATÇA tutturulur.
  *   + ÇEKİRDEK DOKUNULMADI: bu modül photonnet_core.js'i import ETMEZ
  *     (kaynakta doğrulanır) ve dosyanın SHA-256'sı test öncesi/sonrası
  *     değişmez (house convention: production_gate_test.js ile aynı ilke).
@@ -143,6 +150,27 @@ function main() {
     `Bu donanım seçimine bağlı bir varsayım değil — periyodik dar darbe treninin Fourier spektrumu temel frekansın tek katlarında güçlü enerji taşır (matematiksel gerçek). ` +
     `SONUÇ: mevcut kafes tasarımı (2mm çelik + 5mm açıklık) ne 1 GHz'de ne de harmoniklerde hedefi (60 dB) tutturuyor — açıklık küçültülmeli veya derinlikli honeycomb filtre kullanılmalı (bkz. modül dürüstlük notu)`);
 
+  // ══ (I) DÜZELTİLMİŞ TASARIM ══
+  // Seçenek 1: honeycomb OLMADAN, sadece küçültme — 19 GHz'de 60 dB için
+  // gereken açıklık boyutu (pratik olup olmadığını göstermek için).
+  const lambdaAt19GhzMm = 299792458000 / 19e9;
+  const requiredApertureMmNoHoneycomb = lambdaAt19GhzMm / (2 * 1000); // 20log10(λ/2L)=60 → λ/2L=1000
+  // Seçenek 2 (SEÇİLEN DÜZELTME): pratik açıklık + honeycomb derinliği.
+  const fixedCfg = { materialName: "steel", thicknessMm: 2.0, apertureMaxDimMm: 3, honeycombDepthMm: 9, freqRangeHz: harmonics, targetSeDb: 60 };
+  const fixed = F.evaluateFaradayCage(fixedCfg);
+  out.fixedDesign = {
+    requiredApertureUmNoHoneycomb: +(requiredApertureMmNoHoneycomb * 1000).toFixed(2),
+    apertureMaxDimMm: fixedCfg.apertureMaxDimMm, honeycombDepthMm: fixedCfg.honeycombDepthMm,
+    ratio: fixedCfg.honeycombDepthMm / fixedCfg.apertureMaxDimMm,
+    ok: fixed.ok, worstCombinedSeDb: +fixed.worst.combinedSeDb.toFixed(1), worstFreqHz: fixed.worst.freqHz, marginDb: fixed.marginDb,
+    perHarmonic: fixed.perFreq.map(p => ({ freqHz: p.freqHz, combinedSeDb: +p.combinedSeDb.toFixed(1) })),
+  };
+  chk("(I) DÜZELTİLMİŞ TASARIM: sadece küçültme PRATİK DEĞİL (mikrometre mertebesi); açıklık+honeycomb tüm harmoniklerde (1-19 GHz) hedefi tutturuyor",
+    requiredApertureMmNoHoneycomb < 0.1 && fixed.ok && fixed.perFreq.every(p => p.combinedSeDb >= 60),
+    `honeycomb'suz çözüm: 19 GHz'de 60 dB için açıklık ≤ ${(requiredApertureMmNoHoneycomb * 1000).toFixed(1)} µm olmalı — PRATİK DEĞİL. ` +
+    `Düzeltme: ${fixedCfg.apertureMaxDimMm} mm açıklık + ${fixedCfg.honeycombDepthMm} mm honeycomb derinliği (oran ${(fixedCfg.honeycombDepthMm / fixedCfg.apertureMaxDimMm).toFixed(0)}:1) ` +
+    `→ 1-19 GHz taramasının TAMAMINDA hedef tutturuluyor, en kötü durum ${fixed.worst.combinedSeDb.toFixed(1)} dB @ ${(fixed.worst.freqHz / 1e9).toFixed(0)} GHz (marj +${fixed.marginDb} dB)`);
+
   // ══ ÇEKİRDEĞE DOKUNULMADI ══
   const src = fs.readFileSync(path.join(__dirname, "faraday_cage_shielding.js"), "utf8");
   const noCoreImport = !/require\(["']\.\/photonnet_core\.js["']\)/.test(src);
@@ -170,6 +198,7 @@ function report(out) {
   console.log(`  (F) bilinmeyen malzeme reddi: ${out.unknownMaterial.threw ? "✓" : "✗"}`);
   console.log(`  (G) tespit edilebilirlik: kalkanlı=${out.detectability.shielded.detectable} (${out.detectability.shielded.receivedDbuVm} dBµV/m) · sızdıran=${out.detectability.leaky.detectable} (${out.detectability.leaky.receivedDbuVm} dBµV/m)`);
   console.log(`  (H) saat harmonikleri: 1 GHz'de ${out.clockHarmonics.combinedSeAt1GHzDb} dB → ${(out.clockHarmonics.worstFreqHz / 1e9).toFixed(0)} GHz'de ${out.clockHarmonics.worstCombinedSeDb} dB (daha kötü)`);
+  console.log(`  (I) düzeltilmiş tasarım: ${out.fixedDesign.apertureMaxDimMm}mm açıklık + ${out.fixedDesign.honeycombDepthMm}mm honeycomb → en kötü ${out.fixedDesign.worstCombinedSeDb} dB, ok=${out.fixedDesign.ok}`);
   console.log(`\n  ÇEKİRDEK: import yok=${out.coreIntegrity.noCoreImport ? "✓" : "✗"} · SHA-256 ${out.coreIntegrity.unchanged ? "DEĞİŞMEDİ ✓" : "DEĞİŞTİ ✗"}`);
   console.log("\nÖz-testler:");
   for (const c of out.checks) console.log(`  ${c.ok ? "✓" : "✗"} ${c.name}\n      ${c.detail}`);

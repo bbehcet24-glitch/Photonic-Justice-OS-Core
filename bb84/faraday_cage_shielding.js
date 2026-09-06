@@ -34,12 +34,14 @@
  *   ve doyma ile GÜÇLÜ şekilde değişir; burada düşük-frekans/statik
  *   yaklaşık değerler kullanılmıştır. Gerçek bir kafes tasarımı için
  *   üreticinin ölçülmüş kalkanlama-etkinliği eğrileriyle doğrulanmalıdır.
- *   AYRICA: apertureLeakageDb() basit "delik derinliği YOK" yaklaşımıdır —
- *   gerçek dalga-kılavuzu-altı bal peteği (honeycomb) havalandırma
- *   filtreleri, delik derinliği/çapı oranıyla EK zayıflama sağlar (bu
- *   modelde YOK); yani bu fonksiyon düz bir deliğin EN KÖTÜ durumunu
- *   verir, gerçek bir honeycomb filtre bundan DAHA İYİ (daha çok
- *   zayıflatan) sonuç verebilir — bkz. faraday_cage_shielding_test.js (H).
+ *   AYRICA: apertureLeakageDb() varsayılan olarak "delik derinliği YOK"
+ *   (t=0, çıplak delik) yaklaşımıdır — honeycombDepthMm parametresi
+ *   VERİLMEZSE bu, EN KÖTÜ durumu temsil eder. Derinlik verilirse
+ *   (gerçek dalga-kılavuzu-altı bal peteği/honeycomb havalandırma
+ *   filtresi), waveguideDepthAttenuationDb() ile EK zayıflama eklenir —
+ *   ama bu 32·(derinlik/çap) kuralı yalnız kesim frekansının ÇOK
+ *   ALTINDA geçerlidir (bkz. o fonksiyonun dürüstlük notu). Bulgu ve
+ *   düzeltme örneği: faraday_cage_shielding_test.js (H) ve (I).
  *
  * Bu modül photonnet_core.js'ten HİÇBİR ŞEY import ETMEZ ve çekirdeği
  * hiçbir şekilde değiştirmez — bağımsız, kendi başına test edilebilir
@@ -95,14 +97,38 @@ function solidWallShieldingDb(thicknessMm, freqHz, mat) {
  * kılavuzu" yaklaşımı: SE ≈ 20·log10(λ / (2·L)). L, açıklığın EN BÜYÜK
  * doğrusal boyutudur (alanı değil!) — EMC'nin en temel kuralı budur.
  * L ≥ λ/2 olduğunda açıklık rezonansa girer, kalkanlama etkin biçimde
- * SIFIRA (0 dB) düşer.
+ * SIFIRA (0 dB) düşer. Bu, SIFIR-DERİNLİKLİ (t=0) ince bir deliğin
+ * DEĞERİDİR — DÜZELTME: honeycombDepthMm > 0 verilirse, açıklık artık
+ * çıplak bir delik değil, derinliği olan bir "dalga kılavuzu altı"
+ * (waveguide-below-cutoff) HONEYCOMB tünelidir ve EK bir zayıflama
+ * terimi eklenir (bkz. waveguideDepthAttenuationDb). Bu, gerçek EMC
+ * kalkanlı oda havalandırma panellerinin (honeycomb vent) neden düz
+ * bir delikten ONLARCA dB daha iyi performans gösterdiğinin nedenidir.
  */
-function apertureLeakageDb(apertureMaxDimMm, freqHz) {
+function apertureLeakageDb(apertureMaxDimMm, freqHz, honeycombDepthMm = 0) {
   if (apertureMaxDimMm <= 0) return Infinity; // açıklık yok → bu yoldan sızıntı yok
   const lambdaMm = C_MM_PER_S / freqHz;
   const ratio = lambdaMm / (2 * apertureMaxDimMm);
-  if (ratio <= 1) return 0; // rezonans/üstü: kalkanlama yok
-  return 20 * Math.log10(ratio);
+  if (ratio <= 1) return 0; // rezonans/üstü (f ≥ kesim frekansı): kalkanlama yok, derinlik de kurtarmaz
+  const bare = 20 * Math.log10(ratio);
+  if (honeycombDepthMm <= 0) return bare;
+  return bare + waveguideDepthAttenuationDb(honeycombDepthMm, apertureMaxDimMm);
+}
+
+/**
+ * Honeycomb/dalga-kılavuzu-altı TÜNEL derinliğinin sağladığı EK zayıflama.
+ * Standart EMC mühendislik yaklaşımı (ör. Ott, "Electromagnetic
+ * Compatibility Engineering"; dairesel kesit için yaygın kullanılan
+ * kural): A ≈ 32 · (derinlik / çap) dB.
+ * DÜRÜSTLÜK NOTU: bu yaklaşım yalnız kesim frekansının ÇOK ALTINDA
+ * (f ≪ fc, fc = c/(2L)) geçerlidir ve frekanstan BAĞIMSIZDIR (o
+ * bölgede); kesime yaklaştıkça (apertureLeakageDb'deki ratio→1) gerçek
+ * davranış bu sabit-katsayı yaklaşımından SAPAR — gerçek bir honeycomb
+ * panel seçiminde üreticinin ölçülmüş eğrisiyle doğrulanmalıdır.
+ */
+function waveguideDepthAttenuationDb(depthMm, apertureMaxDimMm) {
+  if (depthMm <= 0 || apertureMaxDimMm <= 0) return 0;
+  return 32 * (depthMm / apertureMaxDimMm);
 }
 
 /**
@@ -125,6 +151,8 @@ function combineShieldingPathsDb(seDbList) {
  *   materialName: 'copper'|'aluminum'|'steel'|'muMetal'
  *   thicknessMm: duvar kalınlığı (mm)
  *   apertureMaxDimMm: en büyük açıklığın en büyük doğrusal boyutu (mm) — 0 = açıklık yok
+ *   honeycombDepthMm: açıklığa bir dalga-kılavuzu-altı honeycomb tüneli/filtre
+ *     eklenirse derinliği (mm) — 0/atlanırsa çıplak (t=0) delik varsayılır
  *   freqHz: değerlendirilecek tek frekans (Hz) — VEYA freqRangeHz: [f1, f2, ...]
  *   targetSeDb: hedef minimum kalkanlama etkinliği (dB) — bir tasarım/tehdit-modeli
  *     parametresidir, sertifikalı bir standart DEĞİLDİR; çağıran taraf belirler
@@ -135,10 +163,11 @@ function evaluateFaradayCage(cfg) {
   const freqs = cfg.freqRangeHz && cfg.freqRangeHz.length ? cfg.freqRangeHz : [cfg.freqHz];
   const targetSeDb = cfg.targetSeDb != null ? cfg.targetSeDb : 60;
   const apertureMaxDimMm = cfg.apertureMaxDimMm || 0;
+  const honeycombDepthMm = cfg.honeycombDepthMm || 0;
 
   const perFreq = freqs.map((freqHz) => {
     const wall = solidWallShieldingDb(cfg.thicknessMm, freqHz, mat);
-    const apertureSeDb = apertureMaxDimMm > 0 ? apertureLeakageDb(apertureMaxDimMm, freqHz) : Infinity;
+    const apertureSeDb = apertureMaxDimMm > 0 ? apertureLeakageDb(apertureMaxDimMm, freqHz, honeycombDepthMm) : Infinity;
     const combinedSeDb = combineShieldingPathsDb([wall.totalDb, apertureSeDb]);
     const bottleneck = apertureSeDb < wall.totalDb ? "aperture" : "wall";
     return { freqHz, wallSeDb: wall.totalDb, apertureSeDb, combinedSeDb, bottleneck, wall };
@@ -149,11 +178,14 @@ function evaluateFaradayCage(cfg) {
   const marginDb = +(worst.combinedSeDb - targetSeDb).toFixed(1);
 
   const fMHzStr = (hz) => (hz / 1e6 >= 1 ? `${(hz / 1e6).toFixed(1)} MHz` : `${(hz / 1e3).toFixed(0)} kHz`);
+  const apertureDesc = apertureMaxDimMm > 0
+    ? (honeycombDepthMm > 0 ? `açıklık (${apertureMaxDimMm} mm, ${honeycombDepthMm} mm honeycomb tünel)` : `açıklık (çıplak delik, ${apertureMaxDimMm} mm)`)
+    : "açıklık";
   const detail = ok
-    ? `en zayıf nokta ${fMHzStr(worst.freqHz)}'de ${worst.bottleneck === "aperture" ? "açıklık" : "duvar"} — birleşik SE ${worst.combinedSeDb.toFixed(1)} dB ≥ hedef ${targetSeDb} dB (marj +${marginDb} dB)`
-    : `en zayıf nokta ${fMHzStr(worst.freqHz)}'de ${worst.bottleneck === "aperture" ? `açıklık (en büyük boyut ${apertureMaxDimMm} mm)` : "duvar kalınlığı/malzemesi"} — birleşik SE ${worst.combinedSeDb.toFixed(1)} dB < hedef ${targetSeDb} dB (açık ${Math.abs(marginDb)} dB)`;
+    ? `en zayıf nokta ${fMHzStr(worst.freqHz)}'de ${worst.bottleneck === "aperture" ? apertureDesc : "duvar"} — birleşik SE ${worst.combinedSeDb.toFixed(1)} dB ≥ hedef ${targetSeDb} dB (marj +${marginDb} dB)`
+    : `en zayıf nokta ${fMHzStr(worst.freqHz)}'de ${worst.bottleneck === "aperture" ? apertureDesc : "duvar kalınlığı/malzemesi"} — birleşik SE ${worst.combinedSeDb.toFixed(1)} dB < hedef ${targetSeDb} dB (açık ${Math.abs(marginDb)} dB)`;
 
-  return { ok, targetSeDb, marginDb, worst, perFreq, material: mat.label, thicknessMm: cfg.thicknessMm, apertureMaxDimMm, detail };
+  return { ok, targetSeDb, marginDb, worst, perFreq, material: mat.label, thicknessMm: cfg.thicknessMm, apertureMaxDimMm, honeycombDepthMm, detail };
 }
 
 /**
@@ -181,6 +213,6 @@ function emissionDetectabilityCheck({ sourceLevelDbuVm, cage, observerDistanceM,
 module.exports = {
   MATERIALS, material,
   absorptionLossDb, reflectionLossDb, multipleReflectionCorrectionDb, solidWallShieldingDb,
-  apertureLeakageDb, combineShieldingPathsDb,
+  apertureLeakageDb, waveguideDepthAttenuationDb, combineShieldingPathsDb,
   evaluateFaradayCage, emissionDetectabilityCheck,
 };

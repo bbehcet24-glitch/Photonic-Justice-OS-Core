@@ -45,6 +45,13 @@ function build(D) {
       <span class="v" style="color:${bad ? "var(--k2)" : "var(--k3)"}">${tr(p.combinedSeDb, 1)} dB</span></div>`;
   }).join("");
 
+  // Düzeltilmiş tasarım: önce (5mm çıplak açıklık) vs sonra (3mm + 9mm honeycomb)
+  const fx = D.fixedDesign;
+  const beforeSe = harm.worstCombinedSeDb, afterSe = fx.worstCombinedSeDb;
+  const fixMax = Math.max(afterSe, target) * 1.08;
+  const fixBarW = v => (Math.max(v, 0) / fixMax * 100).toFixed(1);
+  const fixTargetPct = (target / fixMax * 100).toFixed(1);
+
   // Senaryo 2: kalkanlı vs sızdıran emisyon
   const sh = D.detectability.shielded, lk = D.detectability.leaky;
   const emMax = Math.max(lk.receivedDbuVm, lk.noiseFloorDbuVm) + 10;
@@ -133,6 +140,19 @@ function build(D) {
   <div class="tlabel">▎ hedef ${target} dB</div>
 </div>
 <p class="note">Aynı kafes tasarımı (2mm çelik + 5mm açıklık) temel frekansta (1 GHz) zaten hedefin altında (<b>${tr(harm.combinedSeAt1GHzDb, 1)} dB</b>) — ama sadece 1 GHz'e kadar bakmak yanıltıcı: harmonik yükseldikçe açıklık kaynaklı sızıntı MONOTON kötüleşiyor, 19. harmonikte (19 GHz) <b>${tr(harm.worstCombinedSeDb, 1)} dB</b>'ye düşüyor. Sonuç: kafes tasarımı düzeltilmeli (açıklık küçültülmeli veya derinlikli honeycomb havalandırma filtresi eklenmeli) — düz bir 5mm delik hiçbir gerçekçi frekansta hedefi tutturmuyor.</p>
+
+<h2>Düzeltme — açıklık küçültme + honeycomb tünel derinliği</h2>
+<p class="sub" style="margin-top:0;">Sadece açıklığı küçültmek (derinlik eklemeden) 19. harmonikte 60 dB için açıklığı <b>${tr(fx.requiredApertureUmNoHoneycomb, 1)} µm</b>'ye indirmeyi gerektirir — pratik değil. Bunun yerine gerçekçi bir açıklık (${fx.apertureMaxDimMm} mm) + dalga-kılavuzu-altı <b>honeycomb tünel derinliği</b> (${fx.honeycombDepthMm} mm, ${fx.ratio}:1 oran — gerçek EMC honeycomb havalandırma panellerinde yaygın kullanılan oran) eklenir.</p>
+<div class="scen">
+  <div class="scenrow"><span class="l">ÖNCE: 5mm çıplak açıklık, en kötü (19 GHz)</span>
+    <div class="track"><div class="fill" style="width:${fixBarW(Math.min(beforeSe, fixMax))}%;background:var(--k2)"></div><div class="tline" style="left:${fixTargetPct}%"></div></div>
+    <span class="v" style="color:var(--k2)">${tr(beforeSe, 1)} dB</span></div>
+  <div class="scenrow"><span class="l">SONRA: ${fx.apertureMaxDimMm}mm + ${fx.honeycombDepthMm}mm honeycomb, en kötü (19 GHz)</span>
+    <div class="track"><div class="fill" style="width:${fixBarW(afterSe)}%;background:var(--k3)"></div><div class="tline" style="left:${fixTargetPct}%"></div></div>
+    <span class="v" style="color:var(--k3)">${tr(afterSe, 1)} dB</span></div>
+  <div class="tlabel">▎ hedef ${target} dB</div>
+</div>
+<p class="note">Düzeltilmiş tasarım, taranan TÜM harmoniklerde (1-19 GHz) hedefi tutturuyor — en kötü durumda bile <b>+${tr(fx.marginDb, 1)} dB</b> marj bırakıyor. Çekirdeğe dokunulmadı; düzeltme yalnızca bu katmanın (<code>faraday_cage_shielding.js</code>) parametrelerinde.</p>
 
 <h2>Emisyon tespit edilebilirliği — kalkanlı vs sızdıran kafes</h2>
 <div class="scen">

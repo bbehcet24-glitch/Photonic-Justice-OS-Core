@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-06T14:37:28.408Z",
+  "generatedAt": "2026-09-06T14:44:17.626Z",
   "checks": [
     {
       "name": "(A) DÜZ DUVAR BASKIN: 1mm bakır, açıklık yok, 100 kHz → çok yüksek SE (>150 dB), hedefi (60 dB) rahat aşar",
@@ -40,6 +40,11 @@
       "name": "(H) GERÇEKÇİ SAAT HARMONİKLERİ: 1 GHz temel + tek katları (3-19 GHz) — sadece 1 GHz'e kadar tarama YETERSİZ, gerçek en kötü durum daha yüksek harmonikte VE daha kötü",
       "ok": true,
       "detail": "temel 1 GHz'de birleşik SE 29.5 dB (zaten hedefin altında) → 19 GHz harmonikte 4.0 dB'ye DÜŞÜYOR. Bu donanım seçimine bağlı bir varsayım değil — periyodik dar darbe treninin Fourier spektrumu temel frekansın tek katlarında güçlü enerji taşır (matematiksel gerçek). SONUÇ: mevcut kafes tasarımı (2mm çelik + 5mm açıklık) ne 1 GHz'de ne de harmoniklerde hedefi (60 dB) tutturuyor — açıklık küçültülmeli veya derinlikli honeycomb filtre kullanılmalı (bkz. modül dürüstlük notu)"
+    },
+    {
+      "name": "(I) DÜZELTİLMİŞ TASARIM: sadece küçültme PRATİK DEĞİL (mikrometre mertebesi); açıklık+honeycomb tüm harmoniklerde (1-19 GHz) hedefi tutturuyor",
+      "ok": true,
+      "detail": "honeycomb'suz çözüm: 19 GHz'de 60 dB için açıklık ≤ 7.9 µm olmalı — PRATİK DEĞİL. Düzeltme: 3 mm açıklık + 9 mm honeycomb derinliği (oran 3:1) → 1-19 GHz taramasının TAMAMINDA hedef tutturuluyor, en kötü durum 104.4 dB @ 19 GHz (marj +44.4 dB)"
     },
     {
       "name": "ÇEKİRDEĞE DOKUNULMADI: faraday_cage_shielding.js photonnet_core.js'i import ETMEZ VE dosyanın SHA-256'sı değişmedi",
@@ -151,6 +156,58 @@
       {
         "freqHz": 19000000000,
         "combinedSeDb": 3.96
+      }
+    ]
+  },
+  "fixedDesign": {
+    "requiredApertureUmNoHoneycomb": 7.89,
+    "apertureMaxDimMm": 3,
+    "honeycombDepthMm": 9,
+    "ratio": 3,
+    "ok": true,
+    "worstCombinedSeDb": 104.4,
+    "worstFreqHz": 19000000000,
+    "marginDb": 44.4,
+    "perHarmonic": [
+      {
+        "freqHz": 1000000000,
+        "combinedSeDb": 130
+      },
+      {
+        "freqHz": 2000000000,
+        "combinedSeDb": 124
+      },
+      {
+        "freqHz": 3000000000,
+        "combinedSeDb": 120.4
+      },
+      {
+        "freqHz": 5000000000,
+        "combinedSeDb": 116
+      },
+      {
+        "freqHz": 7000000000,
+        "combinedSeDb": 113.1
+      },
+      {
+        "freqHz": 9000000000,
+        "combinedSeDb": 110.9
+      },
+      {
+        "freqHz": 11000000000,
+        "combinedSeDb": 109.1
+      },
+      {
+        "freqHz": 13000000000,
+        "combinedSeDb": 107.7
+      },
+      {
+        "freqHz": 15000000000,
+        "combinedSeDb": 106.5
+      },
+      {
+        "freqHz": 19000000000,
+        "combinedSeDb": 104.4
       }
     ]
   },
