@@ -18,6 +18,11 @@
  */
 const core = require("./photonnet_core.js");
 const { ClassicalAuthChannel, QKDSecurityProof, mulberry32 } = core;
+// EK KATMAN (çekirdeğe dokunmaz — bkz. faraday_cage_shielding.js): kriter 8
+// state.faraday üretmek isteyen çağıranlar için yardımcı olsun diye burada
+// da dışa aktarılır; productionGate() bunu import etmeden de state.faraday
+// alanı üzerinden çalışır (bu satır olmasa da kapı davranışı değişmez).
+const { evaluateFaradayCage, emissionDetectabilityCheck } = require("./faraday_cage_shielding.js");
 
 // ── DOĞRU referans MAC (katman; çekirdeğe dokunmadan) ───────────────
 // GF(2⁶¹−1) üzerinde polinom-değerlendirme (Horner) evrensel hash + OTP
@@ -113,6 +118,17 @@ function productionGate(state) {
   // 7) DONANIM: gerçek dedektör kalibrasyonu (Faz 3 sayıları emülatör)
   add("Dedektör kalibrasyonu (gerçek donanım)", "hardware",
     "afterpulsing/verim-uyumsuzluğu sayıları emülatörden; ÜRETİM gerçek dedektör verisiyle kalibrasyon gerektirir");
+  // 8) Elektromanyetik sızıntı (Faraday kafesi) — EK KATMAN, çekirdeğe dokunmaz.
+  // state.faraday verilmezse (mevcut hiçbir çağrı sitesi vermiyor) davranış
+  // AYNEN korunur: "hardware" — çünkü gerçek bir kafes ölçümü/tasarımı
+  // olmadan bu kriter yazılımla kapatılamaz (bkz. faraday_cage_shielding.js
+  // dosyasındaki dürüstlük notu: malzeme sabitleri ders kitabı değeridir).
+  if (state.faraday === undefined) {
+    add("Elektromanyetik sızıntı (Faraday kafesi)", "hardware",
+      "kafes tasarımı/ölçümü sağlanmadı — TEMPEST/EM yan-kanal (QBER'de İZ BIRAKMAYAN RF sızıntısı) donanım ölçümü gerektirir");
+  } else {
+    add("Elektromanyetik sızıntı (Faraday kafesi)", state.faraday.ok ? "pass" : "fail", state.faraday.detail);
+  }
 
   const blockers = criteria.filter(c => c.status === "fail");
   const hardware = criteria.filter(c => c.status === "hardware");
@@ -123,4 +139,5 @@ function productionGate(state) {
 }
 
 module.exports = { strongKey, strongTag, macMissRate, coreAuthKey, coreTag,
-  SideChannelMonitor, qrngHealth, productionGate, ClassicalAuthChannel };
+  SideChannelMonitor, qrngHealth, productionGate, ClassicalAuthChannel,
+  evaluateFaradayCage, emissionDetectabilityCheck };
