@@ -23,6 +23,9 @@ const { ClassicalAuthChannel, QKDSecurityProof, mulberry32 } = core;
 // da dışa aktarılır; productionGate() bunu import etmeden de state.faraday
 // alanı üzerinden çalışır (bu satır olmasa da kapı davranışı değişmez).
 const { evaluateFaradayCage, emissionDetectabilityCheck } = require("./faraday_cage_shielding.js");
+// EK KATMAN (çekirdeğe dokunmaz): kriter 9 — state.faraday'dan otomatik
+// türetilen mTLS el sıkışma ön-koşulu (bkz. network_shielding_bridge.js).
+const { mtlsHandshakePrecondition } = require("./network_shielding_bridge.js");
 
 // ── DOĞRU referans MAC (katman; çekirdeğe dokunmadan) ───────────────
 // GF(2⁶¹−1) üzerinde polinom-değerlendirme (Horner) evrensel hash + OTP
@@ -129,6 +132,16 @@ function productionGate(state) {
   } else {
     add("Elektromanyetik sızıntı (Faraday kafesi)", state.faraday.ok ? "pass" : "fail", state.faraday.detail);
   }
+  // 9) mTLS el sıkışma ön-koşulu — AYNI state.faraday'dan türetilir (ayrı bir
+  // state alanı İSTEMEZ). Kafes değerlendirmesi yoksa "hardware" (kriter-8
+  // ile AYNI, mevcut çağrı siteleri ETKİLENMEZ); varsa fail-closed pass/fail.
+  if (state.faraday === undefined) {
+    add("mTLS el sıkışma ön-koşulu (fiziksel katman kalkanlaması)", "hardware",
+      "kafes değerlendirmesi sağlanmadı — donanım kalkanlama durumu olmadan mTLS ön-koşulu değerlendirilemez");
+  } else {
+    const mtls = mtlsHandshakePrecondition(state.faraday);
+    add("mTLS el sıkışma ön-koşulu (fiziksel katman kalkanlaması)", mtls.allowed ? "pass" : "fail", mtls.reason);
+  }
 
   const blockers = criteria.filter(c => c.status === "fail");
   const hardware = criteria.filter(c => c.status === "hardware");
@@ -140,4 +153,4 @@ function productionGate(state) {
 
 module.exports = { strongKey, strongTag, macMissRate, coreAuthKey, coreTag,
   SideChannelMonitor, qrngHealth, productionGate, ClassicalAuthChannel,
-  evaluateFaradayCage, emissionDetectabilityCheck };
+  evaluateFaradayCage, emissionDetectabilityCheck, mtlsHandshakePrecondition };

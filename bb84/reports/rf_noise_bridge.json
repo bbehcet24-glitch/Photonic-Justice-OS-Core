@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T23:00:12.985Z",
+  "generatedAt": "2026-09-11T23:13:43.170Z",
   "checks": [
     {
       "name": "(A) KALİBRASYON DUYARLILIĞI: marj=0→referans, +10dB→×10, çok negatif→~0, olasılık [0,1]'e sınırlı",

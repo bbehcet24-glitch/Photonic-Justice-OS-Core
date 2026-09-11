@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T23:00:19.162Z",
+  "generatedAt": "2026-09-11T23:13:42.499Z",
   "checks": [
     {
       "name": "(A) KLASİK KANAL MAC: çekirdek primitifi ZAYIF (tahrifat ~%41 kaçar), standart MAC ~%0",
@@ -19,7 +19,7 @@
     {
       "name": "(D) GO/NO-GO: sertleştirilmiş durum → YAZILIM KAPISI GEÇER; kalan engeller DONANIM",
       "ok": true,
-      "detail": "sertleştirilmiş (standart MAC + monitör + crypto QRNG + ℓ>0@%2.8 + casus-iptal + ETSI): yazılım kriterleri GEÇTİ, engel yok. Kalan 3 DONANIM kriteri: Anahtar QRNG (donanım entropisi); Dedektör kalibrasyonu (gerçek donanım); Elektromanyetik sızıntı (Faraday kafesi)"
+      "detail": "sertleştirilmiş (standart MAC + monitör + crypto QRNG + ℓ>0@%2.8 + casus-iptal + ETSI): yazılım kriterleri GEÇTİ, engel yok. Kalan 4 DONANIM kriteri: Anahtar QRNG (donanım entropisi); Dedektör kalibrasyonu (gerçek donanım); Elektromanyetik sızıntı (Faraday kafesi); mTLS el sıkışma ön-koşulu (fiziksel katman kalkanlaması)"
     },
     {
       "name": "(E) FAIL-CLOSED: tek bir güvenlik değişmezi bozulunca kapı BLOKLAR (üretime izin yok)",
@@ -29,7 +29,7 @@
     {
       "name": "(F) DÜRÜST DONANIM SINIRI: yazılımın kapatamadığı kriterler 'hardware' işaretli (yeşile boyanmaz)",
       "ok": true,
-      "detail": "kapı, yazılımın tek başına kapatamadığını AÇIKÇA ayırıyor: Anahtar QRNG (donanım entropisi); Dedektör kalibrasyonu (gerçek donanım); Elektromanyetik sızıntı (Faraday kafesi) → \"hardware\". Verdict: \"YAZILIM KAPISI GEÇTİ — kalan engeller DONANIM (QRNG cihazı, dedektör kalibrasyonu)\". Kapı ÜRETİME HAZIR demiyor; gerçek QRNG cihazı + dedektör kalibrasyonu bekliyor"
+      "detail": "kapı, yazılımın tek başına kapatamadığını AÇIKÇA ayırıyor: Anahtar QRNG (donanım entropisi); Dedektör kalibrasyonu (gerçek donanım); Elektromanyetik sızıntı (Faraday kafesi); mTLS el sıkışma ön-koşulu (fiziksel katman kalkanlaması) → \"hardware\". Verdict: \"YAZILIM KAPISI GEÇTİ — kalan engeller DONANIM (QRNG cihazı, dedektör kalibrasyonu)\". Kapı ÜRETİME HAZIR demiyor; gerçek QRNG cihazı + dedektör kalibrasyonu bekliyor"
     },
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
@@ -59,7 +59,8 @@
     "hardware": [
       "Anahtar QRNG (donanım entropisi)",
       "Dedektör kalibrasyonu (gerçek donanım)",
-      "Elektromanyetik sızıntı (Faraday kafesi)"
+      "Elektromanyetik sızıntı (Faraday kafesi)",
+      "mTLS el sıkışma ön-koşulu (fiziksel katman kalkanlaması)"
     ],
     "criteria": [
       {
@@ -101,6 +102,11 @@
         "name": "Elektromanyetik sızıntı (Faraday kafesi)",
         "status": "hardware",
         "detail": "kafes tasarımı/ölçümü sağlanmadı — TEMPEST/EM yan-kanal (QBER'de İZ BIRAKMAYAN RF sızıntısı) donanım ölçümü gerektirir"
+      },
+      {
+        "name": "mTLS el sıkışma ön-koşulu (fiziksel katman kalkanlaması)",
+        "status": "hardware",
+        "detail": "kafes değerlendirmesi sağlanmadı — donanım kalkanlama durumu olmadan mTLS ön-koşulu değerlendirilemez"
       }
     ]
   },
@@ -112,7 +118,8 @@
   "hardwareBoundary": [
     "Anahtar QRNG (donanım entropisi)",
     "Dedektör kalibrasyonu (gerçek donanım)",
-    "Elektromanyetik sızıntı (Faraday kafesi)"
+    "Elektromanyetik sızıntı (Faraday kafesi)",
+    "mTLS el sıkışma ön-koşulu (fiziksel katman kalkanlaması)"
   ],
   "coreIntegrity": {
     "unchanged": true,

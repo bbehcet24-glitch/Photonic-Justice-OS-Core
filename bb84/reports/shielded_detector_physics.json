@@ -1,0 +1,168 @@
+{
+  "generatedAt": "2026-09-11T23:13:31.399Z",
+  "checks": [
+    {
+      "name": "(A) TERMAL/EM AYRIŞTIRMASI: yer-tabanlı ve uydu-kalibreli referanslar AÇIKÇA farklı (~2000×) — biri diğerinin yerine zorla KONULMUYOR",
+      "ok": true,
+      "detail": "yer-tabanlı termal referans (timetag_acquisition_bridge.js, bu projenin kendi kalibrasyonu): 5.00e-4 · çekirdeğin uydu-kalibreli DetectorNoiseModel'i 1 GHz'e izdüşürülünce: 2.50e-7 (2000× daha düşük — FARKLI senaryo/dedektör kalibrasyonu, doğrudan birbirinin yerine KULLANILMIYOR)"
+    },
+    {
+      "name": "(B) QBER ALT SINIRI: kirliden temize geçişte ölçülen QBER, RF'siz TERMAL-SADECE tabana BİREBİR geri dönüyor",
+      "ok": true,
+      "detail": "taban (yalnız termal) QBER %1.2124 · ESKİ kafes (kirli EM) QBER %2.8493 (2.4× yüksek) · YENİ kafes (temiz) QBER %1.2124 — tabana BİREBİR eşit (aynı qrng tohumu, yalnız darkProb farklı): QBER alt sınırı GERİ KAZANILDI"
+    },
+    {
+      "name": "(C) SECRET KEY RATE: temizlenmiş kanalda ÖLÇÜLEBİLİR bir artış (gerçek saat süresine göre, ham darbe = n/siftYield)",
+      "ok": true,
+      "detail": "ESKİ kafes: 33.52 Mbit/s · YENİ kafes: 43.62 Mbit/s (tabanla AYNI) → %30.1 artış. (n=1e6 elenmiş bit için sonlu-anahtar kanıtı ℓ=572.580→766.400 bit, her iki durumda da ℓ>0/güvenli)"
+    },
+    {
+      "name": "(D) JİTTER HİZALAMA: AYNI koinsidans penceresinde temiz kanal HER ZAMAN daha düşük QBER veriyor (pencere taraması boyunca monoton)",
+      "ok": true,
+      "detail": "6 pencere genişliği (2σ, 3σ, 4σ, 5σ, 6σ, 8σ) tarandı — HER birinde temiz kanal daha düşük QBER veriyor. Önerilen pencerede (400 ps): kirli QBER %3.34 → temiz QBER %1.219"
+    },
+    {
+      "name": "ÇEKİRDEĞE DOKUNULMADI: photonnet_core.js SHA-256 değişmedi (bu dosya QKDSecurityProof/DetectorNoiseModel'i SALT OKUNUR çağırır)",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — production_gate.js ile AYNI, zaten kabul edilmiş salt-okunur core çağrı deseni"
+    }
+  ],
+  "thermalCrossCheck": {
+    "groundThermal": 0.0005,
+    "satelliteReferenceAt1GHz": 2.499999687266552e-7,
+    "ratio": 2000
+  },
+  "channel": {
+    "darkProb": {
+      "thermal": 0.0005,
+      "dirty": 0.004039728921920689,
+      "clean": 0.0005000000003154787
+    },
+    "baseline": {
+      "qberPct": 1.2124,
+      "siftYieldPct": 5.69,
+      "ell": 766400,
+      "secure": true,
+      "skrBps": 43618889.6
+    },
+    "dirty": {
+      "qberPct": 2.8493,
+      "siftYieldPct": 5.85,
+      "ell": 572580,
+      "secure": true,
+      "skrBps": 33518833.2
+    },
+    "clean": {
+      "qberPct": 1.2124,
+      "siftYieldPct": 5.69,
+      "ell": 766400,
+      "secure": true,
+      "skrBps": 43618889.6
+    },
+    "skrIncreasePct": 30.1,
+    "cleanMatchesBaseline": true
+  },
+  "jitterSweep": {
+    "dirty": {
+      "sweep": [
+        {
+          "multiple": 2,
+          "windowPs": 160,
+          "qberPct": 2.41,
+          "siftYieldPct": 4.205
+        },
+        {
+          "multiple": 3,
+          "windowPs": 240,
+          "qberPct": 2.657,
+          "siftYieldPct": 5.383
+        },
+        {
+          "multiple": 4,
+          "windowPs": 320,
+          "qberPct": 2.998,
+          "siftYieldPct": 5.959
+        },
+        {
+          "multiple": 5,
+          "windowPs": 400,
+          "qberPct": 3.34,
+          "siftYieldPct": 6.208
+        },
+        {
+          "multiple": 6,
+          "windowPs": 480,
+          "qberPct": 3.722,
+          "siftYieldPct": 6.314
+        },
+        {
+          "multiple": 8,
+          "windowPs": 640,
+          "qberPct": 4.504,
+          "siftYieldPct": 6.423
+        }
+      ],
+      "maxYieldPct": 6.423,
+      "thresholdPct": 6.102,
+      "optimal": {
+        "multiple": 5,
+        "windowPs": 400,
+        "qberPct": 3.34,
+        "siftYieldPct": 6.208
+      }
+    },
+    "clean": {
+      "sweep": [
+        {
+          "multiple": 2,
+          "windowPs": 160,
+          "qberPct": 1.111,
+          "siftYieldPct": 4.141
+        },
+        {
+          "multiple": 3,
+          "windowPs": 240,
+          "qberPct": 1.145,
+          "siftYieldPct": 5.27
+        },
+        {
+          "multiple": 4,
+          "windowPs": 320,
+          "qberPct": 1.194,
+          "siftYieldPct": 5.832
+        },
+        {
+          "multiple": 5,
+          "windowPs": 400,
+          "qberPct": 1.219,
+          "siftYieldPct": 6.044
+        },
+        {
+          "multiple": 6,
+          "windowPs": 480,
+          "qberPct": 1.275,
+          "siftYieldPct": 6.116
+        },
+        {
+          "multiple": 8,
+          "windowPs": 640,
+          "qberPct": 1.373,
+          "siftYieldPct": 6.144
+        }
+      ],
+      "maxYieldPct": 6.144,
+      "thresholdPct": 5.837,
+      "optimal": {
+        "multiple": 5,
+        "windowPs": 400,
+        "qberPct": 1.219,
+        "siftYieldPct": 6.044
+      }
+    }
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}

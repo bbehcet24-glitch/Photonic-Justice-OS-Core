@@ -1,0 +1,167 @@
+{
+  "generatedAt": "2026-09-11T23:13:36.150Z",
+  "checks": [
+    {
+      "name": "(A) mTLS ÖN-KOŞULU (YENİ kafes): kalkanlama hedefi karşılanıyor → el sıkışmaya İZİN VERİLİR",
+      "ok": true,
+      "detail": "fiziksel katman kalkanlama hedefi karşılanıyor (marj +44.4 dB) — SAE↔KME mTLS el sıkışmasına İZİN VERİLİR"
+    },
+    {
+      "name": "(B) mTLS ÖN-KOŞULU (ESKİ kafes): hedef karşılanmıyor → fail-closed REDDEDİLİR",
+      "ok": true,
+      "detail": "fiziksel katman kalkanlama hedefi KARŞILANMIYOR (en zayıf nokta 19000.0 MHz'de açıklık (çıplak delik, 5 mm) — birleşik SE 4.0 dB < hedef 60 dB (açık 56 dB)) — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı"
+    },
+    {
+      "name": "(C) mTLS ÖN-KOŞULU (değerlendirme yok): varsayılan GÜVENSİZ — sessizce izin VERİLMEZ",
+      "ok": true,
+      "detail": "fiziksel katman kalkanlama hedefi KARŞILANMIYOR (kafes değerlendirmesi yok) — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı"
+    },
+    {
+      "name": "(D) JİTTER HİZALAMA ÖNERİSİ: temiz kanal aynı/daha dar pencerede DAHA İYİ QBER veriyor",
+      "ok": true,
+      "detail": "ESKİ kafes (kirli EM): en dar uygun pencere 400 ps (5σ), QBER %3.34. YENİ kafes (temiz): 400 ps (5σ) yeterli, QBER %1.219 — pencere %0 daraltılabilir, aynı verim hedefinde QBER %63.5 iyileşir (ODL zamanlama toleransı gevşer)."
+    },
+    {
+      "name": "(E) PRODUCTION_GATE ENTEGRASYONU: state.faraday yokken 'hardware' (mevcut davranış korunuyor), iyi/kötü kafesle pass/fail otomatik türetiliyor",
+      "ok": true,
+      "detail": "state.faraday YOK → mTLS kriteri \"hardware\" (mevcut çağrı siteleri ETKİLENMEDİ). state.faraday=İYİ kafes → \"pass\", genel kapı pass=true. state.faraday=KÖTÜ kafes → \"fail\", genel kapı pass=false (fail-closed BLOKLUYOR)"
+    },
+    {
+      "name": "ÇEKİRDEĞE DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası"
+    }
+  ],
+  "mtlsNew": {
+    "allowed": true,
+    "reason": "fiziksel katman kalkanlama hedefi karşılanıyor (marj +44.4 dB) — SAE↔KME mTLS el sıkışmasına İZİN VERİLİR"
+  },
+  "mtlsOld": {
+    "allowed": false,
+    "reason": "fiziksel katman kalkanlama hedefi KARŞILANMIYOR (en zayıf nokta 19000.0 MHz'de açıklık (çıplak delik, 5 mm) — birleşik SE 4.0 dB < hedef 60 dB (açık 56 dB)) — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı"
+  },
+  "mtlsNone": {
+    "allowed": false,
+    "reason": "fiziksel katman kalkanlama hedefi KARŞILANMIYOR (kafes değerlendirmesi yok) — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı"
+  },
+  "jitterAlignment": {
+    "dirty": {
+      "sweep": [
+        {
+          "multiple": 2,
+          "windowPs": 160,
+          "qberPct": 2.41,
+          "siftYieldPct": 4.205
+        },
+        {
+          "multiple": 3,
+          "windowPs": 240,
+          "qberPct": 2.657,
+          "siftYieldPct": 5.383
+        },
+        {
+          "multiple": 4,
+          "windowPs": 320,
+          "qberPct": 2.998,
+          "siftYieldPct": 5.959
+        },
+        {
+          "multiple": 5,
+          "windowPs": 400,
+          "qberPct": 3.34,
+          "siftYieldPct": 6.208
+        },
+        {
+          "multiple": 6,
+          "windowPs": 480,
+          "qberPct": 3.722,
+          "siftYieldPct": 6.314
+        },
+        {
+          "multiple": 8,
+          "windowPs": 640,
+          "qberPct": 4.504,
+          "siftYieldPct": 6.423
+        }
+      ],
+      "maxYieldPct": 6.423,
+      "thresholdPct": 6.102,
+      "optimal": {
+        "multiple": 5,
+        "windowPs": 400,
+        "qberPct": 3.34,
+        "siftYieldPct": 6.208
+      }
+    },
+    "clean": {
+      "sweep": [
+        {
+          "multiple": 2,
+          "windowPs": 160,
+          "qberPct": 1.111,
+          "siftYieldPct": 4.141
+        },
+        {
+          "multiple": 3,
+          "windowPs": 240,
+          "qberPct": 1.145,
+          "siftYieldPct": 5.27
+        },
+        {
+          "multiple": 4,
+          "windowPs": 320,
+          "qberPct": 1.194,
+          "siftYieldPct": 5.832
+        },
+        {
+          "multiple": 5,
+          "windowPs": 400,
+          "qberPct": 1.219,
+          "siftYieldPct": 6.044
+        },
+        {
+          "multiple": 6,
+          "windowPs": 480,
+          "qberPct": 1.275,
+          "siftYieldPct": 6.116
+        },
+        {
+          "multiple": 8,
+          "windowPs": 640,
+          "qberPct": 1.373,
+          "siftYieldPct": 6.144
+        }
+      ],
+      "maxYieldPct": 6.144,
+      "thresholdPct": 5.837,
+      "optimal": {
+        "multiple": 5,
+        "windowPs": 400,
+        "qberPct": 1.219,
+        "siftYieldPct": 6.044
+      }
+    },
+    "windowNarrowedPct": 0,
+    "qberImprovedPct": 63.5,
+    "detail": "ESKİ kafes (kirli EM): en dar uygun pencere 400 ps (5σ), QBER %3.34. YENİ kafes (temiz): 400 ps (5σ) yeterli, QBER %1.219 — pencere %0 daraltılabilir, aynı verim hedefinde QBER %63.5 iyileşir (ODL zamanlama toleransı gevşer)."
+  },
+  "productionGateIntegration": {
+    "noFaraday": {
+      "status": "hardware",
+      "overallPass": true
+    },
+    "goodCage": {
+      "status": "pass",
+      "overallPass": true
+    },
+    "badCage": {
+      "status": "fail",
+      "overallPass": false
+    }
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
