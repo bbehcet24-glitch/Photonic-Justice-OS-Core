@@ -1,0 +1,154 @@
+{
+  "generatedAt": "2026-09-11T23:31:19.642Z",
+  "checks": [
+    {
+      "name": "(A) ANAHTAR KAPALI: enabled=false (veya cycles=0) → nominal değerlendirme AYNEN döner (sıfır fark)",
+      "ok": true,
+      "detail": "bypass(enabled=false).combinedSeDb=104.3983170318291 === nominal 104.3983170318291 dB — mevcut kullanım (rf_noise_bridge/network_shielding_bridge/production_gate) ETKİLENMEZ"
+    },
+    {
+      "name": "(B) TEK-DÖNGÜ İSTATİSTİKSEL SINIR: uygulanan sızıntı-artışı yüzdesi HER ZAMAN [%1, %5] aralığında",
+      "ok": true,
+      "detail": "3000 bağımsız tek-döngü denemesi: min=%1.001 · max=%4.999 · ortalama=%2.999 (beklenen ortalama ≈%3.0, U(1,5) dağılımı) — hiçbiri [%1,%5] dışına ÇIKMADI"
+    },
+    {
+      "name": "(C) ÇOK-DÖNGÜ BİRİKİMLİ BOZULMA: birleşik SE ASLA kendiliğinden İYİLEŞMEZ (tavana kadar KESİN monoton azalır) ve firstFailCycle ampirik olarak BULUNDU",
+      "ok": true,
+      "detail": "1500 saha-döngüsü boyunca SE HİÇBİR döngüde ARTMADI (neverImproves=true) — tavana (SE=0 dB, tam saydamlık, döngü 795'de ulaşıldı) KADAR KESİN AZALDI (strictlyDecreasing=true) · nominal 104.4 dB → 1500. döngüde 0.0 dB · ampirik ilk-başarısızlık döngüsü (SE < hedef 60 dB'ye ilk düştüğü döngü) = 335 (ÖNCEDEN TAHMİN EDİLMEDİ — ölçüldü)"
+    },
+    {
+      "name": "(D) ADAPTİF GÜVENLİ-ANAHTAR VERİMİ: kafes yaşlandıkça QBER MONOTON yükselir, ℓ (güvenli anahtar) MONOTON azalır — ama bu senaryoda tam çöküşte bile %11 sert-iptal eşiğinin ALTINDA kalır (ölçülen bulgu)",
+      "ok": true,
+      "detail": "döngü 0: SE 104.4 dB → marj -92 dB → QBER %1.2124 → ℓ=766.400 bit (güvenli=true) | döngü 650: SE 18.74 dB → marj -6.3 dB → QBER %1.3811 → ℓ=744.394 bit (güvenli=true) | döngü 699: SE 12.31 dB → marj 0.1 dB → QBER %1.4492 → ℓ=735.677 bit (güvenli=true) | döngü 750: SE 6.12 dB → marj 6.3 dB → QBER %2.2517 → ℓ=638.935 bit (güvenli=true) | döngü 800: SE 0 dB → marj 12.4 dB → QBER %4.9875 → ℓ=362.356 bit (güvenli=true) | döngü 1500: SE 0 dB → marj 12.4 dB → QBER %4.9875 → ℓ=362.356 bit (güvenli=true) — SONUÇ: QBER tabandan (%1.2124) tam çöküşe (%4.9875) kadar MONOTON yükseldi (×4.1) ama %11 eşiğinin altında kaldı → SE/marj-tabanlı kriter (8/9) bu QBER-tabanlı mekanizmadan ÇOK DAHA ERKEN devreye girdi (bkz. (E): döngü 335)"
+    },
+    {
+      "name": "(E) YAŞAM-SONU FAIL-CLOSED: firstFailCycle'dan ÖNCE hâlâ İZİN VERİLİR/pass, SONRA KESİN REDDEDİLİR/fail — sonsuz 'optimizasyon' YOK",
+      "ok": true,
+      "detail": "döngü 100 (firstFail=335'dan ÖNCE): SE 91.3 dB, mTLS izin=true, üretim-kapısı pass=true. döngü 385 (firstFail'dan SONRA): SE 53.5 dB, mTLS izin=false, üretim-kapısı pass=false — sistem KESİN olarak DURDU"
+    },
+    {
+      "name": "ÇEKİRDEĞE DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası"
+    }
+  ],
+  "nominal": {
+    "ok": true,
+    "combinedSeDb": 104.3983170318291,
+    "targetSeDb": 60
+  },
+  "bypass": {
+    "off": {
+      "enabled": false,
+      "cycles": 0,
+      "degradedPct": 0
+    },
+    "zeroCycles": {
+      "enabled": false,
+      "cycles": 0,
+      "degradedPct": 0
+    }
+  },
+  "singleCycleBounds": {
+    "trials": 3000,
+    "minPct": 1.0005,
+    "maxPct": 4.9987,
+    "meanPct": 2.999
+  },
+  "multiCycle": {
+    "cyclesBudget": 1500,
+    "neverImproves": true,
+    "strictlyDecreasingBeforeCap": true,
+    "capCycle": 795,
+    "firstFailCycle": 335,
+    "nominalSeDb": 104.3983170318291,
+    "agedSeDbAtBudget": 0
+  },
+  "adaptiveSeries": [
+    {
+      "cycle": 0,
+      "seDb": 104.4,
+      "marginDb": -92,
+      "rfDarkProb": 3.154786722400971e-13,
+      "qberPct": 1.2124,
+      "ell": 766400,
+      "skrBps": 43618889.6,
+      "secure": true
+    },
+    {
+      "cycle": 650,
+      "seDb": 18.74,
+      "marginDb": -6.3,
+      "rfDarkProb": 0.00011609184345090776,
+      "qberPct": 1.3811,
+      "ell": 744394,
+      "skrBps": 42472144.063999996,
+      "secure": true
+    },
+    {
+      "cycle": 699,
+      "seDb": 12.31,
+      "marginDb": 0.1,
+      "rfDarkProb": 0.0005102719640956695,
+      "qberPct": 1.4492,
+      "ell": 735677,
+      "skrBps": 42133693.143999994,
+      "secure": true
+    },
+    {
+      "cycle": 750,
+      "seDb": 6.12,
+      "marginDb": 6.3,
+      "rfDarkProb": 0.002122275241050135,
+      "qberPct": 2.2517,
+      "ell": 638935,
+      "skrBps": 37002003.72,
+      "secure": true
+    },
+    {
+      "cycle": 800,
+      "seDb": 0,
+      "marginDb": 12.4,
+      "rfDarkProb": 0.008685637652808467,
+      "qberPct": 4.9875,
+      "ell": 362356,
+      "skrBps": 21970368.992000002,
+      "secure": true
+    },
+    {
+      "cycle": 1500,
+      "seDb": 0,
+      "marginDb": 12.4,
+      "rfDarkProb": 0.008685637652808467,
+      "qberPct": 4.9875,
+      "ell": 362356,
+      "skrBps": 21970368.992000002,
+      "secure": true
+    }
+  ],
+  "adaptiveSanityCheck": {
+    "nominalSeDbFromRange": 104.3983170318291,
+    "nominalSeDbFromSingleFreq": 104.3983170318291
+  },
+  "endOfLife": {
+    "earlyCycle": 100,
+    "lateCycle": 385,
+    "early": {
+      "seDb": 91.32816355099644,
+      "ok": true,
+      "mtlsAllowed": true,
+      "gatePass": true
+    },
+    "late": {
+      "seDb": 53.48970765629481,
+      "ok": false,
+      "mtlsAllowed": false,
+      "gatePass": false
+    }
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
