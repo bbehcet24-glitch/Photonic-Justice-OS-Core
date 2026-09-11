@@ -1,0 +1,84 @@
+{
+  "generatedAt": "2026-09-11T23:00:12.985Z",
+  "checks": [
+    {
+      "name": "(A) KALİBRASYON DUYARLILIĞI: marj=0→referans, +10dB→×10, çok negatif→~0, olasılık [0,1]'e sınırlı",
+      "ok": true,
+      "detail": "marj=0dB → 0.0005 (referans darkProb) · marj=+10dB → 0.005 (×10.0) · marj=-100dB → 5.00e-14 (ihmal edilebilir) · marj=+1000dB → 1 (1'e sınırlı, olasılık taşmıyor)"
+    },
+    {
+      "name": "(B) ESKİ TASARIM (5mm çıplak), 0.3 m: RF sızıntısı QBER'i ÖLÇÜLEBİLİR şekilde yükseltiyor ama abort eşiğinin (%11) altında kalıyor",
+      "ok": true,
+      "detail": "marj +8.5 dB (tespit edilebilir) → rfDarkProb 3.54e-3 → QBER %1.21 → %2.85 (2.4× artış), abort eşiğinin (%11) ALTINDA — \"sessiz\" bir marj kaybı"
+    },
+    {
+      "name": "(C) YENİ TASARIM (3mm+9mm honeycomb), 0.3 m: RF katkısı ihmal edilebilir — ölçülen QBER, RF'siz temel duruma TAM eşit",
+      "ok": true,
+      "detail": "marj -92 dB (derinden gürültü tabanının altında) → rfDarkProb 3.15e-13 (temel darkProb'un 6.31e-10'i) → ölçülen QBER AYNI tohumla BİREBİR eşit: %1.2124 = %1.2124"
+    },
+    {
+      "name": "(D) YAKIN-ALAN SENARYOSU (0.1 m, örn. kablo geçişi yanı): ESKİ tasarımda QBER abort eşiğini AŞIYOR (kanal İPTAL — DoS-benzeri risk); YENİ tasarım etkilenmiyor",
+      "ok": true,
+      "detail": "ESKİ: marj +18 dB → QBER %12.54 ≥ abort eşiği %11 → ANAHTAR İPTAL (kanal kullanılamaz hale gelir, salt gizlilik değil KULLANILABİLİRLİK riski). YENİ: marj -82.4 dB → QBER %1.2124 ≪ %11 → etkilenmiyor"
+    },
+    {
+      "name": "(E) SONLU-ANAHTAR ETKİSİ (n=1e6, 0.3 m): ESKİ tasarımın RF sızıntısı güvenli-anahtar uzunluğunu BELİRGİN düşürüyor (ℓ>0 kalsa da); YENİ tasarımda kayıp SIFIR",
+      "ok": true,
+      "detail": "ESKİ: ℓ 766.400 → 572.580 bit (%25.3 kayıp), hâlâ güvenli (ℓ>0) ama gereksiz yere pahalı. YENİ: ℓ değişmedi (766.400 bit, kayıp %0) — kafes düzeltmesi bu maliyeti TAMAMEN ortadan kaldırıyor"
+    },
+    {
+      "name": "ÇEKİRDEĞE DOKUNULMADI: rf_noise_bridge.js photonnet_core.js'i DOĞRUDAN import ETMEZ VE dosyanın SHA-256'sı değişmedi",
+      "ok": true,
+      "detail": "kaynakta doğrudan core import taraması: yok ✓ · SHA-256 8f879fde86be0129… öncesi = sonrası ✓ — yalnız zaten test edilmiş katman dosyaları (faraday_cage_shielding, timetag_acquisition_bridge, detector_recalibration) beslendi"
+    }
+  ],
+  "calibration": {
+    "p0": 0.0005,
+    "p10": 0.005,
+    "pNeg": 5e-14,
+    "pClip": 1
+  },
+  "oldAt03m": {
+    "marginDb": 8.5,
+    "detectable": true,
+    "rfDarkProb": 0.0035397289219206893,
+    "baselineQberPct": 1.212,
+    "withRfQberPct": 2.849
+  },
+  "newAt03m": {
+    "marginDb": -92,
+    "detectable": false,
+    "rfDarkProb": 3.154786722400971e-13,
+    "baselineQberPct": 1.2124,
+    "withRfQberPct": 1.2124
+  },
+  "at01m": {
+    "old": {
+      "marginDb": 18,
+      "qberPct": 12.542,
+      "aborts": true
+    },
+    "new_": {
+      "marginDb": -82.4,
+      "qberPct": 1.2124,
+      "aborts": false
+    }
+  },
+  "finiteKey": {
+    "n": 1000000,
+    "oldIdealEll": 766400,
+    "oldRealEll": 572580,
+    "oldLossPts": 19.38,
+    "oldStillSecure": true,
+    "newIdealEll": 766400,
+    "newRealEll": 766400,
+    "newLossPts": 0,
+    "newStillSecure": true
+  },
+  "coreIntegrity": {
+    "noDirectCoreImport": true,
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
