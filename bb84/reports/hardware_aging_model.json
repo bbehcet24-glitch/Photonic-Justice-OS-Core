@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T23:31:19.642Z",
+  "generatedAt": "2026-09-11T23:49:37.391Z",
   "checks": [
     {
       "name": "(A) ANAHTAR KAPALI: enabled=false (veya cycles=0) → nominal değerlendirme AYNEN döner (sıfır fark)",
