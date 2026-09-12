@@ -1,0 +1,1977 @@
+{
+  "generatedAt": "2026-09-12T14:12:40.103Z",
+  "coreShaVerified": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05",
+  "totalCalls": 197,
+  "elapsedS": 24.9,
+  "counts": {
+    "HANDLED": 133,
+    "SESSİZ_NaN": 40,
+    "SESSİZ_SONSUZ": 4,
+    "ZAMAN_AŞIMI": 4,
+    "KONTROLLÜ_HATA": 16
+  },
+  "findings": [
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_SONSUZ",
+      "elapsedMs": 0,
+      "detay": "\"Infinity\""
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 1,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 1,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "null",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "Infinity",
+      "verdict": "ZAMAN_AŞIMI",
+      "elapsedMs": 2500,
+      "detay": "çağrı süresi aşıldı, alt-process öldürüldü"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "ZAMAN_AŞIMI",
+      "elapsedMs": 2500,
+      "detay": "çağrı süresi aşıldı, alt-process öldürüldü"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_SONSUZ",
+      "elapsedMs": 0,
+      "detay": "\"Infinity\""
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "SESSİZ_SONSUZ",
+      "elapsedMs": 0,
+      "detay": "\"Infinity\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 1,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_SONSUZ",
+      "elapsedMs": 0,
+      "detay": "\"Infinity\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "Infinity",
+      "verdict": "ZAMAN_AŞIMI",
+      "elapsedMs": 2500,
+      "detay": "çağrı süresi aşıldı, alt-process öldürüldü"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "ZAMAN_AŞIMI",
+      "elapsedMs": 2500,
+      "detay": "çağrı süresi aşıldı, alt-process öldürüldü"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "karışık/bozuk bit değerleri",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "[1,0,0,1,1,\"x\",null,2,-1,\"NaN\",-3,2,-1,0]"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "karışık/bozuk bit değerleri",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "[\"x\",\"NaN\",2,-1]"
+    }
+  ],
+  "allResults": [
+    {
+      "hedef": "fiberT",
+      "argüman": "nm",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "nm",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "nm",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "nm",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "nm",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "nm",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "nm",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "nm",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "nm",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_SONSUZ",
+      "elapsedMs": 0,
+      "detay": "\"Infinity\""
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1.0471285480508996"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1e+308"
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "poissonSample",
+      "argüman": "lambda",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "mulberry32",
+      "argüman": "seed",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.26642920868471265"
+    },
+    {
+      "hedef": "mulberry32",
+      "argüman": "seed",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.26642920868471265"
+    },
+    {
+      "hedef": "mulberry32",
+      "argüman": "seed",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.26642920868471265"
+    },
+    {
+      "hedef": "mulberry32",
+      "argüman": "seed",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.26642920868471265"
+    },
+    {
+      "hedef": "mulberry32",
+      "argüman": "seed",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.26642920868471265"
+    },
+    {
+      "hedef": "mulberry32",
+      "argüman": "seed",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.8964226141106337"
+    },
+    {
+      "hedef": "mulberry32",
+      "argüman": "seed",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.26642920868471265"
+    },
+    {
+      "hedef": "mulberry32",
+      "argüman": "seed",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.26642920868471265"
+    },
+    {
+      "hedef": "mulberry32",
+      "argüman": "seed",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.26642920868471265"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "entanglementSeed",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3291306242"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "entanglementSeed",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3291306242"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "entanglementSeed",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3291306242"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "entanglementSeed",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3291306242"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "entanglementSeed",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3291306242"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "entanglementSeed",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1778821804"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "entanglementSeed",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3291306242"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "entanglementSeed",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3291306242"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "entanglementSeed",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3291306242"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "segIndex",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "segIndex",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "segIndex",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "segIndex",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "segIndex",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "segIndex",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1321559452"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "segIndex",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "segIndex",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "segIndex",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "bitIndex",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "bitIndex",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "bitIndex",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "bitIndex",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "bitIndex",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "bitIndex",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1574847125"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "bitIndex",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "bitIndex",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "combineSeed",
+      "argüman": "bitIndex",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "3748654575"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 1,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 1,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "null",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "Infinity",
+      "verdict": "ZAMAN_AŞIMI",
+      "elapsedMs": 2500,
+      "detay": "çağrı süresi aşıldı, alt-process öldürüldü"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":0}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":0}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "ZAMAN_AŞIMI",
+      "elapsedMs": 2500,
+      "detay": "çağrı süresi aşıldı, alt-process öldürüldü"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[],\"bobBases\":[],\"matched\":[],\"matchRate\":\"NaN\"}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "rng",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"DIAG\"…"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "rng",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[\"REC\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"REC\",\"REC\",…"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "rng",
+      "girdi": "fonksiyon değil (42)",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "r is not a function"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "rng",
+      "girdi": "fırlatan rng",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "rng kasıtlı olarak patlatıldı (fuzz)"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "nm",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "nm",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "nm",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "nm",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "nm",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "nm",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "nm",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "nm",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "nm",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.45"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.08"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_SONSUZ",
+      "elapsedMs": 0,
+      "detay": "\"Infinity\""
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.46743756277883286"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.08"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.9877946432208708"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "SESSİZ_SONSUZ",
+      "elapsedMs": 0,
+      "detay": "\"Infinity\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 1,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "0.1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "-Infinity",
+      "verdict": "SESSİZ_SONSUZ",
+      "elapsedMs": 0,
+      "detay": "\"Infinity\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "legaCtx",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.6309573444801932"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "legaCtx",
+      "girdi": "obje değil (metin)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.6309573444801932"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "legaCtx",
+      "girdi": "bozuk coeffOverride/atmosphericConditions",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0.6309573444801932"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "km",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":false,\"evs\":[{\"type\":\"SCATTER\",\"km\":\"NaN\"}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "km",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":false,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"Infinity\"},{\"type\":\"SCATTER\",\"km\":2.0120322714630287e+307}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "km",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "{\"ok\":false,\"evs\":[{\"type\":\"ABSORB\",\"km\":25.359995433060487}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "Infinity",
+      "verdict": "ZAMAN_AŞIMI",
+      "elapsedMs": 2500,
+      "detay": "çağrı süresi aşıldı, alt-process öldürüldü"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "{\"ok\":true,\"evs\":[{\"type\":\"PHASE\",\"km\":38.724296127834336}],\"flip\":true}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "ZAMAN_AŞIMI",
+      "elapsedMs": 2500,
+      "detay": "çağrı süresi aşıldı, alt-process öldürüldü"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "rng",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":false,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"},{\"type\":\"ABSORB\",\"km\":23.88770570929218}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "rng",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":false,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"},{\"type\":\"ABSORB\",\"km\":42.38481428363117}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "rng",
+      "girdi": "fonksiyon değil (42)",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "rand is not a function"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "rng",
+      "girdi": "fırlatan rng",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "rng kasıtlı olarak patlatıldı (fuzz)"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "legaCtx",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "legaCtx",
+      "girdi": "obje değil (metin)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"ok\":true,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "legaCtx",
+      "girdi": "bozuk coeffOverride/atmosphericConditions",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "{\"ok\":true,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"}]}"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "NaN",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "undefined",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "Infinity",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "0"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "sayısal olmayan metin (\"abc\")",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "boş obje ({})",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "\"NaN\""
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "undefined",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "null",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "Cannot read properties of null (reading 'length')"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "boş dizi ([])",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "[]"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "dizi değil (metin)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "[0,0,\"d\",0,\"i\",\"z\",\"i\",0,0,\"-\",0,\"d\",\"e\",\"ğ\",0,0,\"i\",0,\"l\",\"-\",\"m\",0,0,\"e\",0,\"t\",\"i\",\"n\"]"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "karışık/bozuk bit değerleri",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "[1,0,0,1,1,\"x\",null,2,-1,\"NaN\",-3,2,-1,0]"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "aşırı uzun dizi (50000 eleman)",
+      "verdict": "HANDLED",
+      "elapsedMs": 7,
+      "detay": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1…"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "undefined",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "null",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "Cannot read properties of null (reading 'length')"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "boş dizi ([])",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "[]"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "dizi değil (metin)",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "[\"z\",\"-\",\"d\",\"e\",\"l\",\"m\",\"e\",\"t\"]"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "karışık/bozuk bit değerleri",
+      "verdict": "SESSİZ_NaN",
+      "elapsedMs": 0,
+      "detay": "[\"x\",\"NaN\",2,-1]"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "aşırı uzun dizi (50000 eleman)",
+      "verdict": "HANDLED",
+      "elapsedMs": 5,
+      "detay": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1…"
+    },
+    {
+      "hedef": "t2b",
+      "argüman": "t",
+      "girdi": "undefined",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "t is not iterable"
+    },
+    {
+      "hedef": "t2b",
+      "argüman": "t",
+      "girdi": "null",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "t is not iterable"
+    },
+    {
+      "hedef": "t2b",
+      "argüman": "t",
+      "girdi": "boş metin",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "[]"
+    },
+    {
+      "hedef": "t2b",
+      "argüman": "t",
+      "girdi": "metin yerine sayı (42)",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "t is not iterable"
+    },
+    {
+      "hedef": "t2b",
+      "argüman": "t",
+      "girdi": "emoji/çok-baytlı karakter",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "[0,0,1,1,1,1,0,1,0,0,1,0,0,0,0,0,0,0,0,0,1,1,1,1,0,0,1,1,1,1,0,1]"
+    },
+    {
+      "hedef": "t2b",
+      "argüman": "t",
+      "girdi": "aşırı uzun metin (200000 karakter)",
+      "verdict": "HANDLED",
+      "elapsedMs": 54,
+      "detay": "[0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0…"
+    },
+    {
+      "hedef": "b2t",
+      "argüman": "b",
+      "girdi": "undefined",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "hedef": "b2t",
+      "argüman": "b",
+      "girdi": "null",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "Cannot read properties of null (reading 'length')"
+    },
+    {
+      "hedef": "b2t",
+      "argüman": "b",
+      "girdi": "boş dizi ([])",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "detay": "\"\""
+    },
+    {
+      "hedef": "b2t",
+      "argüman": "b",
+      "girdi": "dizi değil (metin)",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "b.slice(...).reduce is not a function"
+    },
+    {
+      "hedef": "b2t",
+      "argüman": "b",
+      "girdi": "karışık/bozuk bit değerleri",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "\"\""
+    },
+    {
+      "hedef": "b2t",
+      "argüman": "b",
+      "girdi": "aşırı uzun dizi (50000 eleman)",
+      "verdict": "HANDLED",
+      "elapsedMs": 4,
+      "detay": "\"ÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ…"
+    },
+    {
+      "hedef": "toeplitzPackBits",
+      "argüman": "bitsArray",
+      "girdi": "undefined",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "Cannot read properties of undefined (reading 'length')"
+    },
+    {
+      "hedef": "toeplitzPackBits",
+      "argüman": "bitsArray",
+      "girdi": "null",
+      "verdict": "KONTROLLÜ_HATA",
+      "elapsedMs": 0,
+      "detay": "Cannot read properties of null (reading 'length')"
+    },
+    {
+      "hedef": "toeplitzPackBits",
+      "argüman": "bitsArray",
+      "girdi": "boş dizi ([])",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{}"
+    },
+    {
+      "hedef": "toeplitzPackBits",
+      "argüman": "bitsArray",
+      "girdi": "dizi değil (metin)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"0\":65535}"
+    },
+    {
+      "hedef": "toeplitzPackBits",
+      "argüman": "bitsArray",
+      "girdi": "karışık/bozuk bit değerleri",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "detay": "{\"0\":102}"
+    },
+    {
+      "hedef": "toeplitzPackBits",
+      "argüman": "bitsArray",
+      "girdi": "aşırı uzun dizi (50000 eleman)",
+      "verdict": "HANDLED",
+      "elapsedMs": 2,
+      "detay": "{\"0\":4294967295,\"1\":4294967295,\"2\":4294967295,\"3\":4294967295,\"4\":4294967295,\"5\":4294967295,\"6\":4294967295,\"7\":4294967295,\"8\":4294967295,\"9\":4294967295,\"10\":4294967295,\"11\":4294967295,\"12\":4294967295,\"13\":4294967295,\"14\":4294967295,\"15\":4294…"
+    }
+  ]
+}
