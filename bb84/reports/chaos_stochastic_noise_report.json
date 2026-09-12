@@ -1,0 +1,373 @@
+{
+  "generatedAt": "2026-09-12T15:02:26.046Z",
+  "coreShaVerified": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05",
+  "params": {
+    "trialsPerMode": 300,
+    "bitCount": 6000,
+    "km": 8,
+    "testFraction": 0.25
+  },
+  "scenarios": [
+    {
+      "key": "baseline",
+      "label": "Taban (gürültü enjeksiyonu YOK)",
+      "mode": "baseline",
+      "opts": {}
+    },
+    {
+      "key": "burst_light",
+      "label": "PATLAMA — hafif",
+      "mode": "burst",
+      "opts": {
+        "pGoodToBurst": 0.01,
+        "pBurstToGood": 0.3,
+        "severity": 1.5
+      }
+    },
+    {
+      "key": "iid_light",
+      "label": "KONTROL (IID, eşleşen ortalama) — hafif",
+      "mode": "iid",
+      "opts": {
+        "piBurst": 0.03225806451612903,
+        "severity": 1.5
+      }
+    },
+    {
+      "key": "burst_moderate",
+      "label": "PATLAMA — orta",
+      "mode": "burst",
+      "opts": {
+        "pGoodToBurst": 0.03,
+        "pBurstToGood": 0.2,
+        "severity": 2.5
+      }
+    },
+    {
+      "key": "iid_moderate",
+      "label": "KONTROL (IID, eşleşen ortalama) — orta",
+      "mode": "iid",
+      "opts": {
+        "piBurst": 0.13043478260869565,
+        "severity": 2.5
+      }
+    },
+    {
+      "key": "burst_severe",
+      "label": "PATLAMA — şiddetli",
+      "mode": "burst",
+      "opts": {
+        "pGoodToBurst": 0.06,
+        "pBurstToGood": 0.12,
+        "severity": 4
+      }
+    },
+    {
+      "key": "iid_severe",
+      "label": "KONTROL (IID, eşleşen ortalama) — şiddetli",
+      "mode": "iid",
+      "opts": {
+        "piBurst": 0.3333333333333333,
+        "severity": 4
+      }
+    }
+  ],
+  "summaries": [
+    {
+      "key": "baseline",
+      "label": "Taban (gürültü enjeksiyonu YOK)",
+      "n": 300,
+      "avgBurstFraction": 0,
+      "qber": {
+        "mean": 0.01379,
+        "stdev": 0.00277,
+        "max": 0.02121,
+        "min": 0.00714
+      },
+      "falseEavesdropRate": 0,
+      "peSampleCount": 300,
+      "peBiasMeanAbs": 0.0036,
+      "cascadeSampleCount": 300,
+      "cascadeConvergedRate": 0.96,
+      "cascadeMeanLeak": 205.7,
+      "secureKeyRate": 1,
+      "meanEll": 342.8,
+      "emptyKeySampleTrials": 0
+    },
+    {
+      "key": "burst_light",
+      "label": "PATLAMA — hafif",
+      "n": 300,
+      "avgBurstFraction": 0.0322,
+      "qber": {
+        "mean": 0.01645,
+        "stdev": 0.00282,
+        "max": 0.02515,
+        "min": 0.00811
+      },
+      "falseEavesdropRate": 0,
+      "peSampleCount": 300,
+      "peBiasMeanAbs": 0.004,
+      "cascadeSampleCount": 300,
+      "cascadeConvergedRate": 0.97,
+      "cascadeMeanLeak": 246.6,
+      "secureKeyRate": 1,
+      "meanEll": 315.6,
+      "emptyKeySampleTrials": 0
+    },
+    {
+      "key": "iid_light",
+      "label": "KONTROL (IID, eşleşen ortalama) — hafif",
+      "n": 300,
+      "avgBurstFraction": 0.0324,
+      "qber": {
+        "mean": 0.01613,
+        "stdev": 0.00258,
+        "max": 0.02492,
+        "min": 0.00882
+      },
+      "falseEavesdropRate": 0,
+      "peSampleCount": 300,
+      "peBiasMeanAbs": 0.00382,
+      "cascadeSampleCount": 300,
+      "cascadeConvergedRate": 0.9933,
+      "cascadeMeanLeak": 239.2,
+      "secureKeyRate": 1,
+      "meanEll": 310.2,
+      "emptyKeySampleTrials": 0
+    },
+    {
+      "key": "burst_moderate",
+      "label": "PATLAMA — orta",
+      "n": 300,
+      "avgBurstFraction": 0.1304,
+      "qber": {
+        "mean": 0.04527,
+        "stdev": 0.00447,
+        "max": 0.05946,
+        "min": 0.03285
+      },
+      "falseEavesdropRate": 0,
+      "peSampleCount": 300,
+      "peBiasMeanAbs": 0.0062,
+      "cascadeSampleCount": 300,
+      "cascadeConvergedRate": 1,
+      "cascadeMeanLeak": 607.9,
+      "secureKeyRate": 0.0933,
+      "meanEll": 3,
+      "emptyKeySampleTrials": 0
+    },
+    {
+      "key": "iid_moderate",
+      "label": "KONTROL (IID, eşleşen ortalama) — orta",
+      "n": 300,
+      "avgBurstFraction": 0.1303,
+      "qber": {
+        "mean": 0.04084,
+        "stdev": 0.00429,
+        "max": 0.05241,
+        "min": 0.02875
+      },
+      "falseEavesdropRate": 0,
+      "peSampleCount": 300,
+      "peBiasMeanAbs": 0.00581,
+      "cascadeSampleCount": 300,
+      "cascadeConvergedRate": 1,
+      "cascadeMeanLeak": 528.9,
+      "secureKeyRate": 0.2567,
+      "meanEll": 9.8,
+      "emptyKeySampleTrials": 0
+    },
+    {
+      "key": "burst_severe",
+      "label": "PATLAMA — şiddetli",
+      "n": 300,
+      "avgBurstFraction": 0.3336,
+      "qber": {
+        "mean": 0.14911,
+        "stdev": 0.00806,
+        "max": 0.16936,
+        "min": 0.12505
+      },
+      "falseEavesdropRate": 1,
+      "peSampleCount": 300,
+      "peBiasMeanAbs": 0.00909,
+      "cascadeSampleCount": 300,
+      "cascadeConvergedRate": 1,
+      "cascadeMeanLeak": 1721.1,
+      "secureKeyRate": 0,
+      "meanEll": 0,
+      "emptyKeySampleTrials": 0
+    },
+    {
+      "key": "iid_severe",
+      "label": "KONTROL (IID, eşleşen ortalama) — şiddetli",
+      "n": 300,
+      "avgBurstFraction": 0.3335,
+      "qber": {
+        "mean": 0.15058,
+        "stdev": 0.00767,
+        "max": 0.17603,
+        "min": 0.13011
+      },
+      "falseEavesdropRate": 1,
+      "peSampleCount": 300,
+      "peBiasMeanAbs": 0.01051,
+      "cascadeSampleCount": 300,
+      "cascadeConvergedRate": 1,
+      "cascadeMeanLeak": 1591.4,
+      "secureKeyRate": 0,
+      "meanEll": 0,
+      "emptyKeySampleTrials": 0
+    }
+  ],
+  "findings": [
+    {
+      "severity": "light",
+      "qberDelta": 0.00266,
+      "vsIidQberDelta": 0.00032,
+      "vsIidLeakDelta": 7.4,
+      "vsIidSecureDelta": 0,
+      "burstSum": {
+        "key": "burst_light",
+        "label": "PATLAMA — hafif",
+        "n": 300,
+        "avgBurstFraction": 0.0322,
+        "qber": {
+          "mean": 0.01645,
+          "stdev": 0.00282,
+          "max": 0.02515,
+          "min": 0.00811
+        },
+        "falseEavesdropRate": 0,
+        "peSampleCount": 300,
+        "peBiasMeanAbs": 0.004,
+        "cascadeSampleCount": 300,
+        "cascadeConvergedRate": 0.97,
+        "cascadeMeanLeak": 246.6,
+        "secureKeyRate": 1,
+        "meanEll": 315.6,
+        "emptyKeySampleTrials": 0
+      },
+      "iidSum": {
+        "key": "iid_light",
+        "label": "KONTROL (IID, eşleşen ortalama) — hafif",
+        "n": 300,
+        "avgBurstFraction": 0.0324,
+        "qber": {
+          "mean": 0.01613,
+          "stdev": 0.00258,
+          "max": 0.02492,
+          "min": 0.00882
+        },
+        "falseEavesdropRate": 0,
+        "peSampleCount": 300,
+        "peBiasMeanAbs": 0.00382,
+        "cascadeSampleCount": 300,
+        "cascadeConvergedRate": 0.9933,
+        "cascadeMeanLeak": 239.2,
+        "secureKeyRate": 1,
+        "meanEll": 310.2,
+        "emptyKeySampleTrials": 0
+      }
+    },
+    {
+      "severity": "moderate",
+      "qberDelta": 0.03148,
+      "vsIidQberDelta": 0.00443,
+      "vsIidLeakDelta": 79,
+      "vsIidSecureDelta": -0.1634,
+      "burstSum": {
+        "key": "burst_moderate",
+        "label": "PATLAMA — orta",
+        "n": 300,
+        "avgBurstFraction": 0.1304,
+        "qber": {
+          "mean": 0.04527,
+          "stdev": 0.00447,
+          "max": 0.05946,
+          "min": 0.03285
+        },
+        "falseEavesdropRate": 0,
+        "peSampleCount": 300,
+        "peBiasMeanAbs": 0.0062,
+        "cascadeSampleCount": 300,
+        "cascadeConvergedRate": 1,
+        "cascadeMeanLeak": 607.9,
+        "secureKeyRate": 0.0933,
+        "meanEll": 3,
+        "emptyKeySampleTrials": 0
+      },
+      "iidSum": {
+        "key": "iid_moderate",
+        "label": "KONTROL (IID, eşleşen ortalama) — orta",
+        "n": 300,
+        "avgBurstFraction": 0.1303,
+        "qber": {
+          "mean": 0.04084,
+          "stdev": 0.00429,
+          "max": 0.05241,
+          "min": 0.02875
+        },
+        "falseEavesdropRate": 0,
+        "peSampleCount": 300,
+        "peBiasMeanAbs": 0.00581,
+        "cascadeSampleCount": 300,
+        "cascadeConvergedRate": 1,
+        "cascadeMeanLeak": 528.9,
+        "secureKeyRate": 0.2567,
+        "meanEll": 9.8,
+        "emptyKeySampleTrials": 0
+      }
+    },
+    {
+      "severity": "severe",
+      "qberDelta": 0.13532,
+      "vsIidQberDelta": -0.00147,
+      "vsIidLeakDelta": 129.7,
+      "vsIidSecureDelta": 0,
+      "burstSum": {
+        "key": "burst_severe",
+        "label": "PATLAMA — şiddetli",
+        "n": 300,
+        "avgBurstFraction": 0.3336,
+        "qber": {
+          "mean": 0.14911,
+          "stdev": 0.00806,
+          "max": 0.16936,
+          "min": 0.12505
+        },
+        "falseEavesdropRate": 1,
+        "peSampleCount": 300,
+        "peBiasMeanAbs": 0.00909,
+        "cascadeSampleCount": 300,
+        "cascadeConvergedRate": 1,
+        "cascadeMeanLeak": 1721.1,
+        "secureKeyRate": 0,
+        "meanEll": 0,
+        "emptyKeySampleTrials": 0
+      },
+      "iidSum": {
+        "key": "iid_severe",
+        "label": "KONTROL (IID, eşleşen ortalama) — şiddetli",
+        "n": 300,
+        "avgBurstFraction": 0.3335,
+        "qber": {
+          "mean": 0.15058,
+          "stdev": 0.00767,
+          "max": 0.17603,
+          "min": 0.13011
+        },
+        "falseEavesdropRate": 1,
+        "peSampleCount": 300,
+        "peBiasMeanAbs": 0.01051,
+        "cascadeSampleCount": 300,
+        "cascadeConvergedRate": 1,
+        "cascadeMeanLeak": 1591.4,
+        "secureKeyRate": 0,
+        "meanEll": 0,
+        "emptyKeySampleTrials": 0
+      }
+    }
+  ]
+}
