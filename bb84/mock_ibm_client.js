@@ -308,8 +308,14 @@ class MockIbmSaeClient {
   // "doğru KME'ye mi bağlandık" ayrıca doğrulanır — bu, CA doğrulamasının
   // ÖTESİNDE bir kontrol (aynı CA başka bir sunucu için de sertifika
   // imzalamış olabilir; CN pinleme bunu daraltır).
-  request(method, urlPath, bodyObj) {
+  // ZAMAN AŞIMI (Kaos Müh. #8'in mock_ibm_client.js'e uygulanmış hali —
+  // bkz. etsi014_client_lib.js'deki httpsCall aynı düzeltme, AYNI
+  // gerekçe: Node'un http(s) istemcisinde varsayılan bir istek zaman
+  // aşımı YOK, bu da GERÇEK/yavaş/yanıt vermeyen bir uzak KME'ye karşı
+  // sonsuz asılı kalmaya yol açabilirdi).
+  request(method, urlPath, bodyObj, timeoutMs = 15000) {
     return new Promise((resolve, reject) => {
+      let settled = false;
       const bodyStr = bodyObj != null ? JSON.stringify(bodyObj) : null;
       const req = https.request({
         hostname: this.host, port: this.port, path: urlPath, method,
@@ -319,6 +325,7 @@ class MockIbmSaeClient {
         const serverCert = req.socket.getPeerCertificate ? req.socket.getPeerCertificate() : null;
         const serverCn = serverCert && serverCert.subject && serverCert.subject.CN;
         if (this.expectedServerCn && serverCn !== this.expectedServerCn) {
+          if (settled) return; settled = true;
           reject(new Error(`SUNUCU SERTİFİKASI PİNLEME BAŞARISIZ: beklenen CN=${this.expectedServerCn}, gelen CN=${serverCn} — YANLIŞ/SAHTE bir KME'ye bağlanmış olabiliriz, bağlantı reddediliyor`));
           req.destroy();
           return;
@@ -326,6 +333,7 @@ class MockIbmSaeClient {
         let data = "";
         res.on("data", (c) => { data += c; });
         res.on("end", () => {
+          if (settled) return; settled = true;
           let parsed = null;
           try { parsed = data ? JSON.parse(data) : null; } catch { /* ham metin bırak */ }
           if (res.statusCode >= 400) {
@@ -335,7 +343,13 @@ class MockIbmSaeClient {
           }
         });
       });
-      req.on("error", (e) => reject(new Error(`mTLS bağlantı hatası: ${e.message}`)));
+      req.on("error", (e) => { if (settled) return; settled = true; reject(new Error(`mTLS bağlantı hatası: ${e.message}`)); });
+      req.setTimeout(timeoutMs, () => {
+        if (settled) return; settled = true;
+        const err = new Error(`İstek ${timeoutMs}ms içinde tamamlanmadı (zaman aşımı) — ${this.host}:${this.port}${urlPath}`);
+        req.destroy();
+        reject(err);
+      });
       if (bodyStr) req.write(bodyStr);
       req.end();
     });
