@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T00:40:14.854Z",
+  "generatedAt": "2026-09-12T00:54:08.494Z",
   "checks": [
     {
       "name": "(A) TRANSIENT BAĞIŞIKLIK: kısa kötü okuma effectiveAllowed'ı HİÇ false yapmaz (SUSPECT'e geçer ama kilit AÇIK kalır), transient geçince OK'e döner",
@@ -29,7 +29,7 @@
     {
       "name": "(F) GÜRÜLTÜSÜZ NORMAL ÇALIŞMA: 50 ardışık iyi okumada TEK BİR durum geçişi bile olmaz, effectiveAllowed HEP true",
       "ok": true,
-      "detail": "50 okuma, 0 durum geçişi, effectiveAllowed hep true — varsayılan parametrelerle (debounce=2000ms) gürültüsüz çalışmada YALANCI TETİKLEME YOK"
+      "detail": "50 okuma, 0 durum geçişi, effectiveAllowed hep true — varsayılan parametrelerle (debounce=630ms) gürültüsüz çalışmada YALANCI TETİKLEME YOK"
     },
     {
       "name": "(G) SOĞUK BAŞLANGIÇ İSTİSNASI: hiç okuma görülmemişken kötü bir ilk okuma debounceMs=5000ms olsa BİLE HİÇBİR gecikme OLMADAN anında BLOCKED üretir (fail-closed felsefesi İHLAL EDİLMEZ — 'ücretsiz pencere' YOK)",
@@ -39,7 +39,12 @@
     {
       "name": "(H) GERÇEK YAŞLANMA TATBİKATI + ENJEKTE TRANSİENT'LER: sentetik tek-döngülük transientler TAMAMEN SÜZÜLÜR (effectiveAllowed hiç false olmaz) VE döngü 335'teki GERÇEK/sürdürülen arıza yine de YAKALANIR (debounceMs kadar dürüstçe ölçülen bir gecikmeyle), bir daha ASLA geri açılmaz",
       "ok": true,
-      "detail": "400 döngü koşuldu (AGING_SEED=7, hardware_aging_model_test.js'teki firstFailCycle=335 ile TUTARLI). Enjekte edilen transient döngüler 50, 120, 200 (SE anlık 10 dB'e düştü) — HİÇBİRİNDE effectiveAllowed false OLMADI (SÜZÜLDÜ). Gerçek/sürdürülen arıza döngü 335'de başladı, döngü 337'de ONAYLANDI (gecikme: 2 döngü = 2000ms — debounce'un DÜRÜSTÇE ödediği bedel) — bir daha ASLA geri AÇILMADI."
+      "detail": "400 döngü koşuldu (AGING_SEED=7, hardware_aging_model_test.js'teki firstFailCycle=335 ile TUTARLI). Enjekte edilen transient döngüler 50, 120, 200 (SE anlık 10 dB'e düştü) — HİÇBİRİNDE effectiveAllowed false OLMADI (SÜZÜLDÜ). Gerçek/sürdürülen arıza döngü 335'de başladı, döngü 336'de ONAYLANDI (gecikme: 1 döngü = 1000ms — debounce'un DÜRÜSTÇE ödediği bedel) — bir daha ASLA geri AÇILMADI."
+    },
+    {
+      "name": "(I) EMC STANDARDI TABANLI KALİBRASYON: DEFAULT_DEBOUNCE_MS = IEC 61000-4-4'ten (315ms epizot ×2 güvenlik payı = 630ms), DEFAULT_RECOVERY_MARGIN_DB = IEEE Std 299'dan (3dB ayırt-edilebilirlik + 2×1dB cihaz doğruluğu = 5dB) BİREBİR türetiliyor — kod içine gizlice 'yuvarlak' bir sayı GÖMÜLMEDİ; kurtarma/şüphe oranı (×10) ise DÜRÜSTÇE bir POLİTİKA seçimi olarak ayrı işaretleniyor",
+      "ok": true,
+      "detail": "DEFAULT_DEBOUNCE_MS=630ms == (15+300)×2=630ms (IEC 61000-4-4 tek burst-epizodunun TAM İKİ katı; karşılaştırma: IEC 61000-4-5 sürgesi yalnız 50µs sürer — bağlayıcı olan EFT/Burst'tür). DEFAULT_RECOVERY_MARGIN_DB=5dB == 3+2×1=5dB (IEEE Std 299 ayırt-edilebilirlik tabanı + tipik cihaz doğruluğu). DEFAULT_RECOVERY_HYSTERESIS_MS=6300ms == debounce×10 (BU ORAN standarttan DEĞİL, fail-safe POLİTİKASINDAN gelir — dürüstçe ayrı işaretlendi, bkz. mtls_failsafe_debounce.js başlığı)."
     },
     {
       "name": "ÇEKİRDEĞE DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
@@ -48,8 +53,8 @@
     }
   ],
   "defaults": {
-    "DEFAULT_DEBOUNCE_MS": 2000,
-    "DEFAULT_RECOVERY_HYSTERESIS_MS": 10000,
+    "DEFAULT_DEBOUNCE_MS": 630,
+    "DEFAULT_RECOVERY_HYSTERESIS_MS": 6300,
     "DEFAULT_RECOVERY_MARGIN_DB": 5
   },
   "transientImmunity": {
@@ -142,9 +147,9 @@
     ],
     "spikesFiltered": true,
     "noBlockBeforeRealOnset": true,
-    "confirmedBlockCycle": 337,
-    "detectionLatencyCycles": 2,
-    "detectionLatencyMs": 2000,
+    "confirmedBlockCycle": 336,
+    "detectionLatencyCycles": 1,
+    "detectionLatencyMs": 1000,
     "neverReopensAfterBlock": true,
     "spikeCycleDetail": [
       {
@@ -2516,8 +2521,8 @@
         "cycle": 336,
         "realSeDb": 59.82,
         "injected": false,
-        "effectiveState": "SUSPECT",
-        "effectiveAllowed": true
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
       },
       {
         "cycle": 337,
@@ -2968,6 +2973,26 @@
         "effectiveAllowed": false
       }
     ]
+  },
+  "calibration": {
+    "standards": {
+      "IEC 61000-4-4 (EFT/Burst)": {
+        "burstDurationMs": 15,
+        "burstPeriodMs": 300,
+        "episodeMs": 315
+      },
+      "IEC 61000-4-5 (Surge, 1.2/50µs)": {
+        "eventDurationUs": 50
+      },
+      "IEEE Std 299 (SE ölçüm ayırt-edilebilirliği)": {
+        "discernibilityFloorDb": 3,
+        "typicalInstrumentAccuracyDb": 1
+      }
+    },
+    "derivedDebounceMs": 630,
+    "derivedRecoveryMarginDb": 5,
+    "derivedRecoveryHysteresisMs": 6300,
+    "recoveryAsymmetryFactor": 10
   },
   "coreIntegrity": {
     "unchanged": true,

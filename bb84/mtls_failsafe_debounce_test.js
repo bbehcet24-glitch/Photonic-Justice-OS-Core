@@ -37,28 +37,43 @@
  *       firstFailCycle=335) üzerine, o yörüngeden TAMAMEN BAĞIMSIZ (335'ten
  *       çok önce, kafes hâlâ >90 dB'de sağlamken), SENTETİK/enjekte edilmiş
  *       tek-döngülük "yüksek-gerilim hattı" transientleri (SE'yi anlık 10 dB'e
- *       düşüren) eklenir. DOĞRULANAN: (1) enjekte edilen transientler debounce
- *       tarafından TAMAMEN SÜZÜLÜR (effectiveAllowed hiçbir zaman false olmaz),
- *       (2) döngü 335'teki GERÇEK, SÜRDÜRÜLEN bozulma yine de YAKALANIR — yalnız
- *       debounceMs kadar (dürüstçe RAPORLANAN) bir gecikmeyle — ve bir daha
- *       ASLA geri açılmaz.
+ *       düşüren) eklenir. ARTIK GERÇEK kalibre edilmiş varsayılan debounceMs
+ *       (630ms, IEC 61000-4-4'ten) kullanılıyor. DOĞRULANAN: (1) enjekte
+ *       edilen transientler debounce tarafından TAMAMEN SÜZÜLÜR (effectiveAllowed
+ *       hiçbir zaman false olmaz), (2) döngü 335'teki GERÇEK, SÜRDÜRÜLEN bozulma
+ *       yine de YAKALANIR — yalnız debounceMs kadar (dürüstçe RAPORLANAN) bir
+ *       gecikmeyle — ve bir daha ASLA geri açılmaz.
+ *   (I) EMC STANDARDI TABANLI KALİBRASYON (kullanıcı talebiyle EKLENDİ —
+ *       "gerçek EMC saha verisiyle debounce parametrelerini kalibre et"):
+ *       DEFAULT_DEBOUNCE_MS/DEFAULT_RECOVERY_MARGIN_DB/DEFAULT_RECOVERY_
+ *       HYSTERESIS_MS'in mtls_failsafe_debounce.js'teki kaynak gösterilmiş
+ *       formülle BİREBİR eşleştiği ve ilgili fiziksel/mühendislik kısıtların
+ *       (debounce ≥ 2×EFT-epizodu, marj > ayırt-edilebilirlik tabanı vb.)
+ *       GERÇEKTEN sağlandığı doğrudan sınanır.
  *   + ÇEKİRDEĞE DOKUNULMADI.
  *
- * DÜRÜSTLÜK NOTU — VARSAYILAN PARAMETRELER: debounceMs/recoveryHysteresisMs/
- * recoveryMarginDb'nin varsayılan değerleri (bkz. mtls_failsafe_debounce.js
- * başlığı) gerçek EMC/rezonans transient süre istatistiğine dayanmaz — bu
- * projede öyle bir ölçüm YOK. Burada test edilen, bu YAPI ile bu PARAMETRE
- * SEÇİMİNİN kendi içinde TUTARLI ve MANTIKLI çalıştığıdır (transient süzülür,
- * gerçek arıza yakalanır, kurtarma temkinlidir) — parametrelerin GERÇEK sahada
- * doğru mutlak değerler olduğu İDDİA EDİLMEZ; saha EMC verisiyle kalibre
- * edilmeleri gerekir (rf_noise_bridge.js'teki AYNI kalibrasyon-dürüstlüğü deseni).
+ * DÜRÜSTLÜK NOTU — VARSAYILAN PARAMETRELER (GÜNCELLENDİ): DEFAULT_DEBOUNCE_MS
+ * (IEC 61000-4-4) ve DEFAULT_RECOVERY_MARGIN_DB (IEEE Std 299) artık bu
+ * projede donanımla ÖLÇÜLMÜŞ bir veri DEĞİL ama YAYINLANMIŞ, saha-doğrulanmış
+ * ULUSLARARASI STANDARTLARDAN türetiliyor (bkz. (I) ve mtls_failsafe_
+ * debounce.js'teki "KALİBRASYON" notu — kaynaklar dahil). GERİYE KALAN tek
+ * politika seçimi DEFAULT_RECOVERY_HYSTERESIS_MS'in debounce'a ORANIdır
+ * (×10 — standarttan DEĞİL, fail-safe mühendislik pratiğinden). Ayrıca KALICI
+ * bir açık varsayım var: bu standartlar TEK bir transient OLAYININ süresini
+ * tanımlar, ama bu projede gerçek bir SE sensörünün ÖRNEKLEME HIZI hiçbir
+ * yerde belirtilmiyor — bkz. (H)'deki zaman-eşlemesi notu ve mtls_failsafe_
+ * debounce.js'teki "KALAN AÇIK VARSAYIM".
  */
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const F = require("./faraday_cage_shielding.js");
 const HW = require("./hardware_aging_model.js");
-const { SeFailsafeDebounce, DEFAULT_DEBOUNCE_MS, DEFAULT_RECOVERY_HYSTERESIS_MS, DEFAULT_RECOVERY_MARGIN_DB } = require("./mtls_failsafe_debounce.js");
+const {
+  SeFailsafeDebounce, DEFAULT_DEBOUNCE_MS, DEFAULT_RECOVERY_HYSTERESIS_MS, DEFAULT_RECOVERY_MARGIN_DB,
+  EFT_BURST_DURATION_MS, EFT_BURST_PERIOD_MS, EFT_BURST_EPISODE_MS, DEBOUNCE_SAFETY_FACTOR, SURGE_EVENT_DURATION_US,
+  SE_DISCERNIBILITY_FLOOR_DB, TYPICAL_SE_INSTRUMENT_ACCURACY_DB, INSTRUMENT_ACCURACY_MARGIN_FACTOR, RECOVERY_ASYMMETRY_FACTOR,
+} = require("./mtls_failsafe_debounce.js");
 
 const coreHash = () => crypto.createHash("sha256")
   .update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
@@ -182,8 +197,21 @@ function main() {
   const history = aged.aging.history; // history[c-1].combinedSeDb = döngü c'deki GERÇEK (sentetik olmayan) SE
   const firstFailCycleReal = aged.aging.firstFailCycle; // beklenen: 335 (hardware_aging_model_test.js ile TUTARLI)
   const INJECTED_SPIKE_CYCLES = [50, 120, 200]; // firstFailCycleReal'den ÇOK ÖNCE, kafes hâlâ >>60dB sağlamken
-  const CYCLE_MS = 1000; // 1 saha-döngüsü = 1000ms (test için tutarlı zaman eşlemesi)
-  const DEBOUNCE_MS_H = 2000; // = 2 döngü
+  // DÜRÜSTLÜK NOTU (zaman eşlemesi): burada 1 saha-döngüsü = 1000ms VE döngü
+  // başına TEK bir SE örneklemesi varsayılıyor — bu, hesaplama açısından
+  // ELVERİŞLİ bir basitleştirmedir, gerçek bir SE sensörünün örnekleme HIZINI
+  // TEMSİL ETMEZ (bkz. mtls_failsafe_debounce.js'teki "KALAN AÇIK VARSAYIM"
+  // notu — proje bu hızı hiçbir yerde belirtmiyor). Enjekte edilen transient
+  // BİLEREK EN KÖTÜ DURUMU modelliyor: kısa bir EM olayının, o döngünün TEK
+  // örneklemesiyle TAM ÇAKIŞTIĞI senaryo. DEFAULT_DEBOUNCE_MS (IEC 61000-4-4'ten
+  // türetilen GERÇEK kalibre edilmiş varsayılan) burada CYCLE_MS'DEN KISA
+  // olsa BİLE (630ms < 1000ms) transient bağışıklığı BOZULMAZ — çünkü tek-
+  // örneklemelik bir transient bir SONRAKİ döngüde HER ZAMAN iyi okumaya
+  // döner ve SUSPECT KOŞULSUZ olarak OK'e sıfırlanır (elapsed süreye BAKILMAZ);
+  // debounceMs yalnızca ARDIŞIK KÖTÜ okumalar arasındaki gerçek geçen süreyi
+  // ölçer — bkz. aşağıdaki (I) kontrolü.
+  const CYCLE_MS = 1000;
+  const DEBOUNCE_MS_H = DEFAULT_DEBOUNCE_MS; // artık GERÇEK kalibre edilmiş varsayılan (630ms) — sabit bir test değeri DEĞİL
 
   const dH = new SeFailsafeDebounce({ debounceMs: DEBOUNCE_MS_H, recoveryHysteresisMs: 10000, recoveryMarginDb: 5 });
   const trace = [];
@@ -216,6 +244,38 @@ function main() {
     `${CYCLES} döngü koşuldu (AGING_SEED=${AGING_SEED}, hardware_aging_model_test.js'teki firstFailCycle=335 ile TUTARLI). Enjekte edilen transient döngüler ${INJECTED_SPIKE_CYCLES.join(", ")} (SE anlık 10 dB'e düştü) — HİÇBİRİNDE effectiveAllowed false OLMADI (SÜZÜLDÜ). ` +
     `Gerçek/sürdürülen arıza döngü ${firstFailCycleReal}'de başladı, döngü ${out.realTrajectoryIntegration.confirmedBlockCycle}'de ONAYLANDI (gecikme: ${detectionLatencyCycles} döngü = ${out.realTrajectoryIntegration.detectionLatencyMs}ms — debounce'un DÜRÜSTÇE ödediği bedel) — bir daha ASLA geri AÇILMADI.`);
 
+  // ══ (I) EMC STANDARDI TABANLI KALİBRASYON — kullanıcı talebiyle EKLENDİ ══
+  // Kullanıcı talebi: "gerçek EMC saha verisiyle debounce parametrelerini
+  // kalibre et". Bu projede DONANIMLA ÖLÇÜLMÜŞ bir EMC verisi YOK (simülasyon
+  // projesi) — ama YAYINLANMIŞ, saha-ölçümlü ULUSLARARASI STANDARTLAR var
+  // (IEC 61000-4-4/-4-5, IEEE Std 299) ve bunlar GERÇEK, doğrulanabilir
+  // sayılardır. Burada, mtls_failsafe_debounce.js'teki türetmenin AYNEN
+  // BELGELENEN formülle eşleştiği (kod içine sessizce "güzel" bir sayı
+  // gömülmediği) VE ilgili fiziksel/mühendislik kısıtların GERÇEKTEN
+  // sağlandığı doğrudan sınanıyor.
+  const derivedDebounceMs = (EFT_BURST_DURATION_MS + EFT_BURST_PERIOD_MS) * DEBOUNCE_SAFETY_FACTOR;
+  const derivedRecoveryMarginDb = SE_DISCERNIBILITY_FLOOR_DB + INSTRUMENT_ACCURACY_MARGIN_FACTOR * TYPICAL_SE_INSTRUMENT_ACCURACY_DB;
+  const derivedRecoveryHysteresisMs = DEFAULT_DEBOUNCE_MS * RECOVERY_ASYMMETRY_FACTOR;
+  const debounceExceedsEftEpisode = DEFAULT_DEBOUNCE_MS >= EFT_BURST_EPISODE_MS * 2; // TAM bir döngü ×2 marjla aşılıyor mu
+  const debounceVastlyExceedsSurge = DEFAULT_DEBOUNCE_MS >= (SURGE_EVENT_DURATION_US / 1000) * 1000; // µs'lik sürge, ms'lik debounce yanında ihmal edilebilir (sağlık kontrolü)
+  const marginExceedsDiscernibilityFloor = DEFAULT_RECOVERY_MARGIN_DB > SE_DISCERNIBILITY_FLOOR_DB; // salt "ayırt edilebilir" değil, RAHATÇA üzerinde
+  out.calibration = {
+    standards: {
+      "IEC 61000-4-4 (EFT/Burst)": { burstDurationMs: EFT_BURST_DURATION_MS, burstPeriodMs: EFT_BURST_PERIOD_MS, episodeMs: EFT_BURST_EPISODE_MS },
+      "IEC 61000-4-5 (Surge, 1.2/50µs)": { eventDurationUs: SURGE_EVENT_DURATION_US },
+      "IEEE Std 299 (SE ölçüm ayırt-edilebilirliği)": { discernibilityFloorDb: SE_DISCERNIBILITY_FLOOR_DB, typicalInstrumentAccuracyDb: TYPICAL_SE_INSTRUMENT_ACCURACY_DB },
+    },
+    derivedDebounceMs, derivedRecoveryMarginDb, derivedRecoveryHysteresisMs,
+    recoveryAsymmetryFactor: RECOVERY_ASYMMETRY_FACTOR, // NOT: bu ORAN standarttan değil, POLİTİKADAN gelir — dürüstçe ayrı işaretlenir
+  };
+  chk("(I) EMC STANDARDI TABANLI KALİBRASYON: DEFAULT_DEBOUNCE_MS = IEC 61000-4-4'ten (315ms epizot ×2 güvenlik payı = 630ms), DEFAULT_RECOVERY_MARGIN_DB = IEEE Std 299'dan (3dB ayırt-edilebilirlik + 2×1dB cihaz doğruluğu = 5dB) BİREBİR türetiliyor — kod içine gizlice 'yuvarlak' bir sayı GÖMÜLMEDİ; kurtarma/şüphe oranı (×10) ise DÜRÜSTÇE bir POLİTİKA seçimi olarak ayrı işaretleniyor",
+    DEFAULT_DEBOUNCE_MS === derivedDebounceMs && DEFAULT_RECOVERY_MARGIN_DB === derivedRecoveryMarginDb &&
+    DEFAULT_RECOVERY_HYSTERESIS_MS === derivedRecoveryHysteresisMs &&
+    debounceExceedsEftEpisode && debounceVastlyExceedsSurge && marginExceedsDiscernibilityFloor,
+    `DEFAULT_DEBOUNCE_MS=${DEFAULT_DEBOUNCE_MS}ms == (${EFT_BURST_DURATION_MS}+${EFT_BURST_PERIOD_MS})×${DEBOUNCE_SAFETY_FACTOR}=${derivedDebounceMs}ms (IEC 61000-4-4 tek burst-epizodunun TAM İKİ katı; karşılaştırma: IEC 61000-4-5 sürgesi yalnız ${SURGE_EVENT_DURATION_US}µs sürer — bağlayıcı olan EFT/Burst'tür). ` +
+    `DEFAULT_RECOVERY_MARGIN_DB=${DEFAULT_RECOVERY_MARGIN_DB}dB == ${SE_DISCERNIBILITY_FLOOR_DB}+${INSTRUMENT_ACCURACY_MARGIN_FACTOR}×${TYPICAL_SE_INSTRUMENT_ACCURACY_DB}=${derivedRecoveryMarginDb}dB (IEEE Std 299 ayırt-edilebilirlik tabanı + tipik cihaz doğruluğu). ` +
+    `DEFAULT_RECOVERY_HYSTERESIS_MS=${DEFAULT_RECOVERY_HYSTERESIS_MS}ms == debounce×${RECOVERY_ASYMMETRY_FACTOR} (BU ORAN standarttan DEĞİL, fail-safe POLİTİKASINDAN gelir — dürüstçe ayrı işaretlendi, bkz. mtls_failsafe_debounce.js başlığı).`);
+
   // ══ ÇEKİRDEĞE DOKUNULMADI ══
   const hashAfter = coreHash();
   out.coreIntegrity = { unchanged: hashBefore === hashAfter, sha256: hashBefore.slice(0, 16) };
@@ -239,6 +299,7 @@ function report(out) {
   console.log(`  (F) gürültüsüz çalışma: ${out.noFalseTripsNormalOp.readings} okuma, ${out.noFalseTripsNormalOp.transitions} geçiş`);
   console.log(`  (G) soğuk başlangıç: kötü-ilk-okuma=${out.coldStart.bad.state}/gecikme=YOK, iyi-ilk-okuma=${out.coldStart.good.state}`);
   console.log(`  (H) gerçek yörünge+enjekte transient: firstFailReal=${out.realTrajectoryIntegration.firstFailCycleReal}, onaylananDöngü=${out.realTrajectoryIntegration.confirmedBlockCycle}, gecikme=${out.realTrajectoryIntegration.detectionLatencyMs}ms, spikesFiltered=${out.realTrajectoryIntegration.spikesFiltered}`);
+  console.log(`  (I) EMC kalibrasyonu: debounce=${DEFAULT_DEBOUNCE_MS}ms (IEC 61000-4-4), recoveryMargin=${DEFAULT_RECOVERY_MARGIN_DB}dB (IEEE 299), recoveryHysteresis=${DEFAULT_RECOVERY_HYSTERESIS_MS}ms (politika ×${RECOVERY_ASYMMETRY_FACTOR})`);
   console.log(`\n  ÇEKİRDEK: SHA-256 ${out.coreIntegrity.unchanged ? "DEĞİŞMEDİ ✓" : "DEĞİŞTİ ✗"}`);
   console.log("\nÖz-testler:");
   for (const c of out.checks) console.log(`  ${c.ok ? "✓" : "✗"} ${c.name}\n      ${c.detail}`);

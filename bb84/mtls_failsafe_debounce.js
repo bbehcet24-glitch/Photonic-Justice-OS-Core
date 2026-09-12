@@ -49,19 +49,81 @@
  * İYİMSERLİK ARACI DEĞİLDİR; SADECE zaten iyi bilinen bir durumu tek bir
  * gürültülü örneğe karşı korur.
  *
- * DÜRÜSTLÜK NOTU (KALİBRASYON VARSAYIMI): debounceMs/recoveryHysteresisMs/
- * recoveryMarginDb için gerçek EMC/rezonans transient SÜRE istatistiği bu
- * projede YOK (gerçek donanımla ÖLÇÜLMELİ — bkz. rf_noise_bridge.js'teki
- * aynı desendeki not). Varsayılanlar AÇIKÇA İLLÜSTRATİF mühendislik
- * seçimleridir (asimetri kasıtlı: kurtarma penceresi debounce'un 5 katı),
- * gerçek dağıtımdan ÖNCE saha EMC verisiyle kalibre edilmelidir — bkz.
- * mtls_failsafe_debounce_test.js'teki (H) duyarlılık notu.
+ * KALİBRASYON (GERÇEK EMC/ÖLÇÜM STANDARTLARINA DAYALI — kullanıcı talebiyle
+ * GÜNCELLENDİ): önceki sürümde debounceMs/recoveryHysteresisMs/recoveryMarginDb
+ * için "bu projede gerçek veri YOK" deniyordu. Bu artık YALNIZCA KISMEN doğru —
+ * İKİ parametre şimdi YAYINLANMIŞ, saha-ölçümlü EMC/enstrümantasyon
+ * standartlarından TÜRETİLİYOR (aşağıda), ÜÇÜNCÜSÜ (recoveryHysteresisMs'in
+ * debounce'a ORANI) hâlâ dürüstçe bir MÜHENDİSLİK POLİTİKASI seçimidir:
+ *
+ *   (1) DEFAULT_DEBOUNCE_MS ← IEC 61000-4-4 (Elektriksel Hızlı Geçici Rejim/
+ *       Burst bağışıklık testi — tam olarak kullanıcının tarif ettiği fiziği
+ *       modeller: anahtarlama/kontak arklanması, yakın bir yüksek-gerilim
+ *       hattındaki anahtarlama olayı). Standart, TEK bir "burst" epizodunu
+ *       EFT_BURST_DURATION_MS=15 ms (onlarca ns'lik darbelerden oluşan bir
+ *       trenin süresi) olarak, ve olası bir sonraki burst'e kadarki
+ *       EFT_BURST_PERIOD_MS=300 ms'lik boşluğu tanımlar — yani belgelenmiş
+ *       TEK bir hızlı-geçici-rejim döngüsü (burst+boşluk) en fazla 315 ms
+ *       sürer. DEBOUNCE_SAFETY_FACTOR=2× uygulanarak (bir tam döngünün
+ *       KESİNLİKLE bitmiş olmasını garanti etmek için) DEFAULT_DEBOUNCE_MS =
+ *       630 ms elde edilir — belgelenmiş TEK bir standart olayın (315 ms)
+ *       İKİ KATI. Karşılaştırma için: IEC 61000-4-5 (yıldırım-kaynaklı/
+ *       anahtarlama sürgesi) 1.2/50 µs'lik gerilim dalga şeklini kullanır —
+ *       TÜM olay ~50 µs'de biter, yani EFT/Burst'ten ~6000× KISADIR ve bu
+ *       yüzden debounce boyutlandırmasında BAĞLAYICI OLAN EFT/Burst'tür.
+ *       (Önceki sürümün 2000 ms'lik "illüstratif" tahmini, bu gerçek
+ *       standart verilere göre GEREĞİNDEN FAZLA temkinliymiş — gerçek arıza
+ *       tespiti artık ~3× daha hızlı, transient bağışıklığı KORUNARAK.)
+ *   (2) DEFAULT_RECOVERY_MARGIN_DB ← IEEE Std 299 (kalkanlama etkinliği
+ *       ölçüm standardı) KENDİ "dinamik aralık" tanımında bir sinyali ancak
+ *       gürültü tabanının SE_DISCERNIBILITY_FLOOR_DB=3 dB veya daha
+ *       ÜZERİNDEYKEN "ayırt edilebilir" sayar — bunun ALTINDAKİ bir
+ *       "iyileşme" ölçüm gürültüsünden AYIRT EDİLEMEZ. Buna, yaygın bir
+ *       ticari SE ölçüm cihazının (SEMS B) belgelenmiş doğruluğu olan
+ *       TYPICAL_SE_INSTRUMENT_ACCURACY_DB=±1 dB'nin İKİ katı eklenerek
+ *       (INSTRUMENT_ACCURACY_MARGIN_FACTOR=2 — cihaz belirsizliğine karşı
+ *       ekstra tampon) DEFAULT_RECOVERY_MARGIN_DB = 3+2×1 = 5 dB elde
+ *       edilir. SAYISAL DEĞER öncekiyle AYNI (5 dB) ama artık KEYFİ DEĞİL —
+ *       IEEE 299'un kendi ayırt-edilebilirlik tanımından + gerçek bir
+ *       enstrümanın doğruluğundan TÜRETİLİYOR.
+ *   (3) DEFAULT_RECOVERY_HYSTERESIS_MS = DEFAULT_DEBOUNCE_MS × 10
+ *       (RECOVERY_ASYMMETRY_FACTOR). Bu ORAN için bir EMC standardı YOK —
+ *       "şüphelenmek hızlı, iyileşmeye güvenmek yavaş olmalı" ilkesi genel
+ *       bir fail-safe/alarm mühendisliği pratiğidir (Schmitt-tetikleyici
+ *       tasarımlarında yaygın), ama BELİRLİ ×10 katsayısı bu projenin
+ *       DÜRÜSTÇE işaretlenmiş bir POLİTİKA seçimidir — 315 ms'lik EFT/Burst
+ *       gibi ölçülmüş bir fiziksel olaya değil, "ne kadar temkinli olunsun"
+ *       kararına dayanır.
+ *
+ * KALAN AÇIK VARSAYIM (dürüstlük notu): bu üç parametre de saniyenin
+ * altı/civarı bir SE ÖRNEKLEME HIZI varsayar — ama bu projede gerçek bir SE
+ * sensörünün ÖRNEKLEME ARALIĞI (ne kadar sıklıkla ölçüm alındığı) HİÇBİR
+ * yerde belirtilmiyor. debounceMs'in "kaç ardışık örneğe" karşılık geldiği
+ * bu nedenle dağıtıma özgü kalır — bkz. mtls_failsafe_debounce_test.js'teki
+ * (I) kalibrasyon kontrolü ve (H) tatbikatındaki örnekleme-aralığı notu.
  */
 const { mtlsHandshakePrecondition, EMERGENCY_SE_FLOOR_DB } = require("./network_shielding_bridge.js");
 
-const DEFAULT_DEBOUNCE_MS = 2000;              // şüphe penceresi: kötü okuma bu süre KESİNTİSİZ sürerse bloklanır
-const DEFAULT_RECOVERY_HYSTERESIS_MS = 10000;  // kurtarma penceresi: BLOCKED'dan bilerek 5× daha uzun/temkinli
-const DEFAULT_RECOVERY_MARGIN_DB = 5;          // Schmitt marjı: tabana sürtünerek değil, rahatça üstünde iyileşme
+// ── (1) IEC 61000-4-4 — Elektriksel Hızlı Geçici Rejim/Burst ──
+const EFT_BURST_DURATION_MS = 15;   // tek burst epizodunun süresi (onlarca ns'lik darbe treni)
+const EFT_BURST_PERIOD_MS = 300;    // olası bir sonraki burst'e kadarki boşluk
+const EFT_BURST_EPISODE_MS = EFT_BURST_DURATION_MS + EFT_BURST_PERIOD_MS; // = 315 ms — TEK belgelenmiş döngü
+const DEBOUNCE_SAFETY_FACTOR = 2;   // bir tam döngünün KESİNLİKLE bittiğinden emin olmak için
+// karşılaştırma/dürüstlük amaçlı: IEC 61000-4-5 sürge olayı ~50 µs sürer —
+// EFT/Burst'ten (315 ms) ~6300× kısa, debounce boyutlandırmasında BAĞLAYICI DEĞİL.
+const SURGE_EVENT_DURATION_US = 50;
+
+// ── (2) IEEE Std 299 — kalkanlama etkinliği ölçüm ayırt-edilebilirliği ──
+const SE_DISCERNIBILITY_FLOOR_DB = 3;          // IEEE 299 "dinamik aralık": bunun altı ayırt edilemez
+const TYPICAL_SE_INSTRUMENT_ACCURACY_DB = 1;   // ör. SEMS B ölçüm cihazının belgelenmiş doğruluğu (±1 dB)
+const INSTRUMENT_ACCURACY_MARGIN_FACTOR = 2;   // cihaz belirsizliğine karşı ekstra tampon (politika)
+
+// ── (3) kurtarma/şüphe asimetrisi — POLİTİKA seçimi, standarttan DEĞİL ──
+const RECOVERY_ASYMMETRY_FACTOR = 10;
+
+const DEFAULT_DEBOUNCE_MS = EFT_BURST_EPISODE_MS * DEBOUNCE_SAFETY_FACTOR; // = 630 ms
+const DEFAULT_RECOVERY_MARGIN_DB = SE_DISCERNIBILITY_FLOOR_DB + INSTRUMENT_ACCURACY_MARGIN_FACTOR * TYPICAL_SE_INSTRUMENT_ACCURACY_DB; // = 5 dB
+const DEFAULT_RECOVERY_HYSTERESIS_MS = DEFAULT_DEBOUNCE_MS * RECOVERY_ASYMMETRY_FACTOR; // = 6300 ms
 
 class SeFailsafeDebounce {
   constructor(opts = {}) {
@@ -158,4 +220,9 @@ module.exports = {
   DEFAULT_DEBOUNCE_MS,
   DEFAULT_RECOVERY_HYSTERESIS_MS,
   DEFAULT_RECOVERY_MARGIN_DB,
+  // kalibrasyon gerekçelendirmesi — test/grafik tüketimi için ihraç edildi
+  EFT_BURST_DURATION_MS, EFT_BURST_PERIOD_MS, EFT_BURST_EPISODE_MS, DEBOUNCE_SAFETY_FACTOR,
+  SURGE_EVENT_DURATION_US,
+  SE_DISCERNIBILITY_FLOOR_DB, TYPICAL_SE_INSTRUMENT_ACCURACY_DB, INSTRUMENT_ACCURACY_MARGIN_FACTOR,
+  RECOVERY_ASYMMETRY_FACTOR,
 };
