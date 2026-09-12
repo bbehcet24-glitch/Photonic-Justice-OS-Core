@@ -1,0 +1,29 @@
+{
+  "generatedAt": "2026-09-12T16:09:19.001Z",
+  "coreShaVerified": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05",
+  "tests": {
+    "behavioralEquivalence": {
+      "n": 20000,
+      "qberTarget": 0.02,
+      "seed": 777001,
+      "settled": true,
+      "scalarDiffs": [],
+      "ldpcDiffs": [],
+      "pass": true
+    },
+    "blockingEliminated": {
+      "n": 150000,
+      "qberTarget": 0.03,
+      "seed": 990002,
+      "originalSyncDispatchMs": 15345,
+      "nonBlockingDispatchMs": 621,
+      "dispatchRatioPct": 4.05,
+      "ldpcWorkerRoundTripMs": 13044,
+      "settled": true,
+      "ldpcDiffs": [],
+      "pass": true
+    }
+  },
+  "findings": [],
+  "overallPass": true
+}
