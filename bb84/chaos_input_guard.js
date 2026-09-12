@@ -31,11 +31,19 @@ const core = require(path.join(__dirname, "photonnet_core.js"));
  * @returns {{value:number, corrected:boolean, reason:string|null}}
  */
 function sanitizeNumber(raw, { min, max, fallback, label }) {
+  // GÜVENLİK NOTU (guard doğrulama testinde bulundu — client_network_report.js
+  // entegrasyonu sırasında): çağıran taraf `fallback` olarak KENDİSİ
+  // hesaplanmış, henüz doğrulanmamış bir değer verirse (örn.
+  // autoReps(henüz-temizlenmemiş-km) gibi türetilmiş bir varsayılan),
+  // fallback'in kendisi de [min,max] dışında olabilir — bu, guard'ı
+  // sessizce by-pass eder. Bu yüzden fallback DA HER ZAMAN [min,max]'a
+  // kırpılır; guard hiçbir koşulda sınırların dışına bir değer döndürmez.
+  const safeFallback = Math.min(max, Math.max(min, fallback));
   if (typeof raw !== "number" || Number.isNaN(raw)) {
-    return { value: fallback, corrected: true, reason: `${label}: sayı değil/NaN (${String(raw)}) → varsayılan ${fallback}` };
+    return { value: safeFallback, corrected: true, reason: `${label}: sayı değil/NaN (${String(raw)}) → varsayılan ${safeFallback}` };
   }
   if (!Number.isFinite(raw)) {
-    return { value: fallback, corrected: true, reason: `${label}: sonlu değil (${String(raw)}) → varsayılan ${fallback}` };
+    return { value: safeFallback, corrected: true, reason: `${label}: sonlu değil (${String(raw)}) → varsayılan ${safeFallback}` };
   }
   if (raw < min) {
     return { value: min, corrected: true, reason: `${label}: alt sınırın altında (${raw}) → ${min}'e kırpıldı` };

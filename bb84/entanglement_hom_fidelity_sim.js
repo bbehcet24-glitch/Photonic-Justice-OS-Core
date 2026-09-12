@@ -60,7 +60,18 @@
 //     literatüründeki standart yaklaşıklık).
 // ══════════════════════════════════════════════════════════════════════════
 
-const { WL, fiberT, poissonSample } = require("./photonnet_core.js");
+const { WL, poissonSample } = require("./photonnet_core.js");
+// GİRDİ DOĞRULAMA: bu dosyanın kmA/kmB'si bugün yalnızca içeride sabit
+// senaryo değerleriyle çağrılıyor (bkz. gen_entanglement_charts.js,
+// entanglement_hom_fidelity_test.js), ama fiberT() ÖNCEDEN chaos_fuzz_test.js
+// tarafından km=NaN/Infinity/vb. ile sessizce NaN/Infinity ürettiği kanıtlanan
+// fonksiyonlardan biriydi (bkz. chaos_input_guard.js). Bu modül dışa açık
+// olduğundan (module.exports altta) ileride başka bir çağıran farklı km
+// değerleri verebilir — savunma amaçlı burada da guard'lı sürüm kullanılıyor.
+const { guardedFiberT } = require("./chaos_input_guard.js");
+function fiberT(nm, km) {
+  return guardedFiberT(nm, km).value;
+}
 
 // ── 1) FOTON KAYNAĞI (kusursuz DEĞİL — "ideal" kapatıldı) ──────────────────
 const SOURCE_G2_ZERO = 0.045;              // kalan çok-fotonlu kirlilik olasılığı (didaktik ref. aralık 0.02–0.08)

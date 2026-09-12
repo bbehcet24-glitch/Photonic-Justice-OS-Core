@@ -52,11 +52,20 @@
  */
 const core = require("./photonnet_core.js");
 const {
-  propPhoton, bb84Reconcile, mulberry32,
+  mulberry32,
   NetworkTopology,
   routeCalculation, routeCalculationResilient, routeIsSuspect, DOS_SUSPECT_RISK_THRESHOLD,
   LinkRiskReputationEngine, CalibrationRateLimiter,
 } = core;
+// GİRDİ DOĞRULAMA (bkz. chaos_fuzz_test.js / chaos_input_guard.js, commit
+// 0d4721c/d18966a): bu dosyanın propPhoton()/bb84Reconcile() çağrıları,
+// MÜŞTERİNİN KENDİ HAM VERİSİNDEN (link.km, girdi.json) besleniyor — yani
+// projenin "sahadaki gerçeklik: donanım/harici veri bazen eksik/saçma
+// olabilir" senaryosunun BİREBİR kendisi. propPhoton/bb84Reconcile artık
+// DOĞRUDAN çekirdekten değil, önce girdiyi doğrulayan bu guard katmanından
+// çağrılıyor — çekirdeğin kendisi HİÇ değişmedi.
+const guard = require("./chaos_input_guard.js");
+const { guardedBb84Reconcile, sanitizeNumber, BOUNDS } = guard;
 
 // ── Dedektör gürültü modeli (çekirdekle AYNI formül, müşteriye özgü girdilerle) ──
 // Kaynak: PhotonNet2.jsx / DetectorNoiseModel.phantomClickProbability —
@@ -94,7 +103,18 @@ function measureLinkQber(link, nBits, seed, repsOverride) {
   const darkRate = link.detector?.darkRateHz ?? 0;
   const pDark = phantomClickProbability(darkRate);
 
-  const recon = bb84Reconcile(nBits, rng);
+  // Müşterinin ham km/reps değerleri BİR KEZ doğrulanır/temizlenir (döngü
+  // içinde tekrar tekrar değil — km/reps zaten sabit, yalnızca rng ilerliyor).
+  // Herhangi bir düzeltme AÇIKÇA loglanır, sessizce yutulmaz.
+  const kmS = sanitizeNumber(link.km, { ...BOUNDS.km, label: "link.km" });
+  const repsS = sanitizeNumber(reps, { ...BOUNDS.reps, label: "reps" });
+  const girdiUyarilari = [kmS, repsS].filter((n) => n.corrected).map((n) => n.reason);
+  const safeKm = kmS.value;
+  const safeReps = repsS.value;
+
+  const reconResult = guardedBb84Reconcile(nBits, rng);
+  const recon = reconResult.value;
+  if (reconResult._guard) girdiUyarilari.push(...reconResult._guard);
 
   let arrived = 0;          // fiziksel olarak ulaşan foton
   let detectorMissed = 0;   // ulaştı ama dedektör verimi yüzünden görülmedi
@@ -103,7 +123,9 @@ function measureLinkQber(link, nBits, seed, repsOverride) {
   let errorCount = 0;       // sifted anahtardaki hatalı bit
 
   for (let i = 0; i < nBits; i++) {
-    const r = propPhoton(TELECOM_NM, link.km, reps, false, rng);
+    // Önceden doğrulanmış safeKm/safeReps kullanılır (bkz. yukarısı) —
+    // döngü başına tekrar sanitize etmek gereksiz maliyet olurdu.
+    const r = core.propPhoton(TELECOM_NM, safeKm, safeReps, false, rng);
     let detected = false;
     let bitIsWrong = false;
 
@@ -141,6 +163,10 @@ function measureLinkQber(link, nBits, seed, repsOverride) {
     // ("mükemmel hat" gibi görünürdü), bu yüzden dürüstçe null döndürülür.
     qber: siftedCount > 0 ? errorCount / siftedCount : null,
     basisMatchRate: recon.matchRate,
+    // Müşterinin ham verisinde (km/reps/nBits) guard katmanının düzelttiği
+    // bir şey varsa BURADA açıkça listelenir — sessizce yutulmaz. Boşsa
+    // müşteri verisi zaten geçerliydi demektir.
+    girdiUyarilari: girdiUyarilari.length ? girdiUyarilari : undefined,
   };
 }
 
@@ -347,7 +373,24 @@ function generateReport(client) {
     //     BB84'ün bilinen fiziksel sınırı budur, gizlenmez.
     const raw = measureLinkQber(lk, N_BITS, seed, 0);
     // (2) GERÇEKÇİ SAHA SENARYOSU: ~80km aralıklı güvenilir-düğüm rölesiyle.
-    const suggestedReps = lk.reps ?? autoReps(lk.km);
+    // NOT: müşteri lk.reps'i geçersiz bir değerle (örn. "NaN" metni)
+    // gönderirse, eskiden bu doğrudan raporda "NaN röle" olarak görünürdü
+    // (guard doğrulama testinde bulundu — measureLinkQber'in KENDİSİNE hiç
+    // ulaşmıyordu çünkü `"NaN" > 0` zaten false, ama görüntü katmanında
+    // çirkin/yanıltıcı bir "NaN" sızıyordu). Burada da aynı guard'la
+    // temizlenip, geçersizse otomatik hesaplanan değere düşülür.
+    // autoReps'in KENDİSİ de km alıyor — km henüz doğrulanmamışsa (örn.
+    // 1e20 gibi aşırı bir değer) autoReps de aşırı büyük bir "varsayılan"
+    // üretip guard'ı by-pass edebilir (guard doğrulama sırasında bizzat
+    // yakalandı). Bu yüzden autoReps'e HER ZAMAN önce-sanitize edilmiş km
+    // verilir.
+    const kmForAutoReps = sanitizeNumber(lk.km, { ...BOUNDS.km, label: "lk.km" }).value;
+    const repsRawS = sanitizeNumber(lk.reps ?? autoReps(kmForAutoReps), {
+      ...BOUNDS.reps,
+      fallback: autoReps(kmForAutoReps),
+      label: "lk.reps",
+    });
+    const suggestedReps = repsRawS.value;
     const realistic = suggestedReps > 0 ? measureLinkQber(lk, N_BITS, seed, suggestedReps) : raw;
 
     return {
@@ -359,6 +402,7 @@ function generateReport(client) {
       gercekciRoleZinciriyle: realistic,
       // Ham (tekrarlayıcısız) ölçüm istatistiksel olarak anlamlı mı?
       tekrarlayicisizUygulanabilirMi: raw.siftedCount >= N_BITS * 0.01,
+      girdiUyarilari: repsRawS.corrected ? [repsRawS.reason] : undefined,
     };
   });
 
