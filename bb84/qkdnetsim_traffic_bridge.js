@@ -150,6 +150,18 @@ async function main() {
   const binRealMs = (REAL_DURATION_S * 1000) / profile.nBins;
   let rogueDone = 0;
   const rogueCheckpoints = new Set([Math.floor(profile.nBins * 0.2), Math.floor(profile.nBins * 0.5), Math.floor(profile.nBins * 0.8)]);
+  // SAĞLAMLAŞTIRMA (bu turda bulundu): aşağıdaki iç döngü her olayı
+  // fire-and-forget dispatch ediyor (yük-üretimi İÇİN kasıtlı — gerçek
+  // eşzamanlı trafiği taklit eder) ama eskiden döngü sonunda SABİT bir
+  // 1500ms bekleme dışında bu dispatch edilen Promise'leri HİÇ TAKİP
+  // ETMİYORDU. Tam da bu script'in simüle ettiği PATLAMALI (bursty)
+  // trafik senaryosunda — özellikle profilin SON bin'inde büyük bir
+  // patlama varsa — 1500ms'lik sabit pencere yetersiz kalıp BAZI
+  // sonuçların (encOk/decOk/bitMismatch) rapora HİÇ YAZILMAMASINA yol
+  // açabilirdi (process.exit() bekleyen Promise'leri sessizce keser).
+  // Artık her dispatch edilen Promise `pending`'e eklenip döngü SONUNDA
+  // TAMAMI `Promise.allSettled` ile beklenir — rapor artık HER olayı sayar.
+  const pending = [];
 
   for (let bi = 0; bi < profile.bins.length; bi++) {
     const bin = profile.bins[bi];
@@ -159,7 +171,7 @@ async function main() {
       for (let i = 0; i < nEvents; i++) {
         const routeName = ROUTES[stats.attempted % ROUTES.length];
         stats.attempted++;
-        (async () => {
+        pending.push((async () => {
           try {
             const encRes = await master.encKeys(`SAE-${routeName}`, 1, 128);
             const keyId = encRes.body && encRes.body.keys && encRes.body.keys[0] && encRes.body.keys[0].key_ID;
@@ -176,7 +188,7 @@ async function main() {
               } catch (e) { stats.decFail++; }
             }
           } catch (e) { stats.encFail++; }
-        })();
+        })());
         if (gapMs > 0.5) await sleep(gapMs);
       }
     } else {
@@ -207,8 +219,20 @@ async function main() {
     }
   }
 
-  // Uçtaki bekleyen async çağrıların oturması için kısa bir bekleme.
-  await sleep(1500);
+  // SAĞLAMLAŞTIRMA: eskiden burada SABİT bir "await sleep(1500)" vardı —
+  // dispatch edilen `pending` Promise'lerini TAKİP ETMİYORDU, yani bir
+  // patlama (burst) 1500ms'den uzun sürerse bazı sonuçlar rapora hiç
+  // yazılmadan process.exit() olurdu. Artık TÜM dispatch edilen istekler
+  // (`pending`, N=stats.attempted adet) `Promise.allSettled` ile burada
+  // GERÇEKTEN beklenir — iç catch blokları zaten hiçbir zaman reject
+  // etmiyor (stats.*Fail++ ile kendi içinde yutuluyor), o yüzden
+  // allSettled'ın "rejected" sonuçları normalde hiç görülmez; sadece
+  // savunma amaçlı loglanır.
+  const settled = await Promise.allSettled(pending);
+  const unexpectedRejections = settled.filter(s => s.status === "rejected");
+  if (unexpectedRejections.length > 0) {
+    console.log(`[BRIDGE] ⚠️ ${unexpectedRejections.length} dispatch edilmiş istek beklenmedik şekilde reject oldu (iç catch'i atlamış olabilir): ${unexpectedRejections[0].reason}`);
+  }
 
   const lat = stats.latenciesMs.slice().sort((a, b) => a - b);
   const pct = (p) => lat.length ? lat[Math.min(lat.length - 1, Math.floor(p * lat.length))] : null;
