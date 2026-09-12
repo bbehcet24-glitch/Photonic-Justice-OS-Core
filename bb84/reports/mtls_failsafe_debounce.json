@@ -1,0 +1,2977 @@
+{
+  "generatedAt": "2026-09-12T00:40:14.854Z",
+  "checks": [
+    {
+      "name": "(A) TRANSIENT BAĞIŞIKLIK: kısa kötü okuma effectiveAllowed'ı HİÇ false yapmaz (SUSPECT'e geçer ama kilit AÇIK kalır), transient geçince OK'e döner",
+      "ok": true,
+      "detail": "durum dizisi: OK → OK → SUSPECT → OK → OK — effectiveAllowed HİÇBİR adımda false olmadı (raw.allowed t=1100'de false olsa BİLE)"
+    },
+    {
+      "name": "(B) SÜRDÜRÜLEN GERÇEK ARIZA: 2000ms KESİNTİSİZ kötü okuma sonunda (ve öncesinde DEĞİL) BLOCKED'a geçilir — debounce MASKELEMEZ, dürüstçe GECİKTİRİR",
+      "ok": true,
+      "detail": "durum dizisi: OK → SUSPECT → SUSPECT → SUSPECT → SUSPECT → BLOCKED — arıza t=100'de başladı, t=2100'de (tam debounceMs=2000ms sonra) ONAYLANDI, öncesinde effectiveAllowed HEP true"
+    },
+    {
+      "name": "(C) TEK İYİ OKUMA KİLİDİ AÇMAZ: BLOCKED'tan çıkmak için tek okuma YETMEZ (RECOVERING'de effectiveAllowed hâlâ false), kesintiye uğrarsa anında BLOCKED'a geri döner",
+      "ok": true,
+      "detail": "durum dizisi: RECOVERING → BLOCKED — effectiveAllowed İKİ adımda da false kaldı (kilit gerçek/marjlı+sürdürülen iyileşme olmadan AÇILMADI)"
+    },
+    {
+      "name": "(D) TAM KURTARMA KİLİDİ AÇAR: recoveryHysteresisMs KADAR KESİNTİSİZ + marj-eşiğinin üzerinde süren iyileşme sonunda (ve ÖNCESİNDE DEĞİL) OK'e dönülür",
+      "ok": true,
+      "detail": "durum dizisi: BLOCKED → RECOVERING → RECOVERING → OK — t=5000'de (4900ms/10000ms) HÂLÂ BLOKLU, t=10100'de (10000ms tamamlanınca) kilit AÇILDI"
+    },
+    {
+      "name": "(E) KESİNTİYE UĞRAYAN KURTARMA SAYACI SIFIRLANIR: kesinti sonrası sayaç best-effort DEVAM ETMEZ — t=10100'de (orijinal zamanlamayla kilit açılırdı) HÂLÂ BLOKLU, sayaç YENİDEN başladığı t=15200'de AÇILIR",
+      "ok": true,
+      "detail": "durum dizisi: BLOCKED → RECOVERING → RECOVERING → BLOCKED → RECOVERING → RECOVERING → OK — kesinti sonrası kurtarma başlangıcı sinceMs=5200 (100 DEĞİL, 5200 — sayaç GERÇEKTEN sıfırlandı) — t=10100'de HÂLÂ RECOVERING/BLOKLU, sayaç yeniden tamamlanınca (t=15200) AÇILDI"
+    },
+    {
+      "name": "(F) GÜRÜLTÜSÜZ NORMAL ÇALIŞMA: 50 ardışık iyi okumada TEK BİR durum geçişi bile olmaz, effectiveAllowed HEP true",
+      "ok": true,
+      "detail": "50 okuma, 0 durum geçişi, effectiveAllowed hep true — varsayılan parametrelerle (debounce=2000ms) gürültüsüz çalışmada YALANCI TETİKLEME YOK"
+    },
+    {
+      "name": "(G) SOĞUK BAŞLANGIÇ İSTİSNASI: hiç okuma görülmemişken kötü bir ilk okuma debounceMs=5000ms olsa BİLE HİÇBİR gecikme OLMADAN anında BLOCKED üretir (fail-closed felsefesi İHLAL EDİLMEZ — 'ücretsiz pencere' YOK)",
+      "ok": true,
+      "detail": "ilk okuma KÖTÜ (SE=15 dB) → anında effectiveState=BLOCKED (debounce SAYACI YOK, sinceMs=null) — debounceMs=5000ms'e RAĞMEN sıfır gecikme. İlk okuma İYİ → effectiveState=OK."
+    },
+    {
+      "name": "(H) GERÇEK YAŞLANMA TATBİKATI + ENJEKTE TRANSİENT'LER: sentetik tek-döngülük transientler TAMAMEN SÜZÜLÜR (effectiveAllowed hiç false olmaz) VE döngü 335'teki GERÇEK/sürdürülen arıza yine de YAKALANIR (debounceMs kadar dürüstçe ölçülen bir gecikmeyle), bir daha ASLA geri açılmaz",
+      "ok": true,
+      "detail": "400 döngü koşuldu (AGING_SEED=7, hardware_aging_model_test.js'teki firstFailCycle=335 ile TUTARLI). Enjekte edilen transient döngüler 50, 120, 200 (SE anlık 10 dB'e düştü) — HİÇBİRİNDE effectiveAllowed false OLMADI (SÜZÜLDÜ). Gerçek/sürdürülen arıza döngü 335'de başladı, döngü 337'de ONAYLANDI (gecikme: 2 döngü = 2000ms — debounce'un DÜRÜSTÇE ödediği bedel) — bir daha ASLA geri AÇILMADI."
+    },
+    {
+      "name": "ÇEKİRDEĞE DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası"
+    }
+  ],
+  "defaults": {
+    "DEFAULT_DEBOUNCE_MS": 2000,
+    "DEFAULT_RECOVERY_HYSTERESIS_MS": 10000,
+    "DEFAULT_RECOVERY_MARGIN_DB": 5
+  },
+  "transientImmunity": {
+    "states": [
+      "OK",
+      "OK",
+      "SUSPECT",
+      "OK",
+      "OK"
+    ],
+    "allowed": [
+      true,
+      true,
+      true,
+      true,
+      true
+    ]
+  },
+  "sustainedFailure": {
+    "states": [
+      "OK",
+      "SUSPECT",
+      "SUSPECT",
+      "SUSPECT",
+      "SUSPECT",
+      "BLOCKED"
+    ],
+    "confirmedAtMs": 2100,
+    "detectionLatencyMs": 2000
+  },
+  "singleGoodNoUnlock": {
+    "states": [
+      "RECOVERING",
+      "BLOCKED"
+    ],
+    "allowed": [
+      false,
+      false
+    ]
+  },
+  "fullRecovery": {
+    "states": [
+      "BLOCKED",
+      "RECOVERING",
+      "RECOVERING",
+      "OK"
+    ],
+    "allowed": [
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "interruptedRecoveryResets": {
+    "states": [
+      "BLOCKED",
+      "RECOVERING",
+      "RECOVERING",
+      "BLOCKED",
+      "RECOVERING",
+      "RECOVERING",
+      "OK"
+    ],
+    "sinceMsAfterInterrupt": 5200
+  },
+  "noFalseTripsNormalOp": {
+    "readings": 50,
+    "transitions": 0,
+    "allAllowed": true
+  },
+  "coldStart": {
+    "bad": {
+      "state": "BLOCKED",
+      "allowed": false,
+      "sinceMs": null
+    },
+    "good": {
+      "state": "OK",
+      "allowed": true
+    }
+  },
+  "realTrajectoryIntegration": {
+    "cyclesRun": 400,
+    "firstFailCycleReal": 335,
+    "injectedSpikeCycles": [
+      50,
+      120,
+      200
+    ],
+    "spikesFiltered": true,
+    "noBlockBeforeRealOnset": true,
+    "confirmedBlockCycle": 337,
+    "detectionLatencyCycles": 2,
+    "detectionLatencyMs": 2000,
+    "neverReopensAfterBlock": true,
+    "spikeCycleDetail": [
+      {
+        "cycle": 50,
+        "realSeDb": 98.18,
+        "effectiveState": "SUSPECT",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 120,
+        "realSeDb": 88.27,
+        "effectiveState": "SUSPECT",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 200,
+        "realSeDb": 77.63,
+        "effectiveState": "SUSPECT",
+        "effectiveAllowed": true
+      }
+    ],
+    "trace": [
+      {
+        "cycle": 1,
+        "realSeDb": 104.35,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 2,
+        "realSeDb": 104.3,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 3,
+        "realSeDb": 104.09,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 4,
+        "realSeDb": 103.93,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 5,
+        "realSeDb": 103.8,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 6,
+        "realSeDb": 103.68,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 7,
+        "realSeDb": 103.56,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 8,
+        "realSeDb": 103.48,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 9,
+        "realSeDb": 103.34,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 10,
+        "realSeDb": 103.17,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 11,
+        "realSeDb": 103.09,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 12,
+        "realSeDb": 103.02,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 13,
+        "realSeDb": 102.84,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 14,
+        "realSeDb": 102.71,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 15,
+        "realSeDb": 102.64,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 16,
+        "realSeDb": 102.53,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 17,
+        "realSeDb": 102.44,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 18,
+        "realSeDb": 102.3,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 19,
+        "realSeDb": 102.21,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 20,
+        "realSeDb": 102,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 21,
+        "realSeDb": 101.91,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 22,
+        "realSeDb": 101.72,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 23,
+        "realSeDb": 101.65,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 24,
+        "realSeDb": 101.58,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 25,
+        "realSeDb": 101.51,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 26,
+        "realSeDb": 101.42,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 27,
+        "realSeDb": 101.28,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 28,
+        "realSeDb": 101.11,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 29,
+        "realSeDb": 101.05,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 30,
+        "realSeDb": 100.85,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 31,
+        "realSeDb": 100.72,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 32,
+        "realSeDb": 100.57,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 33,
+        "realSeDb": 100.41,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 34,
+        "realSeDb": 100.2,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 35,
+        "realSeDb": 100.05,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 36,
+        "realSeDb": 99.85,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 37,
+        "realSeDb": 99.67,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 38,
+        "realSeDb": 99.62,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 39,
+        "realSeDb": 99.55,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 40,
+        "realSeDb": 99.44,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 41,
+        "realSeDb": 99.33,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 42,
+        "realSeDb": 99.28,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 43,
+        "realSeDb": 99.22,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 44,
+        "realSeDb": 99.05,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 45,
+        "realSeDb": 98.94,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 46,
+        "realSeDb": 98.83,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 47,
+        "realSeDb": 98.7,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 48,
+        "realSeDb": 98.5,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 49,
+        "realSeDb": 98.34,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 50,
+        "realSeDb": 98.18,
+        "injected": true,
+        "effectiveState": "SUSPECT",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 51,
+        "realSeDb": 98.08,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 52,
+        "realSeDb": 97.97,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 53,
+        "realSeDb": 97.91,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 54,
+        "realSeDb": 97.84,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 55,
+        "realSeDb": 97.64,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 56,
+        "realSeDb": 97.55,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 57,
+        "realSeDb": 97.47,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 58,
+        "realSeDb": 97.32,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 59,
+        "realSeDb": 97.22,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 60,
+        "realSeDb": 97.17,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 61,
+        "realSeDb": 97.01,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 62,
+        "realSeDb": 96.81,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 63,
+        "realSeDb": 96.67,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 64,
+        "realSeDb": 96.49,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 65,
+        "realSeDb": 96.34,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 66,
+        "realSeDb": 96.14,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 67,
+        "realSeDb": 96.07,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 68,
+        "realSeDb": 95.94,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 69,
+        "realSeDb": 95.79,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 70,
+        "realSeDb": 95.59,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 71,
+        "realSeDb": 95.39,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 72,
+        "realSeDb": 95.2,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 73,
+        "realSeDb": 95.06,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 74,
+        "realSeDb": 94.85,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 75,
+        "realSeDb": 94.65,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 76,
+        "realSeDb": 94.51,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 77,
+        "realSeDb": 94.33,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 78,
+        "realSeDb": 94.28,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 79,
+        "realSeDb": 94.15,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 80,
+        "realSeDb": 94.05,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 81,
+        "realSeDb": 93.89,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 82,
+        "realSeDb": 93.75,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 83,
+        "realSeDb": 93.58,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 84,
+        "realSeDb": 93.37,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 85,
+        "realSeDb": 93.23,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 86,
+        "realSeDb": 93.05,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 87,
+        "realSeDb": 92.93,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 88,
+        "realSeDb": 92.78,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 89,
+        "realSeDb": 92.61,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 90,
+        "realSeDb": 92.48,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 91,
+        "realSeDb": 92.38,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 92,
+        "realSeDb": 92.3,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 93,
+        "realSeDb": 92.25,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 94,
+        "realSeDb": 92.2,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 95,
+        "realSeDb": 92,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 96,
+        "realSeDb": 91.82,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 97,
+        "realSeDb": 91.67,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 98,
+        "realSeDb": 91.62,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 99,
+        "realSeDb": 91.47,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 100,
+        "realSeDb": 91.33,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 101,
+        "realSeDb": 91.16,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 102,
+        "realSeDb": 90.95,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 103,
+        "realSeDb": 90.86,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 104,
+        "realSeDb": 90.65,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 105,
+        "realSeDb": 90.5,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 106,
+        "realSeDb": 90.32,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 107,
+        "realSeDb": 90.17,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 108,
+        "realSeDb": 89.99,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 109,
+        "realSeDb": 89.92,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 110,
+        "realSeDb": 89.71,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 111,
+        "realSeDb": 89.58,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 112,
+        "realSeDb": 89.44,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 113,
+        "realSeDb": 89.37,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 114,
+        "realSeDb": 89.26,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 115,
+        "realSeDb": 89.18,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 116,
+        "realSeDb": 89,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 117,
+        "realSeDb": 88.81,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 118,
+        "realSeDb": 88.64,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 119,
+        "realSeDb": 88.48,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 120,
+        "realSeDb": 88.27,
+        "injected": true,
+        "effectiveState": "SUSPECT",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 121,
+        "realSeDb": 88.13,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 122,
+        "realSeDb": 87.96,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 123,
+        "realSeDb": 87.76,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 124,
+        "realSeDb": 87.63,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 125,
+        "realSeDb": 87.55,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 126,
+        "realSeDb": 87.4,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 127,
+        "realSeDb": 87.23,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 128,
+        "realSeDb": 87.04,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 129,
+        "realSeDb": 86.96,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 130,
+        "realSeDb": 86.82,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 131,
+        "realSeDb": 86.7,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 132,
+        "realSeDb": 86.57,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 133,
+        "realSeDb": 86.49,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 134,
+        "realSeDb": 86.41,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 135,
+        "realSeDb": 86.29,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 136,
+        "realSeDb": 86.16,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 137,
+        "realSeDb": 86.09,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 138,
+        "realSeDb": 86.05,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 139,
+        "realSeDb": 85.98,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 140,
+        "realSeDb": 85.93,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 141,
+        "realSeDb": 85.87,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 142,
+        "realSeDb": 85.67,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 143,
+        "realSeDb": 85.47,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 144,
+        "realSeDb": 85.41,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 145,
+        "realSeDb": 85.34,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 146,
+        "realSeDb": 85.23,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 147,
+        "realSeDb": 85.1,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 148,
+        "realSeDb": 84.93,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 149,
+        "realSeDb": 84.83,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 150,
+        "realSeDb": 84.72,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 151,
+        "realSeDb": 84.54,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 152,
+        "realSeDb": 84.38,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 153,
+        "realSeDb": 84.2,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 154,
+        "realSeDb": 84.07,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 155,
+        "realSeDb": 83.89,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 156,
+        "realSeDb": 83.78,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 157,
+        "realSeDb": 83.64,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 158,
+        "realSeDb": 83.54,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 159,
+        "realSeDb": 83.41,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 160,
+        "realSeDb": 83.24,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 161,
+        "realSeDb": 83.18,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 162,
+        "realSeDb": 83.09,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 163,
+        "realSeDb": 82.91,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 164,
+        "realSeDb": 82.73,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 165,
+        "realSeDb": 82.55,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 166,
+        "realSeDb": 82.43,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 167,
+        "realSeDb": 82.33,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 168,
+        "realSeDb": 82.13,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 169,
+        "realSeDb": 82.05,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 170,
+        "realSeDb": 81.94,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 171,
+        "realSeDb": 81.82,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 172,
+        "realSeDb": 81.63,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 173,
+        "realSeDb": 81.52,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 174,
+        "realSeDb": 81.31,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 175,
+        "realSeDb": 81.18,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 176,
+        "realSeDb": 81.06,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 177,
+        "realSeDb": 80.96,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 178,
+        "realSeDb": 80.82,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 179,
+        "realSeDb": 80.73,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 180,
+        "realSeDb": 80.54,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 181,
+        "realSeDb": 80.4,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 182,
+        "realSeDb": 80.19,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 183,
+        "realSeDb": 80,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 184,
+        "realSeDb": 79.87,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 185,
+        "realSeDb": 79.76,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 186,
+        "realSeDb": 79.59,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 187,
+        "realSeDb": 79.39,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 188,
+        "realSeDb": 79.26,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 189,
+        "realSeDb": 79.1,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 190,
+        "realSeDb": 79.03,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 191,
+        "realSeDb": 78.87,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 192,
+        "realSeDb": 78.76,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 193,
+        "realSeDb": 78.61,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 194,
+        "realSeDb": 78.43,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 195,
+        "realSeDb": 78.32,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 196,
+        "realSeDb": 78.22,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 197,
+        "realSeDb": 78.16,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 198,
+        "realSeDb": 78,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 199,
+        "realSeDb": 77.84,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 200,
+        "realSeDb": 77.63,
+        "injected": true,
+        "effectiveState": "SUSPECT",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 201,
+        "realSeDb": 77.53,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 202,
+        "realSeDb": 77.45,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 203,
+        "realSeDb": 77.39,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 204,
+        "realSeDb": 77.23,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 205,
+        "realSeDb": 77.03,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 206,
+        "realSeDb": 76.85,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 207,
+        "realSeDb": 76.67,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 208,
+        "realSeDb": 76.46,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 209,
+        "realSeDb": 76.38,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 210,
+        "realSeDb": 76.17,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 211,
+        "realSeDb": 76.08,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 212,
+        "realSeDb": 75.94,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 213,
+        "realSeDb": 75.83,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 214,
+        "realSeDb": 75.67,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 215,
+        "realSeDb": 75.5,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 216,
+        "realSeDb": 75.35,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 217,
+        "realSeDb": 75.18,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 218,
+        "realSeDb": 75.03,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 219,
+        "realSeDb": 74.89,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 220,
+        "realSeDb": 74.8,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 221,
+        "realSeDb": 74.62,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 222,
+        "realSeDb": 74.49,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 223,
+        "realSeDb": 74.42,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 224,
+        "realSeDb": 74.26,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 225,
+        "realSeDb": 74.14,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 226,
+        "realSeDb": 74,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 227,
+        "realSeDb": 73.86,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 228,
+        "realSeDb": 73.67,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 229,
+        "realSeDb": 73.46,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 230,
+        "realSeDb": 73.39,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 231,
+        "realSeDb": 73.33,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 232,
+        "realSeDb": 73.24,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 233,
+        "realSeDb": 73.11,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 234,
+        "realSeDb": 73,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 235,
+        "realSeDb": 72.8,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 236,
+        "realSeDb": 72.61,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 237,
+        "realSeDb": 72.48,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 238,
+        "realSeDb": 72.28,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 239,
+        "realSeDb": 72.19,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 240,
+        "realSeDb": 72.06,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 241,
+        "realSeDb": 71.86,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 242,
+        "realSeDb": 71.71,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 243,
+        "realSeDb": 71.53,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 244,
+        "realSeDb": 71.43,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 245,
+        "realSeDb": 71.23,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 246,
+        "realSeDb": 71.02,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 247,
+        "realSeDb": 70.84,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 248,
+        "realSeDb": 70.79,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 249,
+        "realSeDb": 70.72,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 250,
+        "realSeDb": 70.55,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 251,
+        "realSeDb": 70.49,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 252,
+        "realSeDb": 70.43,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 253,
+        "realSeDb": 70.24,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 254,
+        "realSeDb": 70.15,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 255,
+        "realSeDb": 70,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 256,
+        "realSeDb": 69.92,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 257,
+        "realSeDb": 69.74,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 258,
+        "realSeDb": 69.57,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 259,
+        "realSeDb": 69.52,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 260,
+        "realSeDb": 69.4,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 261,
+        "realSeDb": 69.19,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 262,
+        "realSeDb": 69.13,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 263,
+        "realSeDb": 69.08,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 264,
+        "realSeDb": 68.97,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 265,
+        "realSeDb": 68.79,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 266,
+        "realSeDb": 68.63,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 267,
+        "realSeDb": 68.54,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 268,
+        "realSeDb": 68.41,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 269,
+        "realSeDb": 68.35,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 270,
+        "realSeDb": 68.23,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 271,
+        "realSeDb": 68.11,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 272,
+        "realSeDb": 67.97,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 273,
+        "realSeDb": 67.9,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 274,
+        "realSeDb": 67.73,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 275,
+        "realSeDb": 67.63,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 276,
+        "realSeDb": 67.47,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 277,
+        "realSeDb": 67.29,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 278,
+        "realSeDb": 67.24,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 279,
+        "realSeDb": 67.16,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 280,
+        "realSeDb": 67,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 281,
+        "realSeDb": 66.8,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 282,
+        "realSeDb": 66.71,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 283,
+        "realSeDb": 66.53,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 284,
+        "realSeDb": 66.37,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 285,
+        "realSeDb": 66.28,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 286,
+        "realSeDb": 66.22,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 287,
+        "realSeDb": 66.15,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 288,
+        "realSeDb": 65.94,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 289,
+        "realSeDb": 65.78,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 290,
+        "realSeDb": 65.7,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 291,
+        "realSeDb": 65.57,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 292,
+        "realSeDb": 65.51,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 293,
+        "realSeDb": 65.38,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 294,
+        "realSeDb": 65.26,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 295,
+        "realSeDb": 65.09,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 296,
+        "realSeDb": 65.02,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 297,
+        "realSeDb": 64.85,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 298,
+        "realSeDb": 64.78,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 299,
+        "realSeDb": 64.69,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 300,
+        "realSeDb": 64.61,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 301,
+        "realSeDb": 64.42,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 302,
+        "realSeDb": 64.37,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 303,
+        "realSeDb": 64.32,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 304,
+        "realSeDb": 64.12,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 305,
+        "realSeDb": 63.92,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 306,
+        "realSeDb": 63.8,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 307,
+        "realSeDb": 63.66,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 308,
+        "realSeDb": 63.49,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 309,
+        "realSeDb": 63.42,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 310,
+        "realSeDb": 63.29,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 311,
+        "realSeDb": 63.23,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 312,
+        "realSeDb": 63.09,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 313,
+        "realSeDb": 62.92,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 314,
+        "realSeDb": 62.74,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 315,
+        "realSeDb": 62.68,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 316,
+        "realSeDb": 62.54,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 317,
+        "realSeDb": 62.43,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 318,
+        "realSeDb": 62.38,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 319,
+        "realSeDb": 62.18,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 320,
+        "realSeDb": 62.09,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 321,
+        "realSeDb": 62.02,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 322,
+        "realSeDb": 61.93,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 323,
+        "realSeDb": 61.83,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 324,
+        "realSeDb": 61.65,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 325,
+        "realSeDb": 61.47,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 326,
+        "realSeDb": 61.28,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 327,
+        "realSeDb": 61.11,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 328,
+        "realSeDb": 60.94,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 329,
+        "realSeDb": 60.75,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 330,
+        "realSeDb": 60.6,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 331,
+        "realSeDb": 60.44,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 332,
+        "realSeDb": 60.28,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 333,
+        "realSeDb": 60.18,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 334,
+        "realSeDb": 60.07,
+        "injected": false,
+        "effectiveState": "OK",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 335,
+        "realSeDb": 59.92,
+        "injected": false,
+        "effectiveState": "SUSPECT",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 336,
+        "realSeDb": 59.82,
+        "injected": false,
+        "effectiveState": "SUSPECT",
+        "effectiveAllowed": true
+      },
+      {
+        "cycle": 337,
+        "realSeDb": 59.73,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 338,
+        "realSeDb": 59.6,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 339,
+        "realSeDb": 59.46,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 340,
+        "realSeDb": 59.3,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 341,
+        "realSeDb": 59.19,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 342,
+        "realSeDb": 59.02,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 343,
+        "realSeDb": 58.94,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 344,
+        "realSeDb": 58.77,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 345,
+        "realSeDb": 58.64,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 346,
+        "realSeDb": 58.52,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 347,
+        "realSeDb": 58.41,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 348,
+        "realSeDb": 58.23,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 349,
+        "realSeDb": 58.16,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 350,
+        "realSeDb": 58.03,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 351,
+        "realSeDb": 57.89,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 352,
+        "realSeDb": 57.73,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 353,
+        "realSeDb": 57.59,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 354,
+        "realSeDb": 57.53,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 355,
+        "realSeDb": 57.41,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 356,
+        "realSeDb": 57.21,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 357,
+        "realSeDb": 57.05,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 358,
+        "realSeDb": 56.92,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 359,
+        "realSeDb": 56.76,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 360,
+        "realSeDb": 56.66,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 361,
+        "realSeDb": 56.45,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 362,
+        "realSeDb": 56.4,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 363,
+        "realSeDb": 56.22,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 364,
+        "realSeDb": 56.1,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 365,
+        "realSeDb": 56.02,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 366,
+        "realSeDb": 55.9,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 367,
+        "realSeDb": 55.81,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 368,
+        "realSeDb": 55.63,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 369,
+        "realSeDb": 55.41,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 370,
+        "realSeDb": 55.28,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 371,
+        "realSeDb": 55.08,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 372,
+        "realSeDb": 55.01,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 373,
+        "realSeDb": 54.88,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 374,
+        "realSeDb": 54.81,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 375,
+        "realSeDb": 54.76,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 376,
+        "realSeDb": 54.59,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 377,
+        "realSeDb": 54.42,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 378,
+        "realSeDb": 54.34,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 379,
+        "realSeDb": 54.3,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 380,
+        "realSeDb": 54.17,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 381,
+        "realSeDb": 54.02,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 382,
+        "realSeDb": 53.92,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 383,
+        "realSeDb": 53.79,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 384,
+        "realSeDb": 53.58,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 385,
+        "realSeDb": 53.49,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 386,
+        "realSeDb": 53.35,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 387,
+        "realSeDb": 53.19,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 388,
+        "realSeDb": 53.1,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 389,
+        "realSeDb": 53.04,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 390,
+        "realSeDb": 52.88,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 391,
+        "realSeDb": 52.82,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 392,
+        "realSeDb": 52.69,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 393,
+        "realSeDb": 52.56,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 394,
+        "realSeDb": 52.41,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 395,
+        "realSeDb": 52.23,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 396,
+        "realSeDb": 52.06,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 397,
+        "realSeDb": 51.92,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 398,
+        "realSeDb": 51.74,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 399,
+        "realSeDb": 51.61,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      },
+      {
+        "cycle": 400,
+        "realSeDb": 51.44,
+        "injected": false,
+        "effectiveState": "BLOCKED",
+        "effectiveAllowed": false
+      }
+    ]
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
