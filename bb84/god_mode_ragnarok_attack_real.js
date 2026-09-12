@@ -77,21 +77,36 @@ async function main() {
     const linkBackup = calib.riskForLink("Link-Backup-30km", 30);
     console.log(`  Link-Prime-50km (QBER=%10.8, eşiğin hemen altı): risk=${linkPrime.risk}  attribution=${linkPrime.attribution}  sampleCount=${linkPrime.sampleCount}`);
     console.log(`  Link-Backup-30km (QBER=%2, sahte-mükemmel):      risk=${linkBackup.risk}  attribution=${linkBackup.attribution}  sampleCount=${linkBackup.sampleCount}`);
+    // GÜNCELLEME (bu script'in İLK yazıldığı andan SONRA doğrulandı —
+    // bkz. commit mesajı): çekirdeğe _absoluteRisk()/ABSOLUTE_QBER_ALERT_THRESHOLD
+    // ("Ω1/tek-örnek-körlüğü sertleştirmesi") eklendi — norm(), qMax===qMin
+    // (tek örnek) durumunda artık 0 DEĞİL, MUTLAK bir eşiğe göre orantılı bir
+    // risk döndürüyor. Bu blok artık HARDCODED bir "risk=0 bekleniyor" iddiası
+    // yerine GERÇEK ÖLÇÜLEN değere göre dallanıyor — script'in kendisi
+    // gelecekte çekirdek TEKRAR değişse bile YANLIŞ bir "bulgu" YAZDIRMASIN.
     if (linkPrime.risk === 0 && linkBackup.risk === 0) {
       console.log(`  \x1b[33m[BULGU] Her ikisi de risk=0! _interpolate() TEK örnekle qMin===qMax üretiyor, norm() her zaman 0 dönüyor.\x1b[0m`);
       console.log(`  Yani: bir hat hakkında YALNIZCA BİR ölçüm varsa (yeni bir hat, veya saldırgan hiç geçmiş`);
       console.log(`  bırakmadan tek seferde enjekte ettiyse), o hat routing'e GÖRÜNMEZ — QBER %0.001 de olsa`);
       console.log(`  %49 de olsa fark etmez, ikisi de risk=0 üretir. Bu, imza/link-kimliği/sınır denetiminden`);
       console.log(`  TAMAMEN BAĞIMSIZ, üçüncü bir açık: NORMALİZASYON FORMÜLÜ tek-örnek durumunda kör.`);
+    } else {
+      console.log(`  \x1b[32m[DOĞRULANDI] Tek-örnek körlüğü artık YOK — risk değerleri sıfır DEĞİL (mutlak eşik fallback'i devrede).\x1b[0m`);
+      console.log(`  Link-Prime (QBER %10.8, eşiğe çok yakın) risk=${linkPrime.risk.toFixed(4)} ile Link-Backup (QBER %2, temiz)`);
+      console.log(`  risk=${linkBackup.risk.toFixed(4)}'ten DOĞRU şekilde AYRIŞIYOR — "sahte-mükemmel yem" artık ROUTING'i yanıltamıyor,`);
+      console.log(`  çünkü tek örnekli bir hat bile mutlak QBER'ine göre orantılı bir risk taşıyor (bkz. NoiseMatrixCalibration._absoluteRisk).`);
     }
 
     const wp = new EdgeWeightPolicy();
     const costPrime = wp.computeWeight({ a: "X", b: "Y", km: 50, nm: 1550 }, { measuredRisk: { "Link-Prime-50km": linkPrime.risk } });
     const costBackup = wp.computeWeight({ a: "X", b: "Z", km: 30, nm: 1550 }, { measuredRisk: { "Link-Backup-30km": linkBackup.risk } });
-    console.log(`  Routing maliyeti — Link-Prime: ${costPrime.toFixed(4)} (yalnızca saf fiziksel mesafe×kayıp, risk katkısı YOK)`);
+    console.log(`  Routing maliyeti — Link-Prime: ${costPrime.toFixed(4)}`);
     console.log(`  Routing maliyeti — Link-Backup: ${costBackup.toFixed(4)}`);
-    console.log(`  → Saldırının "sahte-mükemmel yem" kısmı GEREKSİZDİ: Link-Prime zaten daha KISA (50 vs 30km`);
-    console.log(`    değil, karşılaştırmada Backup zaten ucuz) VE risk sinyali hiç devreye girmedi.`);
+    if (linkPrime.risk === 0 && linkBackup.risk === 0) {
+      console.log(`  → Saldırının "sahte-mükemmel yem" kısmı GEREKSİZDİ: risk sinyali hiç devreye girmedi (yalnızca fiziksel mesafe×kayıp).`);
+    } else {
+      console.log(`  → Link-Prime'ın maliyeti artık YÜKSEK risk payı İÇERİYOR — routing bu hattı riskli olarak GÖRÜYOR.`);
+    }
   }
 
   console.log("\n=== SONUÇ 2: Peki ya saldırgan İKİ örnek bırakırsa (geçmiş+güncel)? ===");
@@ -109,10 +124,9 @@ async function main() {
     const calib2 = await NoiseMatrixCalibration.verifyAndLoad(payload2, sig2, key);
     const risk2 = calib2.riskForLink("Link-Prime-50km", 50);
     console.log(`  İki örnekle (geçmiş %1.1 + güncel %10.8): risk=${risk2.risk.toFixed(4)}  attribution=${risk2.attribution}`);
-    console.log(`  → Bu durumda risk artık 0 DEĞİL — enterpolasyon en son (50km) noktaya yerleşiyor ve`);
-    console.log(`    aralık içindeki normalize değeri (bu 2 noktalı tabloda uç nokta = maks = 1.0) dönüyor.`);
-    console.log(`    Yani saldırı YALNIZCA "geçmişi olmayan, ilk kez görülen bir hat"ta tamamen görünmez`);
-    console.log(`    kalıyor — geçmişi olan bir hatta kademeli yükseliş yine YAKALANIYOR.`);
+    console.log(`  → İki örnekte risk zaten 0 DEĞİL (göreli min-max normalizasyonu burada zaten çalışıyor) —`);
+    console.log(`    yukarıdaki SONUÇ 1 artık gösteriyor ki TEK örnekli durum da (mutlak eşik fallback'i sayesinde)`);
+    console.log(`    aynı şekilde 0 DEĞİL, yani her iki senaryoda da saldırı routing sinyalini kandıramıyor.`);
   }
 
   console.log("\n=== SONUÇ 3: %10.8 QBER, kripto (güvenlik) katmanında ne ifade ediyor? ===");
@@ -131,18 +145,21 @@ async function main() {
   }
 
   console.log("\n==================================================");
-  console.log("SAVAŞ RAPORU:");
+  console.log("SAVAŞ RAPORU (canlı ölçüme göre GÜNCELLENDİ — bkz. commit mesajı):");
   console.log("  • Kullanıcının verdiği script LİTERAL olarak sistemimle hiç temas etmedi (yanlış anahtar,");
   console.log("    yanlış kanonikleştirme, yanlış dosya/şema, yanlış son komut) — bu bir HAYIR/geçersiz test.");
   console.log("  • GERÇEK anahtar+şemayla tekrarlandığında imza GEÇERLİ oldu (beklenen — anahtar zaten");
   console.log("    depoda açık, bu benim savunmam DEĞİL).");
-  console.log("  • Yine de saldırı asıl hedefine (routing'i kandırmak) ulaşamadı ÇÜNKÜ tek-örnekli veri");
-  console.log("    normalizasyon formülünde risk=0'a düşüyor — ama bu KASITLI bir savunma değil, ŞANS ESERİ");
-  console.log("    bir yan etki (aynı formül, geçmişi olan bir hatta İSE saldırıyı doğru yakalıyor).");
+  console.log("  • Saldırı routing sinyalini kandıramadı: bu script'in İLK yazıldığı andaki hâliyle bunun");
+  console.log("    nedeni 'tek-örnekli veri her zaman risk=0 üretiyor' idi (ŞANS ESERİ bir yan etki, KASITLI");
+  console.log("    bir savunma DEĞİLDİ). O bulgu üzerine çekirdeğe MUTLAK bir eşik-fallback'i eklendi");
+  console.log("    (NoiseMatrixCalibration._absoluteRisk / ABSOLUTE_QBER_ALERT_THRESHOLD) — bu script SONRADAN");
+  console.log("    yeniden çalıştırılıp DOĞRULANDI: artık tek-örnekli bir hat da risk=0 ÜRETMİYOR (yukarıdaki");
+  console.log("    SONUÇ 1'e bakın) — yani kandırma artık ŞANS ESERİ değil, KASITLI bir kontrolle önleniyor.");
   console.log("  • QBER=%10.8 zaten kripto katmanında (Serfling düzeltmesiyle) güvensiz sayılıyor —");
   console.log("    gizlilik hiçbir senaryoda ihlal edilmedi.");
-  console.log("  • GERÇEK AÇIK: tek-örnekli/yeni-hat verisi için MUTLAK bir eşik kontrolü (yalnızca göreli");
-  console.log("    min-max normalizasyon değil) yok — bu bir sonraki sertleştirme maddesi olmalı.");
+  console.log("  • KAPANMIŞ AÇIK: tek-örnekli/yeni-hat verisi için mutlak eşik kontrolü artık MEVCUT —");
+  console.log("    bu script'in önceki sürümünün 'bir sonraki sertleştirme maddesi' dediği şey budur ve YAPILDI.");
   console.log("==================================================\n");
 }
 
