@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-09-12T15:12:14.031Z",
+  "coreShaVerified": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05",
+  "trialsPerScenario": 300,
+  "summaries": [
+    {
+      "key": "temiz",
+      "label": "Taban (Eve YOK, patlama YOK)",
+      "trials": 300,
+      "rawAlarmRate": 0,
+      "ofAlarmed_clusterVerdictRate": null,
+      "ofAlarmed_eveVerdictRate": null,
+      "meanClusteringZ_whenAlarmed": null
+    },
+    {
+      "key": "eve_saf",
+      "label": "SADECE gerçek Eve (patlama YOK)",
+      "trials": 300,
+      "rawAlarmRate": 1,
+      "ofAlarmed_clusterVerdictRate": 0.03,
+      "ofAlarmed_eveVerdictRate": 0.97,
+      "meanClusteringZ_whenAlarmed": 0.014
+    },
+    {
+      "key": "patlama_orta",
+      "label": "SADECE orta patlama (Eve YOK)",
+      "trials": 300,
+      "rawAlarmRate": 0,
+      "ofAlarmed_clusterVerdictRate": null,
+      "ofAlarmed_eveVerdictRate": null,
+      "meanClusteringZ_whenAlarmed": null
+    },
+    {
+      "key": "patlama_siddetli",
+      "label": "SADECE şiddetli patlama (Eve YOK)",
+      "trials": 300,
+      "rawAlarmRate": 1,
+      "ofAlarmed_clusterVerdictRate": 0.9967,
+      "ofAlarmed_eveVerdictRate": 0.0033,
+      "meanClusteringZ_whenAlarmed": -5.423
+    },
+    {
+      "key": "eve_ve_hafif_patlama",
+      "label": "Eve + hafif patlama (saldırgan+çevresel gürültü BİRLİKTE)",
+      "trials": 300,
+      "rawAlarmRate": 1,
+      "ofAlarmed_clusterVerdictRate": 0.02,
+      "ofAlarmed_eveVerdictRate": 0.98,
+      "meanClusteringZ_whenAlarmed": 0.13
+    },
+    {
+      "key": "eve_ve_siddetli_patlama",
+      "label": "Eve + şiddetli patlama (saldırgan gürültünün ARDINA SAKLANMAYA çalışıyor)",
+      "trials": 300,
+      "rawAlarmRate": 1,
+      "ofAlarmed_clusterVerdictRate": 0.0733,
+      "ofAlarmed_eveVerdictRate": 0.9267,
+      "meanClusteringZ_whenAlarmed": -0.444
+    }
+  ]
+}
