@@ -1,24 +1,13 @@
 {
-  "generatedAt": "2026-09-12T16:21:21.617Z",
+  "generatedAt": "2026-09-12T16:26:55.186Z",
   "targetFile": "bb84/etsi014_kme_server.js (çekirdek DEĞİL — bkz. not)",
-  "findings": [
-    {
-      "severity": "KRİTİK — API SÖZLEŞMESİ İHLALİ / SESSİZ ASILI KALMA",
-      "summary": "readBody() 1e6 byte eşiğini aşan gövdede req.destroy() çağırıyor ama bu 'end' ya da 'error' olayını TETİKLEMİYOR — Promise sonsuza kadar pending kalıyor, handler ASLA tamamlanmıyor, istemci temiz bir ETSI-014 400 JSON hatası DEĞİL, ham bir soket hatası/timeout alıyor.",
-      "observed": {
-        "outcome": "socket_error",
-        "ms": 26,
-        "code": "ECONNRESET"
-      },
-      "location": "bb84/etsi014_kme_server.js:361 (readBody, data.length > 1e6 dalı)"
-    }
-  ],
+  "findings": [],
   "memoryTrend": {
-    "rssBeforeKb": 55800,
-    "rssAfterKb": 107176,
+    "rssBeforeKb": 55840,
+    "rssAfterKb": 108312,
     "requests": 600,
-    "deltaKb": 51376,
-    "deltaPerRequestKb": 85.63
+    "deltaKb": 52472,
+    "deltaPerRequestKb": 87.45
   },
-  "overallPass": false
+  "overallPass": true
 }

@@ -355,12 +355,49 @@ function sendJson(res, statusCode, obj) {
   res.end(body);
 }
 
+// KAOS MÜHENDİSLİĞİ #5 DÜZELTMESİ (bkz. commit 15c2439,
+// chaos_kme_oversized_body_test.js): eski davranış, 1e6 byte eşiği
+// aşıldığında doğrudan `req.destroy()` çağırıyordu — ama bu ne "end" ne
+// "error" olayını TETİKLİYORDU, yani bu Promise SONSUZA KADAR pending
+// kalıyor, `await readBody(req)` ASLA dönmüyor, istemciye ETSI-014'ün
+// kendi hata sözleşmesine (KMEError → temiz JSON) uyan bir yanıt DEĞİL,
+// ham bir ECONNRESET gidiyordu — gerçek trafikle DOĞRULANDI.
+//
+// DÜZELTME: limit aşıldığında artık `req.destroy()` ÇAĞRILMIYOR —
+// yalnızca "data" dinleyicisi kaldırılıp (daha fazla veri biriktirilmez)
+// Promise açıkça KMEError(413) ile REDDEDİLİYOR. server_handler bu
+// KMEError'ı YAKALAR ve normal 413 JSON yanıtını GÖNDERİR — istemci artık
+// yapılandırılmış bir hata görür, ham bağlantı kopması DEĞİL. Yanıt
+// gönderildikten SONRA (bkz. server_handler'daki `finally` bloğu),
+// gövdesi tam okunmamış bu bağlantı GÜVENLE kapatılır — okunmamış artık
+// baytlar sıradaki keep-alive isteğinin çözümlenmesini BOZMASIN.
+const MAX_BODY_BYTES = 1e6;
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
-    req.on("data", chunk => { data += chunk; if (data.length > 1e6) req.destroy(); });
-    req.on("end", () => resolve(data));
-    req.on("error", reject);
+    let settled = false;
+    const settle = (fn, arg) => {
+      if (settled) return;
+      settled = true;
+      req.removeListener("data", onData);
+      fn(arg);
+    };
+    const onData = (chunk) => {
+      data += chunk;
+      if (data.length > MAX_BODY_BYTES) {
+        settle(reject, new KMEError(413, `İstek gövdesi çok büyük (>${MAX_BODY_BYTES} byte) — reddedildi`));
+      }
+    };
+    req.on("data", onData);
+    req.on("end", () => settle(resolve, data));
+    req.on("error", (err) => settle(reject, err));
+    // Savunma-derinliği: "end"/"error" HİÇBİRİ tetiklenmeden bağlantı
+    // kapanırsa (ör. istemci taraflı iptal, ya da yukarıdaki limit-red
+    // sonrası biz kendimiz kapatırsak) Promise'i AÇIK bırakma — hâlâ
+    // settle olmamışsa burada reddet (bu, Kaos Müh. #5'in KENDİSİNİN
+    // arkasındaki genel hatayı — "close/destroy sonrası asla settle
+    // olmayan Promise" — bir daha asla mümkün olmayacak şekilde kapatır).
+    req.on("close", () => settle(reject, new Error("Bağlantı, istek gövdesi tam alınmadan kapandı")));
   });
 }
 
@@ -555,11 +592,40 @@ const server_handler = async (req, res) => {
       sendJson(res, 404, { message: "Bilinmeyen ETSI 014 uç noktası", path, method: req.method });
     }
   } catch (e) {
-    if (e instanceof KMEError) {
-      sendJson(res, e.statusCode, { message: e.message });
+    // İstemci bağlantıyı ZATEN kapattıysa (readBody'nin "close" savunma
+    // hattı bu durumda da reddeder — bkz. readBody) yanıt yazmaya
+    // ÇALIŞMA: soket zaten yok/kapanıyor, res.end() burada anlamsız/
+    // hatalı olurdu — kimse dinlemiyor.
+    if (res.writableEnded || (res.socket && res.socket.destroyed)) {
+      // yine de log'la (KMEError DIŞI/beklenmeyen bir durumsa) ama yanıt YAZMA
+      if (!(e instanceof KMEError)) console.error("[KME] Beklenmeyen hata (istemci zaten ayrılmış):", e);
     } else {
-      console.error("[KME] Beklenmeyen hata:", e);
-      sendJson(res, 500, { message: "Sunucu iç hatası" });
+      // İstek gövdesi TAM okunmadıysa (aşağıdaki `finally` bu bağlantıyı
+      // yanıttan SONRA kapatacak) istemciye ÖNCEDEN "Connection: close"
+      // bildir — aksi halde istemcinin keep-alive ajanı bu soketi
+      // GELECEK bir istek için "boşta" sanıp yeniden kullanmaya çalışabilir
+      // (biz onu az sonra yok edeceğimiz için bu, o SONRAKİ isteğe
+      // yanlışlıkla ECONNRESET olarak yansır — bu düzeltmenin KENDİSİNİN
+      // yanlışlıkla yeni bir belirsizlik yüzeyi açmaması için eklendi).
+      if (!req.complete) res.setHeader("Connection", "close");
+      if (e instanceof KMEError) {
+        sendJson(res, e.statusCode, { message: e.message });
+      } else {
+        console.error("[KME] Beklenmeyen hata:", e);
+        sendJson(res, 500, { message: "Sunucu iç hatası" });
+      }
+    }
+  } finally {
+    // KAOS MÜHENDİSLİĞİ #5 DÜZELTMESİ: istek gövdesi TAM okunmadan
+    // (req.complete===false — ör. readBody'nin yukarıdaki 413 erken-red
+    // yolu) bir yanıt gönderildiyse, bağlantıyı yanıt TAMAMEN
+    // gönderildikten SONRA kapat — okunmamış artık gövde baytları,
+    // KEEP-ALIVE ile aynı soket üzerinden gelecek SIRADAKİ isteğin HTTP
+    // ayrıştırmasını bozmasın (bu artıkların yanlışlıkla bir sonraki
+    // isteğin başlangıcı gibi ayrıştırılması riski).
+    if (!req.complete && req.socket && !req.socket.destroyed) {
+      if (res.writableEnded) req.socket.destroy();
+      else res.once("finish", () => { if (!req.socket.destroyed) req.socket.destroy(); });
     }
   }
 };
