@@ -51,9 +51,18 @@ TMP_DIR=$(mktemp -d)
 "$SCRIPT_DIR/issue_cert.sh" "$TMP_DIR" "$ROLE" "$CN" >/dev/null
 "$SCRIPT_DIR/sign_csr.sh" "$PKI_DIR" "$TMP_DIR/${CN}.csr" "$ROLE" "$DAYS" >/dev/null
 
-cp "$TMP_DIR/${CN}-key.pem" "$PKI_DIR/${CN}-key.pem"
-chmod 600 "$PKI_DIR/${CN}-key.pem"
-cp "$TMP_DIR/${CN}-cert.pem" "$PKI_DIR/${CN}-cert.pem"
+# ATOMİK YAZMA (Kaos Müh. #7'deki CRL düzeltmesiyle AYNI mantık —
+# revoke_cert.sh'nin CRL'i doğrudan üzerine yazması yerine .tmp+mv
+# kullanmasına neden olan gerekçe): bu dosyaları GERÇEK bir makine
+# (SAE/sunucu süreci) kendi başına periyodik olarak okuyorsa, doğrudan
+# `cp` hedef dosyayı KISALTIP yazar — o an okuyan bir süreç kesik/boş
+# bir sertifika/anahtar dosyası görebilir. Şimdi her ikisi de AYNI
+# dizinde bir .tmp'ye yazılıp `mv -f` ile atomik olarak taşınıyor.
+cp "$TMP_DIR/${CN}-key.pem" "$PKI_DIR/${CN}-key.pem.tmp"
+chmod 600 "$PKI_DIR/${CN}-key.pem.tmp"
+mv -f "$PKI_DIR/${CN}-key.pem.tmp" "$PKI_DIR/${CN}-key.pem"
+cp "$TMP_DIR/${CN}-cert.pem" "$PKI_DIR/${CN}-cert.pem.tmp"
+mv -f "$PKI_DIR/${CN}-cert.pem.tmp" "$PKI_DIR/${CN}-cert.pem"
 rm -rf "$TMP_DIR"
 
 EXPIRY=$(openssl x509 -in "$PKI_DIR/${CN}-cert.pem" -noout -enddate | cut -d= -f2)
