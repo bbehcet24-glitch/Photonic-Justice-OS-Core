@@ -1,24 +1,8 @@
 {
-  "generatedAt": "2026-09-12T16:36:37.976Z",
+  "generatedAt": "2026-09-12T16:39:34.658Z",
   "targetFile": "bb84/etsi014_kme_server.js (çekirdek DEĞİL)",
-  "findings": [
-    {
-      "severity": "KRİTİK — KAYNAK SIZINTISI (DİSK)",
-      "summary": "checkOcsp(), her OCSP kontrolünde mkdtempSync ile bir geçici dizin oluşturuyor ama temizlik yalnızca içindeki dosyayı (fs.rm(tmpCert,...)) siliyor — dizinin KENDİSİ hiçbir zaman kaldırılmıyor. 6 istekte 6 yeni, kalıcı, boş dizin oluştu.",
-      "location": "bb84/etsi014_kme_server.js — checkOcsp(), fs.rm(tmpCert,...) satırı (dizin değil dosya siliniyor)",
-      "observed": {
-        "newDirsCreated": 6,
-        "requests": 6,
-        "allDirsEmpty": true,
-        "sampleDirs": [
-          "ocsp-0PdG7u",
-          "ocsp-6CXr4K",
-          "ocsp-7ZMxPV"
-        ]
-      }
-    }
-  ],
-  "overallPass": false,
-  "newDirsCreated": 6,
+  "findings": [],
+  "overallPass": true,
+  "newDirsCreated": 0,
   "requests": 6
 }

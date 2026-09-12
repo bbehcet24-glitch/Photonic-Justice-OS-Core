@@ -128,6 +128,14 @@ async function main() {
     }
     const okCount = results.filter((r) => r.ok).length;
     console.log(`  ${okCount}/${N_REQUESTS} istek bir HTTP yanıtı aldı (OCSP erişilemez olduğu için fail-closed 401 BEKLENİYOR — bu doğru/istenen davranış, test edilen bu DEĞİL).`);
+    // fs.rm'in KENDİSİ asenkron — HTTP yanıtı, temizlik callback'i TAM
+    // BİTMEDEN de gönderilmiş olabilir (execFile callback'i içinde önce
+    // fs.rm başlatılır, SONRA resolve() çağrılır, ama fs.rm'in kendi
+    // tamamlanma callback'i ayrı bir mikro-görev/I-O turu). Dizin
+    // sayımından ÖNCE kısa bir bekleme payı — bu, DÜZELTMENİN kendisini
+    // GEÇERSİZ KILMAZ, yalnızca bu testin ÖLÇÜMÜNÜN yarış durumuna
+        // düşmemesi içindir (bu, testin ilk taslağında GERÇEKTEN gözlendi).
+    await new Promise((r) => setTimeout(r, 800));
     if (okCount === 0) {
       findings.push({ severity: "KRİTİK", summary: "Hiçbir mTLS isteği yanıt almadı — sunucu beklenmedik şekilde erişilemez oldu, dizin-sızıntısı testi geçersiz.", observed: results.slice(0, 3) });
     }

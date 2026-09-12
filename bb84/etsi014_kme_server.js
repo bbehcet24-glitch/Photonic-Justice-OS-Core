@@ -455,13 +455,22 @@ function checkOcsp(cert, caCertPath) {
     // güveniyoruz. Sertifika PEM'i geçici bir dosyaya yazılır (execFile
     // shell enjeksiyonuna KAPALIDIR, komut satırı argümanları olarak
     // geçirilir — bu güvenlik açısından ÖNEMLİDİR).
-    const tmpCert = fs.mkdtempSync(require("os").tmpdir() + "/ocsp-") + "/peer.pem";
+    // KAOS MÜHENDİSLİĞİ #6 DÜZELTMESİ (bkz. commit 9494108,
+    // chaos_kme_ocsp_tmpdir_leak_test.js): eski kod yalnızca `tmpCert`
+    // (peer.pem DOSYASI) yolunu tutuyor ve temizlikte SADECE onu
+    // siliyordu — mkdtempSync'in oluşturduğu DİZİN (tmpDir) hiçbir zaman
+    // kaldırılmıyordu, yani her OCSP cache-miss'te kalıcı, boş bir dizin
+    // birikiyordu (üretimde OCSP_CACHE_TTL_MS=30s ile SÜREKLİ). Artık
+    // dizin yolu AYRICA tutuluyor ve temizlik `{recursive:true}` ile
+    // DİZİNİN KENDİSİNİ siliyor (içindeki peer.pem'i de birlikte alır).
+    const tmpDir = fs.mkdtempSync(require("os").tmpdir() + "/ocsp-");
+    const tmpCert = tmpDir + "/peer.pem";
     fs.writeFileSync(tmpCert, cert.raw ? `-----BEGIN CERTIFICATE-----\n${cert.raw.toString("base64").match(/.{1,64}/g).join("\n")}\n-----END CERTIFICATE-----\n` : "");
     execFile("openssl", [
       "ocsp", "-issuer", caCertPath, "-cert", tmpCert,
       "-url", args["ocsp-responder"], "-CAfile", caCertPath, "-timeout", "3",
     ], { timeout: 4000 }, (err, stdout, stderr) => {
-      fs.rm(tmpCert, { force: true }, () => {});
+      fs.rm(tmpDir, { recursive: true, force: true }, () => {});
       const out = `${stdout}\n${stderr}`;
       let result;
       if (/: revoked/i.test(out)) result = { ok: false, reason: "OCSP: sertifika İPTAL EDİLMİŞ" };
