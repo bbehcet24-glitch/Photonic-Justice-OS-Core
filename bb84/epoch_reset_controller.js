@@ -51,11 +51,18 @@ class EpochResetController {
   constructor({ epochDurationS = EPOCH_DURATION_S, onEpochRollover = () => {}, startAtS = 0 } = {}) {
     this.epochDurationS = epochDurationS;
     this.onEpochRollover = onEpochRollover;
+    this.originStartS = startAtS; // SABİT referans — epochStartS'in aksine ASLA mutasyona uğramaz;
+                                   // bir zaman damgasının "gerçek" epoch'unu hesaplamak için gerekir
     this.epochStartS = startAtS;
     this.epochIndex = 0;
     this.epochLocalCount = 0;     // Number — HER ZAMAN epoch içi birikimle SINIRLI
     this.lifetimeCount = 0n;      // BigInt — ASLA sıfırlanmaz, ASLA yuvarlanmaz
     this.rolloverLog = [];        // teşhis/test için kapanan her epoch'un özeti
+    // DÜZELTME (bkz. chaos_jitter_test.js, commit 4cfb743): ağ/kuyruk
+    // yeniden-sıralaması yüzünden bir okuma GEÇ gelirse (kendi gerçek
+    // zaman damgasına göre epoch'u ZATEN KAPANMIŞSA) bu günlükte şeffaf
+    // olarak izlenir — sessizce yanlış epoch'a yazılmaz.
+    this.lateArrivals = [];
   }
 
   /**
@@ -63,8 +70,30 @@ class EpochResetController {
    * (test edilebilirlik için AÇIK parametre — gerçek dağıtımda Date.now()/1000).
    * Epoch süresi dolmuşsa (birden fazla epoch ATLANMIŞ olsa BİLE) rollover
    * ZİNCİRLEME olarak işlenir — hiçbir epoch sessizce KAYBOLMAZ.
+   *
+   * YENİDEN-SIRALAMA GÜVENLİĞİ (bkz. chaos_jitter_test.js bulgusu): nowS,
+   * daha önce görülmüş (ve zaten kapanmış) bir epoch'a aitse — yani bu
+   * okuma ağ/kuyruk gecikmesi yüzünden GEÇ gelmişse — mevcut (yanlış,
+   * çok-yeni) epoch'a eklenMEZ. Bunun yerine kendi GERÇEK epoch'unun
+   * kapanış kaydı RETROAKTİF olarak düzeltilir ve düzeltme lateArrivals'a
+   * açıkça loglanır. lifetimeCount (ömür-boyu toplam) HER İKİ durumda da
+   * (zamanında/geç) etkilenmeden doğru kalır — toplama sıralamadan
+   * bağımsızdır.
    */
   record(n, nowS) {
+    const trueEpochIdx = Math.floor((nowS - this.originStartS) / this.epochDurationS);
+
+    if (trueEpochIdx < this.epochIndex) {
+      const closedEntry = this.rolloverLog.find((r) => r.epochIndex === trueEpochIdx);
+      if (closedEntry) {
+        closedEntry.epochLocalCountAtClose += n;
+        closedEntry.lateCorrected = true;
+      }
+      this.lateArrivals.push({ n, nowS, trueEpochIdx, processedAtEpochIndex: this.epochIndex, attachedToClosedEntry: !!closedEntry });
+      this.lifetimeCount += BigInt(Math.trunc(n));
+      return;
+    }
+
     while (nowS - this.epochStartS >= this.epochDurationS) {
       this._rollover(this.epochStartS + this.epochDurationS);
     }
@@ -90,6 +119,7 @@ class EpochResetController {
       epochIndex: this.epochIndex, epochStartS: this.epochStartS,
       epochLocalCount: this.epochLocalCount, lifetimeCount: this.lifetimeCount.toString(),
       rolloverCount: this.rolloverLog.length,
+      lateArrivalCount: this.lateArrivals.length,
     };
   }
 }

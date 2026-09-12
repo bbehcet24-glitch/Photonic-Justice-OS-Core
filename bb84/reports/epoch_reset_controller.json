@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T01:12:43.569Z",
+  "generatedAt": "2026-09-12T14:46:43.150Z",
   "checks": [
     {
       "name": "(A) TEMEL SIFIRLAMA: 30 gün dolunca epochLocalCount 0'a ÇEKİLİR (yeni kayıt EKLENDİKTEN sonraki değeriyle), epochIndex artar, lifetimeCount (BigInt) İKİSİNİN TOPLAMINI korur",
@@ -45,14 +45,16 @@
       "epochStartS": 0,
       "epochLocalCount": 1000,
       "lifetimeCount": "1000",
-      "rolloverCount": 0
+      "rolloverCount": 0,
+      "lateArrivalCount": 0
     },
     "afterReset": {
       "epochIndex": 1,
       "epochStartS": 2592000,
       "epochLocalCount": 500,
       "lifetimeCount": "1500",
-      "rolloverCount": 1
+      "rolloverCount": 1,
+      "lateArrivalCount": 0
     }
   },
   "rolloverHook": {

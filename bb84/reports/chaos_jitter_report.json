@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T14:38:45.520Z",
+  "generatedAt": "2026-09-12T14:46:47.967Z",
   "trials": 500,
   "debounce": {
     "baseline": {
@@ -75,39 +75,15 @@
       "misattributionDetail": [],
       "finalEpochIndex": 2
     },
-    "misattributedCount": 495,
+    "misattributedCount": 0,
     "lifetimeWrongCount": 0,
-    "sampleMisattribution": {
-      "lifetimeCountCorrect": true,
-      "totalExpected": 141,
-      "totalActualLifetime": 141,
-      "misattributed": true,
-      "misattributionDetail": [
-        {
-          "epochIndex": 0,
-          "expected": 47,
-          "actual": 41
-        },
-        {
-          "epochIndex": 1,
-          "expected": 47,
-          "actual": 23
-        },
-        {
-          "epochIndex": 2,
-          "expected": 47,
-          "actual": 77
-        }
-      ],
-      "finalEpochIndex": 2
-    }
+    "sampleMisattribution": null
   },
   "findings": [
     "[ORTA] SeFailsafeDebounce/reorderOnly: 305/500 denemede nihai durum tabandan saptı (güvenlik yönü fail-closed tarafında kaldı — availability kaybı, güvenlik ihlali değil).",
     "[DÜŞÜK] SeFailsafeDebounce/reorderOnly: 336/500 denemede elapsedMs negatif oldu (zaman damgası tutarsızlığı belirtisi, ama debounce karşılaştırmasını YANLIŞ YÖNE düşürmüyor — bkz. rapor).",
     "[ORTA] SeFailsafeDebounce/tsJitterOnly: 73/500 denemede nihai durum tabandan saptı (güvenlik yönü fail-closed tarafında kaldı — availability kaybı, güvenlik ihlali değil).",
     "[ORTA] SeFailsafeDebounce/combined: 305/500 denemede nihai durum tabandan saptı (güvenlik yönü fail-closed tarafında kaldı — availability kaybı, güvenlik ihlali değil).",
-    "[DÜŞÜK] SeFailsafeDebounce/combined: 337/500 denemede elapsedMs negatif oldu (zaman damgası tutarsızlığı belirtisi, ama debounce karşılaştırmasını YANLIŞ YÖNE düşürmüyor — bkz. rapor).",
-    "[ORTA] EpochResetController: 495/500 denemede yeniden-sıralama, bir sayının YANLIŞ epoch'a atanmasına yol açtı (gecikmeli/geç-gelen bir okuma, epoch zaten ilerledikten SONRA işlendiğinde eski epoch yerine yeni epoch'a yazılıyor)."
+    "[DÜŞÜK] SeFailsafeDebounce/combined: 337/500 denemede elapsedMs negatif oldu (zaman damgası tutarsızlığı belirtisi, ama debounce karşılaştırmasını YANLIŞ YÖNE düşürmüyor — bkz. rapor)."
   ]
 }
