@@ -83,15 +83,14 @@ function runsTest(flags) {
 }
 
 /**
- * ANA GİRİŞ NOKTASI — deriveSiftedKey'in GERÇEK, DEĞİŞTİRİLMEMİŞ
- * çıktısını alır, teşhis amaçlı bir "verdict" (yorum) ekler.
- *
- * @param {{siftedKeyBits:number[], bobKeyBits:number[], qber:number, eavesdropDetected:boolean}} derived
- * @returns teşhis nesnesi — eavesdropDetected ALANI ASLA DEĞİŞTİRİLMEZ.
+ * PAYLAŞILAN VERDICT MANTIĞI — hem diagnoseAlarm (bit-dizisi girdili,
+ * deriveSiftedKey'in TAM çıktısı) hem de diagnoseFromErrorFlags (hazır
+ * hata-bayrağı dizisi girdili — bkz. client_network_report.js gibi
+ * KENDİ yerel per-bit döngüsünü çalıştıran, bit DEĞERLERİNİ değil
+ * yalnızca doğru/yanlış bayrağını tutan çağıranlar) TARAFINDAN kullanılır
+ * — mantık TEK YERDE, tekrarsız.
  */
-function diagnoseAlarm(derived) {
-  const { siftedKeyBits, bobKeyBits, qber, eavesdropDetected } = derived;
-  const errFlags = computeErrorFlags(siftedKeyBits || [], bobKeyBits || []);
+function buildVerdict(errFlags, qber, eavesdropDetected) {
   const runs = runsTest(errFlags);
   const clusteringDetected = !runs.insufficientData && runs.z < CLUSTER_Z_THRESHOLD;
 
@@ -115,7 +114,7 @@ function diagnoseAlarm(derived) {
   }
 
   return {
-    // ÇEKİRDEĞİN kendi ham bayrağı — HİÇBİR KOŞULDA değiştirilmez/geçersiz kılınmaz.
+    // ÇAĞIRANIN kendi ham bayrağı — HİÇBİR KOŞULDA değiştirilmez/geçersiz kılınmaz.
     eavesdropDetected,
     qber,
     clusteringZ: runs.z,
@@ -132,4 +131,32 @@ function diagnoseAlarm(derived) {
   };
 }
 
-module.exports = { diagnoseAlarm, computeErrorFlags, runsTest, CLUSTER_Z_THRESHOLD };
+/**
+ * ANA GİRİŞ NOKTASI (deriveSiftedKey biçimi) — çekirdeğin GERÇEK,
+ * DEĞİŞTİRİLMEMİŞ çıktısını (bit DEĞERLERİ olarak) alır.
+ *
+ * @param {{siftedKeyBits:number[], bobKeyBits:number[], qber:number, eavesdropDetected:boolean}} derived
+ * @returns teşhis nesnesi — eavesdropDetected ALANI ASLA DEĞİŞTİRİLMEZ.
+ */
+function diagnoseAlarm(derived) {
+  const { siftedKeyBits, bobKeyBits, qber, eavesdropDetected } = derived;
+  const errFlags = computeErrorFlags(siftedKeyBits || [], bobKeyBits || []);
+  return buildVerdict(errFlags, qber, eavesdropDetected);
+}
+
+/**
+ * ALTERNATİF GİRİŞ NOKTASI (hazır hata-bayrağı dizisi biçimi) — bit
+ * DEĞERLERİNİ hiç tutmayan, yalnızca "bu sifted bit doğru mu yanlış mı"
+ * bayrağını üreten çağıranlar için (ör. client_network_report.js'in
+ * kendi yerel measureLinkQber() döngüsü — çekirdeğin deriveSiftedKey'i
+ * DEĞİL, kendi ayrı fiziksel-ölçüm mantığıdır, bkz. o dosyanın başlığı).
+ *
+ * @param {number[]} errFlags - zaman/konum SIRALI, {0,1} hata bayrağı dizisi
+ * @param {number} qber
+ * @param {boolean} eavesdropDetected - ÇAĞIRANIN kendi eşik kararı (değiştirilmez)
+ */
+function diagnoseFromErrorFlags(errFlags, qber, eavesdropDetected) {
+  return buildVerdict(errFlags || [], qber, eavesdropDetected);
+}
+
+module.exports = { diagnoseAlarm, diagnoseFromErrorFlags, computeErrorFlags, runsTest, CLUSTER_Z_THRESHOLD };

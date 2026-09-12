@@ -66,6 +66,15 @@ const {
 // çağrılıyor — çekirdeğin kendisi HİÇ değişmedi.
 const guard = require("./chaos_input_guard.js");
 const { guardedBb84Reconcile, sanitizeNumber, BOUNDS } = guard;
+// YANLIŞ-EAVESDROP-ALARMI TEŞHİSİ (bkz. chaos_stochastic_noise_test.js /
+// chaos_eavesdrop_discriminator.js, commit acb026d): bu hattın ölçülen
+// QBER'i alarm eşiğini (%11) aşarsa, bunun GERÇEK bir dinleyicinin İMZASI
+// mı (hata dizisi düzgün-yayılmış) yoksa ZAMANSAL bir donanım/çevre
+// patlamasının İMZASI mı (hata dizisi kümelenmiş) olduğunu, hattın kendi
+// GERÇEK ölçüm dizisi üzerinde bir koşu (runs) testiyle AYIRT EDER. Bu
+// SALT OPERASYONEL bir yorumdur — hiçbir alarm/eşik DEĞİŞTİRİLMEZ/
+// EZİLMEZ, bkz. o dosyanın GÜVENLİK NOTU.
+const { diagnoseFromErrorFlags } = require("./chaos_eavesdrop_discriminator.js");
 
 // ── Dedektör gürültü modeli (çekirdekle AYNI formül, müşteriye özgü girdilerle) ──
 // Kaynak: PhotonNet2.jsx / DetectorNoiseModel.phantomClickProbability —
@@ -121,6 +130,10 @@ function measureLinkQber(link, nBits, seed, repsOverride) {
   let darkClicks = 0;       // hiç foton gelmediği hâlde tetiklenen sahte klik
   let siftedCount = 0;      // baz eşleşen VE tespit edilen bit
   let errorCount = 0;       // sifted anahtardaki hatalı bit
+  // ZAMAN/KONUM SIRALI hata-bayrağı dizisi (0/1) — bit DEĞERLERİ değil,
+  // yalnızca "bu sifted bit doğru mu yanlış mı" — aşağıdaki eavesdrop
+  // teşhisi (koşu testi) için gerekli TEK şey bu sıralı dizidir.
+  const errFlagSeq = [];
 
   for (let i = 0; i < nBits; i++) {
     // Önceden doğrulanmış safeKm/safeReps kullanılır (bkz. yukarısı) —
@@ -148,8 +161,19 @@ function measureLinkQber(link, nBits, seed, repsOverride) {
     if (detected && recon.matched[i]) {
       siftedCount++;
       if (bitIsWrong) errorCount++;
+      errFlagSeq.push(bitIsWrong ? 1 : 0);
     }
   }
+
+  const qber = siftedCount > 0 ? errorCount / siftedCount : null;
+  // Çekirdeğin KENDİ eşiğiyle (deriveSiftedKey, satır ~945: qber>0.11)
+  // BİREBİR AYNI eşik — burada TEKRARLANIYOR (çekirdeğe dokunulmuyor)
+  // çünkü bu dosya zaten propPhoton/bb84Reconcile'ı DOĞRUDAN kullanan,
+  // deriveSiftedKey'i HİÇ çağırmayan kendi ayrı ölçüm döngüsüdür.
+  const alarmEsigiAsildiMi = qber !== null && qber > 0.11;
+  const dinlemeTeshisi = qber !== null
+    ? diagnoseFromErrorFlags(errFlagSeq, qber, alarmEsigiAsildiMi)
+    : undefined;
 
   return {
     reps,
@@ -161,12 +185,15 @@ function measureLinkQber(link, nBits, seed, repsOverride) {
     errorCount,
     // Hiç sifted bit yoksa QBER TANIMSIZDIR — 0 döndürmek YANILTICI olurdu
     // ("mükemmel hat" gibi görünürdü), bu yüzden dürüstçe null döndürülür.
-    qber: siftedCount > 0 ? errorCount / siftedCount : null,
+    qber,
     basisMatchRate: recon.matchRate,
     // Müşterinin ham verisinde (km/reps/nBits) guard katmanının düzelttiği
     // bir şey varsa BURADA açıkça listelenir — sessizce yutulmaz. Boşsa
     // müşteri verisi zaten geçerliydi demektir.
     girdiUyarilari: girdiUyarilari.length ? girdiUyarilari : undefined,
+    // YANLIŞ-EAVESDROP-ALARMI TEŞHİSİ (bkz. dosya başlığı) — SALT
+    // OPERASYONEL yorum; alarmEsigiAsildiMi/qber'i ASLA değiştirmez.
+    dinlemeTeshisi,
   };
 }
 
@@ -282,6 +309,11 @@ function assessRagnarokResilience(links, qberResults) {
     const realQber = measured?.gercekciRoleZinciriyle?.qber
       ?? measured?.hamTekAtim?.qber
       ?? null;
+    // Aynı ölçümün (gercekciRoleZinciriyle öncelikli, yoksa hamTekAtim)
+    // dinleme teşhisi — realQber ile TUTARLI kaynaktan alınır.
+    const dinlemeTeshisi = measured?.gercekciRoleZinciriyle?.qber != null
+      ? measured.gercekciRoleZinciriyle.dinlemeTeshisi
+      : measured?.hamTekAtim?.dinlemeTeshisi;
 
     const engReal = new LinkRiskReputationEngine();
     let tr = 500_000;
@@ -334,6 +366,11 @@ function assessRagnarokResilience(links, qberResults) {
       olculenGercekQber: realQber,
       olculenGercekRisk: gercekOlculenRisk ? gercekOlculenRisk.risk : null,
       olculenGercekAlarmUstundeMi: realQber !== null && realQber >= 0.11,
+      // YANLIŞ-EAVESDROP-ALARMI TEŞHİSİ (bkz. chaos_eavesdrop_discriminator.js) —
+      // olculenGercekAlarmUstundeMi=true iken, bunun GERÇEK bir dinleyicinin mi
+      // yoksa zamansal bir donanım/çevre patlamasının mı imzası olduğuna dair
+      // SALT OPERASYONEL yorum. Alarmın KENDİSİNİ değiştirmez.
+      dinlemeTeshisi,
       // Çerçeveleme senaryosu (ayrı, sağlıklı temel üzerinde).
       cercevelemeTemelQber: FRAMING_HEALTHY_BASELINE_QBER,
       meşruTemelRisk: baseline.risk,
