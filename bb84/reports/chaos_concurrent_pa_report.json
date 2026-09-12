@@ -1,0 +1,232 @@
+{
+  "generatedAt": "2026-09-12T15:57:32.276Z",
+  "coreShaVerified": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05",
+  "workerAvailableInThisEnv": false,
+  "totalAsyncBlocksTested": 20,
+  "dispatchLatencyStats": {
+    "meanMs": 2732,
+    "maxMs": 4560,
+    "samples": [
+      {
+        "scenario": "A",
+        "t": 0,
+        "routeKey": "KAOS-B-0",
+        "nBits": 52000,
+        "dispatchLatencyMs": 2894
+      },
+      {
+        "scenario": "A",
+        "t": 0,
+        "routeKey": "KAOS-A-0",
+        "nBits": 46000,
+        "dispatchLatencyMs": 4189
+      },
+      {
+        "scenario": "A",
+        "t": 0,
+        "routeKey": "KAOS-C-0",
+        "nBits": 2000,
+        "dispatchLatencyMs": 77
+      },
+      {
+        "scenario": "B",
+        "t": 0,
+        "routeKey": "KAOS-D-0",
+        "nBits": 48000,
+        "dispatchLatencyMs": 4560
+      },
+      {
+        "scenario": "B",
+        "t": 0,
+        "routeKey": "KAOS-D-0",
+        "nBits": 54000,
+        "dispatchLatencyMs": 2873
+      },
+      {
+        "scenario": "A",
+        "t": 1,
+        "routeKey": "KAOS-B-1",
+        "nBits": 52000,
+        "dispatchLatencyMs": 3743
+      },
+      {
+        "scenario": "A",
+        "t": 1,
+        "routeKey": "KAOS-A-1",
+        "nBits": 46000,
+        "dispatchLatencyMs": 3623
+      },
+      {
+        "scenario": "A",
+        "t": 1,
+        "routeKey": "KAOS-C-1",
+        "nBits": 2000,
+        "dispatchLatencyMs": 66
+      },
+      {
+        "scenario": "B",
+        "t": 1,
+        "routeKey": "KAOS-D-1",
+        "nBits": 48000,
+        "dispatchLatencyMs": 4346
+      },
+      {
+        "scenario": "B",
+        "t": 1,
+        "routeKey": "KAOS-D-1",
+        "nBits": 54000,
+        "dispatchLatencyMs": 2676
+      },
+      {
+        "scenario": "A",
+        "t": 2,
+        "routeKey": "KAOS-B-2",
+        "nBits": 52000,
+        "dispatchLatencyMs": 2599
+      },
+      {
+        "scenario": "A",
+        "t": 2,
+        "routeKey": "KAOS-A-2",
+        "nBits": 46000,
+        "dispatchLatencyMs": 3418
+      },
+      {
+        "scenario": "A",
+        "t": 2,
+        "routeKey": "KAOS-C-2",
+        "nBits": 2000,
+        "dispatchLatencyMs": 73
+      },
+      {
+        "scenario": "B",
+        "t": 2,
+        "routeKey": "KAOS-D-2",
+        "nBits": 48000,
+        "dispatchLatencyMs": 3023
+      },
+      {
+        "scenario": "B",
+        "t": 2,
+        "routeKey": "KAOS-D-2",
+        "nBits": 54000,
+        "dispatchLatencyMs": 3472
+      },
+      {
+        "scenario": "A",
+        "t": 3,
+        "routeKey": "KAOS-B-3",
+        "nBits": 52000,
+        "dispatchLatencyMs": 3662
+      },
+      {
+        "scenario": "A",
+        "t": 3,
+        "routeKey": "KAOS-A-3",
+        "nBits": 46000,
+        "dispatchLatencyMs": 2548
+      },
+      {
+        "scenario": "A",
+        "t": 3,
+        "routeKey": "KAOS-C-3",
+        "nBits": 2000,
+        "dispatchLatencyMs": 57
+      },
+      {
+        "scenario": "B",
+        "t": 3,
+        "routeKey": "KAOS-D-3",
+        "nBits": 48000,
+        "dispatchLatencyMs": 2957
+      },
+      {
+        "scenario": "B",
+        "t": 3,
+        "routeKey": "KAOS-D-3",
+        "nBits": 54000,
+        "dispatchLatencyMs": 3675
+      },
+      {
+        "scenario": "A",
+        "t": 4,
+        "routeKey": "KAOS-B-4",
+        "nBits": 52000,
+        "dispatchLatencyMs": 3067
+      },
+      {
+        "scenario": "A",
+        "t": 4,
+        "routeKey": "KAOS-A-4",
+        "nBits": 46000,
+        "dispatchLatencyMs": 3968
+      },
+      {
+        "scenario": "A",
+        "t": 4,
+        "routeKey": "KAOS-C-4",
+        "nBits": 2000,
+        "dispatchLatencyMs": 78
+      },
+      {
+        "scenario": "B",
+        "t": 4,
+        "routeKey": "KAOS-D-4",
+        "nBits": 48000,
+        "dispatchLatencyMs": 3457
+      },
+      {
+        "scenario": "B",
+        "t": 4,
+        "routeKey": "KAOS-D-4",
+        "nBits": 54000,
+        "dispatchLatencyMs": 3210
+      }
+    ]
+  },
+  "reconciliationScalingBenchmark": [
+    {
+      "n": 10000,
+      "cascadeMs": 19,
+      "ldpcMs": 1115,
+      "ldpcVsCascadeRatio": 58.7,
+      "cascadeConverged": true,
+      "ldpcConverged": true
+    },
+    {
+      "n": 25000,
+      "cascadeMs": 50,
+      "ldpcMs": 2397,
+      "ldpcVsCascadeRatio": 47.9,
+      "cascadeConverged": true,
+      "ldpcConverged": true
+    },
+    {
+      "n": 50000,
+      "cascadeMs": 98,
+      "ldpcMs": 4069,
+      "ldpcVsCascadeRatio": 41.5,
+      "cascadeConverged": true,
+      "ldpcConverged": true
+    },
+    {
+      "n": 100000,
+      "cascadeMs": 208,
+      "ldpcMs": 12540,
+      "ldpcVsCascadeRatio": 60.3,
+      "cascadeConverged": true,
+      "ldpcConverged": true
+    },
+    {
+      "n": 150000,
+      "cascadeMs": 476,
+      "ldpcMs": 21735,
+      "ldpcVsCascadeRatio": 45.7,
+      "cascadeConverged": true,
+      "ldpcConverged": true
+    }
+  ],
+  "findings": [
+    "[KRİTİK — PERFORMANS/KİLİTLENME] KeyPoolBuffer._finalizeBlock'un SENKRON kısmı (asenkron Toeplitz dispatch'inden ÖNCEKİ PE+Cascade+LDPC aşaması), bu testteki 46-54 bin bitlik bloklarda ort=2732ms/maks=4560ms sürdü. Ölçeklendirme testi (ayrı, temiz ölçüm) LDPCReconciliation'ın — GÜVENLİK KARARINA HİÇ GİRMEYEN, salt karşılaştırma amaçlı ikincil protokolün — bu sürenin AÇIK EZİCİ ÇOĞUNLUĞUNU oluşturduğunu gösteriyor: n=150000'de LDPC=21735ms iken Cascade (güvenlik kararına giren BİRİNCİL protokol) yalnızca 476ms (45.7× fark). Kodun kendi tasarım gerekçesi (satır ~2305-2312), Toeplitz hash'i TAM OLARAK bu yüzden (10⁵-10⁶ bit ölçeğinde ana iş parçacığını \"saniyeler/dakikalar\" kilitlememek için) asenkronize etmişti — ama LDPC bu korumaya sahip DEĞİL ve kodun kendi hedef ölçeğinde (10⁵ bit+) Toeplitz'in KENDİSİNDEN çok daha uzun sürerek, asenkronize etme çabasını byPASS ediyor: _finalizeBlock, \"hemen döndüğünü\" iddia ettiği noktaya gelmeden ÖNCE zaten LDPC yüzünden onlarca saniye bloke olmuş oluyor."
+  ]
+}
