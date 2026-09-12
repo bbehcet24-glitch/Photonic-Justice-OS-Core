@@ -1,0 +1,113 @@
+{
+  "generatedAt": "2026-09-12T14:38:45.520Z",
+  "trials": 500,
+  "debounce": {
+    "baseline": {
+      "finalState": "OK",
+      "finalAllowed": true,
+      "negativeElapsed": false,
+      "transitions": [
+        {
+          "from": "OK",
+          "to": "SUSPECT",
+          "atMs": 100,
+          "seDb": 20
+        },
+        {
+          "from": "SUSPECT",
+          "to": "OK",
+          "atMs": 250,
+          "seDb": 40
+        },
+        {
+          "from": "OK",
+          "to": "SUSPECT",
+          "atMs": 5000,
+          "seDb": 10
+        },
+        {
+          "from": "SUSPECT",
+          "to": "BLOCKED",
+          "atMs": 5680,
+          "seDb": 10
+        },
+        {
+          "from": "BLOCKED",
+          "to": "RECOVERING",
+          "atMs": 6030,
+          "seDb": 40
+        },
+        {
+          "from": "RECOVERING",
+          "to": "OK",
+          "atMs": 12380,
+          "seDb": 40
+        }
+      ]
+    },
+    "summary": {
+      "reorderOnly": {
+        "total": 500,
+        "diverged": 305,
+        "failOpen": 0,
+        "negativeElapsed": 336
+      },
+      "tsJitterOnly": {
+        "total": 500,
+        "diverged": 73,
+        "failOpen": 0,
+        "negativeElapsed": 0
+      },
+      "combined": {
+        "total": 500,
+        "diverged": 305,
+        "failOpen": 0,
+        "negativeElapsed": 337
+      }
+    }
+  },
+  "epoch": {
+    "baseline": {
+      "lifetimeCountCorrect": true,
+      "totalExpected": 141,
+      "totalActualLifetime": 141,
+      "misattributed": false,
+      "misattributionDetail": [],
+      "finalEpochIndex": 2
+    },
+    "misattributedCount": 495,
+    "lifetimeWrongCount": 0,
+    "sampleMisattribution": {
+      "lifetimeCountCorrect": true,
+      "totalExpected": 141,
+      "totalActualLifetime": 141,
+      "misattributed": true,
+      "misattributionDetail": [
+        {
+          "epochIndex": 0,
+          "expected": 47,
+          "actual": 41
+        },
+        {
+          "epochIndex": 1,
+          "expected": 47,
+          "actual": 23
+        },
+        {
+          "epochIndex": 2,
+          "expected": 47,
+          "actual": 77
+        }
+      ],
+      "finalEpochIndex": 2
+    }
+  },
+  "findings": [
+    "[ORTA] SeFailsafeDebounce/reorderOnly: 305/500 denemede nihai durum tabandan saptı (güvenlik yönü fail-closed tarafında kaldı — availability kaybı, güvenlik ihlali değil).",
+    "[DÜŞÜK] SeFailsafeDebounce/reorderOnly: 336/500 denemede elapsedMs negatif oldu (zaman damgası tutarsızlığı belirtisi, ama debounce karşılaştırmasını YANLIŞ YÖNE düşürmüyor — bkz. rapor).",
+    "[ORTA] SeFailsafeDebounce/tsJitterOnly: 73/500 denemede nihai durum tabandan saptı (güvenlik yönü fail-closed tarafında kaldı — availability kaybı, güvenlik ihlali değil).",
+    "[ORTA] SeFailsafeDebounce/combined: 305/500 denemede nihai durum tabandan saptı (güvenlik yönü fail-closed tarafında kaldı — availability kaybı, güvenlik ihlali değil).",
+    "[DÜŞÜK] SeFailsafeDebounce/combined: 337/500 denemede elapsedMs negatif oldu (zaman damgası tutarsızlığı belirtisi, ama debounce karşılaştırmasını YANLIŞ YÖNE düşürmüyor — bkz. rapor).",
+    "[ORTA] EpochResetController: 495/500 denemede yeniden-sıralama, bir sayının YANLIŞ epoch'a atanmasına yol açtı (gecikmeli/geç-gelen bir okuma, epoch zaten ilerledikten SONRA işlendiğinde eski epoch yerine yeni epoch'a yazılıyor)."
+  ]
+}
