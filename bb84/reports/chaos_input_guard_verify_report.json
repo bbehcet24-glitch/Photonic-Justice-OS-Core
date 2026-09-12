@@ -1,0 +1,1006 @@
+{
+  "generatedAt": "2026-09-12T14:18:59.115Z",
+  "total": 91,
+  "stillBrokenCount": 0,
+  "results": [
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (NaN) → varsayılan 50"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (undefined) → varsayılan 50"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (null) → varsayılan 50"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sonlu değil (Infinity) → varsayılan 50"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sonlu değil (-Infinity) → varsayılan 50"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: alt sınırın altında (-1) → 0'e kırpıldı"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: üst sınırın üstünde (1e+308) → 100000'e kırpıldı (sonsuz döngü/DoS koruması)"
+      ],
+      "preview": "0"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (abc) → varsayılan 50"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "fiberT",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN ([object Object]) → varsayılan 50"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sayı değil/NaN (NaN) → varsayılan 50"
+      ],
+      "preview": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (undefined) → varsayılan 50"
+      ],
+      "preview": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sayı değil/NaN (null) → varsayılan 50"
+      ],
+      "preview": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sonlu değil (Infinity) → varsayılan 50"
+      ],
+      "preview": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sonlu değil (-Infinity) → varsayılan 50"
+      ],
+      "preview": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: alt sınırın altında (-1) → 0'e kırpıldı"
+      ],
+      "preview": "0.45"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: üst sınırın üstünde (1e+308) → 100000'e kırpıldı (sonsuz döngü/DoS koruması)"
+      ],
+      "preview": "0.08"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (abc) → varsayılan 50"
+      ],
+      "preview": "0.11699999999999999"
+    },
+    {
+      "hedef": "eavesdropProbability",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN ([object Object]) → varsayılan 50"
+      ],
+      "preview": "0.11699999999999999"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sayı değil/NaN (NaN) → varsayılan 50"
+      ],
+      "preview": "1.8478497974222912"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (undefined) → varsayılan 50"
+      ],
+      "preview": "1.8478497974222912"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sayı değil/NaN (null) → varsayılan 50"
+      ],
+      "preview": "1.8478497974222912"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sonlu değil (Infinity) → varsayılan 50"
+      ],
+      "preview": "1.8478497974222912"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sonlu değil (-Infinity) → varsayılan 50"
+      ],
+      "preview": "1.8478497974222912"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: alt sınırın altında (-1) → 0'e kırpıldı"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: üst sınırın üstünde (1e+308) → 100000'e kırpıldı (sonsuz döngü/DoS koruması)",
+        "gain: çıktı sonlu değil (Infinity) → güvenli varsayılan 1"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sayı değil/NaN (abc) → varsayılan 50"
+      ],
+      "preview": "1.8478497974222912"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sayı değil/NaN ([object Object]) → varsayılan 50"
+      ],
+      "preview": "1.8478497974222912"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sayı değil/NaN (NaN) → varsayılan 0"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: sayı değil/NaN (undefined) → varsayılan 0"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sayı değil/NaN (null) → varsayılan 0"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: sonlu değil (Infinity) → varsayılan 0"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sonlu değil (-Infinity) → varsayılan 0"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: alt sınırın altında (-1) → 0'e kırpıldı"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: üst sınırın üstünde (1e+308) → 200'e kırpıldı (sonsuz döngü/DoS koruması)"
+      ],
+      "preview": "1.010942298648843"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: sayı değil/NaN (abc) → varsayılan 0"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "computeRepeaterGain",
+      "argüman": "reps",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sayı değil/NaN ([object Object]) → varsayılan 0"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sayı değil/NaN (NaN) → varsayılan 50"
+      ],
+      "preview": "0.6309573444801932"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (undefined) → varsayılan 50"
+      ],
+      "preview": "0.6309573444801932"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (null) → varsayılan 50"
+      ],
+      "preview": "0.6309573444801932"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sonlu değil (Infinity) → varsayılan 50"
+      ],
+      "preview": "0.6309573444801932"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sonlu değil (-Infinity) → varsayılan 50"
+      ],
+      "preview": "0.6309573444801932"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: alt sınırın altında (-1) → 0'e kırpıldı"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: üst sınırın üstünde (1e+308) → 100000'e kırpıldı (sonsuz döngü/DoS koruması)",
+        "survival: çıktı sonlu değil (NaN) → güvenli varsayılan 0"
+      ],
+      "preview": "0"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "km: sayı değil/NaN (abc) → varsayılan 50"
+      ],
+      "preview": "0.6309573444801932"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "km",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "km: sayı değil/NaN ([object Object]) → varsayılan 50"
+      ],
+      "preview": "0.6309573444801932"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sayı değil/NaN (NaN) → varsayılan 0"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sayı değil/NaN (undefined) → varsayılan 0"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sayı değil/NaN (null) → varsayılan 0"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sonlu değil (Infinity) → varsayılan 0"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: sonlu değil (-Infinity) → varsayılan 0"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: alt sınırın altında (-1) → 0'e kırpıldı"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: üst sınırın üstünde (1e+308) → 200'e kırpıldı (sonsuz döngü/DoS koruması)"
+      ],
+      "preview": "0.8912509381337814"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: sayı değil/NaN (abc) → varsayılan 0"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "estimateLinkSurvival",
+      "argüman": "reps",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: sayı değil/NaN ([object Object]) → varsayılan 0"
+      ],
+      "preview": "0.1"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sayı değil/NaN (NaN) → varsayılan 0"
+      ],
+      "preview": "{\"ok\":false,\"evs\":[{\"type\":\"ABSORB\",\"km\":41.73286716469311}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: sayı değil/NaN (undefined) → varsayılan 0"
+      ],
+      "preview": "{\"ok\":false,\"evs\":[{\"type\":\"ABSORB\",\"km\":37.23616970835083}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: sayı değil/NaN (null) → varsayılan 0"
+      ],
+      "preview": "{\"ok\":false,\"evs\":[{\"type\":\"ABSORB\",\"km\":26.053486826446374}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sonlu değil (Infinity) → varsayılan 0"
+      ],
+      "preview": "{\"ok\":false,\"evs\":[{\"type\":\"ABSORB\",\"km\":25.048708938977697}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sonlu değil (-Infinity) → varsayılan 0"
+      ],
+      "preview": "{\"ok\":false,\"evs\":[{\"type\":\"ABSORB\",\"km\":28.83585219557702}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: alt sınırın altında (-1) → 0'e kırpıldı"
+      ],
+      "preview": "{\"ok\":false,\"evs\":[{\"type\":\"ABSORB\",\"km\":38.7181064510615}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: üst sınırın üstünde (1e+308) → 200'e kırpıldı (sonsuz döngü/DoS koruması)"
+      ],
+      "preview": "{\"ok\":true,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"0.0\"}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "reps: sayı değil/NaN (abc) → varsayılan 0"
+      ],
+      "preview": "{\"ok\":false,\"evs\":[{\"type\":\"ABSORB\",\"km\":35.34881738089838}]}"
+    },
+    {
+      "hedef": "propPhoton",
+      "argüman": "reps",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "reps: sayı değil/NaN ([object Object]) → varsayılan 0"
+      ],
+      "preview": "{\"ok\":false,\"evs\":[{\"type\":\"ABSORB\",\"km\":24.334585372499706}]}"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "el: sayı değil/NaN (NaN) → varsayılan 45"
+      ],
+      "preview": "0.8579650553219023"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "el: sayı değil/NaN (undefined) → varsayılan 45"
+      ],
+      "preview": "0.8579650553219023"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "el: sayı değil/NaN (null) → varsayılan 45"
+      ],
+      "preview": "0.8579650553219023"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "el: sonlu değil (Infinity) → varsayılan 45"
+      ],
+      "preview": "0.8579650553219023"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "el: sonlu değil (-Infinity) → varsayılan 45"
+      ],
+      "preview": "0.8579650553219023"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "el: alt sınırın altında (-1) → 0'e kırpıldı"
+      ],
+      "preview": "0"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "el: üst sınırın üstünde (1e+308) → 90'e kırpıldı (sonsuz döngü/DoS koruması)"
+      ],
+      "preview": "1"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "el: sayı değil/NaN (abc) → varsayılan 45"
+      ],
+      "preview": "0.8579650553219023"
+    },
+    {
+      "hedef": "satQ",
+      "argüman": "el",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "el: sayı değil/NaN ([object Object]) → varsayılan 45"
+      ],
+      "preview": "0.8579650553219023"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "NaN",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "bitCount: sayı değil/NaN (NaN) → varsayılan 1"
+      ],
+      "preview": "{\"aliceBases\":[\"REC\"],\"bobBases\":[\"DIAG\"],\"matched\":[false],\"matchRate\":0}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bitCount: sayı değil/NaN (undefined) → varsayılan 1"
+      ],
+      "preview": "{\"aliceBases\":[\"REC\"],\"bobBases\":[\"DIAG\"],\"matched\":[false],\"matchRate\":0}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bitCount: sayı değil/NaN (null) → varsayılan 1"
+      ],
+      "preview": "{\"aliceBases\":[\"DIAG\"],\"bobBases\":[\"DIAG\"],\"matched\":[true],\"matchRate\":1}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bitCount: sonlu değil (Infinity) → varsayılan 1"
+      ],
+      "preview": "{\"aliceBases\":[\"REC\"],\"bobBases\":[\"REC\"],\"matched\":[true],\"matchRate\":1}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "-Infinity",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bitCount: sonlu değil (-Infinity) → varsayılan 1"
+      ],
+      "preview": "{\"aliceBases\":[\"DIAG\"],\"bobBases\":[\"REC\"],\"matched\":[false],\"matchRate\":0}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "negatif (-1)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bitCount: alt sınırın altında (-1) → 1'e kırpıldı"
+      ],
+      "preview": "{\"aliceBases\":[\"REC\"],\"bobBases\":[\"DIAG\"],\"matched\":[false],\"matchRate\":0}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "aşırı büyük (1e308)",
+      "verdict": "HANDLED",
+      "elapsedMs": 23,
+      "guardNotes": [
+        "bitCount: üst sınırın üstünde (1e+308) → 100000'e kırpıldı (sonsuz döngü/DoS koruması)"
+      ],
+      "preview": "{\"aliceBases\":[\"REC\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"DIAG\","
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "metin (\"abc\")",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bitCount: sayı değil/NaN (abc) → varsayılan 1"
+      ],
+      "preview": "{\"aliceBases\":[\"DIAG\"],\"bobBases\":[\"REC\"],\"matched\":[false],\"matchRate\":0}"
+    },
+    {
+      "hedef": "bb84Reconcile",
+      "argüman": "bitCount",
+      "girdi": "boş obje ({})",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bitCount: sayı değil/NaN ([object Object]) → varsayılan 1"
+      ],
+      "preview": "{\"aliceBases\":[\"REC\"],\"bobBases\":[\"REC\"],\"matched\":[true],\"matchRate\":1}"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bits: dizi değil (undefined) → boş dizi kullanıldı"
+      ],
+      "preview": "[]"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bits: dizi değil (object) → boş dizi kullanıldı"
+      ],
+      "preview": "[]"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "boş dizi ([])",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": null,
+      "preview": "[]"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "dizi değil (metin)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bits: dizi değil (string) → boş dizi kullanıldı"
+      ],
+      "preview": "[]"
+    },
+    {
+      "hedef": "hEnc",
+      "argüman": "bits",
+      "girdi": "karışık/bozuk bit değerleri",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bits: 0/1 dışı bit değer(ler)i 0'a/1'e normalize edildi"
+      ],
+      "preview": "[1,0,0,1,1,0,0,1,0,0,1,1,0,0]"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "undefined",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bits: dizi değil (undefined) → boş dizi kullanıldı"
+      ],
+      "preview": "[]"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "null",
+      "verdict": "HANDLED",
+      "elapsedMs": 1,
+      "guardNotes": [
+        "bits: dizi değil (object) → boş dizi kullanıldı"
+      ],
+      "preview": "[]"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "boş dizi ([])",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": null,
+      "preview": "[]"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "dizi değil (metin)",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bits: dizi değil (string) → boş dizi kullanıldı"
+      ],
+      "preview": "[]"
+    },
+    {
+      "hedef": "hDec",
+      "argüman": "bits",
+      "girdi": "karışık/bozuk bit değerleri",
+      "verdict": "HANDLED",
+      "elapsedMs": 0,
+      "guardNotes": [
+        "bits: 0/1 dışı bit değer(ler)i 0'a/1'e normalize edildi"
+      ],
+      "preview": "[0,0,1,0]"
+    }
+  ]
+}
