@@ -17,7 +17,16 @@ const https = require("https");
 const fs = require("fs");
 
 // ── mTLS HTTPS çağrısı (mutlak URL + istemci sertifikası) ───────────
-function httpsCall({ baseUrl, method, apiPath, body, cert, key, ca }) {
+// SAĞLAMLAŞTIRMA (kullanıcı "gerçek makinalara bağlanacak" dedikten
+// SONRA eklendi): Node'un http(s) istemcisinde VARSAYILAN bir istek
+// zaman aşımı YOKTUR — bu fonksiyon eskiden bunu ayarlamıyordu, yani
+// yavaş/yanıt vermeyen/güvenlik duvarı arkasında kalan GERÇEK bir uzak
+// KME'ye bağlanılırsa çağıran taraf SONSUZA KADAR asılı kalabilirdi
+// (etsi014_kme_server.js'in kendi readBody() hatasıyla AYNI SINIF
+// sorun — Kaos Müh. #5 — ama burada istemci tarafında). `timeoutMs`
+// (varsayılan 15000) artık isteği bu süre içinde tamamlanmazsa açıkça
+// REDDEDİYOR ve soketi yok ediyor.
+function httpsCall({ baseUrl, method, apiPath, body, cert, key, ca, timeoutMs = 15000 }) {
   const u = new URL(baseUrl);
   const data = body ? JSON.stringify(body) : null;
   const opts = {
@@ -26,11 +35,21 @@ function httpsCall({ baseUrl, method, apiPath, body, cert, key, ca }) {
     headers: { "Content-Type": "application/json", ...(data ? { "Content-Length": Buffer.byteLength(data) } : {}) },
   };
   return new Promise((resolve, reject) => {
+    let settled = false;
     const req = https.request(opts, (res) => {
       let buf = ""; res.on("data", c => buf += c);
-      res.on("end", () => { let json = null; try { json = JSON.parse(buf); } catch {} resolve({ status: res.statusCode, json, raw: buf }); });
+      res.on("end", () => {
+        if (settled) return; settled = true;
+        let json = null; try { json = JSON.parse(buf); } catch {} resolve({ status: res.statusCode, json, raw: buf });
+      });
     });
-    req.on("error", reject);
+    req.on("error", (err) => { if (settled) return; settled = true; reject(err); });
+    req.setTimeout(timeoutMs, () => {
+      if (settled) return; settled = true;
+      const timeoutErr = new Error(`İstek ${timeoutMs}ms içinde tamamlanmadı (zaman aşımı) — hedef: ${baseUrl}${apiPath}`);
+      req.destroy(); // 'error' olayını TETİKLEMEZ (bkz. yukarıdaki settled bayrağı) — reddi BURADA açıkça yapıyoruz
+      reject(timeoutErr);
+    });
     if (data) req.write(data);
     req.end();
   });
