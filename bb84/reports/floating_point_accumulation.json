@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-11T23:48:18.598Z",
+  "generatedAt": "2026-09-12T00:07:08.510Z",
   "checks": [
     {
       "name": "(A) TAMSAYI TEMSİL TAVANI: 2^53'ün ÜZERİNDE n ayırt edilemiyor (somut çarpışma) — TEK bir sonlu-anahtar çağrısı tavandan ÇOK UZAK, ama 10-YILLIK ÖMÜR BOYU KÜMÜLATİF sayaç tavanı GERÇEKTEN AŞIYOR",
@@ -9,7 +9,7 @@
     {
       "name": "(B) NAİF TOPLAMA: hata N arttıkça BÜYÜYOR (ampirik, N=1e6..1e9 GERÇEKTEN koşuldu) — Kahan-telafili toplama N'DEN BAĞIMSIZ makine-epsilon'da kalıyor",
       "ok": true,
-      "detail": "N=1e+6: naif=0.001000000000 (bağıl hata 8.16e-12) · kahan=0.001000000000 (hata 0.00e+0) [4ms/7ms] | N=1e+7: naif=0.01000000000 (bağıl hata -8.05e-12) · kahan=0.01000000000 (hata 0.00e+0) [7ms/26ms] | N=1e+8: naif=0.09999999995 (bağıl hata -4.75e-10) · kahan=0.1000000000 (hata 0.00e+0) [62ms/248ms] | N=1e+9: naif=0.9999999925 (bağıl hata -7.46e-9) · kahan=1.000000000 (hata 0.00e+0) [640ms/2386ms]"
+      "detail": "N=1e+6: naif=0.001000000000 (bağıl hata 8.16e-12) · kahan=0.001000000000 (hata 0.00e+0) [3ms/3ms] | N=1e+7: naif=0.01000000000 (bağıl hata -8.05e-12) · kahan=0.01000000000 (hata 0.00e+0) [7ms/25ms] | N=1e+8: naif=0.09999999995 (bağıl hata -4.75e-10) · kahan=0.1000000000 (hata 0.00e+0) [63ms/249ms] | N=1e+9: naif=0.9999999925 (bağıl hata -7.46e-9) · kahan=1.000000000 (hata 0.00e+0) [626ms/2494ms]"
     },
     {
       "name": "(C) DURAKLAMA EŞİĞİ: 1 GHz saatini NAİF biriktirseydik, ~194 gün (2^24 sn) SÜREKLİ çalışmadan sonra biriktirici TAMAMEN DONARDI (bir artış daha eklemenin HİÇBİR etkisi kalmaz)",
@@ -24,12 +24,12 @@
     {
       "name": "(E) NoiseGateMiddleware UZUN-VADELİ KARARLILIK: 3.17 yıllık sürekli-çalışma benzetiminde (GERÇEK çekirdek sınıfı, salt-okunur) sistematik sürüklenme YOK, NaN/sınır-dışı YOK",
       "ok": true,
-      "detail": "200.000.000 kalibrasyon turu (3.17 yıl) 66180ms'de koşuldu · ilk-%10 ortalama=50.36Hz (σ=8.58) · son-%10 ortalama=52.58Hz (σ=7.99) · fark=0.27σ (istatistiksel olarak anlamlı sürüklenme için tipik eşik ~3σ) · hiçbir noktada NaN/Infinity görülmedi, gateRatio her zaman [0.2,1] aralığında kaldı — DAHA ÖNCE DÜZELTİLEN asimetrik-kırpma sürüklenme hatası (bkz. dosya-üstü not) aşırı-uzun-vadede GERİ GELMEDİ."
+      "detail": "200.000.000 kalibrasyon turu (3.17 yıl) 64522ms'de koşuldu · ilk-%10 ortalama=51.21Hz (σ=10.42) · son-%10 ortalama=49.32Hz (σ=9.94) · fark=0.19σ (istatistiksel olarak anlamlı sürüklenme için tipik eşik ~3σ) · hiçbir noktada NaN/Infinity görülmedi, gateRatio her zaman [0.2,1] aralığında kaldı — DAHA ÖNCE DÜZELTİLEN asimetrik-kırpma sürüklenme hatası (bkz. dosya-üstü not) aşırı-uzun-vadede GERİ GELMEDİ."
     },
     {
       "name": "(F) İZOLE DETERMİNİSTİK EMA: 5e+8 tekrarlık SAF aritmetik yuvarlama (RNG yok, sabit hedef) — sonuç hedefe MAKİNE-EPSİLON düzeyinde yakın kalıyor, SÜRÜKLENMİYOR",
       "ok": true,
-      "detail": "hedef=50, 5e+8 yinelemeden sonra sonuç=50 (mutlak hata=0.00e+0, 935ms) — EMA'nın (1-α) sönümleme terimi geçmiş yuvarlama hatasını HER ADIMDA GEOMETRİK olarak siliyor (kendi kendini düzelten bir süzgeç), bu yüzden (C)'deki BİRİKTİRİCİ (running sum) donma riskine KARŞI YAPISAL OLARAK BAĞIŞIK — matematiksel sınıf farkı budur."
+      "detail": "hedef=50, 5e+8 yinelemeden sonra sonuç=50 (mutlak hata=0.00e+0, 848ms) — EMA'nın (1-α) sönümleme terimi geçmiş yuvarlama hatasını HER ADIMDA GEOMETRİK olarak siliyor (kendi kendini düzelten bir süzgeç), bu yüzden (C)'deki BİRİKTİRİCİ (running sum) donma riskine KARŞI YAPISAL OLARAK BAĞIŞIK — matematiksel sınıf farkı budur."
     },
     {
       "name": "(G) TOEPLITZ ANAHTAR BİTLERİ TAMSAYI-DÜZEYİNDE: paketli (Uint32Array/bit-XOR) motor ile naif tamsayı referansı BİREBİR aynı bit dizisini üretiyor — kayan-nokta yuvarlama kanalı YOK",
@@ -62,8 +62,8 @@
       "naiveAbsErr": 8.158621347953421e-15,
       "kahanAbsErr": 0,
       "naiveRelErr": 8.158621347953421e-12,
-      "tNaiveMs": 4,
-      "tKahanMs": 7
+      "tNaiveMs": 3,
+      "tKahanMs": 3
     },
     {
       "N": 10000000,
@@ -74,7 +74,7 @@
       "kahanAbsErr": 0,
       "naiveRelErr": -8.052759847831936e-12,
       "tNaiveMs": 7,
-      "tKahanMs": 26
+      "tKahanMs": 25
     },
     {
       "N": 100000000,
@@ -84,8 +84,8 @@
       "naiveAbsErr": -4.7452555773652705e-11,
       "kahanAbsErr": 0,
       "naiveRelErr": -4.74525557736527e-10,
-      "tNaiveMs": 62,
-      "tKahanMs": 248
+      "tNaiveMs": 63,
+      "tKahanMs": 249
     },
     {
       "N": 1000000000,
@@ -95,8 +95,8 @@
       "naiveAbsErr": -7.460067119602343e-9,
       "kahanAbsErr": 0,
       "naiveRelErr": -7.460067119602343e-9,
-      "tNaiveMs": 640,
-      "tKahanMs": 2386
+      "tNaiveMs": 626,
+      "tKahanMs": 2494
     }
   ],
   "stagnation": {
@@ -117,1013 +117,1013 @@
   "longRunStability": {
     "cycles": 200000000,
     "elapsedYearsSimulated": 3.17,
-    "wallClockMs": 66180,
+    "wallClockMs": 64522,
     "sawNonFinite": false,
     "gateOutOfBounds": false,
-    "meanFirst": 50.36,
-    "meanLast": 52.58,
-    "stdFirst": 8.58,
-    "stdLast": 7.99,
-    "driftSigmas": 0.268,
+    "meanFirst": 51.21,
+    "meanLast": 49.32,
+    "stdFirst": 10.42,
+    "stdLast": 9.94,
+    "driftSigmas": 0.185,
     "checkpoints": [
       {
         "cycle": 0,
-        "calibratedDarkRateHz": 46.5,
+        "calibratedDarkRateHz": 55.599999999999994,
         "gateRatio": 1
       },
       {
         "cycle": 1000000,
-        "calibratedDarkRateHz": 46.24854844698301,
+        "calibratedDarkRateHz": 43.91666654495505,
         "gateRatio": 1
       },
       {
         "cycle": 2000000,
-        "calibratedDarkRateHz": 45.123706947256395,
+        "calibratedDarkRateHz": 43.78961445505065,
         "gateRatio": 1
       },
       {
         "cycle": 3000000,
-        "calibratedDarkRateHz": 58.22687862920964,
+        "calibratedDarkRateHz": 45.501989758324655,
         "gateRatio": 1
       },
       {
         "cycle": 4000000,
-        "calibratedDarkRateHz": 50.363561355327136,
+        "calibratedDarkRateHz": 27.671769726051245,
         "gateRatio": 1
       },
       {
         "cycle": 5000000,
-        "calibratedDarkRateHz": 54.27410163125076,
+        "calibratedDarkRateHz": 61.17851818386858,
         "gateRatio": 1
       },
       {
         "cycle": 6000000,
-        "calibratedDarkRateHz": 47.419912572183804,
+        "calibratedDarkRateHz": 64.26630988782014,
         "gateRatio": 1
       },
       {
         "cycle": 7000000,
-        "calibratedDarkRateHz": 48.19713478403296,
+        "calibratedDarkRateHz": 43.82392110382874,
         "gateRatio": 1
       },
       {
         "cycle": 8000000,
-        "calibratedDarkRateHz": 47.906602421327435,
+        "calibratedDarkRateHz": 56.44393681377423,
         "gateRatio": 1
       },
       {
         "cycle": 9000000,
-        "calibratedDarkRateHz": 71.05853009871774,
+        "calibratedDarkRateHz": 39.6716937222009,
         "gateRatio": 1
       },
       {
         "cycle": 10000000,
-        "calibratedDarkRateHz": 54.52596383063206,
+        "calibratedDarkRateHz": 58.27578744557182,
         "gateRatio": 1
       },
       {
         "cycle": 11000000,
-        "calibratedDarkRateHz": 56.44816780968571,
+        "calibratedDarkRateHz": 46.90283093843669,
         "gateRatio": 1
       },
       {
         "cycle": 12000000,
-        "calibratedDarkRateHz": 33.89593261107713,
+        "calibratedDarkRateHz": 41.311868892349736,
         "gateRatio": 1
       },
       {
         "cycle": 13000000,
-        "calibratedDarkRateHz": 37.61593114418599,
+        "calibratedDarkRateHz": 65.97016346786714,
         "gateRatio": 1
       },
       {
         "cycle": 14000000,
-        "calibratedDarkRateHz": 44.01296268282047,
+        "calibratedDarkRateHz": 62.39783027369688,
         "gateRatio": 1
       },
       {
         "cycle": 15000000,
-        "calibratedDarkRateHz": 53.57571249099503,
+        "calibratedDarkRateHz": 54.777573683904144,
         "gateRatio": 1
       },
       {
         "cycle": 16000000,
-        "calibratedDarkRateHz": 50.171418710753855,
+        "calibratedDarkRateHz": 40.245231395725675,
         "gateRatio": 1
       },
       {
         "cycle": 17000000,
-        "calibratedDarkRateHz": 67.56702759393687,
+        "calibratedDarkRateHz": 67.56145282401427,
         "gateRatio": 1
       },
       {
         "cycle": 18000000,
-        "calibratedDarkRateHz": 43.070995308164136,
+        "calibratedDarkRateHz": 57.834785308357965,
         "gateRatio": 1
       },
       {
         "cycle": 19000000,
-        "calibratedDarkRateHz": 50.907748488324025,
+        "calibratedDarkRateHz": 47.00496610885769,
         "gateRatio": 1
       },
       {
         "cycle": 20000000,
-        "calibratedDarkRateHz": 32.0562625233011,
+        "calibratedDarkRateHz": 33.414926205847785,
         "gateRatio": 1
       },
       {
         "cycle": 21000000,
-        "calibratedDarkRateHz": 55.93805068536604,
+        "calibratedDarkRateHz": 64.43741469330223,
         "gateRatio": 1
       },
       {
         "cycle": 22000000,
-        "calibratedDarkRateHz": 35.26792154219859,
+        "calibratedDarkRateHz": 45.4496995111802,
         "gateRatio": 1
       },
       {
         "cycle": 23000000,
-        "calibratedDarkRateHz": 29.974280014215353,
+        "calibratedDarkRateHz": 60.02717015961031,
         "gateRatio": 1
       },
       {
         "cycle": 24000000,
-        "calibratedDarkRateHz": 46.29647075919508,
+        "calibratedDarkRateHz": 68.47058967861985,
         "gateRatio": 1
       },
       {
         "cycle": 25000000,
-        "calibratedDarkRateHz": 67.72134516713902,
+        "calibratedDarkRateHz": 70.00863663131052,
         "gateRatio": 1
       },
       {
         "cycle": 26000000,
-        "calibratedDarkRateHz": 68.24826249693109,
+        "calibratedDarkRateHz": 44.12759482846433,
         "gateRatio": 1
       },
       {
         "cycle": 27000000,
-        "calibratedDarkRateHz": 46.43805244518146,
+        "calibratedDarkRateHz": 46.90205412443564,
         "gateRatio": 1
       },
       {
         "cycle": 28000000,
-        "calibratedDarkRateHz": 55.02757626677156,
+        "calibratedDarkRateHz": 55.32466632235575,
         "gateRatio": 1
       },
       {
         "cycle": 29000000,
-        "calibratedDarkRateHz": 44.75950654953374,
+        "calibratedDarkRateHz": 35.81588697476505,
         "gateRatio": 1
       },
       {
         "cycle": 30000000,
-        "calibratedDarkRateHz": 58.62858104046751,
+        "calibratedDarkRateHz": 38.72875213856816,
         "gateRatio": 1
       },
       {
         "cycle": 31000000,
-        "calibratedDarkRateHz": 48.98312749766286,
+        "calibratedDarkRateHz": 58.73995291437318,
         "gateRatio": 1
       },
       {
         "cycle": 32000000,
-        "calibratedDarkRateHz": 39.36506874237446,
+        "calibratedDarkRateHz": 39.94651393965511,
         "gateRatio": 1
       },
       {
         "cycle": 33000000,
-        "calibratedDarkRateHz": 48.684387346403945,
+        "calibratedDarkRateHz": 53.48540847158724,
         "gateRatio": 1
       },
       {
         "cycle": 34000000,
-        "calibratedDarkRateHz": 62.526629367680584,
+        "calibratedDarkRateHz": 37.81147600761586,
         "gateRatio": 1
       },
       {
         "cycle": 35000000,
-        "calibratedDarkRateHz": 50.002171039924136,
+        "calibratedDarkRateHz": 56.34218879503898,
         "gateRatio": 1
       },
       {
         "cycle": 36000000,
-        "calibratedDarkRateHz": 40.217686233699226,
+        "calibratedDarkRateHz": 62.14198240585299,
         "gateRatio": 1
       },
       {
         "cycle": 37000000,
-        "calibratedDarkRateHz": 59.79995463822014,
+        "calibratedDarkRateHz": 48.51829071154109,
         "gateRatio": 1
       },
       {
         "cycle": 38000000,
-        "calibratedDarkRateHz": 53.941187582425734,
+        "calibratedDarkRateHz": 71.46454182813957,
         "gateRatio": 1
       },
       {
         "cycle": 39000000,
-        "calibratedDarkRateHz": 32.4626671545232,
+        "calibratedDarkRateHz": 58.82340201547016,
         "gateRatio": 1
       },
       {
         "cycle": 40000000,
-        "calibratedDarkRateHz": 48.37604046360377,
+        "calibratedDarkRateHz": 47.573099993193495,
         "gateRatio": 1
       },
       {
         "cycle": 41000000,
-        "calibratedDarkRateHz": 43.64099396361073,
+        "calibratedDarkRateHz": 48.0158855688171,
         "gateRatio": 1
       },
       {
         "cycle": 42000000,
-        "calibratedDarkRateHz": 58.56658003863615,
+        "calibratedDarkRateHz": 50.680961944938396,
         "gateRatio": 1
       },
       {
         "cycle": 43000000,
-        "calibratedDarkRateHz": 46.41931655969753,
+        "calibratedDarkRateHz": 58.84860412203952,
         "gateRatio": 1
       },
       {
         "cycle": 44000000,
-        "calibratedDarkRateHz": 53.08522807252217,
+        "calibratedDarkRateHz": 45.93017245370281,
         "gateRatio": 1
       },
       {
         "cycle": 45000000,
-        "calibratedDarkRateHz": 47.24638766902133,
+        "calibratedDarkRateHz": 41.00200847272566,
         "gateRatio": 1
       },
       {
         "cycle": 46000000,
-        "calibratedDarkRateHz": 42.95378609186017,
+        "calibratedDarkRateHz": 51.155143340429724,
         "gateRatio": 1
       },
       {
         "cycle": 47000000,
-        "calibratedDarkRateHz": 36.05437857966269,
+        "calibratedDarkRateHz": 53.823581310957884,
         "gateRatio": 1
       },
       {
         "cycle": 48000000,
-        "calibratedDarkRateHz": 44.528311471453726,
+        "calibratedDarkRateHz": 49.924597640001465,
         "gateRatio": 1
       },
       {
         "cycle": 49000000,
-        "calibratedDarkRateHz": 58.34722393348079,
+        "calibratedDarkRateHz": 60.014841559278075,
         "gateRatio": 1
       },
       {
         "cycle": 50000000,
-        "calibratedDarkRateHz": 56.72983421764248,
+        "calibratedDarkRateHz": 25.65989466185107,
         "gateRatio": 1
       },
       {
         "cycle": 51000000,
-        "calibratedDarkRateHz": 63.34369918294732,
+        "calibratedDarkRateHz": 44.69744885339934,
         "gateRatio": 1
       },
       {
         "cycle": 52000000,
-        "calibratedDarkRateHz": 54.68168229685115,
+        "calibratedDarkRateHz": 46.1113582633281,
         "gateRatio": 1
       },
       {
         "cycle": 53000000,
-        "calibratedDarkRateHz": 49.74190302178551,
+        "calibratedDarkRateHz": 58.76411866207005,
         "gateRatio": 1
       },
       {
         "cycle": 54000000,
-        "calibratedDarkRateHz": 44.20025458217164,
+        "calibratedDarkRateHz": 58.43387988338004,
         "gateRatio": 1
       },
       {
         "cycle": 55000000,
-        "calibratedDarkRateHz": 31.11315779177636,
+        "calibratedDarkRateHz": 37.61171660559613,
         "gateRatio": 1
       },
       {
         "cycle": 56000000,
-        "calibratedDarkRateHz": 52.528133269742234,
+        "calibratedDarkRateHz": 41.013426348733496,
         "gateRatio": 1
       },
       {
         "cycle": 57000000,
-        "calibratedDarkRateHz": 60.796064370687816,
+        "calibratedDarkRateHz": 69.40736568920354,
         "gateRatio": 1
       },
       {
         "cycle": 58000000,
-        "calibratedDarkRateHz": 55.0836754530957,
+        "calibratedDarkRateHz": 55.22953514502261,
         "gateRatio": 1
       },
       {
         "cycle": 59000000,
-        "calibratedDarkRateHz": 38.64535641498108,
+        "calibratedDarkRateHz": 69.62131151610649,
         "gateRatio": 1
       },
       {
         "cycle": 60000000,
-        "calibratedDarkRateHz": 63.12903918387758,
+        "calibratedDarkRateHz": 46.43899197879634,
         "gateRatio": 1
       },
       {
         "cycle": 61000000,
-        "calibratedDarkRateHz": 58.4333813219784,
+        "calibratedDarkRateHz": 43.819396367288846,
         "gateRatio": 1
       },
       {
         "cycle": 62000000,
-        "calibratedDarkRateHz": 58.49983437984389,
+        "calibratedDarkRateHz": 34.43404174340998,
         "gateRatio": 1
       },
       {
         "cycle": 63000000,
-        "calibratedDarkRateHz": 33.344160705943445,
+        "calibratedDarkRateHz": 69.01614072602587,
         "gateRatio": 1
       },
       {
         "cycle": 64000000,
-        "calibratedDarkRateHz": 45.87609995113694,
+        "calibratedDarkRateHz": 64.98485404257082,
         "gateRatio": 1
       },
       {
         "cycle": 65000000,
-        "calibratedDarkRateHz": 40.39931045022287,
+        "calibratedDarkRateHz": 49.26214354157676,
         "gateRatio": 1
       },
       {
         "cycle": 66000000,
-        "calibratedDarkRateHz": 49.34506933721952,
+        "calibratedDarkRateHz": 49.6026696120347,
         "gateRatio": 1
       },
       {
         "cycle": 67000000,
-        "calibratedDarkRateHz": 30.081037439097674,
+        "calibratedDarkRateHz": 67.76011279985568,
         "gateRatio": 1
       },
       {
         "cycle": 68000000,
-        "calibratedDarkRateHz": 43.59182636590601,
+        "calibratedDarkRateHz": 74.39515105303876,
         "gateRatio": 1
       },
       {
         "cycle": 69000000,
-        "calibratedDarkRateHz": 36.33458119455232,
+        "calibratedDarkRateHz": 47.05853504342787,
         "gateRatio": 1
       },
       {
         "cycle": 70000000,
-        "calibratedDarkRateHz": 59.75450684393768,
+        "calibratedDarkRateHz": 50.196735171890154,
         "gateRatio": 1
       },
       {
         "cycle": 71000000,
-        "calibratedDarkRateHz": 46.15994339606445,
+        "calibratedDarkRateHz": 41.752363367215715,
         "gateRatio": 1
       },
       {
         "cycle": 72000000,
-        "calibratedDarkRateHz": 46.38890103148769,
+        "calibratedDarkRateHz": 60.96204598374976,
         "gateRatio": 1
       },
       {
         "cycle": 73000000,
-        "calibratedDarkRateHz": 51.997051192257146,
+        "calibratedDarkRateHz": 51.241251280687386,
         "gateRatio": 1
       },
       {
         "cycle": 74000000,
-        "calibratedDarkRateHz": 51.598632024315606,
+        "calibratedDarkRateHz": 57.87703781478748,
         "gateRatio": 1
       },
       {
         "cycle": 75000000,
-        "calibratedDarkRateHz": 55.10437659354399,
+        "calibratedDarkRateHz": 60.3330889907397,
         "gateRatio": 1
       },
       {
         "cycle": 76000000,
-        "calibratedDarkRateHz": 43.09160450901811,
+        "calibratedDarkRateHz": 51.82177723835255,
         "gateRatio": 1
       },
       {
         "cycle": 77000000,
-        "calibratedDarkRateHz": 60.91108957869115,
+        "calibratedDarkRateHz": 48.391198957485585,
         "gateRatio": 1
       },
       {
         "cycle": 78000000,
-        "calibratedDarkRateHz": 46.37972159320574,
+        "calibratedDarkRateHz": 47.80913753861874,
         "gateRatio": 1
       },
       {
         "cycle": 79000000,
-        "calibratedDarkRateHz": 56.494055092475264,
+        "calibratedDarkRateHz": 44.856244709162354,
         "gateRatio": 1
       },
       {
         "cycle": 80000000,
-        "calibratedDarkRateHz": 35.714379874480954,
+        "calibratedDarkRateHz": 42.61237723610413,
         "gateRatio": 1
       },
       {
         "cycle": 81000000,
-        "calibratedDarkRateHz": 44.25801975748445,
+        "calibratedDarkRateHz": 50.72227832203956,
         "gateRatio": 1
       },
       {
         "cycle": 82000000,
-        "calibratedDarkRateHz": 37.17333646931256,
+        "calibratedDarkRateHz": 50.15058877131678,
         "gateRatio": 1
       },
       {
         "cycle": 83000000,
-        "calibratedDarkRateHz": 58.60739787119546,
+        "calibratedDarkRateHz": 51.253540164969365,
         "gateRatio": 1
       },
       {
         "cycle": 84000000,
-        "calibratedDarkRateHz": 48.86182388717232,
+        "calibratedDarkRateHz": 35.54778785093713,
         "gateRatio": 1
       },
       {
         "cycle": 85000000,
-        "calibratedDarkRateHz": 34.92370154639953,
+        "calibratedDarkRateHz": 69.2819510559825,
         "gateRatio": 1
       },
       {
         "cycle": 86000000,
-        "calibratedDarkRateHz": 52.41639351406028,
+        "calibratedDarkRateHz": 67.44252256534736,
         "gateRatio": 1
       },
       {
         "cycle": 87000000,
-        "calibratedDarkRateHz": 45.41396320079262,
+        "calibratedDarkRateHz": 59.25999201722436,
         "gateRatio": 1
       },
       {
         "cycle": 88000000,
-        "calibratedDarkRateHz": 35.94041739475997,
+        "calibratedDarkRateHz": 69.22626699942691,
         "gateRatio": 1
       },
       {
         "cycle": 89000000,
-        "calibratedDarkRateHz": 49.79900694123627,
+        "calibratedDarkRateHz": 58.048664347673615,
         "gateRatio": 1
       },
       {
         "cycle": 90000000,
-        "calibratedDarkRateHz": 59.763046367361554,
+        "calibratedDarkRateHz": 43.294766895444184,
         "gateRatio": 1
       },
       {
         "cycle": 91000000,
-        "calibratedDarkRateHz": 43.48670051268046,
+        "calibratedDarkRateHz": 59.90159299063652,
         "gateRatio": 1
       },
       {
         "cycle": 92000000,
-        "calibratedDarkRateHz": 67.71359055119996,
+        "calibratedDarkRateHz": 52.40662630617526,
         "gateRatio": 1
       },
       {
         "cycle": 93000000,
-        "calibratedDarkRateHz": 44.95140859926845,
+        "calibratedDarkRateHz": 42.42632831748563,
         "gateRatio": 1
       },
       {
         "cycle": 94000000,
-        "calibratedDarkRateHz": 54.69860278820906,
+        "calibratedDarkRateHz": 40.734953656069806,
         "gateRatio": 1
       },
       {
         "cycle": 95000000,
-        "calibratedDarkRateHz": 49.24311041380887,
+        "calibratedDarkRateHz": 57.98482635249206,
         "gateRatio": 1
       },
       {
         "cycle": 96000000,
-        "calibratedDarkRateHz": 45.144348585092104,
+        "calibratedDarkRateHz": 52.33613041472799,
         "gateRatio": 1
       },
       {
         "cycle": 97000000,
-        "calibratedDarkRateHz": 44.78343166517799,
+        "calibratedDarkRateHz": 27.507875029819882,
         "gateRatio": 1
       },
       {
         "cycle": 98000000,
-        "calibratedDarkRateHz": 54.54480585435354,
+        "calibratedDarkRateHz": 49.10819584430378,
         "gateRatio": 1
       },
       {
         "cycle": 99000000,
-        "calibratedDarkRateHz": 41.39253239909709,
+        "calibratedDarkRateHz": 55.6369154658375,
         "gateRatio": 1
       },
       {
         "cycle": 100000000,
-        "calibratedDarkRateHz": 38.14437717839026,
+        "calibratedDarkRateHz": 68.4746303876697,
         "gateRatio": 1
       },
       {
         "cycle": 101000000,
-        "calibratedDarkRateHz": 51.48114252214195,
+        "calibratedDarkRateHz": 48.71344119536797,
         "gateRatio": 1
       },
       {
         "cycle": 102000000,
-        "calibratedDarkRateHz": 54.088780090528694,
+        "calibratedDarkRateHz": 44.976984527718095,
         "gateRatio": 1
       },
       {
         "cycle": 103000000,
-        "calibratedDarkRateHz": 62.202013359650344,
+        "calibratedDarkRateHz": 46.93704751591646,
         "gateRatio": 1
       },
       {
         "cycle": 104000000,
-        "calibratedDarkRateHz": 44.13015337680384,
+        "calibratedDarkRateHz": 47.574766171403,
         "gateRatio": 1
       },
       {
         "cycle": 105000000,
-        "calibratedDarkRateHz": 63.233763885682976,
+        "calibratedDarkRateHz": 45.22210841604205,
         "gateRatio": 1
       },
       {
         "cycle": 106000000,
-        "calibratedDarkRateHz": 58.51893379630383,
+        "calibratedDarkRateHz": 44.04681838641502,
         "gateRatio": 1
       },
       {
         "cycle": 107000000,
-        "calibratedDarkRateHz": 49.7972399918405,
+        "calibratedDarkRateHz": 46.36725509724814,
         "gateRatio": 1
       },
       {
         "cycle": 108000000,
-        "calibratedDarkRateHz": 49.224463177181846,
+        "calibratedDarkRateHz": 49.60690852452022,
         "gateRatio": 1
       },
       {
         "cycle": 109000000,
-        "calibratedDarkRateHz": 50.15658258353837,
+        "calibratedDarkRateHz": 48.27354333981464,
         "gateRatio": 1
       },
       {
         "cycle": 110000000,
-        "calibratedDarkRateHz": 45.194547383536204,
+        "calibratedDarkRateHz": 60.95521708777332,
         "gateRatio": 1
       },
       {
         "cycle": 111000000,
-        "calibratedDarkRateHz": 43.51068832578646,
+        "calibratedDarkRateHz": 28.72642477188818,
         "gateRatio": 1
       },
       {
         "cycle": 112000000,
-        "calibratedDarkRateHz": 56.7422461692432,
+        "calibratedDarkRateHz": 39.213207374153484,
         "gateRatio": 1
       },
       {
         "cycle": 113000000,
-        "calibratedDarkRateHz": 58.236101281178165,
+        "calibratedDarkRateHz": 60.411148595676465,
         "gateRatio": 1
       },
       {
         "cycle": 114000000,
-        "calibratedDarkRateHz": 47.64499758086604,
+        "calibratedDarkRateHz": 51.37565238764603,
         "gateRatio": 1
       },
       {
         "cycle": 115000000,
-        "calibratedDarkRateHz": 40.225106206128956,
+        "calibratedDarkRateHz": 36.80733170303762,
         "gateRatio": 1
       },
       {
         "cycle": 116000000,
-        "calibratedDarkRateHz": 43.274263855138045,
+        "calibratedDarkRateHz": 64.94458702672446,
         "gateRatio": 1
       },
       {
         "cycle": 117000000,
-        "calibratedDarkRateHz": 53.80766341797859,
+        "calibratedDarkRateHz": 44.528994493497734,
         "gateRatio": 1
       },
       {
         "cycle": 118000000,
-        "calibratedDarkRateHz": 36.45902586355514,
+        "calibratedDarkRateHz": 58.74013323951945,
         "gateRatio": 1
       },
       {
         "cycle": 119000000,
-        "calibratedDarkRateHz": 52.79290148564433,
+        "calibratedDarkRateHz": 53.605471411801474,
         "gateRatio": 1
       },
       {
         "cycle": 120000000,
-        "calibratedDarkRateHz": 53.52174976234461,
+        "calibratedDarkRateHz": 54.52134492833001,
         "gateRatio": 1
       },
       {
         "cycle": 121000000,
-        "calibratedDarkRateHz": 40.254336129777315,
+        "calibratedDarkRateHz": 36.26433460691969,
         "gateRatio": 1
       },
       {
         "cycle": 122000000,
-        "calibratedDarkRateHz": 42.5953060817042,
+        "calibratedDarkRateHz": 55.24092767177605,
         "gateRatio": 1
       },
       {
         "cycle": 123000000,
-        "calibratedDarkRateHz": 61.49185795914079,
+        "calibratedDarkRateHz": 50.1717633456193,
         "gateRatio": 1
       },
       {
         "cycle": 124000000,
-        "calibratedDarkRateHz": 39.4761854513454,
+        "calibratedDarkRateHz": 58.16871859207913,
         "gateRatio": 1
       },
       {
         "cycle": 125000000,
-        "calibratedDarkRateHz": 39.32528581171552,
+        "calibratedDarkRateHz": 45.58927277384034,
         "gateRatio": 1
       },
       {
         "cycle": 126000000,
-        "calibratedDarkRateHz": 62.938432607219056,
+        "calibratedDarkRateHz": 45.712044498699186,
         "gateRatio": 1
       },
       {
         "cycle": 127000000,
-        "calibratedDarkRateHz": 40.05991514280593,
+        "calibratedDarkRateHz": 46.220877532617216,
         "gateRatio": 1
       },
       {
         "cycle": 128000000,
-        "calibratedDarkRateHz": 50.46010542649505,
+        "calibratedDarkRateHz": 51.3167501374792,
         "gateRatio": 1
       },
       {
         "cycle": 129000000,
-        "calibratedDarkRateHz": 52.30506731569517,
+        "calibratedDarkRateHz": 46.31047728727237,
         "gateRatio": 1
       },
       {
         "cycle": 130000000,
-        "calibratedDarkRateHz": 60.06726414298446,
+        "calibratedDarkRateHz": 46.58616220761063,
         "gateRatio": 1
       },
       {
         "cycle": 131000000,
-        "calibratedDarkRateHz": 62.90054923179419,
+        "calibratedDarkRateHz": 42.41686152254013,
         "gateRatio": 1
       },
       {
         "cycle": 132000000,
-        "calibratedDarkRateHz": 45.59624043080101,
+        "calibratedDarkRateHz": 54.247932361515524,
         "gateRatio": 1
       },
       {
         "cycle": 133000000,
-        "calibratedDarkRateHz": 50.86232731284041,
+        "calibratedDarkRateHz": 69.86485619135703,
         "gateRatio": 1
       },
       {
         "cycle": 134000000,
-        "calibratedDarkRateHz": 64.65035372746246,
+        "calibratedDarkRateHz": 56.938683182283185,
         "gateRatio": 1
       },
       {
         "cycle": 135000000,
-        "calibratedDarkRateHz": 68.66631302955128,
+        "calibratedDarkRateHz": 44.88473375555148,
         "gateRatio": 1
       },
       {
         "cycle": 136000000,
-        "calibratedDarkRateHz": 63.41261098423416,
+        "calibratedDarkRateHz": 37.424439431556905,
         "gateRatio": 1
       },
       {
         "cycle": 137000000,
-        "calibratedDarkRateHz": 48.19646024619773,
+        "calibratedDarkRateHz": 46.64631041506141,
         "gateRatio": 1
       },
       {
         "cycle": 138000000,
-        "calibratedDarkRateHz": 48.69981970026795,
+        "calibratedDarkRateHz": 52.537394741744805,
         "gateRatio": 1
       },
       {
         "cycle": 139000000,
-        "calibratedDarkRateHz": 63.60327249077636,
+        "calibratedDarkRateHz": 44.52355643125645,
         "gateRatio": 1
       },
       {
         "cycle": 140000000,
-        "calibratedDarkRateHz": 55.249990178393965,
+        "calibratedDarkRateHz": 47.978299106031855,
         "gateRatio": 1
       },
       {
         "cycle": 141000000,
-        "calibratedDarkRateHz": 50.23017544696397,
+        "calibratedDarkRateHz": 55.80499719765591,
         "gateRatio": 1
       },
       {
         "cycle": 142000000,
-        "calibratedDarkRateHz": 49.891975588410865,
+        "calibratedDarkRateHz": 56.24719707605708,
         "gateRatio": 1
       },
       {
         "cycle": 143000000,
-        "calibratedDarkRateHz": 60.07023404269086,
+        "calibratedDarkRateHz": 50.8276528420094,
         "gateRatio": 1
       },
       {
         "cycle": 144000000,
-        "calibratedDarkRateHz": 42.49001418596301,
+        "calibratedDarkRateHz": 49.93501113767487,
         "gateRatio": 1
       },
       {
         "cycle": 145000000,
-        "calibratedDarkRateHz": 55.24912016743117,
+        "calibratedDarkRateHz": 53.820876148015216,
         "gateRatio": 1
       },
       {
         "cycle": 146000000,
-        "calibratedDarkRateHz": 42.747524712534705,
+        "calibratedDarkRateHz": 53.04490494169625,
         "gateRatio": 1
       },
       {
         "cycle": 147000000,
-        "calibratedDarkRateHz": 46.60778638844989,
+        "calibratedDarkRateHz": 35.53507908675076,
         "gateRatio": 1
       },
       {
         "cycle": 148000000,
-        "calibratedDarkRateHz": 64.50995598580641,
+        "calibratedDarkRateHz": 46.0996023479918,
         "gateRatio": 1
       },
       {
         "cycle": 149000000,
-        "calibratedDarkRateHz": 44.529456418705344,
+        "calibratedDarkRateHz": 44.44109328009234,
         "gateRatio": 1
       },
       {
         "cycle": 150000000,
-        "calibratedDarkRateHz": 49.27397652644797,
+        "calibratedDarkRateHz": 59.370418473958296,
         "gateRatio": 1
       },
       {
         "cycle": 151000000,
-        "calibratedDarkRateHz": 66.04646035103318,
+        "calibratedDarkRateHz": 35.785008078758175,
         "gateRatio": 1
       },
       {
         "cycle": 152000000,
-        "calibratedDarkRateHz": 47.01757894270272,
+        "calibratedDarkRateHz": 63.986059394983606,
         "gateRatio": 1
       },
       {
         "cycle": 153000000,
-        "calibratedDarkRateHz": 45.88737352863501,
+        "calibratedDarkRateHz": 32.66176582235202,
         "gateRatio": 1
       },
       {
         "cycle": 154000000,
-        "calibratedDarkRateHz": 40.79189653854349,
+        "calibratedDarkRateHz": 62.604732635525664,
         "gateRatio": 1
       },
       {
         "cycle": 155000000,
-        "calibratedDarkRateHz": 73.55293514077502,
+        "calibratedDarkRateHz": 63.2845322661571,
         "gateRatio": 1
       },
       {
         "cycle": 156000000,
-        "calibratedDarkRateHz": 59.28454499006591,
+        "calibratedDarkRateHz": 43.25823261384824,
         "gateRatio": 1
       },
       {
         "cycle": 157000000,
-        "calibratedDarkRateHz": 41.67509440260288,
+        "calibratedDarkRateHz": 50.20354997698256,
         "gateRatio": 1
       },
       {
         "cycle": 158000000,
-        "calibratedDarkRateHz": 45.69032115138174,
+        "calibratedDarkRateHz": 34.08655873041502,
         "gateRatio": 1
       },
       {
         "cycle": 159000000,
-        "calibratedDarkRateHz": 56.69678936024309,
+        "calibratedDarkRateHz": 53.6903931952824,
         "gateRatio": 1
       },
       {
         "cycle": 160000000,
-        "calibratedDarkRateHz": 48.42488532289367,
+        "calibratedDarkRateHz": 29.340140953842102,
         "gateRatio": 1
       },
       {
         "cycle": 161000000,
-        "calibratedDarkRateHz": 52.066116795488256,
+        "calibratedDarkRateHz": 43.41686886593323,
         "gateRatio": 1
       },
       {
         "cycle": 162000000,
-        "calibratedDarkRateHz": 45.27480502100091,
+        "calibratedDarkRateHz": 50.94122610588717,
         "gateRatio": 1
       },
       {
         "cycle": 163000000,
-        "calibratedDarkRateHz": 40.50139269900721,
+        "calibratedDarkRateHz": 49.559567779549056,
         "gateRatio": 1
       },
       {
         "cycle": 164000000,
-        "calibratedDarkRateHz": 62.765309636844776,
+        "calibratedDarkRateHz": 39.01634989770543,
         "gateRatio": 1
       },
       {
         "cycle": 165000000,
-        "calibratedDarkRateHz": 52.73493933655768,
+        "calibratedDarkRateHz": 58.826315390489256,
         "gateRatio": 1
       },
       {
         "cycle": 166000000,
-        "calibratedDarkRateHz": 56.38661225859728,
+        "calibratedDarkRateHz": 44.05770474638452,
         "gateRatio": 1
       },
       {
         "cycle": 167000000,
-        "calibratedDarkRateHz": 53.81748673795079,
+        "calibratedDarkRateHz": 49.85870296822664,
         "gateRatio": 1
       },
       {
         "cycle": 168000000,
-        "calibratedDarkRateHz": 40.99189949202406,
+        "calibratedDarkRateHz": 47.32489400953169,
         "gateRatio": 1
       },
       {
         "cycle": 169000000,
-        "calibratedDarkRateHz": 55.4722717141142,
+        "calibratedDarkRateHz": 59.39333939563295,
         "gateRatio": 1
       },
       {
         "cycle": 170000000,
-        "calibratedDarkRateHz": 43.8623486426719,
+        "calibratedDarkRateHz": 68.44285332003446,
         "gateRatio": 1
       },
       {
         "cycle": 171000000,
-        "calibratedDarkRateHz": 37.04155416520523,
+        "calibratedDarkRateHz": 56.20772494535566,
         "gateRatio": 1
       },
       {
         "cycle": 172000000,
-        "calibratedDarkRateHz": 43.36512995021114,
+        "calibratedDarkRateHz": 45.050675484083996,
         "gateRatio": 1
       },
       {
         "cycle": 173000000,
-        "calibratedDarkRateHz": 36.9874439709975,
+        "calibratedDarkRateHz": 54.60784296904909,
         "gateRatio": 1
       },
       {
         "cycle": 174000000,
-        "calibratedDarkRateHz": 70.97108524084581,
+        "calibratedDarkRateHz": 52.037708042707266,
         "gateRatio": 1
       },
       {
         "cycle": 175000000,
-        "calibratedDarkRateHz": 44.327629358047616,
+        "calibratedDarkRateHz": 46.138815966849506,
         "gateRatio": 1
       },
       {
         "cycle": 176000000,
-        "calibratedDarkRateHz": 59.60094206889562,
+        "calibratedDarkRateHz": 54.380480627485525,
         "gateRatio": 1
       },
       {
         "cycle": 177000000,
-        "calibratedDarkRateHz": 41.43453081534891,
+        "calibratedDarkRateHz": 45.05802011524442,
         "gateRatio": 1
       },
       {
         "cycle": 178000000,
-        "calibratedDarkRateHz": 38.63405932166648,
+        "calibratedDarkRateHz": 43.7646255221157,
         "gateRatio": 1
       },
       {
         "cycle": 179000000,
-        "calibratedDarkRateHz": 46.041959855891456,
+        "calibratedDarkRateHz": 49.425995336928054,
         "gateRatio": 1
       },
       {
         "cycle": 180000000,
-        "calibratedDarkRateHz": 49.74794995984433,
+        "calibratedDarkRateHz": 58.139032056687284,
         "gateRatio": 1
       },
       {
         "cycle": 181000000,
-        "calibratedDarkRateHz": 46.18407706415643,
+        "calibratedDarkRateHz": 28.16084718871737,
         "gateRatio": 1
       },
       {
         "cycle": 182000000,
-        "calibratedDarkRateHz": 42.01121070827579,
+        "calibratedDarkRateHz": 37.1893992730854,
         "gateRatio": 1
       },
       {
         "cycle": 183000000,
-        "calibratedDarkRateHz": 70.38056101841136,
+        "calibratedDarkRateHz": 52.27258578704739,
         "gateRatio": 1
       },
       {
         "cycle": 184000000,
-        "calibratedDarkRateHz": 49.03542393522555,
+        "calibratedDarkRateHz": 45.18578685698067,
         "gateRatio": 1
       },
       {
         "cycle": 185000000,
-        "calibratedDarkRateHz": 56.38696781151317,
+        "calibratedDarkRateHz": 44.028559476502856,
         "gateRatio": 1
       },
       {
         "cycle": 186000000,
-        "calibratedDarkRateHz": 42.400853849059175,
+        "calibratedDarkRateHz": 56.185067847727346,
         "gateRatio": 1
       },
       {
         "cycle": 187000000,
-        "calibratedDarkRateHz": 43.90458097368864,
+        "calibratedDarkRateHz": 46.26040807282183,
         "gateRatio": 1
       },
       {
         "cycle": 188000000,
-        "calibratedDarkRateHz": 55.202100413384144,
+        "calibratedDarkRateHz": 49.63371513336491,
         "gateRatio": 1
       },
       {
         "cycle": 189000000,
-        "calibratedDarkRateHz": 41.01440599065688,
+        "calibratedDarkRateHz": 64.87478861705245,
         "gateRatio": 1
       },
       {
         "cycle": 190000000,
-        "calibratedDarkRateHz": 67.34574435359733,
+        "calibratedDarkRateHz": 46.31107605105904,
         "gateRatio": 1
       },
       {
         "cycle": 191000000,
-        "calibratedDarkRateHz": 51.34953205552891,
+        "calibratedDarkRateHz": 68.39598738729353,
         "gateRatio": 1
       },
       {
         "cycle": 192000000,
-        "calibratedDarkRateHz": 52.3443683288067,
+        "calibratedDarkRateHz": 58.06320198188705,
         "gateRatio": 1
       },
       {
         "cycle": 193000000,
-        "calibratedDarkRateHz": 62.20800006160834,
+        "calibratedDarkRateHz": 38.21110961752262,
         "gateRatio": 1
       },
       {
         "cycle": 194000000,
-        "calibratedDarkRateHz": 53.45310781993048,
+        "calibratedDarkRateHz": 44.89648178341955,
         "gateRatio": 1
       },
       {
         "cycle": 195000000,
-        "calibratedDarkRateHz": 59.914305690878756,
+        "calibratedDarkRateHz": 34.67706011646362,
         "gateRatio": 1
       },
       {
         "cycle": 196000000,
-        "calibratedDarkRateHz": 55.601252323068266,
+        "calibratedDarkRateHz": 46.29594245745572,
         "gateRatio": 1
       },
       {
         "cycle": 197000000,
-        "calibratedDarkRateHz": 49.06548836758722,
+        "calibratedDarkRateHz": 57.036975021986024,
         "gateRatio": 1
       },
       {
         "cycle": 198000000,
-        "calibratedDarkRateHz": 57.741235617398715,
+        "calibratedDarkRateHz": 53.59091281139777,
         "gateRatio": 1
       },
       {
         "cycle": 199000000,
-        "calibratedDarkRateHz": 46.32420482098569,
+        "calibratedDarkRateHz": 56.98780241725523,
         "gateRatio": 1
       }
     ]
@@ -1134,7 +1134,7 @@
     "target": 50,
     "result": 50,
     "absErr": 0,
-    "wallClockMs": 935
+    "wallClockMs": 848
   },
   "bitIntegrity": {
     "selfTestOk": true,

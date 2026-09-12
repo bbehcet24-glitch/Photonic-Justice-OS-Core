@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-09-11T23:49:36.691Z",
+  "generatedAt": "2026-09-12T00:07:06.515Z",
   "checks": [
     {
       "name": "(A) mTLS ÖN-KOŞULU (YENİ kafes): kalkanlama hedefi karşılanıyor → el sıkışmaya İZİN VERİLİR",
       "ok": true,
-      "detail": "fiziksel katman kalkanlama hedefi karşılanıyor (marj +44.4 dB) — SAE↔KME mTLS el sıkışmasına İZİN VERİLİR"
+      "detail": "fiziksel katman kalkanlama hedefi karşılanıyor (marj +44.4 dB, SE 104.4 dB ≥ acil-durum tabanı 30 dB) — SAE↔KME mTLS el sıkışmasına İZİN VERİLİR"
     },
     {
       "name": "(B) mTLS ÖN-KOŞULU (ESKİ kafes): hedef karşılanmıyor → fail-closed REDDEDİLİR",
       "ok": true,
-      "detail": "fiziksel katman kalkanlama hedefi KARŞILANMIYOR (en zayıf nokta 19000.0 MHz'de açıklık (çıplak delik, 5 mm) — birleşik SE 4.0 dB < hedef 60 dB (açık 56 dB)) — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı"
+      "detail": "ACİL-DURUM TABANI İHLALİ: SE 4.0 dB < 30 dB (targetSeDb'nin KENDİSİ karşılanıyor olsa BİLE koşulsuz reddedilir) — mTLS el sıkışması REDDEDİLİR (fail-closed): fiziksel katman pratikte kalkansız, EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı"
     },
     {
       "name": "(C) mTLS ÖN-KOŞULU (değerlendirme yok): varsayılan GÜVENSİZ — sessizce izin VERİLMEZ",
@@ -34,14 +34,23 @@
   ],
   "mtlsNew": {
     "allowed": true,
-    "reason": "fiziksel katman kalkanlama hedefi karşılanıyor (marj +44.4 dB) — SAE↔KME mTLS el sıkışmasına İZİN VERİLİR"
+    "emergencyBreach": false,
+    "targetMet": true,
+    "seDb": 104.4,
+    "reason": "fiziksel katman kalkanlama hedefi karşılanıyor (marj +44.4 dB, SE 104.4 dB ≥ acil-durum tabanı 30 dB) — SAE↔KME mTLS el sıkışmasına İZİN VERİLİR"
   },
   "mtlsOld": {
     "allowed": false,
-    "reason": "fiziksel katman kalkanlama hedefi KARŞILANMIYOR (en zayıf nokta 19000.0 MHz'de açıklık (çıplak delik, 5 mm) — birleşik SE 4.0 dB < hedef 60 dB (açık 56 dB)) — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı"
+    "emergencyBreach": true,
+    "targetMet": false,
+    "seDb": 3.96,
+    "reason": "ACİL-DURUM TABANI İHLALİ: SE 4.0 dB < 30 dB (targetSeDb'nin KENDİSİ karşılanıyor olsa BİLE koşulsuz reddedilir) — mTLS el sıkışması REDDEDİLİR (fail-closed): fiziksel katman pratikte kalkansız, EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı"
   },
   "mtlsNone": {
     "allowed": false,
+    "emergencyBreach": true,
+    "targetMet": false,
+    "seDb": null,
     "reason": "fiziksel katman kalkanlama hedefi KARŞILANMIYOR (kafes değerlendirmesi yok) — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı"
   },
   "jitterAlignment": {

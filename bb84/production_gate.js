@@ -25,7 +25,7 @@ const { ClassicalAuthChannel, QKDSecurityProof, mulberry32 } = core;
 const { evaluateFaradayCage, emissionDetectabilityCheck } = require("./faraday_cage_shielding.js");
 // EK KATMAN (çekirdeğe dokunmaz): kriter 9 — state.faraday'dan otomatik
 // türetilen mTLS el sıkışma ön-koşulu (bkz. network_shielding_bridge.js).
-const { mtlsHandshakePrecondition } = require("./network_shielding_bridge.js");
+const { mtlsHandshakePrecondition, EMERGENCY_SE_FLOOR_DB } = require("./network_shielding_bridge.js");
 
 // ── DOĞRU referans MAC (katman; çekirdeğe dokunmadan) ───────────────
 // GF(2⁶¹−1) üzerinde polinom-değerlendirme (Horner) evrensel hash + OTP
@@ -130,7 +130,19 @@ function productionGate(state) {
     add("Elektromanyetik sızıntı (Faraday kafesi)", "hardware",
       "kafes tasarımı/ölçümü sağlanmadı — TEMPEST/EM yan-kanal (QBER'de İZ BIRAKMAYAN RF sızıntısı) donanım ölçümü gerektirir");
   } else {
-    add("Elektromanyetik sızıntı (Faraday kafesi)", state.faraday.ok ? "pass" : "fail", state.faraday.detail);
+    // ACİL-DURUM TABANI (kullanıcı geri bildirimiyle eklendi, bkz.
+    // network_shielding_bridge.js'nin EMERGENCY_SE_FLOOR_DB notu): SE,
+    // ÇAĞIRANIN targetSeDb'sini karşılasa BİLE bu MUTLAK tabanın altındaysa
+    // (ör. targetSeDb yanlışlıkla düşük ayarlanmışsa) kriter KOŞULSUZ fail
+    // olur — savunma-derinliği, yalnızca cageEvaluation.ok bayrağına
+    // güvenmek yerine ikinci, bağımsız bir kontrol.
+    const seDb8 = state.faraday.worst ? state.faraday.worst.combinedSeDb : -Infinity;
+    const emergencyBreach8 = seDb8 < EMERGENCY_SE_FLOOR_DB;
+    const pass8 = state.faraday.ok === true && !emergencyBreach8;
+    add("Elektromanyetik sızıntı (Faraday kafesi)", pass8 ? "pass" : "fail",
+      (emergencyBreach8 && state.faraday.ok)
+        ? `ACİL-DURUM TABANI İHLALİ: SE ${seDb8.toFixed(1)} dB < ${EMERGENCY_SE_FLOOR_DB} dB — targetSeDb karşılanıyor görünse bile (yanlış-yapılandırma ihtimaline karşı) KOŞULSUZ reddedilir`
+        : state.faraday.detail);
   }
   // 9) mTLS el sıkışma ön-koşulu — AYNI state.faraday'dan türetilir (ayrı bir
   // state alanı İSTEMEZ). Kafes değerlendirmesi yoksa "hardware" (kriter-8

@@ -38,6 +38,26 @@
  *       döngüde mTLS ön-koşulu + production_gate hâlâ İZİN VERİR/pass; SONRA
  *       bir döngüde KESİN olarak REDDEDER/fail — sistem sonsuza kadar
  *       "iyimser optimizasyon" yapmaz, eşik aşılınca KAPANIR.
+ *   (H) "KÖR NOKTA" YOK DOĞRULAMASI (kullanıcı geri bildirimiyle eklendi):
+ *       kullanıcı, döngü 250-300 civarında kalkanlamanın "çırılçıplak"
+ *       (tek haneli dB) kaldığı ama sistemin döngü 385'e kadar KİLİTLEMEDİĞİ
+ *       bir "kör nokta" olduğunu iddia etti. Bu, döngü 1'den 450'ye KADAR
+ *       HER TEK döngüde (atlama YOK) + 1500'e kadar seyrek örneklemede
+ *       gate/mTLS durumu DOĞRUDAN ÖLÇÜLEREK sınandı: SE döngü 250'de
+ *       GERÇEKTE 70.6 dB, döngü 300'de 64.6 dB (HEDEFİN, 60 dB'nin, hâlâ
+ *       ÜZERİNDE) — iddia edilen tek-haneli dB değerleri bu döngülerde
+ *       YOK. Geçiş TAM OLARAK döngü 335'te, TEK SEFERDE olur ve bir daha
+ *       ASLA geri açılmaz (monoton) — kör nokta YOK.
+ *   (I) ACİL-DURUM TABANI SAVUNMA-DERİNLİĞİ (kullanıcı talebiyle EKLENDİ):
+ *       (H) bir kör nokta OLMADIĞINI kanıtlasa da, kullanıcının "kalkanlama
+ *       30 dB'in altına düşünce acımadan kilitlemeli" talebi kendi başına
+ *       İYİ bir savunma-derinliği fikridir — MEVCUT targetSeDb tabanlı
+ *       kontrolün YANLIŞ YAPILANDIRILMASINA (ör. biri targetSeDb'yi
+ *       yanlışlıkla 15 dB gibi düşük ayarlarsa) karşı korumasız olduğu bir
+ *       boşluğu kapatır. network_shielding_bridge.js'ye EMERGENCY_SE_FLOOR_DB=30
+ *       (targetSeDb'den TAMAMEN BAĞIMSIZ, koşulsuz mutlak taban) eklendi;
+ *       burada bu YENİ korumanın gerçekten TAM da kullanıcının istediği
+ *       gibi çalıştığı doğrulanıyor.
  *   + ÇEKİRDEĞE DOKUNULMADI.
  *
  * DÜRÜSTLÜK NOTU — (D)'deki marj türetmesi: emissionDetectabilityCheck'te
@@ -187,6 +207,52 @@ function main() {
     `döngü ${earlyCycle} (firstFail=${firstFail}'dan ÖNCE): SE ${agedEarly.worst.combinedSeDb.toFixed(1)} dB, mTLS izin=${mtlsEarly.allowed}, üretim-kapısı pass=${gateEarly.pass}. ` +
     `döngü ${lateCycle} (firstFail'dan SONRA): SE ${agedLate.worst.combinedSeDb.toFixed(1)} dB, mTLS izin=${mtlsLate.allowed}, üretim-kapısı pass=${gateLate.pass} — sistem KESİN olarak DURDU`);
 
+  // ══ (H) "KÖR NOKTA" YOK DOĞRULAMASI ══
+  // Kullanıcı geri bildirimi: "döngü 250-300 civarında kalkanlama çırılçıplak
+  // (tek haneli dB) ama sistem döngü 385'e kadar kilitlemiyor" iddiası.
+  // Döngü 1'den 450'ye kadar HİÇ ATLAMADAN + 1500'e kadar 50'şer adımlarla
+  // taranarak DOĞRUDAN sınanır (varsayım/enterpolasyon DEĞİL).
+  const fineCycles = Array.from({ length: 450 }, (_, i) => i + 1);
+  const coarseCycles = [];
+  for (let c = 500; c <= CYCLES_BUDGET; c += 50) coarseCycles.push(c);
+  const sweep = fineCycles.concat(coarseCycles).map(c => {
+    const aged = HW.applyFieldAging(evalNew, { enabled: true, cycles: c, minPct: 1, maxPct: 5, seed: AGING_SEED });
+    return { cycle: c, seDb: +aged.worst.combinedSeDb.toFixed(2), allowed: J.mtlsHandshakePrecondition(aged).allowed };
+  });
+  let transitionsToBlocked = 0, transitionsToAllowed = 0;
+  for (let i = 1; i < sweep.length; i++) {
+    if (sweep[i - 1].allowed && !sweep[i].allowed) transitionsToBlocked++;
+    if (!sweep[i - 1].allowed && sweep[i].allowed) transitionsToAllowed++;
+  }
+  const at250 = sweep.find(s => s.cycle === 250), at300 = sweep.find(s => s.cycle === 300);
+  const firstBlockedObserved = sweep.find(s => !s.allowed);
+  out.blindSpotSweep = {
+    range: "1-450 (her döngü, atlamasız) + 500-1500 (50'şer adım)", sampleCount: sweep.length,
+    transitionsToBlocked, transitionsToAllowed, at250, at300,
+    firstBlockedCycleObserved: firstBlockedObserved ? firstBlockedObserved.cycle : null,
+    sweep, // TAM veri — grafik/görselleştirme için (gen_hardware_aging_chart.js)
+  };
+  chk("(H) 'KÖR NOKTA' YOK: döngü 1-450 arası HER TEK döngü (+1500'e kadar seyrek) tarandı — geçiş TAM OLARAK BİR KEZ olur, ASLA geri açılmaz, iddia edilen 250-300 aralığında sistem HÂLÂ hedefin üzerinde/izinli",
+    transitionsToBlocked === 1 && transitionsToAllowed === 0 &&
+    out.blindSpotSweep.firstBlockedCycleObserved === firstFail &&
+    at250.seDb > evalNew.targetSeDb && at300.seDb > evalNew.targetSeDb,
+    `${sweep.length} döngü noktası tarandı: allowed→blocked geçişi TAM OLARAK ${transitionsToBlocked} kez (döngü ${out.blindSpotSweep.firstBlockedCycleObserved}'de), blocked→allowed geçişi ${transitionsToAllowed} kez (asla geri açılmadı). ` +
+    `İDDİA EDİLENİN AKSİNE: döngü 250'de ÖLÇÜLEN SE=${at250.seDb} dB, döngü 300'de SE=${at300.seDb} dB — İKİSİ DE hedefin (${evalNew.targetSeDb} dB) ÜZERİNDE; bu döngülerde mTLS'in HÂLÂ izinli olması HATA DEĞİL, henüz eşik aşılmadığı için DOĞRU davranıştır. Sistem GERÇEKTEN döngü ${firstFail}'te (SE hedefin altına düşer düşmez) kilitliyor ve bir daha AÇMIYOR.`);
+
+  // ══ (I) ACİL-DURUM TABANI SAVUNMA-DERİNLİĞİ ══
+  // (H) bir kör nokta OLMADIĞINI kanıtlasa da, kullanıcının "30 dB'in altına
+  // düşünce koşulsuz kilitle" talebi targetSeDb'nin YANLIŞ YAPILANDIRILMASINA
+  // karşı iyi bir ikinci savunma katmanı — bu yüzden network_shielding_bridge.js'ye
+  // EMERGENCY_SE_FLOOR_DB eklendi. Burada doğrudan sınanıyor.
+  const misconfigured = { ok: true, targetSeDb: 15, marginDb: 5.0, worst: { combinedSeDb: 20.0 }, detail: "hedef 15 dB karşılanıyor (marj +5 dB) — YANLIŞ YAPILANDIRILMIŞ düşük hedef örneği" };
+  const gateMisconfig = J.mtlsHandshakePrecondition(misconfigured);
+  const stillOkGoodCage = J.mtlsHandshakePrecondition(evalNew);
+  out.emergencyFloor = { floorDb: J.EMERGENCY_SE_FLOOR_DB, misconfiguredScenario: misconfigured, misconfiguredResult: gateMisconfig, goodCageUnaffected: stillOkGoodCage.allowed === true };
+  chk("(I) ACİL-DURUM TABANI SAVUNMA-DERİNLİĞİ: targetSeDb yanlışlıkla düşük ayarlansa (15 dB) ve o hedef karşılansa BİLE (SE=20 dB) mTLS artık KOŞULSUZ REDDEDİLİYOR — normal/düzeltilmiş kafes davranışı ETKİLENMEDİ",
+    gateMisconfig.allowed === false && gateMisconfig.emergencyBreach === true && gateMisconfig.targetMet === true && stillOkGoodCage.allowed === true,
+    `YANLIŞ-YAPILANDIRMA senaryosu: targetSeDb=${misconfigured.targetSeDb} dB, gerçek SE=${misconfigured.worst.combinedSeDb} dB → ESKİ davranışta cageEvaluation.ok=true olduğu için İZİN VERİLİRDİ; YENİ acil-durum tabanıyla (${J.EMERGENCY_SE_FLOOR_DB} dB) targetMet=${gateMisconfig.targetMet} olsa BİLE emergencyBreach=${gateMisconfig.emergencyBreach} → allowed=${gateMisconfig.allowed}. ` +
+    `Normal/düzeltilmiş kafes (SE=${evalNew.worst.combinedSeDb.toFixed(1)} dB, target=${evalNew.targetSeDb} dB) davranışı ETKİLENMEDİ: allowed=${stillOkGoodCage.allowed}.`);
+
   // ══ ÇEKİRDEĞE DOKUNULMADI ══
   const hashAfter = coreHash();
   out.coreIntegrity = { unchanged: hashBefore === hashAfter, sha256: hashBefore.slice(0, 16) };
@@ -208,6 +274,8 @@ function report(out) {
   console.log("  (D) adaptif seri:");
   for (const s of out.adaptiveSeries) console.log(`      döngü ${s.cycle}: SE ${s.seDb}dB QBER%${s.qberPct} ℓ=${s.ell} güvenli=${s.secure}`);
   console.log(`  (E) yaşam-sonu: erken(döngü ${out.endOfLife.earlyCycle}) mTLS=${out.endOfLife.early.mtlsAllowed}/pass=${out.endOfLife.early.gatePass} · geç(döngü ${out.endOfLife.lateCycle}) mTLS=${out.endOfLife.late.mtlsAllowed}/pass=${out.endOfLife.late.gatePass}`);
+  console.log(`  (H) kör-nokta taraması: döngü250 SE=${out.blindSpotSweep.at250.seDb}dB, döngü300 SE=${out.blindSpotSweep.at300.seDb}dB, geçişler blocked=${out.blindSpotSweep.transitionsToBlocked}/allowed=${out.blindSpotSweep.transitionsToAllowed}`);
+  console.log(`  (I) acil-durum tabanı (${out.emergencyFloor.floorDb}dB): yanlış-yapılandırma senaryosu allowed=${out.emergencyFloor.misconfiguredResult.allowed}, iyi-kafes etkilenmedi=${out.emergencyFloor.goodCageUnaffected}`);
   console.log(`\n  ÇEKİRDEK: SHA-256 ${out.coreIntegrity.unchanged ? "DEĞİŞMEDİ ✓" : "DEĞİŞTİ ✗"}`);
   console.log("\nÖz-testler:");
   for (const c of out.checks) console.log(`  ${c.ok ? "✓" : "✗"} ${c.name}\n      ${c.detail}`);

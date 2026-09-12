@@ -23,21 +23,50 @@
  * tutması gereken zamanlama toleransı) DARALTILABİLİR — bkz.
  * shielded_detector_physics.js'teki findOptimalCoincidenceWindow(). Bu
  * dosya o sonucu "önerilen pencere" biçiminde ağ/zamanlama katmanına sunar.
+ *
+ * ACİL-DURUM TABANI (EMERGENCY_SE_FLOOR_DB) — KULLANICI GERİ BİLDİRİMİYLE
+ * EKLENDİ: "kalkanlama 30 dB'in altına düştüğü an acımadan mTLS kapılarını
+ * kilitlemesi gerekir" talebi üzerine. ÖNCEKİ davranış (cageEvaluation.ok,
+ * yalnız ÇAĞIRANIN verdiği targetSeDb'ye göre pass/fail) DOĞRUYDU ve hâlâ
+ * birincil kontroldür — hardware_aging_model_test.js'in (E) kontrolü, 60 dB
+ * hedefiyle sistemin döngü 335'te (SE hedefin altına düşer düşmez) KESİNTİSİZ
+ * blokladığını, 250-400 arası TEK BİR döngüde bile "kör nokta" OLMADIĞINI
+ * döngü-döngü doğruladı (bkz. o dosyanın (H) kontrolü). AMA bu, targetSeDb'yi
+ * DÜŞÜK ayarlayan (ör. yanlışlıkla 15 dB) bir çağırana karşı KORUMASIZDI —
+ * o durumda cageEvaluation.ok, SE=20 dB gibi GERÇEKTE tehlikeli bir durumda
+ * bile true olurdu. Bu taban, targetSeDb NE OLURSA OLSUN, SE bu MUTLAK
+ * eşiğin altına düşerse mTLS'i KOŞULSUZ REDDEDER — savunma-derinliği,
+ * yanlış-yapılandırmaya karşı ikinci bir fail-closed katmanı.
  */
 const D = require("./shielded_detector_physics.js");
 
+const EMERGENCY_SE_FLOOR_DB = 30; // targetSeDb'den BAĞIMSIZ, koşulsuz acil-durum tabanı (kullanıcı talebiyle eklendi)
+
 /**
  * mTLS EL SIKIŞMA ÖN-KOŞULU — fail-closed. cageEvaluation,
- * faraday_cage_shielding.js'nin evaluateFaradayCage() çıktısıdır.
+ * faraday_cage_shielding.js'nin evaluateFaradayCage() çıktısıdır (veya
+ * hardware_aging_model.js'nin applyFieldAging() ile üretilen, AYNI şekle
+ * sahip "yaşlanmış" bir değerlendirme). İKİ BAĞIMSIZ kontrol uygulanır:
+ * (1) cageEvaluation.ok — çağıranın verdiği targetSeDb'ye göre; (2) SE'nin
+ * EMERGENCY_SE_FLOOR_DB'nin altına düşüp düşmediği — targetSeDb'den
+ * TAMAMEN BAĞIMSIZ, sabit bir mutlak taban.
  */
 function mtlsHandshakePrecondition(cageEvaluation) {
-  const allowed = !!(cageEvaluation && cageEvaluation.ok === true);
-  return {
-    allowed,
-    reason: allowed
-      ? `fiziksel katman kalkanlama hedefi karşılanıyor (marj +${cageEvaluation.marginDb} dB) — SAE↔KME mTLS el sıkışmasına İZİN VERİLİR`
-      : `fiziksel katman kalkanlama hedefi KARŞILANMIYOR${cageEvaluation ? ` (${cageEvaluation.detail})` : " (kafes değerlendirmesi yok)"} — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı`,
-  };
+  const seDb = cageEvaluation && cageEvaluation.worst ? cageEvaluation.worst.combinedSeDb : -Infinity;
+  const emergencyBreach = seDb < EMERGENCY_SE_FLOOR_DB;
+  const targetMet = !!(cageEvaluation && cageEvaluation.ok === true);
+  const allowed = targetMet && !emergencyBreach;
+  let reason;
+  if (allowed) {
+    reason = `fiziksel katman kalkanlama hedefi karşılanıyor (marj +${cageEvaluation.marginDb} dB, SE ${seDb.toFixed(1)} dB ≥ acil-durum tabanı ${EMERGENCY_SE_FLOOR_DB} dB) — SAE↔KME mTLS el sıkışmasına İZİN VERİLİR`;
+  } else if (!cageEvaluation) {
+    reason = `fiziksel katman kalkanlama hedefi KARŞILANMIYOR (kafes değerlendirmesi yok) — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı`;
+  } else if (emergencyBreach) {
+    reason = `ACİL-DURUM TABANI İHLALİ: SE ${seDb.toFixed(1)} dB < ${EMERGENCY_SE_FLOOR_DB} dB (targetSeDb'nin KENDİSİ karşılanıyor olsa BİLE koşulsuz reddedilir) — mTLS el sıkışması REDDEDİLİR (fail-closed): fiziksel katman pratikte kalkansız, EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı`;
+  } else {
+    reason = `fiziksel katman kalkanlama hedefi KARŞILANMIYOR (${cageEvaluation.detail}) — mTLS el sıkışması REDDEDİLİR (fail-closed): EM yan-kanal riski çözülene kadar SAE↔KME bağlantısı açılmamalı`;
+  }
+  return { allowed, emergencyBreach, targetMet, seDb: seDb === -Infinity ? null : +seDb.toFixed(2), reason };
 }
 
 /**
@@ -60,4 +89,4 @@ function recommendJitterAlignment({ periodPs = 1000, jitterPs = 80, emDarkProbDi
   };
 }
 
-module.exports = { mtlsHandshakePrecondition, recommendJitterAlignment };
+module.exports = { mtlsHandshakePrecondition, recommendJitterAlignment, EMERGENCY_SE_FLOOR_DB };
