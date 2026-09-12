@@ -1,0 +1,112 @@
+{
+  "generatedAt": "2026-09-12T01:12:43.815Z",
+  "checks": [
+    {
+      "name": "(A) KÜÇÜK ÖLÇEKTE EŞLEŞME: gerçekçi (i,periodPs) çiftlerinde BigInt == Number formülü — mevcut davranış BOZULMADI",
+      "ok": true,
+      "detail": "i=0,periodPs=1000→eşleşti=true | i=1,periodPs=1000→eşleşti=true | i=100.000,periodPs=1000→eşleşti=true | i=100.000.000,periodPs=1000→eşleşti=true | i=1.000.000,periodPs=833→eşleşti=true | i=999.999,periodPs=80→eşleşti=true"
+    },
+    {
+      "name": "(B) TAVAN KORUYUCU/GARANTİLİ (maxExactPulseIndex'in ALTI HER ZAMAN kesin) — ÖTESİ İSE MONOTON DEĞİL: bazı i değerleri tavanın ÇOK ötesinde bile (ikilik yapı hizalanması yüzünden) hâlâ kesin kalabiliyor; yine de ikili arama GERÇEK bir kesin/kesin-değil geçişi (varsayılmadan) BULDU",
+      "ok": true,
+      "detail": "maxExactPulseIndex(1000ps)=9.007.199.254.740 (bu değerE KADAR HER i için KOŞULSUZ garanti — i*periodPs≤MAX_SAFE_INTEGER). Bunun ÖTESİ deneyle MONOTON DEĞİL bulundu: candidate×11 (99.079.191.802.140) HÂLÂ kesin, ama ikili aramayla candidate×101 civarında GERÇEK bir sınır bulundu — bitişik i çifti 555.093.972.929.704 (kesin) → 555.093.972.929.705 (KESİN DEĞİL). Bu, ÖTESİNDE \"genelde çalışır\" diye güvenilemeyeceğini kanıtlıyor."
+    },
+    {
+      "name": "(C) SINIRIN HEMEN ÖTESİNDE ÖLÇÜLEN GERÇEK SAPMA: (B)'de ikili aramayla bulunan İLK kesin-olmayan i noktasında Number formülü BigInt zemin-gerçeklikten GERÇEKTEN sapıyor (sıfır DEĞİL) — teorik risk EMPİRİK olarak doğrulandı",
+      "ok": true,
+      "detail": "i=555.093.972.929.705 ((B)'de bulunan ilk kesin-olmayan nokta), periodPs=1000: Number formülü 555.093.972.929.705.000 ps veriyor, BigInt zemin-gerçeklik 555.093.972.929.705.000 ps — SAPMA=24 ps"
+    },
+    {
+      "name": "(D) precisionRiskForConfig GÜVENLİ/RİSKLİ yapılandırmaları DOĞRU ayırt eder — run() hiç ÇALIŞTIRILMADAN ÖNCEDEN tespit",
+      "ok": true,
+      "detail": "GÜVENLİ (1e8 darbe/1GHz): GÜVENLİ: son pulse indeksi (99999999) ≤ Number çarpım tavanı (9007199254740) — i*periodPs run() içinde KESİN kalır. RİSKLİ (tavanın 2 katı darbe/1GHz): RİSKLİ: son pulse indeksi (18014398509479) > Number çarpım tavanı (9007199254740) — run() bu yapılandırmada i*periodPs hassasiyet KAYBEDER (bkz. slotTimePsExact/BigInt geçişi)"
+    },
+    {
+      "name": "(E) DÜRÜST KAPSAM SINIRI: BigInt'in KESİN sonucu Number'a GERİ ÇEVRİLİRSE (run()'un aşağı akışının ihtiyacı budur), i tavanın ÖTESİNDEYKEN AYNI hassasiyet kaybı miras alınır — bu modül run()'un MEVCUT borusunu OTOMATİK düzeltmez, bu GİZLENMEZ",
+      "ok": true,
+      "detail": "BigInt zemin-gerçeklik 555093972929705000 ps → Number'a çevrilince 555.093.972.929.705.000 ps (doğrudan Number formülüyle AYNI: 555.093.972.929.705.000) — SONUÇ: BigInt yalnız BAĞIMSIZ/denetim hesaplaması olarak veya aşağı akış da tam tamsayı aritmetiğine taşınırsa fayda sağlar; run()'un coincidence()/sift() borusu Number kaldığı sürece bu geri-dönüş noktasında aynı tavan GEÇERLİ kalır (kapsam DIŞI bırakıldı, ABARTILMADI)."
+    },
+    {
+      "name": "ÇEKİRDEĞE VE timetag_acquisition_bridge.js'E DOKUNULMADI: her iki dosyanın SHA-256'sı değişmedi",
+      "ok": true,
+      "detail": "core SHA-256 8f879fde86be0129… öncesi=sonrası; bridge SHA-256 2cfa659cb35871ce… öncesi=sonrası"
+    }
+  ],
+  "smallScaleMatch": [
+    {
+      "i": 0,
+      "periodPs": 1000,
+      "matches": true
+    },
+    {
+      "i": 1,
+      "periodPs": 1000,
+      "matches": true
+    },
+    {
+      "i": 100000,
+      "periodPs": 1000,
+      "matches": true
+    },
+    {
+      "i": 100000000,
+      "periodPs": 1000,
+      "matches": true
+    },
+    {
+      "i": 1000000,
+      "periodPs": 833,
+      "matches": true
+    },
+    {
+      "i": 999999,
+      "periodPs": 80,
+      "matches": true
+    }
+  ],
+  "ceilingDiscovery": {
+    "periodPs": 1000,
+    "maxExactPulseIndex": "9007199254740",
+    "candidateExact": true,
+    "binarySearchSeeds": {
+      "loExactSeed": true,
+      "hiExactSeed": false
+    },
+    "lastExactFound": "555093972929704",
+    "firstInexactFound": "555093972929705"
+  },
+  "measuredDivergence": {
+    "iBeyond": 555093972929705,
+    "periodPs": 1000,
+    "numberResultBeyond": 555093972929705000,
+    "exactBeyond": "555093972929705000",
+    "errorPs": "24"
+  },
+  "precisionRisk": {
+    "safeConfig": {
+      "safe": true,
+      "maxExactPulseIndex": "9007199254740",
+      "lastIndexReached": "99999999",
+      "headroomPulses": "9007099254741",
+      "detail": "GÜVENLİ: son pulse indeksi (99999999) ≤ Number çarpım tavanı (9007199254740) — i*periodPs run() içinde KESİN kalır"
+    },
+    "riskyConfig": {
+      "safe": false,
+      "maxExactPulseIndex": "9007199254740",
+      "lastIndexReached": "18014398509479",
+      "headroomPulses": "0",
+      "detail": "RİSKLİ: son pulse indeksi (18014398509479) > Number çarpım tavanı (9007199254740) — run() bu yapılandırmada i*periodPs hassasiyet KAYBEDER (bkz. slotTimePsExact/BigInt geçişi)"
+    }
+  },
+  "honestScopeLimit": {
+    "exactBeyond": "555093972929705000",
+    "backToNumber": 555093972929705000,
+    "numberResultBeyond": 555093972929705000,
+    "inheritsSameLoss": true
+  },
+  "integrity": {
+    "coreUnchanged": true,
+    "bridgeUnchanged": true
+  },
+  "allChecksPassed": true
+}

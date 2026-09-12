@@ -1,0 +1,103 @@
+{
+  "generatedAt": "2026-09-12T01:12:43.569Z",
+  "checks": [
+    {
+      "name": "(A) TEMEL SIFIRLAMA: 30 gün dolunca epochLocalCount 0'a ÇEKİLİR (yeni kayıt EKLENDİKTEN sonraki değeriyle), epochIndex artar, lifetimeCount (BigInt) İKİSİNİN TOPLAMINI korur",
+      "ok": true,
+      "detail": "sıfırlama öncesi: epochLocalCount=1000, epochIndex=0. 30 gün AŞILINCA: epochIndex=1 (arttı), epochLocalCount=500 (0'a ÇEKİLİP yeni kaydı aldı), lifetimeCount=1500 (1000+500=1500, BigInt, KESİN)"
+    },
+    {
+      "name": "(B) mTLS TAZELEME KANCASI: onEpochRollover HER sıfırlamada TAM OLARAK bir kez, doğru epochIndex sırasıyla çağrılır — gerçek oturum-tazeleme mantığı BURAYA bağlanır",
+      "ok": true,
+      "detail": "2 epoch sınırı geçildi → kanca 2 kez çağrıldı (epochIndex sırası: 0, 1) — mTLS oturum-tazeleme mantığı bu kancaya BAĞLANABİLİR"
+    },
+    {
+      "name": "(C) 10 YILLIK MARATON — SIFIR BİT KAYBI: lifetimeCount (BigInt) 10 yıl/~3652 günlük birikimden sonra bağımsız hesaplanan TOPLAMLA BİREBİR eşleşir (SIFIR bit kaybı) VE epochLocalCount HİÇBİR ANDA güvenlik sınırını aşmadı — floating_point_accumulation_test.js'in (A) Number-only 5.3× TAŞMA bulgusunun TAM TERSİ",
+      "ok": true,
+      "detail": "3652 gün (10 yıl) boyunca günlük 12.960.000.000.000 bit kaydedildi (121 epoch sıfırlaması geçti). lifetimeCount=47329920000000000 == bağımsız-hesaplanan toplam=47329920000000000 (BİREBİR, SIFIR fark). epochLocalCount HİÇBİR ANDA 388.800.000.000.000 sınırını (gözlenen en yüksek: 388.800.000.000.000) AŞMADI."
+    },
+    {
+      "name": "(D) GÜVENLİK PAYI SAYISAL KANITI: AYNI hızda (1.5e8 bit/s), 30-günlük epoch sıfırlamasıyla MAX_SAFE_INTEGER'ın ~23× ALTINDA kalınırken, sıfırlama OLMASA (10 yıl kesintisiz) 5.3× AŞARDI — floating_point_accumulation_test.js'in (A) bulgusuyla SAYISAL OLARAK TUTARLI",
+      "ok": true,
+      "detail": "30-günlük epoch: en kötü durum birikimi=388.800.000.000.000, MAX_SAFE_INTEGER'a payı=23.2× (GÜVENLİ). AYNI hızda 10 yıl sıfırlamasız: birikim=47.336.400.000.000.000, payı=0.19× (TAVANI AŞIYOR) — floating_point_accumulation_test.js'in (A) kontrolündeki 4.73×10¹⁶/5.3× taşma bulgusuyla TUTARLI."
+    },
+    {
+      "name": "(E) BÜYÜK ZAMAN SIÇRAMASI: record() 100 epoch'u TEK ÇAĞRIDA ZİNCİRLEME olarak kapatır — hiçbir epoch sessizce ATLANMAZ (rolloverLog TAM 100 kayıt tutar)",
+      "ok": true,
+      "detail": "100 epoch'luk (3000 günlük) tek bir zaman sıçramasından sonra epochIndex=100, rolloverLog uzunluğu=100 — TAM 100 kez (eksiksiz zincirleme)"
+    },
+    {
+      "name": "(F) KANCA ÇAĞRI SAYISI rolloverLog UZUNLUĞUYLA BİREBİR eşleşir — kanca ne EKSİK ne FAZLA çağrılır",
+      "ok": true,
+      "detail": "5 epoch'luk sıçrama: kanca 5 kez çağrıldı, rolloverLog 5 kayıt tutuyor — BİREBİR eşleşme"
+    },
+    {
+      "name": "ÇEKİRDEĞE DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
+      "ok": true,
+      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası"
+    }
+  ],
+  "epochDurationS": 2592000,
+  "epochDurationDays": 30,
+  "basicReset": {
+    "beforeReset": {
+      "epochIndex": 0,
+      "epochStartS": 0,
+      "epochLocalCount": 1000,
+      "lifetimeCount": "1000",
+      "rolloverCount": 0
+    },
+    "afterReset": {
+      "epochIndex": 1,
+      "epochStartS": 2592000,
+      "epochLocalCount": 500,
+      "lifetimeCount": "1500",
+      "rolloverCount": 1
+    }
+  },
+  "rolloverHook": {
+    "calls": 2,
+    "epochIndices": [
+      0,
+      1
+    ]
+  },
+  "tenYearMarathon": {
+    "years": 10,
+    "rateHz": 150000000,
+    "totalDaysSimulated": 3652,
+    "finalEpochIndex": 121,
+    "maxEpochLocalObserved": 388800000000000,
+    "epochMaxCountBound": 388800000000000,
+    "lifetimeCount": "47329920000000000",
+    "expectedTotal": "47329920000000000",
+    "zeroBitLoss": true,
+    "neverExceededMargin": true
+  },
+  "safetyMarginComparison": {
+    "withReset": {
+      "epochMaxCount": 388800000000000,
+      "marginFactor": 23.166664749848227,
+      "safe": true
+    },
+    "withoutReset": {
+      "epochMaxCount": 47336400000000000,
+      "marginFactor": 0.19028061396179244,
+      "safe": false
+    }
+  },
+  "largeTimeJump": {
+    "jumpEpochs": 100,
+    "resultingEpochIndex": 100,
+    "rolloverLogLength": 100
+  },
+  "hookCountMatchesLog": {
+    "hookCallCount": 5,
+    "rolloverLogLength": 5
+  },
+  "coreIntegrity": {
+    "unchanged": true,
+    "sha256": "8f879fde86be0129"
+  },
+  "allChecksPassed": true
+}
