@@ -177,6 +177,9 @@ fi
 
 # Başlangıç CRL'i (boş — henüz iptal edilen yok). Sunucunun --crl= ile
 # başından itibaren geçerli bir dosya bulabilmesi için üretiliyor.
-openssl ca -config ca-db/openssl-ca.cnf -gencrl -out crl/ca-crl.pem >/dev/null 2>&1
+# ATOMİK YAZMA (bkz. revoke_cert.sh'deki AYNI düzeltme, Kaos Müh. #7) —
+# tutarlılık için burada da geçici dosya + rename kullanılıyor.
+openssl ca -config ca-db/openssl-ca.cnf -gencrl -out crl/ca-crl.pem.tmp >/dev/null 2>&1
+mv -f crl/ca-crl.pem.tmp crl/ca-crl.pem
 echo "[CA] Başlangıç CRL'i üretildi: crl/ca-crl.pem (boş — henüz iptal yok, 1 gün geçerli, bkz. default_crl_days)."
 echo "[CA] İKAZ: ca-key.pem'i şimdi bu makineden GÜVENLİ ŞEKİLDE KALDIRIP hava-boşluklu bir ortama/HSM'e taşımayı düşünün — yalnızca ca-cert.pem'in (ve issue_cert.sh'in ürettiği CSR'ların imzalanması sırasında ca-key.pem'in) ağa bağlı makinelere ihtiyacı YOKTUR."

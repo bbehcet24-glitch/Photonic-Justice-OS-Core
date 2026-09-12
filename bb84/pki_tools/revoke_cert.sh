@@ -47,6 +47,22 @@ SERIAL=$(openssl x509 -in "$CERT_PATH" -noout -serial | cut -d= -f2)
 openssl ca -config ca-db/openssl-ca.cnf -revoke "$CERT_PATH" -crl_reason keyCompromise 2>&1 | grep -v "^$" || true
 echo "[REVOKE] İPTAL EDİLDİ: CN=${CN}, serial=${SERIAL}"
 
-openssl ca -config ca-db/openssl-ca.cnf -gencrl -out crl/ca-crl.pem
-echo "[REVOKE] CRL yeniden üretildi: $(pwd)/crl/ca-crl.pem"
+# ATOMİK YAZMA (Kaos Mühendisliği #7 bulgusu): openssl'in `-out FILE`
+# doğrudan hedef dosyaya yazması, dosyayı ÖNCE 0 byte'a KISALTIP sonra
+# içeriği yazıyor — bu, etsi014_kme_server.js'in fs.watchFile ile bu
+# dosyayı İZLEYEN hot-reload'ının, tam da bu birkaç-milisaniyelik
+# pencerede bir okuma yapması durumunda BOŞ/KESİK bir CRL okumasına yol
+# açabileceği GERÇEK, ÖLÇÜLEREK DOĞRULANMIŞ bir yarış durumu (bkz. commit
+# mesajı). Sunucu tarafı bunu ZATEN güvenle ele alıyor (Node'un TLS
+# katmanı boş/bozuk bir CRL'i "Failed to parse CRL" ile REDDEDİYOR,
+# sunucunun try/catch'i eski CRL'i korumaya devam ediyor — yani bu BİR
+# GÜVENLİK AÇIĞI DEĞİLDİ, sadece kaçırılan bir yeniden-yükleme
+# denemesiydi). Ama üretimde bunun HİÇ yaşanmaması gereken bir sınıf hata
+# olduğu için — standart PKI hijyeni — CRL artık AYNI dizinde bir geçici
+# dosyaya yazılıp ATOMİK olarak (rename/`mv`, POSIX'te tek bir syscall)
+# hedef ada taşınıyor: okuyucular HER ZAMAN ya TAM eski ya TAM yeni
+# içeriği görür, ARA bir durum asla.
+openssl ca -config ca-db/openssl-ca.cnf -gencrl -out crl/ca-crl.pem.tmp
+mv -f crl/ca-crl.pem.tmp crl/ca-crl.pem
+echo "[REVOKE] CRL yeniden üretildi (atomik yeniden adlandırma ile): $(pwd)/crl/ca-crl.pem"
 echo "[REVOKE] Sunucu bu dosyayı --crl=$(pwd)/crl/ca-crl.pem ile izliyorsa, iptal EN GEÇ birkaç saniye içinde (dosya-değişikliği algılamasıyla) yürürlüğe girer — yeniden başlatma GEREKMEZ."
