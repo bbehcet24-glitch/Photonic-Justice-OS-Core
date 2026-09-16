@@ -179,3 +179,69 @@ new TimeTagEmulator({ ...opts, qrng: client });
   tükenmiş-tampon senaryolarının HEPSİ throw ediyor.
 - Çekirdek SHA-256 (`8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05`)
   bu çalışmanın HİÇBİR adımında değişmedi.
+
+## 8. Üst katman senkronizasyon — mTLS el sıkışması ↔ epoch_reset_controller.js (bb84/mtls_handshake_qrng_sync.js)
+
+**Talep (birebir):** "Sunucunun bu canlı QRNG tohumlarını, her mTLS el
+sıkışması yenilendiğinde otomatik olarak `epoch_reset_controller.js`
+kancalarına enjekte etmesini sağlayacak üst katman senkronizasyon."
+
+**Bulunan granülerlik uyumsuzluğu (dürüstçe):** `epoch_reset_controller.js`'in
+`onEpochRollover` kancası **30 günde bir** tetiklenen, sayaç-taşması-önleme
+amaçlı TEK bir olaydır. mTLS el sıkışması ise saniyede onlarca/yüzlerce kez
+olabilen YÜKSEK FREKANSLI bir olaydır. "Her el sıkışmayı doğrudan
+`onEpochRollover`'a bağlamak" bu kancanın 30-günlük anlamını YOK EDERDİ. Bu
+yüzden talep, ayrıştırılmadan uygulanmadı — İKİ AYRI ama BİRBİRİNİ tamamlayan
+mekanizmaya bölündü:
+
+1. **`attachHandshakeQrngSync(server, { qrngClient, epochController, ... })`**
+   — HER GERÇEK, KABUL EDİLMİŞ mTLS el sıkışmasında (Node'un `secureConnection`
+   olayı) canlı QRNG akışından taze bit çekilir ve bu tüketim
+   `EpochResetController.record(n, nowS)` — dosyanın ZATEN VAR OLAN, hiç
+   değiştirilmemiş API'si — ile epoch muhasebesine işlenir. "Canlı QRNG
+   tohumu her el sıkışmada epoch mekanizmasına enjekte edilir" isteği BÖYLECE
+   lafzen karşılanır.
+2. **`attachEpochRolloverHardReseed(epochController, qrngClient, ...)`** —
+   `onEpochRollover` kancasının KENDİSİ (30 günlük, değişmeyen frekansında)
+   artık gerçek bir eylem tetikler: `HardwareQrngClient.hardReseed()` —
+   tamponun TAMAMEN atılıp sıfırdan doldurulması. Sertifika rotasyonu
+   (`pki_tools/rotate_cert.sh`) KASITLI OLARAK otomatik tetiklenmez — sadece
+   bir işaretçi log'lanır; bu, geri döndürülemez bir PKI eylemi olduğu için
+   operatör onayına bırakılmıştır.
+
+**Kritik dürüstlük sınırı — bu tasarımın YANLIŞ anlaşılmaması için:**
+`secureConnection` olayı ateşlendiğinde TLS el sıkışması (sertifika
+doğrulaması, oturum anahtarı türetimi) OpenSSL/Node'un KENDİ dahili RNG'siyle
+ZATEN TAMAMLANMIŞTIR. Bu katmanın çektiği QRNG bit'leri o el sıkışmasının
+kriptografik oturum anahtarına HİÇBİR ŞEKİLDE karışmaz — JavaScript
+katmanından Node'un TLS/OpenSSL RNG'sini değiştirmek bu projenin kapsamı
+dışındadır (ve gerekli de değildir: `IBM_ONAY_MATEMATIKSEL_DENETIM.md`'nin
+bulduğu sorun SADECE BB84 fiziksel katmanının taban/bit üretimiydi — mTLS
+taşıma güvenliği hiçbir zaman kırık değildi). Bu katmanın gerçek işlevi:
+(a) her kabul edilen el sıkışmada donanım entropi kaynağının CANLI/SAĞLIKLI
+olduğunu kanıtlamak, (b) bu tüketimi epoch/hardReseed disiplinine doğru
+şekilde bağlamak. "QRNG tohumunu mTLS'e enjekte etmek" ifadesi BU anlamda
+karşılanmıştır — TLS oturum anahtarının kendisini değiştirmek anlamında
+DEĞİL.
+
+**Fail-closed:** bir el sıkışmada entropi çekimi başarısız olursa (HAL
+köprüsü sağlıksız/erişilemez/tükenmiş), varsayılan davranış — TLS katmanı
+zaten o bağlantıyı kabul etmiş olsa BİLE — soketi `destroy()` eder. Gerçek
+test (`bb84/chaos_mtls_handshake_qrng_sync_test.js`, Test 4) bunu doğrudan
+kanıtlıyor: `secureConnect` (OpenSSL katmanı) başarıyla ateşleniyor, AMA
+bağlantı hemen ardından uygulama katmanınca sonlandırılıyor.
+
+**Gerçek testlerle doğrulanan davranış (`chaos_mtls_handshake_qrng_sync_test.js`,
+gerçek openssl-üretimli PKI + gerçek `hal/bridge_server.py` + gerçek
+`tls.connect()` el sıkışmaları — 12/12 kontrol geçti):**
+- Geçerli istemci sertifikalı GERÇEK el sıkışma → `secureConnection` →
+  doğru `n` ile `record()` çağrısı.
+- İstemci sertifikası sunmayan bağlantı `tlsClientError` ile reddediliyor
+  ve `secureConnection`/senkronizasyon katmanı bunu HİÇ saymıyor.
+- 30 günlük epoch yerine test edilebilirlik için kısa (5s) bir epoch sınırı
+  gerçekten geçilince (`record()` ile, doğrudan) `hardReseed()` tetikleniyor,
+  ÖNCEDEN var olan `onEpochRollover` davranışı (zincirleme) korunuyor, VE
+  tamponun bit içeriği rollover öncesi/sonrası GERÇEKTEN farklı (eski bitler
+  sessizce yeniden servis edilmiyor).
+- HAL köprüsü erişilemez olduğunda, TAMAMLANMIŞ bir mTLS el sıkışması bile
+  fail-closed olarak sonlandırılıyor.

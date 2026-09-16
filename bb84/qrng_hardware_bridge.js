@@ -108,6 +108,22 @@ class HardwareQrngClient {
     return { bits, health: res.json.health };
   }
 
+  /** SERT YENİDEN TOHUMLAMA (hard reseed): mevcut tamponu TAMAMEN atar
+   * (eski bitler ASLA tekrar servis edilmez) ve sıfırdan doldurur. Bu,
+   * `bit()`'in normal akışından (tampon eşiğe göre kademeli yenilenir)
+   * KASITLI OLARAK farklıdır — periyodik/olay-tetiklemeli bir "artık bu
+   * ana kadar biriken her şeyi unut" güvenlik disiplinidir (bkz.
+   * `mtls_handshake_qrng_sync.js`'in epoch-rollover kancası). Devam eden
+   * bir `_pendingRefill` varsa önce onun bitmesi beklenir (yarım kalan
+   * bir yenilemenin bu sıfırlamadan SONRA tampona sessizce eklenmesini
+   * önlemek için). */
+  async hardReseed(minBits = this.batchBytes * 8) {
+    if (this._pendingRefill) { try { await this._pendingRefill; } catch { /* zaten aşağıda ele alınıyor */ } }
+    this._bitBuffer = [];
+    this._lastRefillError = null;
+    return this.warmUp(minBits);
+  }
+
   /** Tamponu en az `minBits` bit'e ulaşana kadar doldurur (senkron `.bit()`
    * çağrılarından ÖNCE bir kez çağrılmalı — bkz. modül başlığındaki
    * "TAMPON MİMARİSİ"). */

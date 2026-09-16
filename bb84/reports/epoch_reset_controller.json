@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T14:46:43.150Z",
+  "generatedAt": "2026-09-16T22:50:12.329Z",
   "checks": [
     {
       "name": "(A) TEMEL SIFIRLAMA: 30 gün dolunca epochLocalCount 0'a ÇEKİLİR (yeni kayıt EKLENDİKTEN sonraki değeriyle), epochIndex artar, lifetimeCount (BigInt) İKİSİNİN TOPLAMINI korur",
