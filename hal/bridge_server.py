@@ -22,9 +22,11 @@ Test:        curl -X POST localhost:8765/api/acquire -H 'Content-Type: applicati
 """
 from __future__ import annotations
 
+import base64
 import dataclasses
 import json
 import logging
+import os
 import queue
 import threading
 import time
@@ -33,6 +35,9 @@ from flask import Flask, Response, jsonify, request
 
 from .hardware_interface import HardwareError
 from .link_manager import LinkManager
+from .qrng_health_tests import bytes_to_bits, run_health_tests
+from .qrng_interface import QRNGError
+from .qrng_simulated import SimulatedQRNG
 from .simulated_hardware import SimulatedAliceSource, SimulatedHardware
 from .time_tag_correlator import TimeTagCorrelator
 from .types import AcquisitionConfig
@@ -66,6 +71,54 @@ def _add_cors_headers(resp):
 _link_manager: LinkManager | None = None
 _status_subscribers: list["queue.Queue"] = []
 _subscribers_lock = threading.Lock()
+
+# ── QRNG donanım köprüsü (bkz. qrng_interface.py'nin baş yorumu) ─────────
+# BAĞLAM: bb84/IBM_ONAY_MATEMATIKSEL_DENETIM.md, çekirdeğin "kuantum" bit
+# üretiminin gerçekte 32-bit mulberry32'den türediğini kanıtlamıştı.
+# `bb84/timetag_acquisition_bridge.js`'in ZATEN doğru tasarlanmış
+# `opts.qrng` seam'ine (mulberry32'yi TAMAMEN by-pass eden, crypto.randomBytes
+# varsayılanlı enjekte edilebilir arayüz) gerçek/harici bir entropi
+# KAYNAĞI takmak için bu uç noktalar var. Backend seçimi env değişkeniyle:
+#   PHOTONNET_QRNG_BACKEND=simulated              (varsayılan — os.urandom, DONANIM DEĞİL)
+#   PHOTONNET_QRNG_BACKEND=tcp:<host>:<port>      (TCPQRNG — gerçek/ağ QRNG cihazı)
+#   PHOTONNET_QRNG_BACKEND=serial:<port>[:<baud>] (SerialQRNG — gerçek USB QRNG dongle'ı)
+# `PHOTONNET_QRNG_MIN_ENTROPY_BITS`: örnek başına VENDOR'IN BEYAN ETTİĞİ
+# min-entropi (bit) — GERÇEK donanımda bu değer cihazın karakterizasyon
+# raporundan gelmelidir, burada VARSAYILMAZ (varsayılan 1.0, SimulatedQRNG
+# için makuldür ama gerçek donanım için ASLA kör kör kopyalanmamalıdır).
+_qrng_source = None
+_qrng_lock = threading.Lock()
+
+
+def _make_qrng_source():
+    backend = os.environ.get("PHOTONNET_QRNG_BACKEND", "simulated")
+    if backend == "simulated":
+        return SimulatedQRNG()
+    if backend.startswith("tcp:"):
+        from .qrng_tcp_hardware import TCPQRNG
+        _, host, port = backend.split(":", 2)
+        return TCPQRNG(host, int(port))
+    if backend.startswith("serial:"):
+        from .qrng_serial_hardware import SerialQRNG
+        parts = backend.split(":")
+        port = parts[1]
+        baud = int(parts[2]) if len(parts) > 2 else 921600
+        return SerialQRNG(port, baud)
+    raise ValueError(f"tanınmayan PHOTONNET_QRNG_BACKEND: {backend!r}")
+
+
+def _get_qrng_source():
+    global _qrng_source
+    with _qrng_lock:
+        if _qrng_source is None:
+            src = _make_qrng_source()
+            src.connect()
+            _qrng_source = src
+        return _qrng_source
+
+
+def _qrng_min_entropy_bits() -> float:
+    return float(os.environ.get("PHOTONNET_QRNG_MIN_ENTROPY_BITS", "1.0"))
 
 
 def _broadcast_status(status) -> None:
@@ -250,6 +303,43 @@ def api_stream():
                     _status_subscribers.remove(q)
 
     return Response(gen(), mimetype="text/event-stream")
+
+
+@app.route("/api/qrng/status", methods=["GET"])
+def api_qrng_status():
+    try:
+        src = _get_qrng_source()
+        st = src.status()
+        return jsonify({"ok": True, "connected": st.connected, "isCertifiedHardware": st.is_certified_hardware,
+                         "vendor": st.vendor, "driverName": st.driver_name, "lastError": st.last_error})
+    except QRNGError as e:
+        return jsonify({"ok": False, "error": str(e)}), 503
+
+
+@app.route("/api/qrng/bytes", methods=["GET"])
+def api_qrng_bytes():
+    """Bir parti (batch) ham entropi baytı döndürür — HER partide RCT+APT
+    çalıştırılır (bkz. qrng_health_tests.py'nin baş yorumu: bu testler
+    BÜYÜK/biriken akışlar üzerinde DEĞİL, sınırlı boyutlu partiler üzerinde
+    çalıştırılmalı). Sağlık testi BAŞARISIZ olursa 503 + `ok:false` döner
+    — bu baytlar HTTP gövdesine dahi YERLEŞTİRİLMEZ (fail-closed: çağıran
+    tarafın "belki kullanılabilir" bir şeyle karşılaşma riski YOK).
+    `?n=` bayt sayısı (varsayılan 256, üst sınır 65536 — tek istekte
+    sınırsız büyümeyi önlemek için)."""
+    n = min(int(request.args.get("n", 256)), 65536)
+    try:
+        src = _get_qrng_source()
+        data = src.read_bytes(n, timeout_s=float(request.args.get("timeout_s", 5.0)))
+    except QRNGError as e:
+        return jsonify({"ok": False, "error": str(e)}), 503
+
+    health = run_health_tests(bytes_to_bits(data), min_entropy_bits=_qrng_min_entropy_bits())
+    if not health["overall_pass"]:
+        logger.error("QRNG sağlık testi BAŞARISIZ — bayt SERVİS EDİLMİYOR: %s", health)
+        return jsonify({"ok": False, "error": "QRNG sağlık testi başarısız (RCT/APT) — bkz. detail",
+                         "health": health}), 503
+
+    return jsonify({"ok": True, "n": n, "bytesBase64": base64.b64encode(data).decode("ascii"), "health": health})
 
 
 @app.route("/api/health", methods=["GET"])

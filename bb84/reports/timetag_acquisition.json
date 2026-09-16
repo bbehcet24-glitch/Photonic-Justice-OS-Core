@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T05:30:02.097Z",
+  "generatedAt": "2026-09-16T22:29:28.547Z",
   "checks": [
     {
       "name": "(A) TEMİZ HAT: QBER optik hizasızlık tabanına (eDetect ~%1) oturuyor, anahtar güvenli",
@@ -24,7 +24,7 @@
     {
       "name": "(E) QRNG SEAM: Alice baz/bit enjekte edilebilir kaynaktan (mulberry32 DEĞİL); QBER RNG'den bağımsız",
       "ok": true,
-      "detail": "üç farklı QRNG kaynağı (tohumlu-101/202 + crypto.randomBytes) → QBER %1.26/%0.98/%1.13 (yayılım %0.28). QBER RNG seçiminden DEĞİL fizikten geliyor. Anahtar seçimi crypto entropiden (üretimde donanım QRNG buraya takılır); mulberry32 yalnız fiziksel gürültü için"
+      "detail": "üç farklı QRNG kaynağı (tohumlu-101/202 + crypto.randomBytes) → QBER %1.26/%0.98/%1.25 (yayılım %0.28). QBER RNG seçiminden DEĞİL fizikten geliyor. Anahtar seçimi crypto entropiden (üretimde donanım QRNG buraya takılır); mulberry32 yalnız fiziksel gürültü için"
     },
     {
       "name": "(F) FAZ 0 KÖPRÜSÜ: distile bitler KME route export biçimine paketlenip ETSI-014 ucuna takılabiliyor",
@@ -122,12 +122,12 @@
   "qrngSeam": {
     "seed101": 1.26,
     "seed202": 0.98,
-    "crypto": 1.13,
+    "crypto": 1.25,
     "spread": 0.28
   },
   "kmeBridge": {
     "keys": 34,
-    "sample": "8818b96c"
+    "sample": "06a1531b"
   },
   "coreIntegrity": {
     "unchanged": true,
