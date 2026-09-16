@@ -33,8 +33,9 @@ sunulmamıştır.
 5. [Mühendislik/test kültürü — tekrar eden desenler](#5-mühendisliktest-kültürü--tekrar-eden-desenler)
 6. [IBM ETSI-014 sertifikasyon denetimi — özet yargı](#6-ibm-etsi-014-sertifikasyon-denetimi--özet-yargı)
 7. [Üretime hazırlık durumu (PKI/mTLS/HSM)](#7-üretime-hazırlık-durumu-pkimtlshsm)
-8. [Nasıl çalıştırılır](#8-nasıl-çalıştırılır)
-9. [Dizin haritası](#9-dizin-haritası)
+8. [Bu README'den sonraki oturum — girdi doğrulama + Kaos Mühendisliği turu #3-#9](#8-bu-readmeden-sonraki-oturum--girdi-doğrulama--kaos-mühendisliği-turu-3-9)
+9. [Nasıl çalıştırılır](#9-nasıl-çalıştırılır)
+10. [Dizin haritası](#10-dizin-haritası)
 
 ---
 
@@ -520,7 +521,70 @@ sonrası — genel kullanılabilirlik (GA).
 
 ---
 
-## 8. Nasıl çalıştırılır
+## 8. Bu README'den sonraki oturum — girdi doğrulama + Kaos Mühendisliği turu #3-#9
+
+Bu bölüm, README'nin ilk yazıldığı commit'ten (`2742a0d`) sonra yapılan ve
+henüz §3-§7'ye işlenmemiş **22 commit**'i, aynı dürüstlük disipliniyle
+(bulgu → ölçüm → düzeltme → regresyon kontrolü → çekirdek SHA-256
+doğrulaması) özetler. Bu turun tetikleyicisi kullanıcının açık yetki
+devriydi: *"sistemin bütün hatalarını düzeltmen için bütün yetkiyi sana
+devrediyorum, yapısını bozmadan çekirdeğe zarar vermeden sistemi
+mükemmelleştir, bundan sonra gerçek makinalara bağlanacak"* — yani odak,
+gerçek dış sistemlere (gerçek KME sunucuları, gerçek uzak istemciler)
+bağlanmadan önce kalan hataları bulup kapatmaktı.
+
+### 8.1 Girdi doğrulama / fuzz katmanı
+
+| Dosya | Bulgu / Ne yapar |
+|---|---|
+| `chaos_fuzz_test.js` + `chaos_fuzz_worker.js` | Çekirdeğin `EXPORT_MANIFEST`'teki 15 fonksiyonuna 197 kasıtlı bozuk girdi (NaN/undefined/null/±Infinity/aşırı-büyük tamsayı/bozuk dizi) besler; her çağrı izole bir alt-process'te zaman aşımıyla çalıştırılır (kod okumasında `propPhoton`'un `reps=Infinity` ile gerçekten sonsuz döngüye girebileceği önceden fark edildiği için). **Dürüst sonuç:** 133/197 zarif bozulma, 16/197 kontrollü istisna, **4/197 GERÇEK ZAMAN AŞIMI** (`propPhoton`/`bb84Reconcile`'ın `for(i=0;i<N;i++)` deseni doğrulanmamış N'e bağlı — gerçek donanımdan bozuk bir telemetri gelirse DoS riski), 40/197 sessiz NaN + 4/197 sessiz Infinity (özellikle `estimateLinkSurvival`/`computeRepeaterGain` — NaN karşılaştırmaları hep `false` döndüğü için "riskli" eşik kontrollerini sessizce atlatabilir). Çekirdeğe dokunulmadı. |
+| `chaos_input_guard.js` + `chaos_input_guard_test.js` + `chaos_guard_verify_worker.js` | Yukarıdaki TÜM sessiz-NaN/sessiz-Infinity/zaman-aşımı bulgularını çözen, çekirdeğin ÖNÜNE konan bir doğrulama/kırpma katmanı — proje genelindeki "kanca/köprü, asla üzerine yazma" desenine uygun. Üst sınırlar aynı zamanda sonsuz-döngü DoS riskini de kapatır. `computeRepeaterGain`'in `Math.pow(10,x/10)` hattının km=100000 sınırının İÇİNDE bile üstel taşmaya uğrayabildiği kendi doğrulama testinde ayrıca bulundu — çıktı da doğrulanıp taşmada FAIL-CLOSED bir değere düşülüyor (`estimateLinkSurvival`→0 "hayatta kalmadı", iyimser değil). **Kendi kendini düzeltme:** ilk taslakta `bitCount` fallback'i 0 seçilmişti, bu `bb84Reconcile`'da yeni bir 0/0=NaN kaynağı açtı — guard'ın kendi doğrulama testi bunu yakaladı, fallback 1'e çekildi. Her düzeltme `_guard` alanıyla açıkça loglanır, sessizce yutulmaz. |
+| `client_network_report.js`, `entanglement_hom_fidelity_sim.js` (guard entegrasyonu) | Guard katmanını, çekirdeği GERÇEK/güvenilmeyen harici veriyle (müşterinin gönderdiği ham fiber-km JSON'u) çağıran gerçek çağrı noktalarına bağlar. **Gerçek entegrasyon yeni bir gerçek bulgu çıkardı:** guard'ın `sanitizeNumber()`'ı çağıranın verdiği `fallback` değerinin kendisinin `[min,max]` dışında olabileceğini kontrol etmiyordu — düzeltildi. `compare_js4.js` de `fiberT()` çağırıyor ama bu dosya (bu commit'ten bağımsız, ilk taban commit'inden beri) var olmayan bir mutlak yola require ediyor ve hiç çalışmıyor — kapsam dışı bırakıldı, dokunulmadı. |
+
+### 8.2 Zamansal bütünlük
+
+| Dosya | Bulgu / Ne yapar |
+|---|---|
+| `chaos_jitter_test.js` | Durum-makinesi senkronizasyonuna gecikme/jitter enjekte eden test — `epoch_reset_controller.js`'de gerçek bir sıra-dışı-varış (out-of-order arrival) hatası buldu: iletim gecikmesi yüzünden bir önceki epoch'a ait "gecikmiş" bir olay, rollover SONRASI yanlışlıkla YENİ epoch'a sayılabiliyordu. |
+| `epoch_reset_controller.js` (düzeltme) | Gecikmiş varışlar artık doğru (eski) epoch'a atanıyor ve `lateArrivals` alanında AÇIKÇA loglanıyor — ileriye dönük (zamanında/erken) rollover mantığı hiç değişmedi, düzeltme sadece geriye-bakan atamayı düzeltti. |
+
+### 8.3 Kaos Mühendisliği #3 — Stokastik/Patlama (Burst) Gürültü Enjeksiyonu
+
+| Dosya | Bulgu / Ne yapar |
+|---|---|
+| `chaos_stochastic_noise_test.js` + `KAOS_STOKASTIK_GURULTU_RAPORU.md` | Çekirdeğe gerçek stokastik/patlama gürültü enjekte eder. **Dürüst ön-tarama sonucu:** çöken şey hata-düzeltme protokolü DEĞİL — çekirdek zaten gerçek stokastik mekanizmalara sahip; çöken, operatöre sunulan **güvenlik-kanıtı yorumlama/eşik** katmanıydı (bir patlama sırasında geçici olarak yükselen QBER, "gözcü var" olarak yanlış yorumlanabiliyordu). |
+| `chaos_eavesdrop_discriminator.js` + `chaos_eavesdrop_discriminator_test.js` | Koşu-testi (run-test) tabanlı bir teşhis katmanı — kısa, geçici bir QBER sıçramasını (patlama gürültüsü) sürdürülen bir yükselmeden (gerçek gözcü paterni) istatistiksel olarak ayırır. **Kapsam notu:** bu, güvenlik KARARINI (anahtarı reddet/kabul et) değiştirmez — `ProductionSecurityAudit` zaten doğru karar veriyordu; düzeltilen, operatöre sunulan YORUM/alarm eşiğiydi. |
+| `client_network_report.js` (discriminator entegrasyonu) | Eavesdrop-teşhis katmanını gerçek çağrı noktasına bağlar — izole bir düzeltme+doğrulama adımı olarak. |
+
+### 8.4 Kaos Mühendisliği #4-#9 — gerçek makinelere bağlanma öncesi son tur
+
+Bu altı tur, kullanıcının "gerçek makinalara bağlanacak" ifadesiyle
+doğrudan ilgilidir — her biri, sistemin gerçek/yavaş/kötü-niyetli bir uzak
+uçla karşılaştığında NE OLDUĞUNU (varsayılmadan) ölçer.
+
+| # | Dosya(lar) | Bulgu | Düzeltme | Doğrulama |
+|---|---|---|---|---|
+| 4 | `ldpc_async_offload.js`, `ldpc_async_offload_test.js`, `workers/ldpc_worker.js` | `KeyPoolBuffer._finalizeBlock`, ikincil/yetkisiz-olmayan `LDPCReconciliation.reconcile`'ı TAMAMEN SENKRON çalıştırıyor — n=150.000'de ana thread'i 15-22s BLOKLUYOR. | Gerçek Node `worker_threads` ile LDPC çağrısı ayrı bir OS thread'ine devredildi (`ProductionSecurityAudit.audit()`'in yalnızca Cascade sonucunu okuduğu, LDPC'yi hiç okumadığı önceden kanıtlandı — LDPC'yi "beklemede" bırakmak güvenli). | n=20.000 davranış-eşdeğerliği + n=150.000 gecikme testi: 15.345ms→621ms (×24.7 iyileşme). **Kapsam notu:** bu köprüye bağlanacak canlı bir çağrı noktası bu depoda henüz yok (`KeyPoolBuffer.feed()` hiçbir Node script'inden çağrılmıyor, sadece dokunulmaz tarayıcı akışından). |
+| 5 | `etsi014_kme_server.js` (`readBody()`/`server_handler`) | 1MB gövde sınırını aşan istekte `req.destroy()` "end"/"error" hiç tetiklemiyor — döndürülen Promise SONSUZA KADAR askıda kalıyor, istemci temiz bir 413 yerine çıplak ECONNRESET alıyor. | `readBody()` artık `KMEError(413)` ile doğrudan reddediyor + "close" olayında savunma amaçlı ret; `!req.complete` durumunda `Connection: close` header'ı + gecikmeli soket-yok-etme (ilk düzeltme, aynı process'te ikinci isteğin ECONNRESET alması gibi YENİ bir regresyona yol açtı — bu da düzeltildi). | `chaos_kme_oversized_body_test.js`: gerçek HTTP isteğiyle 0 bulgu. |
+| 6 | `etsi014_kme_server.js` (`checkOcsp()`) | `fs.mkdtempSync`'in oluşturduğu geçici DİZİN hiç silinmiyor (sadece içindeki dosya) — her OCSP cache-miss'te (30sn TTL, yani gerçek trafikte SÜREKLİ) kalıcı boş-dizin sızıntısı. | `tmpDir` ayrıca yakalanıp `fs.rm(tmpDir,{recursive:true,force:true})` ile temizleniyor. | `chaos_kme_ocsp_tmpdir_leak_test.js`: gerçek mTLS+OCSP sunucusu + 6 farklı sertifika (cache'in aynı sertifikayı maskelemesini önlemek için) ile 0 bulgu. |
+| 7 | `pki_tools/ca_init.sh`, `pki_tools/revoke_cert.sh` | `openssl ca -gencrl -out FILE`, dosyayı yazmadan ÖNCE sıfırlıyor — gerçek bir `setImmediate` döngüsüyle dosyanın ara-anda 0 bayt olduğu ampirik olarak yakalandı. | `.tmp` dosyası + atomik POSIX `mv -f` deseni. | `chaos_pki_crl_atomic_write_test.js`: gerçek CA+sertifika ile CRL boyutu poll edildi, artık yalnızca eski/yeni TAM boyutlar gözlemleniyor. **Not:** Node'un TLS katmanı bozuk/boş bir CRL'i zaten güvenle reddediyor (KME'nin var olan try/catch'i eski CRL'i koruyor) — yani bu, sömürülebilir bir güvenlik açığı DEĞİLDİ, ama gerçek bir atomiklik kusuruydu. |
+| 7b | `pki_tools/rotate_cert.sh` | Aynı atomik-olmama deseni anahtar/sertifika dosya değişiminde de vardı. | Aynı `.tmp`+`mv -f` deseni uygulandı. | Kapsam: hijyen düzeltmesi, ayrı bir chaos-test yazılmadı. |
+| 8 | `etsi014_client_lib.js` (`httpsCall()`), `mock_ibm_client.js` (`MockIbmSaeClient.request()`) | Node'un http(s) istemcisinde VARSAYILAN istek zaman aşımı YOK — gerçek/yavaş/yanıtsız bir uzak KME'ye bağlanılırsa çağıran SONSUZA KADAR asılı kalabilir (KME sunucusunun kendi `readBody()` hatasıyla AYNI SINIF sorun, istemci tarafında). | Her ikisine de `req.setTimeout(timeoutMs,...)` + açık `reject()` + çift-settle'a karşı `settled` bayrağı eklendi (varsayılan 15000ms). `qkdnetsim_traffic_bridge.js`'in KENDİ `SaeClient.request()`'i incelendi — o zaten doğru (`timeout:8000`+`r.on("timeout",...)`) — DOKUNULMADI. | `chaos_client_lib_timeout_test.js`: gerçek, kasıtlı yanıtsız https sunucusuna karşı ~1522ms'de temiz ret (bütçe 1500ms) + gerçek mTLS KME'ye karşı regresyon kontrolü (status=200). `mock_ibm_client.js` için gerçek 3-sertifikalı PKI + gerçek mTLS KME ile tam CLI koşumu (9/10 test — 1 başarısızlık ilgisiz bir SAE-kimlik uyuşmazlığıydı, regresyon değil). |
+| 9 | `god_mode_ragnarok_attack_real.js` | Kod DOĞRUYDU ama script'in KENDİ yazdırdığı sonuç metni BAYATLAMIŞTI: script hâlâ "tek-örnek risk=0 kör noktası AÇIK" diyordu, ama çekirdeğe bu turdan ÖNCE zaten bir düzeltme (`_absoluteRisk()`/`ABSOLUTE_QBER_ALERT_THRESHOLD`) eklenmişti — script'i güncel çekirdeğe karşı çalıştırınca risk=0.98/0.18 çıktı (0 değil), kendi metniyle ÇELİŞTİ. | SONUÇ 1/2 ve "SAVAŞ RAPORU" bölümleri, sabit bir sonuç iddia etmek yerine GERÇEK ölçülen değerlere göre dinamik dallanacak şekilde yeniden yazıldı — kardeş dosyalar (`_omega.js`/`_omega_v3.js`/`_omega_v4.js`) zaten bunu doğru yapıyordu, sadece `_real.js` bayattı. | Script + 3 kardeş dosya çalıştırılıp hepsinin exit 0 verdiği ve artık kendi ölçümüyle tutarlı olduğu doğrulandı. |
+| 9b | `qkdnetsim_traffic_bridge.js` (`main()`) | Patlamalı trafiği taklit etmek için her isteği kasıtlı olarak fire-and-forget dispatch eden ana döngü, bu Promise'leri HİÇ takip etmiyordu — döngü sonunda sadece SABİT bir `sleep(1500)` vardı. Yanıt süresi bunu aşan her istek, sonucunu rapora hiç yazamadan `process.exit()` ile sessizce düşüyordu. | Her dispatch edilen Promise `pending[]`'e itiliyor; sabit sleep yerine `await Promise.allSettled(pending)` kullanılıyor. | **Ampirik kanıt:** gerçek CA/sertifika zinciri + kasıtlı 3000ms geciken gerçek bir mTLS sunucusuyla 30 olaylık yük — düzeltme ÖNCESİ 30/30 sonuç rapordan düştü (encOk+encFail=0), düzeltme SONRASI 0 kayıp (30/30). Ayrıca gerçek bir `etsi014_kme_server.js`'e karşı tam regresyon koşumu: 1416/1407 anahtar teslim, 0 hata, 0 bit-uyuşmazlığı, 3/3 sahte-sertifika reddi. |
+
+**Bu turun ortak noktası:** her bulgu önce gerçek bir GERÇEK-DÜNYA
+koşulunda (yanıtsız sunucu, aşırı-büyük istek gövdesi, sıra-dışı varış,
+bozuk girdi) yeniden üretildi, sonra düzeltildi, sonra AYNI gerçek koşulda
+0-bulgu olarak yeniden doğrulandı — hiçbir düzeltme "mantıken doğru
+olmalı" gerekçesiyle test edilmeden kabul edilmedi. `photonnet_core.js`
+SHA-256'sı (`8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05`)
+bu 22 commit'in HİÇBİRİNDE değişmedi — her commit öncesi/sonrası ayrıca
+doğrulandı.
+
+---
+
+## 9. Nasıl çalıştırılır
 
 ```bash
 # Çekirdeği kaynaktan (PhotonNet2.jsx) yeniden üret / doğrula
@@ -559,7 +623,7 @@ regresyon değil, çalıştırma-öncesi kurulum adımıdır.
 
 ---
 
-## 9. Dizin haritası
+## 10. Dizin haritası
 
 ```
 photonnet/
@@ -585,7 +649,11 @@ photonnet/
 
 ---
 
-*Bu README, projenin tüm `bb84/` (166 dosya), `hal/` (13 Python dosyası)
-ve kök seviyesi dosyaları taranarak, her dosyanın kendi baş yorumundaki
-amaç/mekanizma/dürüstlük notları temel alınarak derlenmiştir. Hiçbir sayı
-veya iddia bu tarama dışında uydurulmamıştır.*
+*Bu README, projenin tüm `bb84/` (176 .js/.sh dosyası), `hal/` (15 Python
+dosyası) ve kök seviyesi dosyaları taranarak, her dosyanın kendi baş
+yorumundaki amaç/mekanizma/dürüstlük notları temel alınarak derlenmiştir.
+Hiçbir sayı veya iddia bu tarama dışında uydurulmamıştır. §8, ilk yazım
+sonrası eklenen 22 commit'i (Kaos Mühendisliği #3-#9 + girdi doğrulama
+katmanı) kapsayacak şekilde 2026-09-16'da güncellendi — git geçmişi
+(`git log --oneline`) her zaman bu README'den daha güncel kabul
+edilmelidir.*
