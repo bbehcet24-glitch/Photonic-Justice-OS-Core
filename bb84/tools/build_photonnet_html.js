@@ -33,7 +33,9 @@ function requireTypescript() {
   } catch (e) {
     console.error(
       "[build_photonnet_html] HATA: 'typescript' paketi bulunamadı. Önce kurun:\n" +
-      "  npm install --no-save typescript@^5.4.0"
+      "  npm install --no-save typescript@6.0.3\n" +
+      "  (bb84/tools/extract_core.js İLE AYNI SABİT sürüm — transpileModule() çıktısı\n" +
+      "   sürümler arası bayt-birebir kararlı değildir, bkz. o dosyanın baş yorumu.)"
     );
     process.exit(3);
   }

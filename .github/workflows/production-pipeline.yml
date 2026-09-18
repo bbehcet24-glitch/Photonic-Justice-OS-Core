@@ -130,8 +130,24 @@ jobs:
         with:
           node-version: "20"
 
-      - name: TypeScript'i kur (yalnızca JSX→JS dönüşümü için; tip denetimi YAPILMAZ)
-        run: npm install --no-save typescript@^5.4.0
+      # DİKKAT (bkz. commit mesajındaki kök-neden analizi): sürüm TAM
+      # OLARAK sabitlenmiş (^5.4.0 GİBİ bir ARALIK DEĞİL) — çünkü
+      # extract_core.js --check, ts.transpileModule()'ün ÜRETTİĞİ metni
+      # commit edilmiş bb84/photonnet_core.js ile BİREBİR (string ===)
+      # karşılaştırıyor. TypeScript'in transpileModule() çıktısı major
+      # sürümler arası (hatta bazen minor) BAYT-BİREBİR KARARLI OLMAK
+      # ZORUNDA DEĞİLDİR — bir ARALIK kullanmak, npm'in gelecekte farklı
+      # bir sürüm çözmesi yüzünden kaynakla çıkarım MANTIKEN senkronken
+      # bile bu kapının SAHTE-BAŞARISIZ (false negative) olmasına yol
+      # açar (GERÇEKTEN YAŞANDI — bkz. commit mesajı). 6.0.3, bb84/
+      # photonnet_core.js'i ŞU AN üreten/doğrulayan sürümdür (yerel
+      # olarak `node bb84/tools/extract_core.js --check` ile ÖLÇÜLEREK
+      # doğrulandı). PhotonNet2.jsx her yeniden üretildiğinde, kullanılan
+      # tsc sürümü buradakiyle AYNI olmalı — farklı bir sürüme KASITLI
+      # geçilecekse bu satır VE bb84/photonnet_core.js AYNI commit'te
+      # birlikte güncellenmelidir.
+      - name: TypeScript'i kur (yalnızca JSX→JS dönüşümü için; tip denetimi YAPILMAZ) — SÜRÜM TAM SABİTLİ
+        run: npm install --no-save typescript@6.0.3
 
       - name: bb84/photonnet_core.js, PhotonNet2.jsx ile senkron mu doğrula
         run: node bb84/tools/extract_core.js --check

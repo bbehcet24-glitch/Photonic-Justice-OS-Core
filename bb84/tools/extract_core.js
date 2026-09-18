@@ -24,10 +24,25 @@
 //
 // BAĞIMLILIK: "typescript" paketi (devDependency olarak KOŞULLU/yerel
 // kurulur — bkz. .github/workflows/production-pipeline.yml,
-// "npm install --no-save typescript@^5.4.0" adımı). Bu depoda kalıcı bir
+// "npm install --no-save typescript@6.0.3" adımı). Bu depoda kalıcı bir
 // node_modules/ TUTULMAZ (boyut/güvenlik nedeniyle) — script her
 // çalıştırıldığında typescript'i require() etmeye çalışır, bulamazsa
 // açık bir hata mesajıyla durur (bkz. requireTypescript()).
+//
+// ★ SÜRÜM TAM SABİTLENMELİ (ARALIK DEĞİL) — GERÇEK BULGU: --check,
+// transpileModule() çıktısını commit edilmiş dosyayla BİREBİR (string
+// ===) karşılaştırır (aşağıda, "if (existing === content)"). TypeScript
+// derleyicisinin transpileModule() çıktısı SÜRÜMLER ARASI bayt-birebir
+// kararlılık GARANTİ ETMEZ — bir "^5.4.0" gibi ARALIK kullanmak, CI'nın
+// npm'de farklı bir sürüm çözmesi durumunda, kaynak (PhotonNet2.jsx) ve
+// çıkarım (bb84/photonnet_core.js) MANTIKEN tamamen senkronken bile bu
+// kapının SAHTE-BAŞARISIZ (false negative) olmasına yol açar — production-
+// pipeline.yml'de GERÇEKTEN YAŞANDI (CI'nın çözdüğü 5.x sürümü, bu depodaki
+// bb84/photonnet_core.js'i üreten 6.0.3'ten farklı çıktı üretti). Kaynak/
+// çıkarım GERÇEKTEN uyumsuz hâle gelirse zaten bu doğrulama başarısız
+// OLMALI — ama bunun SEBEBİ kaynak kayması olmalı, sessizce farklı bir
+// derleyici sürümü DEĞİL. Bu yüzden yerel geliştirmede de production-
+// pipeline.yml'deki İLE AYNI sürümü (6.0.3) kullanın.
 //
 // KULLANIM:
 //   node bb84/tools/extract_core.js                 → üretir ve
@@ -72,8 +87,9 @@ function requireTypescript() {
   } catch (e) {
     console.error(
       "[extract_core] HATA: 'typescript' paketi bulunamadı. Bu script'i çalıştırmadan önce kurun:\n" +
-      "  npm install --no-save typescript@^5.4.0\n" +
-      "(CI'da bu adım production-pipeline.yml içinde OTOMATİK yapılır.)"
+      "  npm install --no-save typescript@6.0.3\n" +
+      "(SÜRÜM TAM SABİT olmalı — bkz. bu dosyanın baş yorumundaki 'SÜRÜM TAM\n" +
+      "  SABİTLENMELİ' notu. CI'da bu adım production-pipeline.yml içinde OTOMATİK yapılır.)"
     );
     process.exit(3);
   }
