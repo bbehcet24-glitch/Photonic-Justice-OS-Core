@@ -201,9 +201,12 @@ function main() {
     "// ═══════════════════════════════════════════════════════════════\n" +
     "// OTOMATİK ÜRETİLDİ — bb84/build_production_server.js tarafından.\n" +
     "// ELLE DÜZENLEMEYİN. Kaynak: bb84/etsi014_kme_server.js\n" +
-    "// Bu dosyada demo/geri-düşüş kimlik doğrulama kodu (Bearer token,\n" +
-    "// X-SAE-ID header modu, TLS'siz/istemci-sertifikasız sunucu modları)\n" +
-    "// FİZİKSEL OLARAK YOKTUR — mTLS (--cert/--key/--ca üçü birlikte)\n" +
+    // DİKKAT: bu başlık, FORBIDDEN_PATTERNS'teki sözcükleri (ör. token
+    // şeması adı, SAE kimlik header'ının adı) ADIYLA ANMAMALIDIR — aşağıdaki
+    // Doğrulama #3b bu başlık EKLENDİKTEN SONRA son dosyayı tarar.
+    "// Bu dosyada demo/geri-düşüş kimlik doğrulama kodu (token tabanlı ve\n" +
+    "// header tabanlı SAE kimlik modları, TLS'siz/istemci-sertifikasız sunucu\n" +
+    "// modları) FİZİKSEL OLARAK YOKTUR — mTLS (--cert/--key/--ca üçü birlikte)\n" +
     "// verilmeden bu sunucu BAŞLAMAZ.\n" +
     "// ═══════════════════════════════════════════════════════════════\n";
   // Shebang (#!/usr/bin/env node) SADECE dosyanın KESİN İLK satırıyken
@@ -214,6 +217,19 @@ function main() {
     finalOutput = output.slice(0, newlineIdx + 1) + header + output.slice(newlineIdx + 1);
   } else {
     finalOutput = header + output;
+  }
+
+  // ── Doğrulama #3b: yasaklı örüntüleri DİSKE YAZILACAK SON içerikte TEKRAR
+  // tara. GERÇEK BULGU (CI Kapı 3d'nin bağımsız grep'i yakaladı): Doğrulama #3
+  // yalnızca başlık EKLENMEDEN ÖNCEKİ `output`'u tarıyordu; başlığın kendisi
+  // "Bearer"/"X-SAE-ID" sözcüklerini içeriyordu — build "TEMİZ" raporluyor ama
+  // yazdığı dosya yasaklı örüntü İÇERİYORDU. Artık rapor, GERÇEKTEN yazılan
+  // dosyayı anlatır.
+  const leftoverFinal = FORBIDDEN_PATTERNS.filter((p) => p.re.test(finalOutput));
+  if (leftoverFinal.length) {
+    throw new Error(
+      `Üretim çıktısının SON hâlinde (başlık dahil) YASAKLI örüntü(ler) bulundu: ${leftoverFinal.map((p) => p.name).join(", ")} — build DURDURULDU, dosya YAZILMADI.`
+    );
   }
   fs.writeFileSync(opts.out, finalOutput);
   console.log(`[build] ✓ Üretim derlemesi yazıldı: ${path.relative(REPO_ROOT, opts.out)} (${output.split("\n").length} satır)`);
