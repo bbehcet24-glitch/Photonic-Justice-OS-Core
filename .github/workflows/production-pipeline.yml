@@ -206,6 +206,15 @@ jobs:
     name: "Kapı 3b — IBM Entegrasyon Testi (ephemeral, kendi geçici PKI'sı)"
     needs: [ca-key-secret-guard, extract-core-check]
     if: ${{ github.event_name != 'workflow_dispatch' || inputs.kme_mode == 'ephemeral' }}
+    # İŞ-SEVİYESİ izin (iş-seviyesi `permissions`, workflow-seviyesindekinin
+    # YERİNE geçer — bu yüzden contents:read de burada TEKRAR yazılıyor).
+    # checks:write YALNIZCA bu işe verilir: mikepenz/action-junit-report bir
+    # "check run" oluşturmak için buna ihtiyaç duyar. GERÇEK BULGU (GitHub
+    # çalıştırması #15): bu izin yokken testler 19/19 geçtiği hâlde rapor adımı
+    # "Resource not accessible by integration" hatası üretiyordu.
+    permissions:
+      contents: read
+      checks: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -251,6 +260,15 @@ jobs:
     name: "Kapı 3b — IBM Entegrasyon Testi (external, GERÇEK sertifikalar)"
     needs: [ca-key-secret-guard, extract-core-check]
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.kme_mode == 'external' }}
+    # İŞ-SEVİYESİ izin (iş-seviyesi `permissions`, workflow-seviyesindekinin
+    # YERİNE geçer — bu yüzden contents:read de burada TEKRAR yazılıyor).
+    # checks:write YALNIZCA bu işe verilir: mikepenz/action-junit-report bir
+    # "check run" oluşturmak için buna ihtiyaç duyar. GERÇEK BULGU (GitHub
+    # çalıştırması #15): bu izin yokken testler 19/19 geçtiği hâlde rapor adımı
+    # "Resource not accessible by integration" hatası üretiyordu.
+    permissions:
+      contents: read
+      checks: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
