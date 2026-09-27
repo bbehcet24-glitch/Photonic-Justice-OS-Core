@@ -452,6 +452,24 @@ jobs:
               --pubkey-pem="${{ github.workspace }}/hsm-pki/ca-pub.pem"
           } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
 
+      - name: HSM-arkalı CA ile sertifika iptali (revoke_cert.sh --engine) + CRL doğrulaması
+        id: s_revoke
+        run: |
+          {
+            source "${{ github.workspace }}/hsm-env.sh"
+            W="${{ github.workspace }}"
+            bb84/pki_tools/revoke_cert.sh "$W/hsm-pki" "$W/hsm-client/SAE-HSM-TEST-cert.pem" \
+              --engine pkcs11 --key-uri "pkcs11:token=photonnet-ci-ca;object=ca-key;type=private"
+            # CRL, token'daki CA anahtarıyla GERÇEKTEN imzalanmış mı?
+            openssl crl -in "$W/hsm-pki/crl/ca-crl.pem" -noout -verify -CAfile "$W/hsm-pki/ca-cert.pem"
+            # İptal edilen sertifika CRL kontrolünde REDDEDİLMELİ — ve sebebi "revoked" olmalı.
+            if OUT=$(openssl verify -crl_check -CAfile "$W/hsm-pki/ca-cert.pem" -CRLfile "$W/hsm-pki/crl/ca-crl.pem" "$W/hsm-client/SAE-HSM-TEST-cert.pem" 2>&1); then
+              echo "::error::İptal edilen sertifika CRL kontrolünde HÂLÂ GEÇERLİ görünüyor: $OUT"; exit 1
+            fi
+            echo "$OUT" | grep -q "certificate revoked" || { echo "::error::Beklenmeyen doğrulama hatası (revoked değil): $OUT"; exit 1; }
+            echo "✓ HSM-arkalı CA ile iptal edilen sertifika, token anahtarıyla imzalı CRL'de 'certificate revoked' olarak reddediliyor."
+          } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
+
       - name: Kapı 3c tanı raporu (YALNIZCA iş kalırsa)
         if: failure()
         env:
@@ -464,6 +482,7 @@ jobs:
           O_SIGN: ${{ steps.s_sign.outcome }}
           O_PUB: ${{ steps.s_pub.outcome }}
           O_BRIDGE: ${{ steps.s_bridge.outcome }}
+          O_REVOKE: ${{ steps.s_revoke.outcome }}
         run: |
           set +e
           LOG="$RUNNER_TEMP/kapi3c.log"; S="$GITHUB_STEP_SUMMARY"
@@ -476,7 +495,8 @@ jobs:
           } >> "$S"
           for pair in "apt kurulumu:$O_APT" "pkcs11js kurulumu:$O_NPM" "chmod:$O_CHMOD" "openssl pkcs11 engine:$O_ENGINE" \
                       "hsm_init.sh:$O_HSMINIT" "ca_init.sh (HSM):$O_CAINIT" "CSR imzalama:$O_SIGN" \
-                      "genel anahtar dışa aktarma:$O_PUB" "pkcs11_bridge öz-testi:$O_BRIDGE"; do
+                      "genel anahtar dışa aktarma:$O_PUB" "pkcs11_bridge öz-testi:$O_BRIDGE" \
+                      "HSM ile iptal + CRL:$O_REVOKE"; do
             name="${pair%%:*}"; out="${pair##*:}"; [ -z "$out" ] && out="çalışmadı"
             echo "| $name | $out |" >> "$S"
             if [ "$out" = "failure" ] && [ "$FAILED" = "(bulunamadı)" ]; then FAILED="$name"; fi
