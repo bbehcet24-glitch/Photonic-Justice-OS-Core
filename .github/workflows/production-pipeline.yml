@@ -87,6 +87,17 @@ concurrency:
   group: production-pipeline-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# ── ÇALIŞTIRICI SÜRÜMÜ BİLEREK SABİT: ubuntu-24.04 (ubuntu-latest DEĞİL) ──
+# GitHub, `ubuntu-latest` etiketini 19 Ekim 2026'dan itibaren Ubuntu 26'ya
+# taşıyacağını duyurdu (koşulardaki notice). Bu pipeline'ın kapıları
+# işletim sisteminin KENDİ kripto yığınına bağlı: Kapı 3c OpenSSL'in
+# "engine" arayüzünü (libengine-pkcs11-openssl) kullanıyor, Kapı 3a
+# OpenSSL/OCSP'nin GERÇEK zamanlama davranışını ölçüyor. Tüm kapıların
+# ilk kez birlikte yeşil geçtiği koşular (@9b32bbe, @fa3442f) Ubuntu 24.04
+# üzerindeydi (loglar: "OpenSSL 3.0.13 30 Jan 2024"). Etiket sessizce
+# kayarsa, kodda HİÇBİR değişiklik yokken kapılar kırmızıya dönebilir —
+# kaynağı bulmak da zor olur. Ubuntu 26'ya geçiş, ayrı ve bilinçli bir
+# değişiklik olarak yapılmalı (önce Kapı 3c'nin engine yolu orada denenmeli).
 permissions:
   contents: read
 
@@ -94,7 +105,7 @@ jobs:
   # ── KAPI 1: CA özel anahtarı sızıntı koruması (statik tarama) ──────
   ca-key-secret-guard:
     name: "Kapı 1 — CA Özel Anahtarı Sızıntı Koruması"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 3
     steps:
       - name: Depoyu çek
@@ -119,7 +130,7 @@ jobs:
   # ── KAPI 2: BB84 çıkarımı kaynakla senkron mu? ──────────────────────
   extract-core-check:
     name: "Kapı 2 — extract_core.js Senkronizasyon Kontrolü"
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
       - name: Depoyu çek
@@ -161,7 +172,7 @@ jobs:
   mtls-kme-scenarios:
     name: "Kapı 3a — mTLS/KME Sertifika Rotasyon+İptal Senaryoları (S1-S6)"
     needs: [ca-key-secret-guard, extract-core-check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Depoyu çek
@@ -215,7 +226,7 @@ jobs:
     permissions:
       contents: read
       checks: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Depoyu çek
@@ -269,7 +280,7 @@ jobs:
     permissions:
       contents: read
       checks: write
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Depoyu çek
@@ -343,7 +354,7 @@ jobs:
   software-hsm-pkcs11:
     name: "Kapı 3c — Yazılımsal HSM (SoftHSM2) + Node-PKCS11 Köprüsü"
     needs: [ca-key-secret-guard, extract-core-check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     # KENDİ KENDİNİ TEŞHİS EDEN İŞ (GERÇEK BULGU, GitHub çalıştırmaları #15/#16):
     # bu iş ilk gerçek koşularında "Process completed with exit code 1" ile
@@ -549,7 +560,7 @@ jobs:
   production-build-strip:
     name: "Kapı 3d — Üretim Derlemesi: Demo/Bypass Kodu Fiziksel Sökme"
     needs: [ca-key-secret-guard, extract-core-check]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Depoyu çek
@@ -616,7 +627,7 @@ jobs:
     name: "Kapı 4 — Üretim Kilometre Taşını Mühürle"
     needs: [ca-key-secret-guard, extract-core-check, mtls-kme-scenarios, ibm-integration-test-ephemeral, software-hsm-pkcs11, production-build-strip]
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.seal_production_milestone == true }}
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
     permissions:
       contents: write
