@@ -109,8 +109,22 @@ function signWithHsm({ modulePath, pin, label, data, tokenLabel }) {
     }
     const privKeyHandle = found[0];
 
+    // GERÇEK BULGU (GitHub Actions Kapı 3c, @4a1f4e8 — bu fonksiyonun İLK
+    // gerçek koşusu): pkcs11js'in C_Sign'ı ÜÇ argüman ister — oturum, veri
+    // ve imzanın yazılacağı ÇIKTI tamponu — ve yazdığı kadarını döndürür.
+    // Önceden tampon verilmiyordu → "TypeError: Parameters are required.
+    // Expected 3 arguments, but received 2." Tampon boyutu tahmin edilmez:
+    // RSA imzası modül uzunluğundadır, modül (gizli OLMAYAN bir öznitelik)
+    // anahtardan okunur; okunamazsa 8192-bit RSA'ya kadar yeten yedek boyut.
+    let sigLen = 1024;
+    try {
+      const [mod] = pkcs11.C_GetAttributeValue(session, privKeyHandle, [{ type: pkcs11js.CKA_MODULUS }]);
+      if (mod && mod.value && mod.value.length) sigLen = mod.value.length;
+    } catch (e) {
+      /* modül uzunluğu okunamadı — yedek boyut kullanılır */
+    }
     pkcs11.C_SignInit(session, { mechanism: pkcs11js.CKM_SHA256_RSA_PKCS }, privKeyHandle);
-    const signature = pkcs11.C_Sign(session, data);
+    const signature = pkcs11.C_Sign(session, data, Buffer.alloc(sigLen));
     return signature;
   } finally {
     if (session !== null) {

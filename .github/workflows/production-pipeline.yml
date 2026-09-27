@@ -493,7 +493,7 @@ jobs:
             echo "### Ortam yoklaması"
             echo '```'
             echo "== paketler =="; dpkg -l softhsm2 opensc libengine-pkcs11-openssl 2>&1 | tail -n 4
-            echo "== libsofthsm2.so konumu =="; find /usr/lib /usr/local/lib -name 'libsofthsm2.so' 2>/dev/null | head -5
+            echo "== libsofthsm2.so konumu =="; ls -la /usr/lib/softhsm/libsofthsm2.so /usr/lib/x86_64-linux-gnu/softhsm/libsofthsm2.so /usr/local/lib/softhsm/libsofthsm2.so 2>&1
             echo "== openssl =="; openssl version -a 2>&1 | grep -E '^OpenSSL|ENGINESDIR|MODULESDIR'
             echo "== engine dizini =="; ls "$(openssl version -e 2>/dev/null | sed -E 's/.*"(.*)"/\1/')" 2>&1 | head
             echo "== pkcs11js =="; node -e "require('pkcs11js'); console.log('pkcs11js yüklenebildi')" 2>&1 | tail -n 3
