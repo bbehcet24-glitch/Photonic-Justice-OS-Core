@@ -431,7 +431,11 @@ jobs:
         run: |
           {
             source "${{ github.workspace }}/hsm-env.sh"
-            pkcs11-tool --module "$PKCS11_MODULE_PATH" --read-object --type pubkey --label ca-key \
+            # --token-label/--login: ÖNLEYİCİ (henüz gözlenmedi) — SoftHSM her zaman
+            # ek bir BAŞLATILMAMIŞ slot da gösterir; hangi token'ın okunacağı açıkça
+            # belirtilir, genel anahtar CKA_PRIVATE=true ise giriş gerekir.
+            pkcs11-tool --module "$PKCS11_MODULE_PATH" --token-label "$PKCS11_TOKEN_LABEL" \
+              --login --pin "$PKCS11_PIN" --read-object --type pubkey --label ca-key \
               --output-file "${{ github.workspace }}/hsm-pki/ca-pub.der"
             openssl rsa -pubin -inform DER -in "${{ github.workspace }}/hsm-pki/ca-pub.der" \
               -outform PEM -out "${{ github.workspace }}/hsm-pki/ca-pub.pem"
@@ -444,6 +448,7 @@ jobs:
             source "${{ github.workspace }}/hsm-env.sh"
             node bb84/pki_tools/pkcs11_bridge.js --self-test \
               --module="$PKCS11_MODULE_PATH" --pin="$PKCS11_PIN" --label=ca-key \
+              --token-label="$PKCS11_TOKEN_LABEL" \
               --pubkey-pem="${{ github.workspace }}/hsm-pki/ca-pub.pem"
           } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
 
@@ -488,7 +493,7 @@ jobs:
             echo "### Ortam yoklaması"
             echo '```'
             echo "== paketler =="; dpkg -l softhsm2 opensc libengine-pkcs11-openssl 2>&1 | tail -n 4
-            echo "== libsofthsm2.so konumu =="; find / -name 'libsofthsm2.so' -not -path '/proc/*' 2>/dev/null | head -5
+            echo "== libsofthsm2.so konumu =="; find /usr/lib /usr/local/lib -name 'libsofthsm2.so' 2>/dev/null | head -5
             echo "== openssl =="; openssl version -a 2>&1 | grep -E '^OpenSSL|ENGINESDIR|MODULESDIR'
             echo "== engine dizini =="; ls "$(openssl version -e 2>/dev/null | sed -E 's/.*"(.*)"/\1/')" 2>&1 | head
             echo "== pkcs11js =="; node -e "require('pkcs11js'); console.log('pkcs11js yüklenebildi')" 2>&1 | tail -n 3

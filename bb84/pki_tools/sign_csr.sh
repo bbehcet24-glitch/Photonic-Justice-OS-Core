@@ -56,8 +56,17 @@ CSR_ABS="$(cd "$(dirname "$CSR")" && pwd)/$(basename "$CSR")"
 OUT_CERT_DIR="$(dirname "$CSR_ABS")"
 
 cd "$CA_DIR"
-if [ ! -f ca-key.pem ] || [ ! -f ca-cert.pem ]; then
-  echo "HATA: bu dizinde ca-key.pem/ca-cert.pem yok — önce ca_init.sh çalıştırılmalı" >&2
+# GERÇEK BULGU (Kapı 3c incelemesi): bu kontrol önceden ENGINE_MODE'dan
+# BAĞIMSIZ olarak ca-key.pem arıyordu — HSM modunda o dosya BİLEREK hiç
+# yoktur, yani --engine pkcs11 yolu buraya gelir gelmez "ca-key.pem yok"
+# diyerek duruyordu (HSM imzalama dalına hiç ulaşılamıyordu). ca-cert.pem
+# her iki modda da gerekli; ca-key.pem yalnızca dosya-tabanlı modda.
+if [ ! -f ca-cert.pem ]; then
+  echo "HATA: bu dizinde ca-cert.pem yok — önce ca_init.sh çalıştırılmalı" >&2
+  exit 1
+fi
+if [ "$ENGINE_MODE" != "1" ] && [ ! -f ca-key.pem ]; then
+  echo "HATA: bu dizinde ca-key.pem yok — dosya-tabanlı CA için önce ca_init.sh çalıştırılmalı (HSM-arkalı CA ise --engine pkcs11 --key-uri ... verin)" >&2
   exit 1
 fi
 

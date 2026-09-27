@@ -179,7 +179,26 @@ fi
 # başından itibaren geçerli bir dosya bulabilmesi için üretiliyor.
 # ATOMİK YAZMA (bkz. revoke_cert.sh'deki AYNI düzeltme, Kaos Müh. #7) —
 # tutarlılık için burada da geçici dosya + rename kullanılıyor.
-openssl ca -config ca-db/openssl-ca.cnf -gencrl -out crl/ca-crl.pem.tmp >/dev/null 2>&1
+#
+# GERÇEK BULGU (GitHub Actions Kapı 3c, @7c95f51 — bu kod yolunun İLK
+# gerçek koşusu): HSM modunda CRL imzası da TOKEN'daki anahtarla atılmalı.
+# Önceden bu komut her iki modda da config'deki `private_key = ca-key.pem`
+# dosyasını kullanıyordu; HSM modunda o dosya BİLEREK hiç yoktur → openssl
+# "Could not open file or uri for loading CA private key from ca-key.pem"
+# ile çıkış 1 veriyor, `>/dev/null 2>&1` de bu mesajı GİZLİYORDU (CI'da
+# yalnızca "exit code 1" görünüyordu). Artık HSM modunda anahtar komut
+# satırından (-keyfile, config'dekini geçersiz kılar — yerelde doğrulandı)
+# sign_csr.sh'deki ile AYNI `-engine pkcs11 -keyform engine` desenle verilir;
+# stderr artık gizlenmiyor (hata olursa sebebi log'da görünür).
+if [ -n "$PKCS11_URI" ]; then
+  openssl ca -config ca-db/openssl-ca.cnf -gencrl \
+    -engine pkcs11 -keyform engine -keyfile "${PKCS11_URI};pin-value=${PKCS11_PIN}" \
+    -out crl/ca-crl.pem.tmp >/dev/null
+else
+  openssl ca -config ca-db/openssl-ca.cnf -gencrl -out crl/ca-crl.pem.tmp >/dev/null
+fi
 mv -f crl/ca-crl.pem.tmp crl/ca-crl.pem
 echo "[CA] Başlangıç CRL'i üretildi: crl/ca-crl.pem (boş — henüz iptal yok, 1 gün geçerli, bkz. default_crl_days)."
-echo "[CA] İKAZ: ca-key.pem'i şimdi bu makineden GÜVENLİ ŞEKİLDE KALDIRIP hava-boşluklu bir ortama/HSM'e taşımayı düşünün — yalnızca ca-cert.pem'in (ve issue_cert.sh'in ürettiği CSR'ların imzalanması sırasında ca-key.pem'in) ağa bağlı makinelere ihtiyacı YOKTUR."
+if [ -z "$PKCS11_URI" ]; then
+  echo "[CA] İKAZ: ca-key.pem'i şimdi bu makineden GÜVENLİ ŞEKİLDE KALDIRIP hava-boşluklu bir ortama/HSM'e taşımayı düşünün — yalnızca ca-cert.pem'in (ve issue_cert.sh'in ürettiği CSR'ların imzalanması sırasında ca-key.pem'in) ağa bağlı makinelere ihtiyacı YOKTUR."
+fi
