@@ -345,6 +345,19 @@ jobs:
     needs: [ca-key-secret-guard, extract-core-check]
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # KENDİ KENDİNİ TEŞHİS EDEN İŞ (GERÇEK BULGU, GitHub çalıştırmaları #15/#16):
+    # bu iş ilk gerçek koşularında "Process completed with exit code 1" ile
+    # kaldı ama özet sayfası HANGİ komutun NEDEN kaldığını göstermiyordu.
+    # Artık (1) her adımın bir `id`'si var, (2) her `run` adımının çıktısı
+    # ayrıca $RUNNER_TEMP/kapi3c.log'a da yazılıyor (tee — çıktı ekranda
+    # AYNEN görünmeye devam eder), (3) iş kalırsa son adım, başarısız adımı
+    # ve log'un son satırlarını hem iş özetine hem de ::error:: annotation'ı
+    # olarak yazıyor. Komutların KENDİSİ değiştirilmedi.
+    # shell: bash → GitHub'da `bash --noprofile --norc -eo pipefail {0}`;
+    # pipefail, `{ ...; } | tee` sarmalında hata kodunun KAYBOLMAMASI için ŞART.
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Depoyu çek
         uses: actions/checkout@v4
@@ -355,59 +368,137 @@ jobs:
           node-version: "20"
 
       - name: SoftHSM2 + OpenSC (pkcs11-tool) + OpenSSL PKCS#11 engine kur
+        id: s_apt
         run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y softhsm2 opensc libengine-pkcs11-openssl
+          {
+            sudo apt-get update -qq
+            sudo apt-get install -y softhsm2 opensc libengine-pkcs11-openssl
+          } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
 
       - name: pkcs11js kur (Node ↔ PKCS#11 köprüsü için)
-        run: npm install --no-save pkcs11js
+        id: s_npm
+        run: |
+          { npm install --no-save pkcs11js; } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
 
       - name: script'lerin çalıştırılabilir olduğunu garanti et
+        id: s_chmod
         run: chmod +x bb84/pki_tools/*.sh bb84/pki_tools/*.js
 
       - name: openssl 'pkcs11' engine'inin yüklenebildiğini doğrula (erken tanılama)
+        id: s_engine
         run: |
-          export PKCS11_MODULE_PATH=/usr/lib/softhsm/libsofthsm2.so
-          openssl engine -t -c pkcs11 || {
-            echo "::error::openssl 'pkcs11' engine'i yüklenemedi — libengine-pkcs11-openssl kurulumunu/openssl sürümünü kontrol edin."
-            exit 1
-          }
+          {
+            export PKCS11_MODULE_PATH=/usr/lib/softhsm/libsofthsm2.so
+            openssl engine -t -c pkcs11 || {
+              echo "::error::openssl 'pkcs11' engine'i yüklenemedi — libengine-pkcs11-openssl kurulumunu/openssl sürümünü kontrol edin."
+              exit 1
+            }
+          } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
 
       - name: Yazılımsal HSM token'ını başlat (SoftHSM2)
-        run: bb84/pki_tools/hsm_init.sh "${{ github.workspace }}/hsm-work" photonnet-ci-ca 123456 654321 > "${{ github.workspace }}/hsm-env.sh"
+        id: s_hsminit
+        run: |
+          {
+            bb84/pki_tools/hsm_init.sh "${{ github.workspace }}/hsm-work" photonnet-ci-ca 123456 654321 > "${{ github.workspace }}/hsm-env.sh"
+          } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
 
       - name: CA'yı HSM-arkalı anahtarla başlat (özel anahtar HİÇ diske inmemeli)
+        id: s_cainit
         run: |
-          source "${{ github.workspace }}/hsm-env.sh"
-          bb84/pki_tools/ca_init.sh "${{ github.workspace }}/hsm-pki" --pkcs11-uri "pkcs11:token=photonnet-ci-ca;object=ca-key;type=private"
-          if [ -f "${{ github.workspace }}/hsm-pki/ca-key.pem" ]; then
-            echo "::error::ca-key.pem dosyası ÜRETİLMİŞ — HSM modu bir dosyaya sızdırmamalıydı!"
-            exit 1
-          fi
-          echo "✓ ca-key.pem dosyası oluşturulmadı — CA özel anahtarı yalnızca token içinde var."
+          {
+            source "${{ github.workspace }}/hsm-env.sh"
+            bb84/pki_tools/ca_init.sh "${{ github.workspace }}/hsm-pki" --pkcs11-uri "pkcs11:token=photonnet-ci-ca;object=ca-key;type=private"
+            if [ -f "${{ github.workspace }}/hsm-pki/ca-key.pem" ]; then
+              echo "::error::ca-key.pem dosyası ÜRETİLMİŞ — HSM modu bir dosyaya sızdırmamalıydı!"
+              exit 1
+            fi
+            echo "✓ ca-key.pem dosyası oluşturulmadı — CA özel anahtarı yalnızca token içinde var."
+          } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
 
       - name: Test istemci CSR'ı üret ve HSM-arkalı CA ile imzala
+        id: s_sign
         run: |
-          source "${{ github.workspace }}/hsm-env.sh"
-          bb84/pki_tools/issue_cert.sh "${{ github.workspace }}/hsm-client" client SAE-HSM-TEST
-          bb84/pki_tools/sign_csr.sh "${{ github.workspace }}/hsm-pki" "${{ github.workspace }}/hsm-client/SAE-HSM-TEST.csr" client 7 --engine pkcs11 --key-uri "pkcs11:token=photonnet-ci-ca;object=ca-key;type=private"
-          openssl verify -CAfile "${{ github.workspace }}/hsm-pki/ca-cert.pem" "${{ github.workspace }}/hsm-client/SAE-HSM-TEST-cert.pem"
-          echo "✓ İstemci sertifikası, HSM İÇİNDEKİ CA özel anahtarıyla başarıyla imzalandı ve zincir doğrulandı."
+          {
+            source "${{ github.workspace }}/hsm-env.sh"
+            bb84/pki_tools/issue_cert.sh "${{ github.workspace }}/hsm-client" client SAE-HSM-TEST
+            bb84/pki_tools/sign_csr.sh "${{ github.workspace }}/hsm-pki" "${{ github.workspace }}/hsm-client/SAE-HSM-TEST.csr" client 7 --engine pkcs11 --key-uri "pkcs11:token=photonnet-ci-ca;object=ca-key;type=private"
+            openssl verify -CAfile "${{ github.workspace }}/hsm-pki/ca-cert.pem" "${{ github.workspace }}/hsm-client/SAE-HSM-TEST-cert.pem"
+            echo "✓ İstemci sertifikası, HSM İÇİNDEKİ CA özel anahtarıyla başarıyla imzalandı ve zincir doğrulandı."
+          } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
 
       - name: CA'nın GENEL anahtarını (yalnızca doğrulama için) token'dan dışa aktar
+        id: s_pub
         run: |
-          source "${{ github.workspace }}/hsm-env.sh"
-          pkcs11-tool --module "$PKCS11_MODULE_PATH" --read-object --type pubkey --label ca-key \
-            --output-file "${{ github.workspace }}/hsm-pki/ca-pub.der"
-          openssl rsa -pubin -inform DER -in "${{ github.workspace }}/hsm-pki/ca-pub.der" \
-            -outform PEM -out "${{ github.workspace }}/hsm-pki/ca-pub.pem"
+          {
+            source "${{ github.workspace }}/hsm-env.sh"
+            pkcs11-tool --module "$PKCS11_MODULE_PATH" --read-object --type pubkey --label ca-key \
+              --output-file "${{ github.workspace }}/hsm-pki/ca-pub.der"
+            openssl rsa -pubin -inform DER -in "${{ github.workspace }}/hsm-pki/ca-pub.der" \
+              -outform PEM -out "${{ github.workspace }}/hsm-pki/ca-pub.pem"
+          } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
 
       - name: Node-PKCS11 köprüsü öz-testi (pkcs11js ile doğrudan token'a imzalatma)
+        id: s_bridge
         run: |
-          source "${{ github.workspace }}/hsm-env.sh"
-          node bb84/pki_tools/pkcs11_bridge.js --self-test \
-            --module="$PKCS11_MODULE_PATH" --pin="$PKCS11_PIN" --label=ca-key \
-            --pubkey-pem="${{ github.workspace }}/hsm-pki/ca-pub.pem"
+          {
+            source "${{ github.workspace }}/hsm-env.sh"
+            node bb84/pki_tools/pkcs11_bridge.js --self-test \
+              --module="$PKCS11_MODULE_PATH" --pin="$PKCS11_PIN" --label=ca-key \
+              --pubkey-pem="${{ github.workspace }}/hsm-pki/ca-pub.pem"
+          } 2>&1 | tee -a "$RUNNER_TEMP/kapi3c.log"
+
+      - name: Kapı 3c tanı raporu (YALNIZCA iş kalırsa)
+        if: failure()
+        env:
+          O_APT: ${{ steps.s_apt.outcome }}
+          O_NPM: ${{ steps.s_npm.outcome }}
+          O_CHMOD: ${{ steps.s_chmod.outcome }}
+          O_ENGINE: ${{ steps.s_engine.outcome }}
+          O_HSMINIT: ${{ steps.s_hsminit.outcome }}
+          O_CAINIT: ${{ steps.s_cainit.outcome }}
+          O_SIGN: ${{ steps.s_sign.outcome }}
+          O_PUB: ${{ steps.s_pub.outcome }}
+          O_BRIDGE: ${{ steps.s_bridge.outcome }}
+        run: |
+          set +e
+          LOG="$RUNNER_TEMP/kapi3c.log"; S="$GITHUB_STEP_SUMMARY"
+          FAILED="(bulunamadı)"
+          {
+            echo "## Kapı 3c — tanı raporu"
+            echo
+            echo "| Adım | Sonuç |"
+            echo "|---|---|"
+          } >> "$S"
+          for pair in "apt kurulumu:$O_APT" "pkcs11js kurulumu:$O_NPM" "chmod:$O_CHMOD" "openssl pkcs11 engine:$O_ENGINE" \
+                      "hsm_init.sh:$O_HSMINIT" "ca_init.sh (HSM):$O_CAINIT" "CSR imzalama:$O_SIGN" \
+                      "genel anahtar dışa aktarma:$O_PUB" "pkcs11_bridge öz-testi:$O_BRIDGE"; do
+            name="${pair%%:*}"; out="${pair##*:}"; [ -z "$out" ] && out="çalışmadı"
+            echo "| $name | $out |" >> "$S"
+            if [ "$out" = "failure" ] && [ "$FAILED" = "(bulunamadı)" ]; then FAILED="$name"; fi
+          done
+          {
+            echo
+            echo "**İlk başarısız adım:** $FAILED"
+            echo
+            echo "### kapi3c.log — son 60 satır"
+            echo '```'
+            tail -n 60 "$LOG" 2>/dev/null || echo "(log yok)"
+            echo '```'
+            echo
+            echo "### Ortam yoklaması"
+            echo '```'
+            echo "== paketler =="; dpkg -l softhsm2 opensc libengine-pkcs11-openssl 2>&1 | tail -n 4
+            echo "== libsofthsm2.so konumu =="; find / -name 'libsofthsm2.so' -not -path '/proc/*' 2>/dev/null | head -5
+            echo "== openssl =="; openssl version -a 2>&1 | grep -E '^OpenSSL|ENGINESDIR|MODULESDIR'
+            echo "== engine dizini =="; ls "$(openssl version -e 2>/dev/null | sed -E 's/.*"(.*)"/\1/')" 2>&1 | head
+            echo "== pkcs11js =="; node -e "require('pkcs11js'); console.log('pkcs11js yüklenebildi')" 2>&1 | tail -n 3
+            echo "== softhsm slotları =="; [ -f "$GITHUB_WORKSPACE/hsm-env.sh" ] && source "$GITHUB_WORKSPACE/hsm-env.sh"; softhsm2-util --show-slots 2>&1 | grep -E 'Slot|Label|Initialized' | head -8
+          } >> "$S"
+          # Annotation: özet sayfasındaki listede görünür. %, CR, LF kaçışlanır (GitHub workflow komutu kuralı).
+          TAIL=$(grep -v '^\s*$' "$LOG" 2>/dev/null | tail -n 8)
+          TAIL=${TAIL//'%'/'%25'}; TAIL=${TAIL//$'\r'/'%0D'}; TAIL=${TAIL//$'\n'/'%0A'}
+          echo "::error title=Kapı 3c tanı — başarısız adım → ${FAILED}::${TAIL:-log boş}"
+          exit 0
 
       - name: HSM-arkalı PKI çıktısını artifact olarak yükle (denetlenebilirlik)
         if: always()
