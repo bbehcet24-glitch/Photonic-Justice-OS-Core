@@ -680,8 +680,8 @@ jobs:
             echo "- ✅ CA özel anahtarı sızıntı koruması (statik tarama)"
             echo "- ✅ BB84 algoritma çıkarımı (bb84/photonnet_core.js) kaynakla senkron (bkz. bb84/tools/extract_core.js)"
             echo "- ✅ mTLS/KME sertifika rotasyon+iptal senaryoları (S1-S6, bkz. ekli rapor)"
-            echo "- ✅ IBM ETSI GS QKD 014 mTLS entegrasyon testleri (19 test, mock_ibm_client.js)"
-            echo "- ✅ Yazılımsal HSM (SoftHSM2) + Node-PKCS11 köprüsü — CA özel anahtarı token içinde üretildi/imzaladı, dosyaya hiç inmedi"
+            echo "- ✅ ETSI GS QKD 014 mTLS entegrasyon testleri — 19 test, mock_ibm_client.js; kendi geçici PKI'mız + YEREL KME'ye karşı (ephemeral mod). GERÇEK bir IBM/dış KME'ye karşı DEĞİL — external mod bu mühürlemede çalıştırılmadı."
+            echo "- ✅ Yazılımsal HSM (SoftHSM2) + Node-PKCS11 köprüsü — CA özel anahtarı token içinde üretildi, sertifika imzaladı ve iptal etti (CRL token anahtarıyla), dosyaya hiç inmedi"
             echo "- ✅ Üretim derlemesi — demo/bypass kimlik doğrulama kodu FİZİKSEL OLARAK SÖKÜLDÜ, 19 test sökülmüş derlemeye karşı da geçti"
             echo
             echo "**Commit:** \`${{ github.sha }}\`"
@@ -699,19 +699,49 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: İmzalı tag oluştur ve push et
+      # NOT: `git tag -a` AÇIKLAMALI (annotated) bir etiket üretir — kriptografik
+      # olarak İMZALI DEĞİLDİR (-s / GPG anahtarı yok). Adım adı önceden
+      # "İmzalı tag" diyordu; yanlış bir güvence vermemesi için düzeltildi.
+      - name: Açıklamalı (annotated, imzasız) tag oluştur ve push et
         run: |
           git tag -a "${{ inputs.milestone_version }}" -m "Üretim kilometre taşı ${{ inputs.milestone_version }} — bkz. release notes"
           git push origin "${{ inputs.milestone_version }}"
 
-      - name: GitHub Release yayınla
+      # GERÇEK BULGU (ilk koşu öncesi inceleme): bu adım önceden
+      # `gh release create ... || echo "::warning::Release oluşturuldu ama..."`
+      # ile bitiyordu — Release HİÇ oluşturulamasa bile iş YEŞİL kalıyor ve
+      # "oluşturuldu" diyordu; etiket ise bir önceki adımda ZATEN push edilmiş
+      # olduğundan geride Release'siz yarım bir etiket kalıyordu. Artık:
+      # yalnızca GERÇEKTEN var olan ekler verilir; Release oluşturulamazsa
+      # etiket uzak depodan SİLİNİR (yarım durum bırakılmaz) ve iş KIRMIZI olur.
+      - name: GitHub Release yayınla (başarısız olursa etiket GERİ ALINIR)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          V: ${{ inputs.milestone_version }}
         run: |
-          gh release create "${{ inputs.milestone_version }}" \
-            --title "PhotonNet BB84/KME — Üretim Kilometre Taşı ${{ inputs.milestone_version }}" \
-            --notes-file release-notes.md \
-            release-assets/* || echo "::warning::Release oluşturuldu ama bazı ekler yüklenemedi (rapor artifact'i boş olabilir) — tag yine de push edildi."
+          set -uo pipefail
+          ASSETS=()
+          if [ -d release-assets ]; then
+            while IFS= read -r -d '' f; do ASSETS+=("$f"); done < <(find release-assets -type f -print0 | sort -z)
+          fi
+          if [ "${#ASSETS[@]}" -eq 0 ]; then
+            echo "::warning::Release'e eklenecek rapor dosyası bulunamadı — Release yalnızca notlarla oluşturulacak."
+          else
+            echo "Release ekleri (${#ASSETS[@]}):"; printf '  %s\n' "${ASSETS[@]}"
+          fi
+          if ! gh release create "$V" --verify-tag \
+                 --title "PhotonNet BB84/KME — Üretim Kilometre Taşı $V" \
+                 --notes-file release-notes.md "${ASSETS[@]}"; then
+            echo "::error::Release OLUŞTURULAMADI — yarım durum bırakmamak için $V etiketi geri alınıyor."
+            gh release delete "$V" --yes >/dev/null 2>&1 || true   # kısmen oluştuysa temizle (yoksa sorun değil)
+            if git push --delete origin "$V"; then
+              echo "::error::$V etiketi uzak depodan silindi. Sorunu giderip aynı sürümle tekrar mühürleyebilirsiniz."
+            else
+              echo "::error::$V etiketi SİLİNEMEDİ — elle silin: git push --delete origin $V"
+            fi
+            exit 1
+          fi
+          echo "✓ Release yayınlandı: $V"
 
       - name: Özet
         run: |
