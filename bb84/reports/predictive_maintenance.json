@@ -1,0 +1,931 @@
+{
+  "generatedAt": "2026-10-11T11:19:40.316Z",
+  "thresholdDb": 39.01,
+  "checks": [
+    {
+      "name": "P1 Fizik birimleri: Peck/Arrhenius referansta 1, +10 °C ve RH 50→100 beklenen katsayılar; yarım-döngü sayacı 10 günlük sinüste 2/gün ve aralık≈2A; <2 °C dalgacık sayılmıyor; kapı olayı başına sabit aşınma",
+      "ok": true,
+      "detail": "AF(25°C,%50)=1 · AF(35°C)=2.712 (Arrhenius 0,79 eV: 2.712) · AF(%100)=6.498 (2^2,7=6.498) · 10 gün sinüs (A=5 °C): 20 yarım döngü, aralıklar 10.20–10.57 °C · 0,8 °C dalgacık: 0 döngü · 3 kapı olayı: 0.090 dB"
+    },
+    {
+      "name": "P2 Referans ortamda (25 °C, %50, titreşim/kapı yok) model zamana-bağlı DOĞRUSAL dB kaybına indirgenir (her yıl tam 2,0 dB); sızıntı 1'de (0 dB) tavanlanır — hardware_aging_model ile aynı fizik",
+      "ok": true,
+      "detail": "yıllık kayıp 2.000000 / 2.000000 / 2.000000 dB · 1 dB'den 50 dB/yıl ile 1 yıl → SE 0 dB (tavan)"
+    },
+    {
+      "name": "P3 Aynı kafes, aynı ölçek: yıllık kayıp sahaya göre farklı ve baskın mekanizma değişiyor (ray yanı: titreşim; sokak dolabı: termal döngü + kapı; HVAC arızası: kısa süreli ısı-nem sıçraması)",
+      "ok": true,
+      "detail": "dc: 1.64 dB/yıl {\"th\":1.1,\"tc\":0,\"vib\":0,\"door\":0.73} · dcHvac: 1.8 dB/yıl {\"th\":1.21,\"tc\":0,\"vib\":0,\"door\":0.73} · cabinet: 3.97 dB/yıl {\"th\":2.01,\"tc\":0.83,\"vib\":0,\"door\":1.67} · rail: 6.56 dB/yıl {\"th\":1.1,\"tc\":0,\"vib\":4.9,\"door\":0.73} — NOT: sokak dolabında ısınma bağıl nemi düşürdüğü için (Magnus ~%6/°C) ısı-nem kanalı veri merkezinden çok yüksek DEĞİL"
+    },
+    {
+      "name": "P4 Gizli birim ölçeği 120 günlük veriden öğreniliyor (çevresel sensörler + SE): medyan göreli hata küçük, %90 güven aralığı gerçeği büyük çoğunlukla kapsıyor",
+      "ok": true,
+      "detail": "40 birimde medyan |ŝ−s|/s = 2.2% · p90 5.2% · %90 aralık kapsaması 40/40 (önsel N(1; 0,8²), gerçek ölçekler 0,5–4,5)"
+    },
+    {
+      "name": "P5 Erken uyarı (filo, bakımsız 2 yıl): eşiği geçen HER birim için WARNING eşikten önce geldi, hiçbir ADVISORY 30 günden az önce gelmedi (bu karışık filoda iki tahminci benzer — fark P7/P13'te)",
+      "ok": true,
+      "detail": "eşiği geçen 19/40 birim · çevre-duyarlı: WARNING kaçırma 0, ADVISORY <30 gün 0, medyan öncülük ADVISORY 61 gün / WARNING 23 gün · zaman-tabanlı: WARNING kaçırma 0, ADVISORY <30 gün 0, medyan 60 / 23 gün"
+    },
+    {
+      "name": "P6 Yanlış/erken alarm: RUL-tabanlı hiçbir WARNING/CRITICAL gerçek kalan ömür 56 günden fazlayken, hiçbir ADVISORY 240 günden fazlayken gelmiyor; eşiği hiç geçmeyen birimde WARNING yok. Modelden bağımsız marj kuralının erken alarmları AYRICA sayılıyor (bilinçli bedel)",
+      "ok": true,
+      "detail": "çevre-duyarlı: RUL-tabanlı erken WARNING 0, erken ADVISORY 0, marj kuralından erken CRITICAL 3 · zaman-tabanlı: 0 / 0 / 3 · geçmeyen 19 birimde WARNING 0 · marj kuralı (SE ≤ eşik+0,5 dB) yavaş bozulan birimde ~2 ay erken çalar — model yanlış olsa bile eşiği uyarısız geçirmemenin bedeli"
+    },
+    {
+      "name": "P7 Kalan ömür (RUL) doğruluğu: çevre-duyarlı tahminci 90/60/30 gün kala medyan mutlak hatada zaman-tabanlıdan kötü değil (en az 2/3 noktada daha iyi)",
+      "ok": true,
+      "detail": "çevre-duyarlı → 90g: |hata| 3.4 g, p10–p90 kapsama 0.58 (n=19) · 60g: |hata| 1.9 g, p10–p90 kapsama 0.68 (n=19) · 30g: |hata| 2.5 g, p10–p90 kapsama 0.26 (n=19) · 14g: |hata| 2.1 g, p10–p90 kapsama 0.42 (n=19) ║ zaman-tabanlı → 90g: |hata| 7.9 g, p10–p90 kapsama 0.16 (n=19) · 60g: |hata| 6.2 g, p10–p90 kapsama 0.21 (n=19) · 30g: |hata| 3.2 g, p10–p90 kapsama 0.16 (n=19) · 14g: |hata| 3 g, p10–p90 kapsama 0.16 (n=19)"
+    },
+    {
+      "name": "P8 Kapalı döngü (40 birim × 2 yıl): kestirimci bakımla kalkan HİÇ (ya da neredeyse hiç) HOLD eşiğine inmiyor; reaktif bakımda her geçiş en az sevk gecikmesi kadar HOLD üretiyor. Bedel: ömür dolmadan yapılan bakım",
+      "ok": true,
+      "detail": "HOLD saatleri: çevre-duyarlı 0 · zaman-tabanlı 0 · reaktif 1533 · bakım sayısı 22 / 22 / 21 · bakım anında kalan gerçek ömür (medyan, boşa harcanan): çevre-duyarlı 42 gün, zaman-tabanlı 41 gün"
+    },
+    {
+      "name": "P9 Ani SE düşüşü (400. gün, −9 dB): ÖNCEDEN uyarı yok (öngörülemez), ≤3 saat içinde STEP_CHANGE + muayene önerisi; filoda (adım içermeyen) hiç yanlış STEP_CHANGE yok",
+      "ok": true,
+      "detail": "STEP_CHANGE 2 saat sonra, yenilik -8.82 dB, \"Ani SE düşüşü (gevşek panel/conta, açık kapı?) — trend modeli bunu öng…\" · adımdan önce uyarı: yok · filoda yanlış STEP_CHANGE 0"
+    },
+    {
+      "name": "P10 Model yanlış (gerçek n=1,5, Ea=0,5 eV, q=1,5, b=3; tahminci 2,7 / 0,79 / 2 / 4 varsayıyor): çevrimiçi ölçek kısmen telafi ediyor, WARNING yine hiçbir birimde kaçmıyor; doğruluk kaybı raporlanıyor",
+      "ok": true,
+      "detail": "eşiği geçen 20 · WARNING kaçırma 0 · ADVISORY <30 gün 0 (doğru modelde 0) · RUL |hata| 60 gün kala 3.1 g (doğru modelde 1.9 g), kapsama 0.5 — son savunma: tahmini SE ≤ eşik+0,5 dB → CRITICAL kuralı modelden bağımsız"
+    },
+    {
+      "name": "P13 ÇEVRE FARKININ ASIL ÖNEMLİ OLDUĞU YER — kışın (1 Ocak) izlemeye başlanan, bahar/yaz sıcağında eşiği geçen 20 sokak dolabı: zaman-tabanlı tahminci kış hızını yaza taşıyıp kalan ömrü olduğundan UZUN sanıyor; çevre-duyarlı tahminci iklim öngörüsüyle bunu yakalıyor",
+      "ok": true,
+      "detail": "eşik geçişleri 108–205. gün · 90 gün kala medyan |RUL hatası|: çevre 9.3 g, zaman 23.6 g · ortalama işaretli hata (+ = iyimser): çevre 7.1 g, zaman 22.6 g · en kısa ADVISORY öncülüğü: çevre 43 g, zaman 26 g · ADVISORY <30 gün: 0 / 1 — NOT: çevre-duyarlı da hafif İYİMSER (hava anomalileri dışbükey Arrhenius'ta ortalamayı yükseltir, klimatoloji bunu bilmez)"
+    },
+    {
+      "name": "P11 Çıktı mevcut katmanlara takılıyor: toCageEvaluation → mtlsHandshakePrecondition (aynı şekil), RUL eşiği = ShieldLevelTracker'ın dışa-sızıntı eşiği",
+      "ok": true,
+      "detail": "SE 45 → precondition allowed=false (hedef 60) · SE 25 → acil taban ihlali=true · eşik 39.01 dB = tracker 39.01 dB"
+    },
+    {
+      "name": "P12 Belirlenimcilik ve bütünlük: aynı birim aynı olayları üretiyor; çekirdek + yeniden kullanılan modüllerin SHA-256'sı değişmedi; yeni modüller çekirdeği import etmiyor",
+      "ok": true,
+      "detail": "olaylar birebir · 5 dosya SHA-256 değişmedi · core import yok · süre 20.8 s"
+    }
+  ],
+  "fleet": {
+    "units": [
+      {
+        "id": 0,
+        "cls": "dc",
+        "unitScale": 2.49,
+        "se0": 46.7,
+        "bias": -0.92,
+        "startDayOfYear": 130
+      },
+      {
+        "id": 1,
+        "cls": "dcHvac",
+        "unitScale": 2.53,
+        "se0": 51.5,
+        "bias": -0.38,
+        "startDayOfYear": 230
+      },
+      {
+        "id": 2,
+        "cls": "dcHvac",
+        "unitScale": 2.04,
+        "se0": 49,
+        "bias": 0.32,
+        "startDayOfYear": 158
+      },
+      {
+        "id": 3,
+        "cls": "cabinet",
+        "unitScale": 0.81,
+        "se0": 44.9,
+        "bias": 0.34,
+        "startDayOfYear": 322
+      },
+      {
+        "id": 4,
+        "cls": "dcHvac",
+        "unitScale": 1.08,
+        "se0": 48.8,
+        "bias": 0.8,
+        "startDayOfYear": 202
+      },
+      {
+        "id": 5,
+        "cls": "rail",
+        "unitScale": 2.49,
+        "se0": 44.6,
+        "bias": 0.79,
+        "startDayOfYear": 107
+      },
+      {
+        "id": 6,
+        "cls": "dcHvac",
+        "unitScale": 0.86,
+        "se0": 52,
+        "bias": 0.32,
+        "startDayOfYear": 100
+      },
+      {
+        "id": 7,
+        "cls": "cabinet",
+        "unitScale": 0.74,
+        "se0": 52.6,
+        "bias": -0.37,
+        "startDayOfYear": 107
+      },
+      {
+        "id": 8,
+        "cls": "rail",
+        "unitScale": 1.96,
+        "se0": 48.4,
+        "bias": 0.17,
+        "startDayOfYear": 154
+      },
+      {
+        "id": 9,
+        "cls": "cabinet",
+        "unitScale": 2.48,
+        "se0": 46.9,
+        "bias": -0.13,
+        "startDayOfYear": 116
+      },
+      {
+        "id": 10,
+        "cls": "cabinet",
+        "unitScale": 1.37,
+        "se0": 51.8,
+        "bias": 0.61,
+        "startDayOfYear": 2
+      },
+      {
+        "id": 11,
+        "cls": "dcHvac",
+        "unitScale": 2.45,
+        "se0": 46.5,
+        "bias": 0.1,
+        "startDayOfYear": 73
+      },
+      {
+        "id": 12,
+        "cls": "dc",
+        "unitScale": 1.25,
+        "se0": 52.2,
+        "bias": 0.19,
+        "startDayOfYear": 150
+      },
+      {
+        "id": 13,
+        "cls": "dc",
+        "unitScale": 0.85,
+        "se0": 53,
+        "bias": 0.39,
+        "startDayOfYear": 2
+      },
+      {
+        "id": 14,
+        "cls": "cabinet",
+        "unitScale": 1.69,
+        "se0": 47.2,
+        "bias": -0.02,
+        "startDayOfYear": 334
+      },
+      {
+        "id": 15,
+        "cls": "dcHvac",
+        "unitScale": 2.26,
+        "se0": 53.1,
+        "bias": 0.35,
+        "startDayOfYear": 149
+      },
+      {
+        "id": 16,
+        "cls": "dc",
+        "unitScale": 2.05,
+        "se0": 46.5,
+        "bias": -0.54,
+        "startDayOfYear": 15
+      },
+      {
+        "id": 17,
+        "cls": "rail",
+        "unitScale": 1.69,
+        "se0": 45.7,
+        "bias": -0.6,
+        "startDayOfYear": 19
+      },
+      {
+        "id": 18,
+        "cls": "cabinet",
+        "unitScale": 1.18,
+        "se0": 49.9,
+        "bias": -0.09,
+        "startDayOfYear": 168
+      },
+      {
+        "id": 19,
+        "cls": "cabinet",
+        "unitScale": 1.21,
+        "se0": 44.9,
+        "bias": -0.34,
+        "startDayOfYear": 184
+      },
+      {
+        "id": 20,
+        "cls": "dc",
+        "unitScale": 0.79,
+        "se0": 52.1,
+        "bias": 0.8,
+        "startDayOfYear": 143
+      },
+      {
+        "id": 21,
+        "cls": "cabinet",
+        "unitScale": 0.49,
+        "se0": 49,
+        "bias": -0.68,
+        "startDayOfYear": 48
+      },
+      {
+        "id": 22,
+        "cls": "cabinet",
+        "unitScale": 1.55,
+        "se0": 49.7,
+        "bias": -0.04,
+        "startDayOfYear": 225
+      },
+      {
+        "id": 23,
+        "cls": "rail",
+        "unitScale": 3.26,
+        "se0": 45.4,
+        "bias": 0.36,
+        "startDayOfYear": 283
+      },
+      {
+        "id": 24,
+        "cls": "dc",
+        "unitScale": 1.57,
+        "se0": 48.3,
+        "bias": -0.15,
+        "startDayOfYear": 127
+      },
+      {
+        "id": 25,
+        "cls": "cabinet",
+        "unitScale": 0.65,
+        "se0": 44.6,
+        "bias": 0.57,
+        "startDayOfYear": 52
+      },
+      {
+        "id": 26,
+        "cls": "rail",
+        "unitScale": 1.05,
+        "se0": 46.1,
+        "bias": 0.07,
+        "startDayOfYear": 318
+      },
+      {
+        "id": 27,
+        "cls": "rail",
+        "unitScale": 1.15,
+        "se0": 45,
+        "bias": 0.86,
+        "startDayOfYear": 72
+      },
+      {
+        "id": 28,
+        "cls": "cabinet",
+        "unitScale": 1.55,
+        "se0": 46.8,
+        "bias": -0.89,
+        "startDayOfYear": 173
+      },
+      {
+        "id": 29,
+        "cls": "dcHvac",
+        "unitScale": 1.62,
+        "se0": 50,
+        "bias": 0.23,
+        "startDayOfYear": 306
+      },
+      {
+        "id": 30,
+        "cls": "cabinet",
+        "unitScale": 2.55,
+        "se0": 46.1,
+        "bias": 0.12,
+        "startDayOfYear": 184
+      },
+      {
+        "id": 31,
+        "cls": "dc",
+        "unitScale": 1.63,
+        "se0": 44.7,
+        "bias": 0.3,
+        "startDayOfYear": 328
+      },
+      {
+        "id": 32,
+        "cls": "dc",
+        "unitScale": 1.78,
+        "se0": 44.4,
+        "bias": -0.55,
+        "startDayOfYear": 221
+      },
+      {
+        "id": 33,
+        "cls": "rail",
+        "unitScale": 1.38,
+        "se0": 47,
+        "bias": -0.28,
+        "startDayOfYear": 161
+      },
+      {
+        "id": 34,
+        "cls": "dc",
+        "unitScale": 1.77,
+        "se0": 53.3,
+        "bias": 0.03,
+        "startDayOfYear": 18
+      },
+      {
+        "id": 35,
+        "cls": "dc",
+        "unitScale": 0.91,
+        "se0": 53.5,
+        "bias": -0.84,
+        "startDayOfYear": 54
+      },
+      {
+        "id": 36,
+        "cls": "cabinet",
+        "unitScale": 1,
+        "se0": 46.7,
+        "bias": -0.23,
+        "startDayOfYear": 140
+      },
+      {
+        "id": 37,
+        "cls": "dc",
+        "unitScale": 0.69,
+        "se0": 46.4,
+        "bias": -0.29,
+        "startDayOfYear": 125
+      },
+      {
+        "id": 38,
+        "cls": "rail",
+        "unitScale": 0.65,
+        "se0": 49,
+        "bias": 0.04,
+        "startDayOfYear": 75
+      },
+      {
+        "id": 39,
+        "cls": "dc",
+        "unitScale": 1.16,
+        "se0": 48.7,
+        "bias": 0.63,
+        "startDayOfYear": 173
+      }
+    ],
+    "lead": {
+      "env": {
+        "crossingUnits": 19,
+        "advisoryLate30": 0,
+        "warningMissed": 0,
+        "medianAdvisoryLeadDays": 60.70833333333334,
+        "medianWarningLeadDays": 23.416666666666686,
+        "falseWarnings": 0,
+        "nonCrossingUnits": 19,
+        "prematureWarnings": 0,
+        "prematureAdvisories": 0,
+        "prematureByMargin": 3
+      },
+      "time": {
+        "crossingUnits": 19,
+        "advisoryLate30": 0,
+        "warningMissed": 0,
+        "medianAdvisoryLeadDays": 60.41666666666666,
+        "medianWarningLeadDays": 23.416666666666686,
+        "falseWarnings": 0,
+        "nonCrossingUnits": 19,
+        "prematureWarnings": 0,
+        "prematureAdvisories": 0,
+        "prematureByMargin": 3
+      }
+    },
+    "rows": [
+      {
+        "id": 0,
+        "cls": "dc",
+        "crossDay": 473.875,
+        "advDay": 414,
+        "warnDay": 437,
+        "timeAdvDay": 405,
+        "timeWarnDay": 437
+      },
+      {
+        "id": 1,
+        "cls": "dcHvac",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 2,
+        "cls": "dcHvac",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 3,
+        "cls": "cabinet",
+        "crossDay": 763.25,
+        "advDay": 684,
+        "warnDay": 689,
+        "timeAdvDay": 671,
+        "timeWarnDay": 687
+      },
+      {
+        "id": 4,
+        "cls": "dcHvac",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 5,
+        "cls": "rail",
+        "crossDay": 138.41666666666666,
+        "advDay": 78,
+        "warnDay": 125,
+        "timeAdvDay": 78,
+        "timeWarnDay": 123
+      },
+      {
+        "id": 6,
+        "cls": "dcHvac",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 7,
+        "cls": "cabinet",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 8,
+        "cls": "rail",
+        "crossDay": 259.8333333333333,
+        "advDay": 199,
+        "warnDay": 245,
+        "timeAdvDay": 203,
+        "timeWarnDay": 246
+      },
+      {
+        "id": 9,
+        "cls": "cabinet",
+        "crossDay": 216.20833333333334,
+        "advDay": 149,
+        "warnDay": 194,
+        "timeAdvDay": 120,
+        "timeWarnDay": 195
+      },
+      {
+        "id": 10,
+        "cls": "cabinet",
+        "crossDay": 849.2083333333334,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 11,
+        "cls": "dcHvac",
+        "crossDay": 570.0416666666666,
+        "advDay": 515,
+        "warnDay": 539,
+        "timeAdvDay": 522,
+        "timeWarnDay": 540
+      },
+      {
+        "id": 12,
+        "cls": "dc",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 13,
+        "cls": "dc",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 14,
+        "cls": "cabinet",
+        "crossDay": 440.9583333333333,
+        "advDay": 381,
+        "warnDay": 397,
+        "timeAdvDay": 348,
+        "timeWarnDay": 398
+      },
+      {
+        "id": 15,
+        "cls": "dcHvac",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 16,
+        "cls": "dc",
+        "crossDay": 591.0833333333334,
+        "advDay": 536,
+        "warnDay": 551,
+        "timeAdvDay": 530,
+        "timeWarnDay": 553
+      },
+      {
+        "id": 17,
+        "cls": "rail",
+        "crossDay": 192.70833333333334,
+        "advDay": 132,
+        "warnDay": 177,
+        "timeAdvDay": 134,
+        "timeWarnDay": 177
+      },
+      {
+        "id": 18,
+        "cls": "cabinet",
+        "crossDay": 783.125,
+        "advDay": 724,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 19,
+        "cls": "cabinet",
+        "crossDay": 410.2916666666667,
+        "advDay": 353,
+        "warnDay": 379,
+        "timeAdvDay": 366,
+        "timeWarnDay": 383
+      },
+      {
+        "id": 20,
+        "cls": "dc",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 21,
+        "cls": "cabinet",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 22,
+        "cls": "cabinet",
+        "crossDay": 680.375,
+        "advDay": 625,
+        "warnDay": 660,
+        "timeAdvDay": 639,
+        "timeWarnDay": 661
+      },
+      {
+        "id": 23,
+        "cls": "rail",
+        "crossDay": 111.08333333333333,
+        "advDay": 50,
+        "warnDay": 95,
+        "timeAdvDay": 53,
+        "timeWarnDay": 95
+      },
+      {
+        "id": 24,
+        "cls": "dc",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 25,
+        "cls": "cabinet",
+        "crossDay": 847.5,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 26,
+        "cls": "rail",
+        "crossDay": 369.6666666666667,
+        "advDay": 305,
+        "warnDay": 343,
+        "timeAdvDay": 303,
+        "timeWarnDay": 342
+      },
+      {
+        "id": 27,
+        "cls": "rail",
+        "crossDay": 329.75,
+        "advDay": 268,
+        "warnDay": 308,
+        "timeAdvDay": 268,
+        "timeWarnDay": 307
+      },
+      {
+        "id": 28,
+        "cls": "cabinet",
+        "crossDay": 405.4166666666667,
+        "advDay": 338,
+        "warnDay": 382,
+        "timeAdvDay": 344,
+        "timeWarnDay": 382
+      },
+      {
+        "id": 29,
+        "cls": "dcHvac",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 30,
+        "cls": "cabinet",
+        "crossDay": 279.4583333333333,
+        "advDay": 214,
+        "warnDay": 261,
+        "timeAdvDay": 230,
+        "timeWarnDay": 262
+      },
+      {
+        "id": 31,
+        "cls": "dc",
+        "crossDay": 686.9166666666666,
+        "advDay": 633,
+        "warnDay": 638,
+        "timeAdvDay": 630,
+        "timeWarnDay": 636
+      },
+      {
+        "id": 32,
+        "cls": "dc",
+        "crossDay": 533.3333333333334,
+        "advDay": 460,
+        "warnDay": 463,
+        "timeAdvDay": 462,
+        "timeWarnDay": 467
+      },
+      {
+        "id": 33,
+        "cls": "rail",
+        "crossDay": 301.9166666666667,
+        "advDay": 242,
+        "warnDay": 281,
+        "timeAdvDay": 246,
+        "timeWarnDay": 282
+      },
+      {
+        "id": 34,
+        "cls": "dc",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 35,
+        "cls": "dc",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 36,
+        "cls": "cabinet",
+        "crossDay": 616.6666666666666,
+        "advDay": 540,
+        "warnDay": 554,
+        "timeAdvDay": 498,
+        "timeWarnDay": 546
+      },
+      {
+        "id": 37,
+        "cls": "dc",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 38,
+        "cls": "rail",
+        "crossDay": 826.8333333333334,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      },
+      {
+        "id": 39,
+        "cls": "dc",
+        "crossDay": null,
+        "advDay": null,
+        "warnDay": null,
+        "timeAdvDay": null,
+        "timeWarnDay": null
+      }
+    ],
+    "rulAccuracy": {
+      "env": {
+        "14": {
+          "n": 19,
+          "medianAbsErrDays": 2.1,
+          "coverage80": 0.42
+        },
+        "30": {
+          "n": 19,
+          "medianAbsErrDays": 2.5,
+          "coverage80": 0.26
+        },
+        "60": {
+          "n": 19,
+          "medianAbsErrDays": 1.9,
+          "coverage80": 0.68
+        },
+        "90": {
+          "n": 19,
+          "medianAbsErrDays": 3.4,
+          "coverage80": 0.58
+        }
+      },
+      "time": {
+        "14": {
+          "n": 19,
+          "medianAbsErrDays": 3,
+          "coverage80": 0.16
+        },
+        "30": {
+          "n": 19,
+          "medianAbsErrDays": 3.2,
+          "coverage80": 0.16
+        },
+        "60": {
+          "n": 19,
+          "medianAbsErrDays": 6.2,
+          "coverage80": 0.21
+        },
+        "90": {
+          "n": 19,
+          "medianAbsErrDays": 7.9,
+          "coverage80": 0.16
+        }
+      }
+    }
+  },
+  "scaleLearning": {
+    "medianRelErr": 0.022,
+    "p90RelErr": 0.052,
+    "coverage90": 1
+  },
+  "closedLoop": {
+    "env": {
+      "holdHours": 0,
+      "maintenances": 22,
+      "medianWastedLifeDays": 42
+    },
+    "time": {
+      "holdHours": 0,
+      "maintenances": 22,
+      "medianWastedLifeDays": 41
+    },
+    "reactive": {
+      "holdHours": 1533,
+      "maintenances": 21,
+      "medianWastedLifeDays": null
+    }
+  },
+  "misspecified": {
+    "truth": {
+      "n": 1.5,
+      "eaEv": 0.5,
+      "q": 1.5,
+      "b": 3
+    },
+    "lead": {
+      "crossingUnits": 20,
+      "advisoryLate30": 0,
+      "warningMissed": 0,
+      "medianAdvisoryLeadDays": 63.83333333333334,
+      "medianWarningLeadDays": 28.083333333333314,
+      "falseWarnings": 0,
+      "nonCrossingUnits": 16,
+      "prematureWarnings": 0,
+      "prematureAdvisories": 0,
+      "prematureByMargin": 1
+    },
+    "rulAccuracy": {
+      "14": {
+        "n": 20,
+        "medianAbsErrDays": 1.8,
+        "coverage80": 0.4
+      },
+      "30": {
+        "n": 20,
+        "medianAbsErrDays": 3,
+        "coverage80": 0.4
+      },
+      "60": {
+        "n": 20,
+        "medianAbsErrDays": 3.1,
+        "coverage80": 0.5
+      },
+      "90": {
+        "n": 20,
+        "medianAbsErrDays": 5,
+        "coverage80": 0.6
+      }
+    }
+  },
+  "seasonal": {
+    "units": 20,
+    "crossDays": [
+      108,
+      142,
+      119,
+      124,
+      150,
+      167,
+      124,
+      139,
+      139,
+      191,
+      180,
+      144,
+      180,
+      179,
+      166,
+      158,
+      177,
+      153,
+      199,
+      205
+    ],
+    "env": {
+      "medAbsErr90": 9.291666666666671,
+      "meanErr90": 7.07708333333333,
+      "minAdvLead": 43.291666666666664,
+      "late30": 0
+    },
+    "time": {
+      "medAbsErr90": 23.629708854879027,
+      "meanErr90": 22.588512917627845,
+      "minAdvLead": 26.291666666666668,
+      "late30": 1
+    }
+  },
+  "allChecksPassed": true
+}

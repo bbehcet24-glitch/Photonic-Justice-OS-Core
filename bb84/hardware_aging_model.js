@@ -13,11 +13,16 @@
  *   oranı) rastgele %1–%5 ARTIRIR:
  *     leak_{i+1} = leak_i · (1 + U(0.01, 0.05))
  *   Bu ARTAN, BİRİKEN (compounding) bir bozulmadır — gerçek aşınma gibi
- *   kendiliğinden İYİLEŞMEZ. dB'de bu, SE'nin (log ölçekte) giderek
- *   KÜÇÜLEN adımlarla düşmesi anlamına gelir (yüksek SE'de %'lik sızıntı
- *   artışı az dB kaybettirir; SE düştükçe AYNI %'lik artış DAHA FAZLA dB
- *   kaybettirir — gerçekçi: iyi bir kalkan yavaş bozulur, kötüleşmiş bir
- *   kalkan HIZLA çöker).
+ *   kendiliğinden İYİLEŞMEZ.
+ *   DÜZELTME (environmental_aging_model.js çalışması sırasında bulundu, davranış
+ *   DEĞİŞMEDİ — yalnız bu açıklama yanlıştı): önceki metin "dB'de giderek küçülen
+ *   adımlar / kötüleşmiş kalkan hızla çöker" diyordu. Matematik bunu VERMEZ:
+ *   leak·(1+p) çarpımsal büyümesi dB'de SABİT bir adımdır,
+ *   ΔSE = 10·log10(1+p) ≈ 0,04–0,21 dB/döngü (ortalama ~0,13), SE'den BAĞIMSIZ —
+ *   ölçüm: seed=7'de döngü 0–50, 150–200, 300–350 aralıklarında 0,125 / 0,140 /
+ *   0,131 dB/döngü. Doğrusal-olmayanlık YALNIZ leak=1 (0 dB) tavanında vardır.
+ *   "Döngü"nün zaman/çevre karşılığı tanımsızdır; çevresel sürücüler için bkz.
+ *   environmental_aging_model.js.
  *
  * DÜRÜSTLÜK NOTU: "%1-5 arasında rastgele düşürsün" talebini SIZINTI
  * KESRİNE (güç alanında, doğrusal) uyguluyoruz — SE dB DEĞERİNİN kendisine
