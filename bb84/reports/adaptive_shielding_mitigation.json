@@ -1,0 +1,222 @@
+{
+  "generatedAt": "2026-10-11T09:31:01.883Z",
+  "checks": [
+    {
+      "name": "(A) SE_gerekli tersi emissionDetectabilityCheck ile birebir tutarlı (tespit ⟺ SE < SE_gerekli)",
+      "ok": true,
+      "detail": "12/12 senaryo uyuştu (tespit edilebilir VE edilemez sonuçların ikisi de görüldü), FSPL artığı ≤ 0.048 dB (yalnız yuvarlama)"
+    },
+    {
+      "name": "(B) Tehdit modeli / içeri-giriş varsayımı / teslimat-yolu izolasyonu / η eksikse AÇIKÇA reddediliyor",
+      "ok": true,
+      "detail": "tehdit eksik→hata ✓ · ingress eksik→hata ✓ · deliveryPathIsolated eksik→hata ✓ · η eksik→hata ✓ — SE<hedef gevşetmesi ancak açık tehdit modeliyle mümkün"
+    },
+    {
+      "name": "(C) Tam uyarlama ≥ yalnız-kod-oranı ≥ sabit; sabitin çözemediği Y0'larda R>0; ν ızgara İÇ noktası",
+      "ok": true,
+      "detail": "devreye alma μ=0.55 ν=0.06 s/d/v=0.95/0.035/0.015 r=0.800 R=6.63e-4 · Y0=1e-5: 6.6e-4/6.6e-4/6.6e-4 · Y0=5e-5: 6.2e-4/6.2e-4/6.2e-4 · Y0=1e-4: 0.0e+0/4.5e-4/4.7e-4 · Y0=2e-4: 0.0e+0/1.5e-4/3.3e-4 · Y0=3e-4: 0.0e+0/9.4e-5/2.1e-4 · Y0=4e-4: 0.0e+0/0.0e+0/8.1e-5 (sabit/kod/tam) · sabit=0 iken kurtarılan 4 nokta · ν=0.06 > ızgara alt sınırı 0.02"
+    },
+    {
+      "name": "(D) Küçük blokta (N=1e8) decoy+vakum payı büyük blokta (N=1e11) olduğundan BÜYÜK (sonlu-istatistik maliyeti)",
+      "ok": true,
+      "detail": "N=1e8: s/d/v=0.5/0.35/0.15 R=5.92e-5 · N=1e11: s/d/v=0.95/0.025/0.025 R=4.02e-4 · ps=0.5 ızgara alt ucu ama ızgara 0.2'ye genişletilince optimum AYNI kalıyor (gerçek iç optimum, sınır artefaktı değil) ✓"
+    },
+    {
+      "name": "(E) SE_gerekli ≤ SE < hedef: mevcut önkoşul REDDEDER, bu katman ADAPT + mTLS AÇIK + R>0",
+      "ok": true,
+      "detail": "mtlsHandshakePrecondition(SE=45) allowed=false · katman: ADAPT, mTLS=true, R=5.12e-4/darbe — gevşetme yalnız açık tehdit modeliyle (bkz. B)"
+    },
+    {
+      "name": "(F) 200 ms'lik 25 dB düşüşü: BLOCK yok, mTLS hiç kopmuyor, HOLD penceresi karantinada, havuz muhasebesi korunuyor, aç kalınmıyor",
+      "ok": true,
+      "detail": "seviye süreleri {\"NORMAL\":23550,\"HOLD\":6500} ms · HOLD 5000→11450 ms (düşüş 200 ms + dışa-sızıntı kurtarma histerezisi 6300 ms) · karantina 3343290 bit (asla havuza dönmedi) · korunum P0+serbest−teslim=havuz ✓ · aç kalınan süre 0 ms · KARŞILAŞTIRMA: mevcut debounce tek başına bu düşüşte mTLS'i açık tutar ama yalnız el sıkışmayı yönetir, anahtar serbest bırakma kararı İÇERMEZ — o 200 ms'ye değen bloklar ayrıca karantinaya alınmazdı (bulgu)"
+    },
+    {
+      "name": "(G) Dışa-sızıntı kurtarması: SE_gerekli+1 dB'de 14 s sonra hâlâ HOLD; +5,5 dB'de ~6300 ms sonra serbest",
+      "ok": true,
+      "detail": "SE_gerekli=38.01 dB · +1 dB → HOLD (marjsız iyileşme sayılmaz) · +5,5 dB → 7300 ms'de ADAPT"
+    },
+    {
+      "name": "(H) HOLD'da üstel daraltma: τ sonunda havuz ≈ e^−1, hiç aç kalınmıyor; naif teslimat havuzu ~1 s'de bitirir; izole olmayan yolda teslimat 0",
+      "ok": true,
+      "detail": "τ=6930 ms · havuz/P0=0.3679 (e^−1=0.3679) · aç kalma 0 ms · naif: havuz 1000 ms'de biter, 5930 ms aç kalır · deliveryPathIsolated=false → HOLD teslimatı 0 bit — süreklilik GÜVENLİKTEN değil temiz havuzdan gelir"
+    },
+    {
+      "name": "(I) SE 41↔42 dB titreşiminde parametre salınımı yok (tepe-tutma + %5 histerezis); korumasız kontrol deneyinde salınım VAR",
+      "ok": true,
+      "detail": "korumalı: 1 geçiş · korumasız (histerezis=0, tepe-tutma=0): 201 geçiş / 201 okuma — korumasızda her kova kendi optimumunu dayatıyor, kod oranı diğer kovada çözülemiyor"
+    },
+    {
+      "name": "(J) İçeri-giriş gürültüsü anahtar hızını 0'a indirince HOLD (BLOCK değil), mTLS açık",
+      "ok": true,
+      "detail": "SE 32,5 dB (taban 30, SE_gerekli 32.01) → Y0≈5.72e-4 → HOLD, mTLS=true · \"HOLD (anahtar hızı 0: tepe Y0≈5.72e-4, hiçbir izinli parametre seti pozitif sonlu-anahtar …\""
+    },
+    {
+      "name": "(K) Ölçülmüş vakum-decoy Y0'ı verilince model yerine o kullanılıyor (SE iyi görünse bile)",
+      "ok": true,
+      "detail": "SE=62 dB (model Y0≈1e-5) ama measuredY0=2e-4 → Y0eff=0.0002, bekleyen parametreler μ=0.75 ν=0.06 r=0.750 (devreye alma μ=0.55 r=0.800)"
+    },
+    {
+      "name": "(L) Sürdürülmüş taban ihlali: 630 ms sonra BLOCK + mTLS kesik; kurtarma 6300 ms marjlı iyi okuma ister; soğuk başlangıçta gecikmesiz BLOCK",
+      "ok": true,
+      "detail": "ilk BLOCK 2650 ms (ihlal 2000 ms'de başladı) · son mTLS kesik okuması 10250 ms (SE 4000 ms'de düzeldi) · BLOCK boyunca teslimat 0 ✓ · soğuk başlangıç SE=20 → BLOCK (sert fail-closed DEĞİŞMEDİ)"
+    },
+    {
+      "name": "(M) Aynı senaryo iki kez → birebir aynı havuz/karantina/teslimat",
+      "ok": true,
+      "detail": "havuz = · karantina = · teslimat ="
+    },
+    {
+      "name": "ÇEKİRDEĞE VE YENİDEN KULLANILAN MODÜLLERE DOKUNULMADI",
+      "ok": true,
+      "detail": "8 dosyanın SHA-256'sı öncesi=sonrası ✓ · doğrudan core import yok ✓ · core=8f879fde86be0129… ✓"
+    }
+  ],
+  "seRequired": {
+    "agree": 12,
+    "total": 12,
+    "bothOutcomesSeen": true,
+    "maxFsplResidualDb": 0.048,
+    "defaultThreatSeReqDb": 38.01
+  },
+  "adaptationGain": {
+    "commissioning": {
+      "mu": 0.55,
+      "nu": 0.06,
+      "ps": 0.95,
+      "pd": 0.035,
+      "pv": 0.015,
+      "r": 0.8,
+      "R": 0.000663091995758077
+    },
+    "rows": [
+      {
+        "Y0": 0.00001,
+        "fixed": 0.000663091995758077,
+        "codeOnly": 0.000663091995758077,
+        "full": 0.000663091995758077,
+        "mu": 0.55,
+        "nu": 0.06,
+        "ps": 0.95,
+        "pd": 0.035,
+        "r": 0.8
+      },
+      {
+        "Y0": 0.00005,
+        "fixed": 0.00061867858294259,
+        "codeOnly": 0.00061867858294259,
+        "full": 0.0006223172171126439,
+        "mu": 0.55,
+        "nu": 0.08,
+        "ps": 0.95,
+        "pd": 0.035,
+        "r": 0.8
+      },
+      {
+        "Y0": 0.0001,
+        "fixed": 0,
+        "codeOnly": 0.00044580060828848387,
+        "full": 0.0004735063680939277,
+        "mu": 0.45,
+        "nu": 0.1,
+        "ps": 0.95,
+        "pd": 0.035,
+        "r": 0.75
+      },
+      {
+        "Y0": 0.0002,
+        "fixed": 0,
+        "codeOnly": 0.00015437201998080955,
+        "full": 0.00032598793947883904,
+        "mu": 0.7,
+        "nu": 0.08,
+        "ps": 0.9,
+        "pd": 0.07,
+        "r": 0.75
+      },
+      {
+        "Y0": 0.0003,
+        "fixed": 0,
+        "codeOnly": 0.00009449977833276035,
+        "full": 0.00020629200773353927,
+        "mu": 0.45,
+        "nu": 0.08,
+        "ps": 0.85,
+        "pd": 0.075,
+        "r": 0.6666666666666666
+      },
+      {
+        "Y0": 0.0004,
+        "fixed": 0,
+        "codeOnly": 0,
+        "full": 0.00008096165239685095,
+        "mu": 0.6,
+        "nu": 0.08,
+        "ps": 0.75,
+        "pd": 0.125,
+        "r": 0.6666666666666666
+      }
+    ]
+  },
+  "blockSize": {
+    "N1e8": {
+      "ps": 0.5,
+      "pd": 0.35,
+      "pv": 0.15,
+      "R": 0.00005917593766058781
+    },
+    "N1e11": {
+      "ps": 0.95,
+      "pd": 0.025,
+      "pv": 0.025,
+      "R": 0.00040205066958666665
+    }
+  },
+  "policy": {
+    "legacyAllowed": false,
+    "level": "ADAPT",
+    "mtls": true,
+    "R": 0.0005123718753551271
+  },
+  "transient": {
+    "levelTimeMs": {
+      "NORMAL": 23550,
+      "HOLD": 6500
+    },
+    "holdStartMs": 5000,
+    "holdEndMs": 11450,
+    "quarantinedBits": 3343290,
+    "releasedBits": 12258730,
+    "deliveredBits": 8666464,
+    "starvedMs": 0,
+    "legacyDebounceCut": false
+  },
+  "egressRecovery": {
+    "seReqDb": 38.01,
+    "at1dB": "HOLD",
+    "releaseAtMs": 7300
+  },
+  "throttle": {
+    "tauMs": 6930,
+    "poolRatioAfterTau": 0.3679,
+    "starvedMs": 0,
+    "naiveDrainMs": 1000,
+    "naiveStarvedMs": 5930,
+    "notIsolatedDelivered": 0
+  },
+  "flapping": {
+    "withProtection": 1,
+    "without": 201
+  },
+  "sustained": {
+    "firstBlockMs": 2650,
+    "lastMtlsCutMs": 10250,
+    "coldStart": "BLOCK"
+  },
+  "integrity": {
+    "unchanged": true,
+    "noCoreImport": true,
+    "coreSha256": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05"
+  },
+  "allChecksPassed": true
+}
