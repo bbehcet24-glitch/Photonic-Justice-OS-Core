@@ -111,6 +111,28 @@
  *        --cert=./pki/localhost-cert.pem --key=./pki/localhost-key.pem --ca=./pki/ca-cert.pem \
  *        --crl=./pki/crl/ca-crl.pem --ocsp-responder=http://localhost:8888
  *
+ * KALKAN KAPISI + ANAHTAR GELEN KUTUSU (isteğe bağlı, çok-düğümlü test ağı —
+ * bkz. multinode_shielding_testbed.js, docs/MULTINODE_SHIELDING_TESTBED.md):
+ *   --shield-gate=<gate.json>     → düğümün Faraday-kafes SE izleyicisinin
+ *                                    (adaptive_shielding_mitigation.js) yazdığı
+ *                                    kapı dosyası. Verilirse FAIL-CLOSED uygulanır:
+ *                                    dosya yok/bozuk/BAYAT (yaş > min(maxAgeMs,
+ *                                    --shield-gate-max-age-ms, vars. 2000)) ya da
+ *                                    self.mtlsAllowed=false → mTLS oturumu
+ *                                    handshake'ten hemen sonra KESİLİR ve istek
+ *                                    503 ile reddedilir; peers[düğüm].deliveryAllowed
+ *                                    false/eksik olan bir SAE düğümüne (çağıran ya
+ *                                    da enc_keys karşı tarafı) anahtar VERİLMEZ.
+ *                                    Verilmezse davranış ESKİSİYLE AYNIDIR.
+ *   --keystore-inbox=<dizin>      → çalışırken anahtar ekleme: dizine atomik
+ *                                    olarak (önce .tmp, sonra rename) bırakılan
+ *                                    her *.json (loadFromExport biçimi) 200 ms'de
+ *                                    bir MERGE ile yüklenir ve dosya SİLİNİR
+ *                                    (anahtar materyali diskte bekletilmez).
+ *                                    Dizine yazabilen herkes anahtar enjekte
+ *                                    edebilir — --keystore dosyasıyla AYNI güven
+ *                                    sınırı (tmpfs + yalnız KME kullanıcısı).
+ *
  * KULLANIM (hızlı yerel demo, --seed-demo, düz HTTP, iptal YOK):
  *   node etsi014_kme_server.js --seed-demo
  *
@@ -348,6 +370,78 @@ if (args["seed-demo"]) {
   console.log("[KME] UYARI: --keystore veya --seed-demo verilmedi, depo BOŞ başlıyor. Anahtar eklemek için PhotonNet'in '🔐 KME Anahtar Deposu' JSON'unu --keystore ile verin.");
 }
 
+// ── KALKAN KAPISI (isteğe bağlı, fail-closed) ─────────────────────
+// Düğümün SE izleyicisi kapı dosyasını sürekli tazeler:
+//   { issuedAtMs, maxAgeMs, self: { node, mtlsAllowed, level },
+//     peers: { "<düğüm>": { deliveryAllowed, level } } }
+// Her bağlantıda/istekte YENİDEN okunur (önbellek yok → bayatlık anında görünür).
+const SHIELD_GATE_PATH = args["shield-gate"] || null;
+const SHIELD_GATE_SERVER_MAX_AGE_MS = parseInt(args["shield-gate-max-age-ms"] || "2000", 10);
+const saeNode = (sae) => String(sae).replace(/^SAE-/i, "");
+function readShieldGate() {
+  if (!SHIELD_GATE_PATH) return { active: false, ok: true };
+  let g;
+  try { g = JSON.parse(fs.readFileSync(SHIELD_GATE_PATH, "utf8")); }
+  catch (e) { return { active: true, ok: false, reason: `kalkan kapısı okunamadı/ayrıştırılamadı (${e.code || e.message})` }; }
+  if (!g || typeof g !== "object" || !Number.isFinite(g.issuedAtMs) || !Number.isFinite(g.maxAgeMs) ||
+      !g.self || typeof g.self.mtlsAllowed !== "boolean" || !g.peers || typeof g.peers !== "object") {
+    return { active: true, ok: false, reason: "kalkan kapısı biçimi geçersiz" };
+  }
+  // Sunucu tarafı tavan: izleyici kendine sınırsız tazelik süresi veremez.
+  const maxAge = Math.min(g.maxAgeMs, SHIELD_GATE_SERVER_MAX_AGE_MS);
+  const age = Date.now() - g.issuedAtMs;
+  if (age > maxAge || age < -maxAge) {
+    return { active: true, ok: false, reason: `kalkan kapısı BAYAT (yaş ${age} ms, sınır ${maxAge} ms) — SE izleyicisi durmuş olabilir` };
+  }
+  return { active: true, ok: true, gate: g };
+}
+/** Bağlantı düzeyi: düğümün kendi kafesi mTLS'e izin veriyor mu? */
+function shieldGateConnectionVerdict() {
+  const r = readShieldGate();
+  if (!r.active) return { allowed: true };
+  if (!r.ok) return { allowed: false, reason: r.reason };
+  if (!r.gate.self.mtlsAllowed) return { allowed: false, reason: `düğüm kalkanı ${r.gate.self.level || "BLOCK"} — mTLS kapalı (fail-closed)` };
+  return { allowed: true };
+}
+/** İstek düzeyi: verilen SAE'lerin düğümlerine anahtar teslimi serbest mi? */
+function assertShieldGate(saeIds) {
+  const r = readShieldGate();
+  if (!r.active) return;
+  if (!r.ok) throw new KMEError(503, `Kalkan kapısı: ${r.reason}`);
+  if (!r.gate.self.mtlsAllowed) throw new KMEError(503, `Kalkan kapısı: düğüm kalkanı ${r.gate.self.level || "BLOCK"} — anahtar teslimi kapalı`);
+  for (const sae of saeIds) {
+    const p = r.gate.peers[saeNode(sae)];
+    if (!p || p.deliveryAllowed !== true) {
+      throw new KMEError(503, `Kalkan kapısı: '${sae}' düğümüne anahtar teslimi şu an izinli değil (${p ? p.level || "kısıtlı" : "kapıda tanımsız düğüm"})`);
+    }
+  }
+}
+
+// ── ANAHTAR GELEN KUTUSU (isteğe bağlı) ───────────────────────────
+const KEYSTORE_INBOX = args["keystore-inbox"] || null;
+let inboxLoadedFiles = 0, inboxRejectedFiles = 0;
+function drainKeystoreInbox() {
+  let names;
+  try { names = fs.readdirSync(KEYSTORE_INBOX).filter((n) => n.endsWith(".json")).sort(); }
+  catch (e) { console.error(`[KME] Gelen kutusu okunamadı (${KEYSTORE_INBOX}): ${e.message}`); return; }
+  for (const n of names) {
+    const fp = require("path").join(KEYSTORE_INBOX, n);
+    try {
+      store.loadFromExport(JSON.parse(fs.readFileSync(fp, "utf8")), { merge: true });
+      inboxLoadedFiles++;
+    } catch (e) {
+      inboxRejectedFiles++;
+      console.error(`[KME] Gelen kutusu dosyası REDDEDİLDİ (${n}): ${e.message}`);
+    } finally {
+      try { fs.unlinkSync(fp); } catch (e) { /* zaten silinmiş olabilir */ }
+    }
+  }
+}
+if (KEYSTORE_INBOX && require.main === module) {
+  drainKeystoreInbox();
+  setInterval(drainKeystoreInbox, 200);
+}
+
 // ── HTTP yardımcıları ──────────────────────────────────────────────
 function sendJson(res, statusCode, obj) {
   const body = JSON.stringify(obj);
@@ -498,6 +592,7 @@ async function authenticate(req) {
       const ocsp = await checkOcsp(cert, args.ca);
       if (!ocsp.ok) throw new KMEError(401, ocsp.reason || "OCSP doğrulaması başarısız");
     }
+    assertShieldGate([cn]); // kapı yoksa no-op
     return cn;
   }
   // PROD-STRIP-BEGIN: demo-auth-fallback
@@ -505,6 +600,7 @@ async function authenticate(req) {
   const auth = req.headers["authorization"] || "";
   const saeId = req.headers["x-sae-id"];
   if (!saeId) throw new KMEError(401, "X-SAE-ID header eksik — çağıran SAE kimliği belirtilmedi");
+  assertShieldGate([saeId]);
   if (auth !== `Bearer ${AUTH_TOKEN}`) throw new KMEError(401, "Authorization header geçersiz — bkz. --sae-token (İKAZ: bu demo kimlik doğrulaması mTLS'in YERİNE GEÇMEZ, yalnızca yerel test içindir — gerçek mTLS için --cert/--key/--ca üçünü birlikte verin, bkz. pki_tools/)");
   return saeId;
   // PROD-STRIP-END: demo-auth-fallback
@@ -547,6 +643,7 @@ async function handleStatus(req, res, counterpartSaeId) {
 
 async function handleEncKeys(req, res, slaveSaeId) {
   const masterSaeId = await authenticate(req);
+  assertShieldGate([slaveSaeId]); // karşı taraf alamayacaksa master'a da verme (yarı-açık anahtar bırakma)
   const routeKey = KMEKeyStore.routeKeyFromSAEPair(masterSaeId, slaveSaeId);
 
   let params = {};
@@ -660,11 +757,40 @@ if (args.cert && args.key && args.ca) {
   if (args.crl) secureOpts.crl = [fs.readFileSync(args.crl)];
   server = https.createServer(secureOpts, server_handler);
   MTLS_ENABLED = true;
-  modeDesc = `https (GERÇEK mTLS ETKİN — istemciler CA-imzalı sertifika SUNMAK ZORUNDA${args.crl ? "; CRL iptal kontrolü AKTİF" : ""}${args["ocsp-responder"] ? "; OCSP canlı iptal kontrolü AKTİF" : ""})`;
+  modeDesc = `https (GERÇEK mTLS ETKİN — istemciler CA-imzalı sertifika SUNMAK ZORUNDA${args.crl ? "; CRL iptal kontrolü AKTİF" : ""}${args["ocsp-responder"] ? "; OCSP canlı iptal kontrolü AKTİF" : ""}${SHIELD_GATE_PATH ? `; KALKAN KAPISI AKTİF (${SHIELD_GATE_PATH}, fail-closed)` : ""}${KEYSTORE_INBOX ? `; anahtar gelen kutusu ${KEYSTORE_INBOX}` : ""})`;
   // TLS handshake reddedilen bağlantıları (yanlış/eksik/CA-dışı/İPTAL
   // EDİLMİŞ sertifika) GÖZLEMLENEBİLİRLİK için logla — istemciye HİÇBİR
   // ek bilgi SIZDIRILMAZ (bağlantı zaten TLS seviyesinde kesildi),
   // yalnızca sunucu tarafında kayıt.
+  // KALKAN KAPISI — bağlantı düzeyi: düğüm kalkanı BLOCK / kapı bayat ise
+  // doğrulanmış mTLS oturumu, HİÇBİR HTTP verisi işlenmeden kesilir.
+  // Keep-alive ile AÇIK KALAN oturumlar da izlenir: kapı kapandığında (BLOCK /
+  // bayat) 200 ms içinde HEPSİ kesilir — yalnız yeni bağlantıları reddetmek
+  // yetmez, aksi halde önceden açılmış bir oturum BLOCK boyunca kullanılabilirdi.
+  if (SHIELD_GATE_PATH) {
+    const liveTls = new Set();
+    server.on("secureConnection", (tlsSocket) => {
+      const v = shieldGateConnectionVerdict();
+      if (!v.allowed) {
+        console.warn(`[KME] Kalkan kapısı mTLS oturumunu KESTİ: ${v.reason}`);
+        tlsSocket.destroy();
+        return;
+      }
+      liveTls.add(tlsSocket);
+      tlsSocket.on("close", () => liveTls.delete(tlsSocket));
+    });
+    if (require.main === module) {
+      setInterval(() => {
+        if (!liveTls.size) return;
+        const v = shieldGateConnectionVerdict();
+        if (!v.allowed) {
+          console.warn(`[KME] Kalkan kapısı kapandı — ${liveTls.size} açık mTLS oturumu KESİLİYOR: ${v.reason}`);
+          for (const sock of liveTls) sock.destroy();
+          liveTls.clear();
+        }
+      }, 200);
+    }
+  }
   server.on("tlsClientError", (err, tlsSocket) => {
     console.warn(`[KME] mTLS handshake reddedildi (${tlsSocket && tlsSocket.remoteAddress || "?"}): ${err.message}`);
   });
@@ -715,4 +841,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { KMEKeyStore, KMEError, store, server };
+module.exports = { KMEKeyStore, KMEError, store, server, readShieldGate, assertShieldGate, drainKeystoreInbox };

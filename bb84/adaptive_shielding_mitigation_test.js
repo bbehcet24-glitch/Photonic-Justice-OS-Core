@@ -27,6 +27,9 @@
  *   (L) Sürdürülmüş taban ihlali → BLOCK (DEĞİŞMEMİŞ fail-closed), kurtarma
  *       6300 ms marjlı iyi okuma ister; soğuk başlangıçta gecikmesiz BLOCK.
  *   (M) Belirlenimcilik: aynı senaryo iki kez → birebir aynı sonuç.
+ *   (N) Çekme (grant) API'si seviye kurallarına uyuyor.
+ *   (O) ShieldLevelTracker ölçüm belirsizliği bandı.
+ *   (P) Geçici (≤630 ms) vs uzun dışa-sızıntı epizodu kurtarma süresi.
  *   + ÇEKİRDEĞE ve yeniden kullanılan modüllere DOKUNULMADI (SHA-256).
  */
 const fs = require("fs");
@@ -147,6 +150,8 @@ function main() {
   const holdStart = dF.find((d) => d.level === "HOLD").atMs;
   const holdEnd = dF.filter((d) => d.level === "HOLD").pop().atMs;
   const conservation = Math.abs(P0 + ctlF.releasedBits - ctlF.deliveredBits - ctlF.cleanPoolBits) < 1e-6;
+  // HOLD penceresine (köşeli parantez: bir önceki okumadan itibaren) değen TÜM bloklar lekeli olmalı
+  const touched = ctlF.blockLog.filter((b) => b.endMs > 4950 && b.startMs <= holdEnd + 50);
   // Karşılaştırma: mevcut debounce TEK BAŞINA (hedef=60 ile, network_shielding_bridge sözleşmesi)
   const legacyDeb = new SeFailsafeDebounce();
   let legacyCut = false;
@@ -157,14 +162,14 @@ function main() {
   }
   out.transient = { levelTimeMs: lt, holdStartMs: holdStart, holdEndMs: holdEnd, quarantinedBits: ctlF.quarantinedBits, releasedBits: ctlF.releasedBits,
     deliveredBits: Math.round(ctlF.deliveredBits), starvedMs: ctlF.starvedMs, legacyDebounceCut: legacyCut };
-  chk("(F) 200 ms'lik 25 dB düşüşü: BLOCK yok, mTLS hiç kopmuyor, HOLD penceresi karantinada, havuz muhasebesi korunuyor, aç kalınmıyor",
-    !anyBlock && !anyCut && ctlF.quarantinedBits > 0 && conservation && ctlF.starvedMs === 0 && holdStart === 5000 && holdEnd >= 5150 + 6300 - 50,
-    `seviye süreleri ${JSON.stringify(lt)} ms · HOLD ${holdStart}→${holdEnd} ms (düşüş 200 ms + dışa-sızıntı kurtarma histerezisi 6300 ms) · ` +
-    `karantina ${ctlF.quarantinedBits} bit (asla havuza dönmedi) · korunum P0+serbest−teslim=havuz ${conservation ? "✓" : "✗"} · aç kalınan süre ${ctlF.starvedMs} ms · ` +
+  chk("(F) 200 ms'lik 25 dB düşüşü: BLOCK yok, mTLS hiç kopmuyor, HOLD penceresine değen bloklar lekeli, havuz muhasebesi korunuyor, aç kalınmıyor",
+    !anyBlock && !anyCut && touched.length >= 2 && touched.every((b) => b.tainted) && conservation && ctlF.starvedMs === 0 && holdStart === 5000 && holdEnd >= 5200 + 630 - 50 && holdEnd <= 5200 + 630,
+    `seviye süreleri ${JSON.stringify(lt)} ms · HOLD ${holdStart}→${holdEnd} ms (düşüş 200 ms ≤ 630 ms → GEÇİCİ epizot, marjlı-iyi 630 ms kurtarma) · ` +
+    `HOLD'a değen ${touched.length} blok (${touched.map((b) => `[${b.startMs},${b.endMs})`).join(" ")}) hepsi lekeli ${touched.every((b) => b.tainted) ? "✓" : "✗"}, karantina ${ctlF.quarantinedBits} bit (o blokların en kötü Y0'ı düşüş anındaki içeri-giriş gürültüsü → R=0; yani anahtar zaten oluşmadı) · korunum P0+serbest−teslim=havuz ${conservation ? "✓" : "✗"} · aç kalınan süre ${ctlF.starvedMs} ms · ` +
     `KARŞILAŞTIRMA: mevcut debounce tek başına bu düşüşte mTLS'i ${legacyCut ? "KOPARIR" : "açık tutar"} ama yalnız el sıkışmayı yönetir, anahtar serbest bırakma kararı İÇERMEZ — o 200 ms'ye değen bloklar ayrıca karantinaya alınmazdı (bulgu)`);
 
   // ══ (G) Dışa-sızıntı kurtarması marj ister ══
-  const req = A.seRequiredForThreatDb(THREAT).seRequiredDb;
+  const req = mk().egressThresholdDb; // SE_gerekli + ölçüm belirsizliği (vars. 1 dB)
   const ctlG1 = mk();
   const dG1 = run(ctlG1, (t) => (t < 1000 ? 30.5 : req + 1), { tEnd: 15000 });
   const stillHold = dG1.slice(-1)[0].level === "HOLD";
@@ -172,9 +177,9 @@ function main() {
   const dG2 = run(ctlG2, (t) => (t < 1000 ? 30.5 : req + 5.5), { tEnd: 15000 });
   const releaseAt = (dG2.find((d) => d.atMs > 1000 && d.level !== "HOLD") || {}).atMs;
   out.egressRecovery = { seReqDb: +req.toFixed(2), at1dB: dG1.slice(-1)[0].level, releaseAtMs: releaseAt };
-  chk("(G) Dışa-sızıntı kurtarması: SE_gerekli+1 dB'de 14 s sonra hâlâ HOLD; +5,5 dB'de ~6300 ms sonra serbest",
+  chk("(G) Dışa-sızıntı kurtarması: eşik+1 dB'de 14 s sonra hâlâ HOLD; eşik+5,5 dB'de ~6300 ms sonra serbest",
     stillHold && releaseAt >= 1000 + 6300 && releaseAt <= 1000 + 6300 + 50,
-    `SE_gerekli=${req.toFixed(2)} dB · +1 dB → ${dG1.slice(-1)[0].level} (marjsız iyileşme sayılmaz) · +5,5 dB → ${releaseAt} ms'de ${(dG2.find((d) => d.atMs === releaseAt) || {}).level}`);
+    `eşik=${req.toFixed(2)} dB (SE_gerekli ${A.seRequiredForThreatDb(THREAT).seRequiredDb.toFixed(2)} + belirsizlik ${A.DEFAULT_SE_MEASUREMENT_UNCERTAINTY_DB} dB) · +1 dB → ${dG1.slice(-1)[0].level} (marjsız iyileşme sayılmaz) · +5,5 dB → ${releaseAt} ms'de ${(dG2.find((d) => d.atMs === releaseAt) || {}).level}`);
 
   // ══ (H) Daraltma ══
   const tau = mk().holdHorizonMs;
@@ -196,20 +201,20 @@ function main() {
   const jitter = (t) => ((t / 100) % 2 < 1 ? 41 : 42);
   const ctlI = mk();
   run(ctlI, jitter, { tEnd: 20000, dt: 100 });
-  const ctlI0 = mk({ switchHysteresis: 0, y0PeakHoldMs: 0 });
+  const ctlI0 = mk({ switchHysteresis: 0, y0PeakHoldMs: 0, upgradeGuardDb: 0 });
   run(ctlI0, jitter, { tEnd: 20000, dt: 100 });
   out.flapping = { withProtection: ctlI.paramSwitches, without: ctlI0.paramSwitches };
   chk("(I) SE 41↔42 dB titreşiminde parametre salınımı yok (tepe-tutma + %5 histerezis); korumasız kontrol deneyinde salınım VAR",
     ctlI.paramSwitches <= 1 && ctlI0.paramSwitches > 50,
-    `korumalı: ${ctlI.paramSwitches} geçiş · korumasız (histerezis=0, tepe-tutma=0): ${ctlI0.paramSwitches} geçiş / 201 okuma — korumasızda her kova kendi optimumunu dayatıyor, kod oranı diğer kovada çözülemiyor`);
+    `korumalı: ${ctlI.paramSwitches} geçiş · korumasız (histerezis=0, tepe-tutma=0, Y0 yükseltme bandı=0): ${ctlI0.paramSwitches} geçiş / 201 okuma — korumasızda her kova kendi optimumunu dayatıyor, kod oranı diğer kovada çözülemiyor`);
 
   // ══ (J) Anahtar hızı 0 → HOLD ══
-  const ctlJ = mk({ threat: { ...THREAT, noiseFloorDbuVm: 46 }, blockPulses: 1e10 }); // SE_gerekli≈32
+  const ctlJ = mk({ threat: { ...THREAT, noiseFloorDbuVm: 47 }, blockPulses: 1e10 }); // SE_gerekli≈31 → eşik≈32
   const dJ = run(ctlJ, () => 32.5, { tEnd: 1000 });
   const lastJ = dJ.slice(-1)[0];
   chk("(J) İçeri-giriş gürültüsü anahtar hızını 0'a indirince HOLD (BLOCK değil), mTLS açık",
     lastJ.level === "HOLD" && lastJ.mtlsAllowed && /anahtar hızı 0/.test(lastJ.reason),
-    `SE 32,5 dB (taban 30, SE_gerekli ${lastJ.seRequiredDb}) → Y0≈${lastJ.Y0eff.toExponential(2)} → ${lastJ.level}, mTLS=${lastJ.mtlsAllowed} · "${lastJ.reason.slice(0, 90)}…"`);
+    `SE 32,5 dB (taban 30, eşik ${lastJ.egressThresholdDb}) → Y0≈${lastJ.Y0eff.toExponential(2)} → ${lastJ.level}, mTLS=${lastJ.mtlsAllowed} · "${lastJ.reason.slice(0, 90)}…"`);
 
   // ══ (K) Ölçülmüş Y0 ══
   const ctlK = mk({ blockPulses: 1e10 });
@@ -242,6 +247,47 @@ function main() {
   chk("(M) Aynı senaryo iki kez → birebir aynı havuz/karantina/teslimat",
     again.cleanPoolBits === ctlF.cleanPoolBits && again.quarantinedBits === ctlF.quarantinedBits && again.deliveredBits === ctlF.deliveredBits,
     `havuz ${again.cleanPoolBits === ctlF.cleanPoolBits ? "=" : "≠"} · karantina ${again.quarantinedBits === ctlF.quarantinedBits ? "=" : "≠"} · teslimat ${again.deliveredBits === ctlF.deliveredBits ? "=" : "≠"}`);
+
+  // ══ (N) Çekme (grant) API'si — çok-düğümlü relay bunu kullanır ══
+  const gN = mk({ initialCleanPoolBits: 1e6 });
+  gN.ingest({ seDb: 62 }, 0);
+  const gNormal = gN.grantable(100);
+  gN.ingest({ seDb: 35 }, 100);                      // eşik altı → HOLD
+  const gHold = gN.grantable(100);
+  const expHold = gN.cleanPoolBits * (1 - Math.exp(-100 / gN.holdHorizonMs));
+  const got = gN.grant(1e9, 100);
+  const gNi = mk({ initialCleanPoolBits: 1e6, deliveryPathIsolated: false });
+  gNi.ingest({ seDb: 62 }, 0); gNi.ingest({ seDb: 35 }, 100);
+  const gB = mk({ initialCleanPoolBits: 1e6 });
+  gB.ingest({ seDb: 20 }, 0);                        // soğuk başlangıç → BLOCK
+  chk("(N) grant API: NORMAL'de havuzun tamamı, HOLD'da havuz·(1−e^(−dt/τ)), izole değilse 0, BLOCK'ta 0; verilen miktar havuzdan düşülüyor",
+    gNormal === 1e6 && Math.abs(gHold - expHold) < 1e-6 && Math.abs(got - expHold) < 1e-6 && gN.cleanPoolBits === 1e6 - got && gNi.grantable(100) === 0 && gB.grantable(100) === 0,
+    `NORMAL ${gNormal} · HOLD ${gHold.toFixed(1)} (beklenen ${expHold.toFixed(1)}) · izole değil ${gNi.grantable(100)} · BLOCK ${gB.grantable(100)}`);
+
+  // ══ (O) ShieldLevelTracker — düğüm seviyesi için aynı mantık, ölçüm belirsizliği bandı ══
+  const tr = new A.ShieldLevelTracker({ seRequiredDb: 38 });
+  const s1 = tr.update(38.5, 0).state;               // gerçek eşik 38 ama bant 1 dB → 38,5 < 39 → HOLD_EGRESS
+  const tr0 = new A.ShieldLevelTracker({ seRequiredDb: 38, seMeasurementUncertaintyDb: 0 });
+  const s0 = tr0.update(38.5, 0).state;
+  chk("(O) ShieldLevelTracker: ±1 dB ölçüm belirsizliği bandı SE_gerekli'nin hemen üstündeki okumayı güvenli SAYMIYOR; bant 0 iken sayıyor",
+    s1 === "HOLD_EGRESS" && s0 === "OK" && tr.egressThresholdDb === 39,
+    `SE_gerekli 38 dB, okuma 38,5 dB: bant 1 dB → ${s1} · bant 0 → ${s0} (gerçek SE 37,5 dB olabilir — sızıntı fark edilmezdi)`);
+
+  // ══ (P) Geçici vs uzun dışa-sızıntı epizodu kurtarma süresi ══
+  const relAfter = (profile) => {
+    const tk = new A.ShieldLevelTracker({ seRequiredDb: 38 });
+    let rel = null;
+    for (let t = 0; t <= 12000; t += 50) { const st = tk.update(profile(t), t).state; if (t > 1000 && st === "OK" && rel === null) rel = t; }
+    return rel;
+  };
+  const relShort = relAfter((t) => (t === 1000 ? 35 : 50));            // tek kötü örnek (EFT/kopma benzeri)
+  const relLong = relAfter((t) => (t >= 1000 && t < 2000 ? 35 : 50));  // 1 s'lik gerçek bozulma
+  // Gerçek SE eşiğin hemen üstünde (eşik 39 → 41 dB): tek artefakt düğümü KİLİTLEMEMELİ; 1 s'lik gerçek düşüş ise marj (44 dB) ister.
+  const relShortLow = relAfter((t) => (t === 1000 ? 10 : 41));
+  const relLongLow = relAfter((t) => (t >= 1000 && t < 2000 ? 35 : 41));
+  chk("(P) Geçici (≤630 ms) epizot: marjsız 630 ms iyi okumayla kurtarılıyor — gerçek SE eşiğin yalnız 2 dB üstündeyken bile; uzun epizot 5 dB marj + 6300 ms istiyor",
+    relShort === 1700 && relLong === 2000 + 6300 && relShortLow === 1700 && relLongLow === null,
+    `SE 50: tek örnek → OK @${relShort} ms, 1 s epizot → OK @${relLong} ms · SE 41 (eşik+2): tek artefakt → OK @${relShortLow} ms (eski kural: KALICI kilit), 1 s gerçek düşüş → ${relLongLow === null ? "12 s sonra hâlâ HOLD (44 dB marj yok)" : "OK @" + relLongLow} — güvenlik kurtarma süresine değil köşeli-parantez lekelemesine dayanır`);
 
   // ══ ÇEKİRDEK + yeniden kullanılan modüller ══
   const after = hashes();

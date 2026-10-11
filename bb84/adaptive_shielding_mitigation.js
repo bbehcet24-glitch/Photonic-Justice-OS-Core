@@ -61,7 +61,11 @@
  * 7) Teslimat yolu (KME bellek/veri yolu) sızan kafesin İÇİNDEYSE, HOLD
  *    sırasında temiz havuzdan teslimat da sızabilir. Bu yüzden
  *    deliveryPathIsolated AÇIKÇA verilmelidir; false → HOLD'da teslimat 0.
- * 8) KME sunucusuna / production_gate.js'e BAĞLANMADI (non-invaziv katman).
+ * 8) production_gate.js'e BAĞLANMADI. KME sunucusuna bağlantı yalnız
+ *    çok-düğümlü test ağı üzerinden (multinode_shielding_testbed.js →
+ *    etsi014_kme_server.js --shield-gate/--keystore-inbox) yapılır.
+ * 9) SE ölçüm belirsizliği (vars. ±1 dB) dışa-sızıntı eşiğine eklenir:
+ *    eşik = SE_gerekli + u. Bkz. DEFAULT_SE_MEASUREMENT_UNCERTAINTY_DB.
  *
  * ÇEKİRDEĞE DOKUNULMAZ: photonnet_core.js doğrudan import EDİLMEZ; yeniden
  * kullanılan modüller (mtls_failsafe_debounce, decoy_state_protocol,
@@ -75,6 +79,7 @@ const { rfInducedDarkProb } = require("./rf_noise_bridge.js");
 const { combinedDarkProb } = require("./shielded_detector_physics.js");
 const {
   SeFailsafeDebounce, DEFAULT_DEBOUNCE_MS, DEFAULT_RECOVERY_HYSTERESIS_MS, DEFAULT_RECOVERY_MARGIN_DB,
+  TYPICAL_SE_INSTRUMENT_ACCURACY_DB,
 } = require("./mtls_failsafe_debounce.js");
 const { EMERGENCY_SE_FLOOR_DB } = require("./network_shielding_bridge.js");
 
@@ -97,7 +102,22 @@ const DEFAULT_GRID = Object.freeze({
   decoyShareOfRest: [0.3, 0.5, 0.7, 0.85],
 });
 const DEFAULT_SWITCH_HYSTERESIS = 0.05;   // yeni optimum mevcut parametrelerden ≥%5 iyi değilse geçme
+// Y0-ALANI HİSTEREZİSİ: "yükseltme" (zorunlu olmayan) geçişinin adayı, tepe Y0'ın
+// UPGRADE_GUARD_DB ÜSTÜNDE de kod çözebilmelidir. Çok-düğümlü
+// test ağı, ölçülen Y0'ın (vakum sayımı gürültüsü) bir kova sınırında gezinirken
+// iki parametre seti arasında ~30 s'de bir salındığını ölçtü: bir kovada çözülemeyen
+// yüksek kod oranı ZORLA düşürülüyor, komşu kovada %8 daha iyi olduğu için GERİ
+// alınıyordu. 1 dB daha gürültülü kanalda çözemeyecek aday reddedilir → zorunlu
+// düşürme eşiği ile yükseltme eşiği arasında ≥1 dB bant kalır, salınım biter.
+// Zorunlu geçiş (mevcut set R=0) gecikmesiz kalır; önleyici düşürme yapılmaz.
+const DEFAULT_UPGRADE_GUARD_DB = 1;
 const Y0_BUCKET_DB = 0.5;                 // optimizasyon önbelleği için Y0 nicemleme adımı (dB)
+// SE ÖLÇÜM BELİRSİZLİĞİ KORUMA BANDI: ölçülen SE gerçeğinden ±u dB sapabiliyorsa
+// (ör. SEMS sınıfı cihazın belgelenmiş ±1 dB doğruluğu), "ölçülen ≥ SE_gerekli"
+// GERÇEK SE'nin SE_gerekli'nin u dB altında olmasına izin verir → sızıntı fark
+// edilmeden anahtar serbest kalır. Bu yüzden dışa-sızıntı eşiği SE_gerekli + u'dur.
+// Çok-düğümlü test ağının yer-gerçeği denetimi bu bandın GEREKLİ olduğunu ölçer.
+const DEFAULT_SE_MEASUREMENT_UNCERTAINTY_DB = TYPICAL_SE_INSTRUMENT_ACCURACY_DB; // = 1 dB
 
 // ═══ 1) Tehdit modeli: dışa sızıntıyı tespit-edilemez tutmak için gereken SE ═══
 /**
@@ -132,10 +152,16 @@ function ingressEffectiveY0({ seDb, ambientFieldDbuVm, susceptibilityDbuVm, refD
  * olasılıkları. codeRate verilmezse merdivenden çözülebilir EN YÜKSEK oran seçilir.
  */
 function finiteKeyRate({ mu, nu, ps, pd, N, Y0, eta, eDetector = 0.02, e0 = 0.5, epsPE = 1e-10, codeRate }) {
+  if (!(1 - ps - pd > 0) || !(pd > 0) || !(nu < mu)) return { R: 0, decodable: false, reason: "geçersiz oran/yoğunluk" };
+  const p = { Y0, eta, eDetector, e0 };
+  return finiteKeyRateFromGains({ s: D.theoreticalGainAndQber(mu, p), d: D.theoreticalGainAndQber(nu, p), v: D.theoreticalGainAndQber(0, p),
+    mu, nu, ps, pd, N, epsPE, codeRate });
+}
+
+/** finiteKeyRate'in kazançları (Q,E) ÖNCEDEN hesaplanmış hâli — ızgara araması aynı μ/ν için tekrar hesaplamasın diye. */
+function finiteKeyRateFromGains({ s, d, v, mu, nu, ps, pd, N, epsPE = 1e-10, codeRate }) {
   const pv = 1 - ps - pd;
   if (!(pv > 0) || !(pd > 0) || !(nu < mu)) return { R: 0, decodable: false, reason: "geçersiz oran/yoğunluk" };
-  const p = { Y0, eta, eDetector, e0 };
-  const s = D.theoreticalGainAndQber(mu, p), d = D.theoreticalGainAndQber(nu, p), v = D.theoreticalGainAndQber(0, p);
   const run = (g, frac) => {
     const pulses = Math.round(N * frac);
     return { pulses, detected: Math.round(g.Q * pulses), errors: Math.round((g.E || 0) * g.Q * pulses) };
@@ -155,20 +181,113 @@ function* range({ from, to, step }) {
 }
 
 /** Izgara araması: μ, ν, ps, pd (ve otomatik kod oranı) üzerinde R'yi maksimize eder. */
-function optimizeDecoyParameters({ N, Y0, eta, eDetector, e0, epsPE, grid = DEFAULT_GRID }) {
+function optimizeDecoyParameters({ N, Y0, eta, eDetector = 0.02, e0 = 0.5, epsPE = 1e-10, grid = DEFAULT_GRID }) {
   let best = null;
+  const p = { Y0, eta, eDetector, e0 };
+  const gain = new Map();
+  const g = (x) => { if (!gain.has(x)) gain.set(x, D.theoreticalGainAndQber(x, p)); return gain.get(x); };
+  const v = g(0);
   for (const mu of range(grid.mu)) for (const nu of range(grid.nu)) {
     if (!(nu < mu - 1e-9)) continue;
+    const s = g(mu), d = g(nu);
     for (const ps of range(grid.ps)) for (const share of grid.decoyShareOfRest) {
       const pd = +((1 - ps) * share).toFixed(6);
-      const o = finiteKeyRate({ mu, nu, ps, pd, N, Y0, eta, eDetector, e0, epsPE });
+      const o = finiteKeyRateFromGains({ s, d, v, mu, nu, ps, pd, N, epsPE });
       if (best === null || o.R > best.R) best = { ...o, mu, nu, ps, pd, pv: +(1 - ps - pd).toFixed(6) };
     }
   }
   return best;
 }
 
-// ═══ 4) Durumlu denetleyici ═══
+// ═══ 4) Kalkan seviye izleyici (taban debounce + dışa-sızıntı mandalı) ═══
+/**
+ * Hem link denetleyicisinin (AdaptiveShieldingMitigation) hem de çok-düğümlü
+ * ağda DÜĞÜM seviyesindeki kararın (mTLS, güvenilir-relay uygunluğu) AYNI
+ * mantığı kullanması için ayrı sınıf. Durumlar:
+ *   OK          — taban sağlam, SE ≥ eşik (= SE_gerekli + ölçüm belirsizliği)
+ *   HOLD_FLOOR  — taban altı düşüş, debounce penceresi içinde (henüz BLOCK değil)
+ *   HOLD_EGRESS — dışa sızıntı tespit edilebilir ya da marjlı kurtarma sürüyor
+ *   BLOCK       — taban ihlali sürdürülmüş (debounce BLOCKED/RECOVERING)
+ */
+class ShieldLevelTracker {
+  constructor({ seRequiredDb, seMeasurementUncertaintyDb = DEFAULT_SE_MEASUREMENT_UNCERTAINTY_DB,
+    debounceMs = DEFAULT_DEBOUNCE_MS, recoveryHysteresisMs = DEFAULT_RECOVERY_HYSTERESIS_MS,
+    recoveryMarginDb = DEFAULT_RECOVERY_MARGIN_DB, floorDb = EMERGENCY_SE_FLOOR_DB } = {}) {
+    if (!Number.isFinite(seRequiredDb)) throw new TypeError("ShieldLevelTracker: seRequiredDb ZORUNLU.");
+    if (!(seMeasurementUncertaintyDb >= 0)) throw new RangeError("ShieldLevelTracker: seMeasurementUncertaintyDb ≥ 0 olmalı.");
+    Object.assign(this, { seRequiredDb, seMeasurementUncertaintyDb, debounceMs, recoveryHysteresisMs, recoveryMarginDb, floorDb });
+    this.egressThresholdDb = seRequiredDb + seMeasurementUncertaintyDb;
+    // Acil-durum tabanı: MEVCUT debounce sınıfı DEĞİŞTİRİLMEDEN yeniden kullanılır;
+    // ona yalnız TABANA göre kurulmuş bir değerlendirme verilir (hedef = taban).
+    this.floorDebounce = new SeFailsafeDebounce({ debounceMs, recoveryHysteresisMs, recoveryMarginDb, floorDb });
+    this.egressHold = null;       // null = henüz okuma yok (soğuk başlangıç)
+    this.egressGoodSinceMs = null;
+    this.egressEpisodeStartMs = null; // mevcut kötü epizodun ilk kötü okuması
+    this.egressLastBadMs = null;      // ... ve son kötü okuması
+    this.state = null;
+  }
+
+  /**
+   * Kurtarma için gereken kesintisiz marjlı-iyi süre. GEÇİCİ epizot (ilk ve son
+   * kötü okuma arası ≤ debounceMs — ör. tek EFT artefaktı / sensör kopması)
+   * → debounceMs; uzun epizot → recoveryHysteresisMs. GÜVENLİK BUNA BAĞLI
+   * DEĞİLDİR: kötü okumaya değen bloklar köşeli-parantez kuralıyla zaten
+   * lekelenir; bu süre yalnız gerçek bozulmada salınımı önler. Çok-düğümlü
+   * test ağı, tek-örneklik artefaktlarda 6300 ms beklemenin karantinayı ~10×
+   * şişirdiğini ölçtü (bkz. docs/MULTINODE_SHIELDING_TESTBED.md).
+   */
+  _transientEpisode() {
+    return this.egressEpisodeStartMs != null && this.egressLastBadMs - this.egressEpisodeStartMs <= this.debounceMs;
+  }
+  requiredRecoveryMs() { return this._transientEpisode() ? this.debounceMs : this.recoveryHysteresisMs; }
+  /**
+   * Kurtarma için gereken marj. GEÇİCİ epizotta 0 dB (eşiğin üstü yeter), uzun
+   * epizotta recoveryMarginDb (5 dB). Çok-düğümlü test ağı bulgusu: marj her
+   * epizotta 5 dB olunca, gerçek SE eşik ile eşik+5 arasındayken (ADAPT bandının
+   * alt kısmı) TEK bir EFT artefaktı düğümü KALICI olarak HOLD'a kilitliyordu
+   * (ASY: 46. dk'daki tek artefakt → gerçek sızıntıdan 8 dk önce sürekli HOLD).
+   * Eşiğe yakın gerçek titreşim ise kötü okumaları sık tekrarladığı için epizodu
+   * uzatır → tam marj + 6,3 s histerezis devreye girer (salınım koruması korunur).
+   */
+  requiredRecoveryMarginDb() { return this._transientEpisode() ? 0 : this.recoveryMarginDb; }
+
+  update(seDb, nowMs) {
+    const floorEval = {
+      ok: seDb >= this.floorDb, targetSeDb: this.floorDb, marginDb: +(seDb - this.floorDb).toFixed(1),
+      worst: { combinedSeDb: seDb }, detail: `SE ${Number.isFinite(seDb) ? seDb.toFixed(1) : "yok"} dB (taban ${this.floorDb} dB)`,
+    };
+    const deb = this.floorDebounce.ingest(floorEval, nowMs);
+    const floorState = deb.effectiveState;
+
+    // Dışa sızıntı mandalı (Schmitt + zaman histerezisi, debounce ile AYNI sabitler).
+    const thr = this.egressThresholdDb;
+    if (!(seDb >= thr)) {
+      // soğuk başlangıç dahil: kötü okuma → mandal (gecikmesiz)
+      if (!this.egressHold) this.egressEpisodeStartMs = nowMs;
+      this.egressHold = true; this.egressGoodSinceMs = null; this.egressLastBadMs = nowMs;
+    } else if (this.egressHold === null) { // soğuk başlangıç, iyi okuma
+      this.egressHold = false;
+    } else if (this.egressHold) {
+      if (seDb >= thr + this.requiredRecoveryMarginDb()) {
+        if (this.egressGoodSinceMs == null) this.egressGoodSinceMs = nowMs;
+        if (nowMs - this.egressGoodSinceMs >= this.requiredRecoveryMs()) {
+          this.egressHold = false; this.egressGoodSinceMs = null; this.egressEpisodeStartMs = null; this.egressLastBadMs = null;
+        }
+      } else {
+        this.egressGoodSinceMs = null; // marjsız iyileşme sayılmaz, sayaç sıfırlanır
+      }
+    }
+    let state;
+    if (floorState === "BLOCKED" || floorState === "RECOVERING") state = "BLOCK";
+    else if (floorState === "SUSPECT") state = "HOLD_FLOOR";
+    else if (this.egressHold) state = "HOLD_EGRESS";
+    else state = "OK";
+    this.state = state;
+    return { state, floorState, deb, egressGoodSinceMs: this.egressGoodSinceMs, egressThresholdDb: thr, requiredRecoveryMs: this.requiredRecoveryMs() };
+  }
+}
+
+// ═══ 5) Durumlu link denetleyicisi ═══
 class AdaptiveShieldingMitigation {
   /**
    * @param {Object} cfg
@@ -181,6 +300,7 @@ class AdaptiveShieldingMitigation {
    *   switchHysteresis (vars. 0.05), initialCleanPoolBits (vars. 0), grid,
    *   optimizationCache (isteğe bağlı paylaşılan Map — yalnız hız için)
    *   debounceMs / recoveryHysteresisMs / recoveryMarginDb / floorDb — SeFailsafeDebounce ile AYNI anlam
+   *   seMeasurementUncertaintyDb (vars. 1 dB = belgelenmiş SE cihaz doğruluğu) — dışa-sızıntı eşiğine eklenir
    */
   constructor(cfg = {}) {
     const th = cfg.threat || {};
@@ -207,6 +327,7 @@ class AdaptiveShieldingMitigation {
     this.floorDb = cfg.floorDb != null ? cfg.floorDb : EMERGENCY_SE_FLOOR_DB;
     this.holdHorizonMs = cfg.holdHorizonMs != null ? cfg.holdHorizonMs : this.debounceMs + this.recoveryHysteresisMs;
     this.switchHysteresis = cfg.switchHysteresis != null ? cfg.switchHysteresis : DEFAULT_SWITCH_HYSTERESIS;
+    this.upgradeGuardDb = cfg.upgradeGuardDb != null ? cfg.upgradeGuardDb : DEFAULT_UPGRADE_GUARD_DB;
     this.grid = cfg.grid || DEFAULT_GRID;
     // "Hızlı saldırı, yavaş bırakma": optimizasyon, son y0PeakHoldMs içindeki
     // EN KÖTÜ Y0 için yapılır. Böylece seçilen kod oranı yakın geçmişteki her
@@ -216,12 +337,13 @@ class AdaptiveShieldingMitigation {
     this.y0PeakHoldMs = cfg.y0PeakHoldMs != null ? cfg.y0PeakHoldMs : this.recoveryHysteresisMs;
     this._y0Window = [];
 
-    // Acil-durum tabanı: MEVCUT debounce sınıfı DEĞİŞTİRİLMEDEN yeniden kullanılır;
-    // ona yalnız TABANA göre kurulmuş bir değerlendirme verilir (hedef = taban).
-    this.floorDebounce = new SeFailsafeDebounce({
+    this.tracker = new ShieldLevelTracker({
+      seRequiredDb: this.threat.seRequiredDb,
+      seMeasurementUncertaintyDb: cfg.seMeasurementUncertaintyDb != null ? cfg.seMeasurementUncertaintyDb : DEFAULT_SE_MEASUREMENT_UNCERTAINTY_DB,
       debounceMs: this.debounceMs, recoveryHysteresisMs: this.recoveryHysteresisMs,
       recoveryMarginDb: this.recoveryMarginDb, floorDb: this.floorDb,
     });
+    this.egressThresholdDb = this.tracker.egressThresholdDb;
 
     // Önbellek anahtarı TÜM optimizasyon girdilerini içerir → aynı Map'i
     // farklı kanallı denetleyiciler arasında paylaşmak güvenlidir.
@@ -231,18 +353,22 @@ class AdaptiveShieldingMitigation {
     this.pendingParams = this.activeParams;                    // bir sonraki blok sınırında yürürlüğe girecek
     this.paramSwitches = 0;
 
-    this.cleanPoolBits = cfg.initialCleanPoolBits || 0;
+    // KME depolama sınırı (vars. sınırsız). Dolu havuza gelen temiz bitler atılır
+    // (overflowBits) — sürdürülmüş HOLD'daki sürekliliğin tampon boyutuna bağlı olduğunu
+    // görünür kılmak için (bkz. çok-düğümlü test ağı S11).
+    this.poolCapacityBits = cfg.poolCapacityBits != null ? cfg.poolCapacityBits : Infinity;
+    this.overflowBits = 0;
+    this.cleanPoolBits = Math.min(cfg.initialCleanPoolBits || 0, this.poolCapacityBits);
     this.quarantinedBits = 0;     // ASLA havuza dönmez — yalnız sayaç (imha edilmiş say)
     this.releasedBits = 0;
     this.deliveredBits = 0;
     this.starvedMs = 0;           // talep > 0 iken hiç teslim edilemeyen süre
 
-    this.egressHold = null;       // null = henüz okuma yok (soğuk başlangıç)
-    this.egressGoodSinceMs = null;
     this.lastMs = null;
     this.lastDecision = null;
     this.block = null;
     this.history = [];
+    this.blockLog = [];           // kapanan her blok: {startMs, endMs, bits, tainted} — yer-gerçeği denetimi için
   }
 
   _paramsOf(o) { return { mu: o.mu, nu: o.nu, ps: o.ps, pd: o.pd, pv: o.pv, codeRate: o.r }; }
@@ -265,6 +391,13 @@ class AdaptiveShieldingMitigation {
     return { ...this._optCache.get(key), bucketY0: b.Y0 };
   }
 
+  _rateAtBucket(params, Y0) {
+    const b = this._bucketY0(Y0), c = this.channel;
+    const key = ["R", this.blockPulses, c.eta, c.eDetector, c.e0, c.epsPE, b.key, params.mu, params.nu, params.ps, params.pd, params.codeRate].join("|");
+    if (!this._optCache.has(key)) this._optCache.set(key, this._rateOf(params, b.Y0));
+    return this._optCache.get(key);
+  }
+
   _rateOf(params, Y0) {
     return finiteKeyRate({ ...params, N: this.blockPulses, Y0, eta: this.channel.eta, eDetector: this.channel.eDetector,
       e0: this.channel.e0, epsPE: this.channel.epsPE, codeRate: params.codeRate });
@@ -280,9 +413,9 @@ class AdaptiveShieldingMitigation {
     const ing = ingressEffectiveY0({ seDb: Number.isFinite(seDb) ? seDb : 0, ...this.ingress, baseY0: this.channel.baseY0 });
     const Y0eff = reading && Number.isFinite(reading.measuredY0) ? reading.measuredY0 : ing.Y0eff;
 
-    // (b) Seviye kararı. Tepe-tutma penceresi HER okumayla (HOLD/BLOCK dahil) beslenir.
-    const Y0opt = this._peakY0(nowMs, Y0eff);
-    const lvl = this._decideLevel(seDb, nowMs, Y0eff, Y0opt);
+    // (b) Seviye kararı (tepe-tutma penceresi _decideLevel içinde beslenir).
+    const lvl = this._decideLevel(seDb, nowMs, Y0eff);
+    const Y0opt = lvl.Y0opt;
 
     // (c) Önceki karar altındaki aralığı muhasebeleştir (nedensel: karar
     //     t_prev'de verildi, t_now'a kadar geçerliydi). Bu okumadan çıkan
@@ -299,7 +432,7 @@ class AdaptiveShieldingMitigation {
       newKeyDisposition: RELEASABLE.has(lvl.level) ? "RELEASE" : "QUARANTINE",
       deliveryCapBps: this._deliveryCapBps(lvl.level, demandBps),
       demandBps, Y0eff, Y0opt, ingressMarginDb: +ing.ingressMarginDb.toFixed(2),
-      seRequiredDb: +this.threat.seRequiredDb.toFixed(2),
+      seRequiredDb: +this.threat.seRequiredDb.toFixed(2), egressThresholdDb: +this.egressThresholdDb.toFixed(2),
       activeParams: { ...this.activeParams }, pendingParams: { ...this.pendingParams },
       expectedRate: lvl.rate, floorState: lvl.floorState,
       cleanPoolBits: this.cleanPoolBits, quarantinedBits: this.quarantinedBits,
@@ -310,59 +443,66 @@ class AdaptiveShieldingMitigation {
     return decision;
   }
 
-  _decideLevel(seDb, nowMs, Y0eff, Y0opt) {
-    // 1) Acil-durum tabanı — mevcut debounce, aynen.
-    const floorEval = {
-      ok: seDb >= this.floorDb, targetSeDb: this.floorDb, marginDb: +(seDb - this.floorDb).toFixed(1),
-      worst: { combinedSeDb: seDb }, detail: `SE ${Number.isFinite(seDb) ? seDb.toFixed(1) : "yok"} dB (taban ${this.floorDb} dB)`,
-    };
-    const deb = this.floorDebounce.ingest(floorEval, nowMs);
-    const floorState = deb.effectiveState;
+  _decideLevel(seDb, nowMs, Y0eff) {
+    // 1)+2) Taban debounce'u + dışa-sızıntı mandalı (ShieldLevelTracker).
+    const tr = this.tracker.update(seDb, nowMs);
+    const { floorState, deb } = tr;
+    const seReq = this.egressThresholdDb; // SE_gerekli + ölçüm belirsizliği
+    // Tepe-tutma penceresi YALNIZ kalkan OK iken beslenir: HOLD/BLOCK sırasındaki
+    // bloklar zaten karantinada; o anki (geçici) Y0'ı pencereye koymak, 200 ms'lik
+    // bir düşüşten sonra 6,3 s boyunca "anahtar hızı 0" HOLD'una yol açıyordu
+    // (öz-test F bunu yakaladı). Kalıcı gürültü, kurtarmadan sonraki okumalarda
+    // zaten görünür.
+    const Y0opt = tr.state === "OK" ? this._peakY0(nowMs, Y0eff) : this._peakY0Peek(nowMs, Y0eff);
 
-    // 2) Dışa sızıntı mandalı (Schmitt + zaman histerezisi, debounce ile AYNI sabitler).
-    const seReq = this.threat.seRequiredDb;
-    if (this.egressHold === null) { // soğuk başlangıç: doğrulanmış iyi durum yok, ilk okuma belirler
-      this.egressHold = !(seDb >= seReq);
-    } else if (seDb < seReq) {
-      this.egressHold = true; this.egressGoodSinceMs = null;
-    } else if (this.egressHold) {
-      if (seDb >= seReq + this.recoveryMarginDb) {
-        if (this.egressGoodSinceMs == null) this.egressGoodSinceMs = nowMs;
-        if (nowMs - this.egressGoodSinceMs >= this.recoveryHysteresisMs) { this.egressHold = false; this.egressGoodSinceMs = null; }
-      } else {
-        this.egressGoodSinceMs = null; // marjsız iyileşme sayılmaz, sayaç sıfırlanır
-      }
+    if (tr.state === "BLOCK") {
+      return { level: LEVELS.BLOCK, floorState, rate: null, Y0opt, reason: `BLOCK — ${deb.reason}` };
     }
-
-    if (floorState === "BLOCKED" || floorState === "RECOVERING") {
-      return { level: LEVELS.BLOCK, floorState, rate: null, reason: `BLOCK — ${deb.reason}` };
-    }
-    if (floorState === "SUSPECT") {
-      return { level: LEVELS.HOLD, floorState, rate: null,
+    if (tr.state === "HOLD_FLOOR") {
+      return { level: LEVELS.HOLD, floorState, rate: null, Y0opt,
         reason: `HOLD (taban geçici düşüşü, debounce ${deb.elapsedMs}/${this.debounceMs} ms) — mTLS AÇIK, yeni anahtar KARANTİNADA, teslimat temiz havuzdan daraltılmış` };
     }
-    if (this.egressHold) {
-      const rec = this.egressGoodSinceMs != null ? ` (kurtarma ${nowMs - this.egressGoodSinceMs}/${this.recoveryHysteresisMs} ms, eşik SE ≥ ${(seReq + this.recoveryMarginDb).toFixed(1)} dB)` : "";
-      return { level: LEVELS.HOLD, floorState, rate: null,
-        reason: `HOLD (dışa sızıntı: SE ${seDb.toFixed(1)} dB, gerekli ${seReq.toFixed(1)} dB${rec}) — mTLS AÇIK, yeni anahtar KARANTİNADA` };
+    if (tr.state === "HOLD_EGRESS") {
+      const rec = tr.egressGoodSinceMs != null ? ` (kurtarma ${nowMs - tr.egressGoodSinceMs}/${tr.requiredRecoveryMs} ms, eşik SE ≥ ${(seReq + this.tracker.requiredRecoveryMarginDb()).toFixed(1)} dB)` : "";
+      return { level: LEVELS.HOLD, floorState, rate: null, Y0opt,
+        reason: `HOLD (dışa sızıntı: SE ${Number.isFinite(seDb) ? seDb.toFixed(1) : "yok"} dB, eşik ${seReq.toFixed(1)} dB = gerekli ${this.threat.seRequiredDb.toFixed(1)} + belirsizlik ${this.tracker.seMeasurementUncertaintyDb} dB${rec}) — mTLS AÇIK, yeni anahtar KARANTİNADA` };
     }
 
     // 3) ADAPT/NORMAL: parametre yeniden seçimi (tepe-tutmalı Y0, oran histerezisi,
     //    blok sınırında yürürlüğe girer).
-    const cur = this._rateOf(this.pendingParams, Y0opt);
-    const opt = this._optimizeCached(Y0opt);
-    const optAtActual = this._rateOf(this._paramsOf(opt), Y0opt);
-    const better = optAtActual.R > cur.R * (1 + this.switchHysteresis) || (!(cur.R > 0) && optAtActual.R > 0);
-    const newPending = better && !sameParams(this._paramsOf(opt), this.pendingParams) ? this._paramsOf(opt) : null;
-    const rate = better ? optAtActual : cur;
+    // Karar hızları tepe-Y0'ın KOVA ÜST KENARINDA hesaplanır (optimizasyonla
+    // tutarlı, muhafazakâr) ve önbelleklenir — çok-düğümlü ağda adım başına maliyet ~0.
+    const cur = this._rateAtBucket(this.pendingParams, Y0opt);
+    let cand, candRate, better;
+    if (!(cur.R > 0)) {
+      // ZORUNLU geçiş: mevcut set bu gürültüde anahtar üretemiyor → tepe Y0 için optimum.
+      cand = this._paramsOf(this._optimizeCached(Y0opt));
+      candRate = this._rateAtBucket(cand, Y0opt);
+      better = candRate.R > 0;
+    } else {
+      // YÜKSELTME (asimetrik): aday tepe Y0'da ≥%h daha iyi OLMALI ve UPGRADE_GUARD_DB
+      // daha gürültülü kanalda da hâlâ anahtar üretebilmeli (kod çözülebilir). Önleyici
+      // düşürme YOK — düşürme yalnız zorunlu (mevcut R=0) olduğunda.
+      const Yg = Y0opt * Math.pow(10, this.upgradeGuardDb / 10);
+      cand = this._paramsOf(this._optimizeCached(Y0opt));
+      candRate = this._rateAtBucket(cand, Y0opt);
+      better = candRate.R > cur.R * (1 + this.switchHysteresis) && this._rateAtBucket(cand, Yg).R > 0;
+    }
+    const newPending = better && !sameParams(cand, this.pendingParams) ? cand : null;
+    const rate = better ? candRate : cur;
     if (!(rate.R > 0)) {
-      return { level: LEVELS.HOLD, floorState, rate, newPending,
+      return { level: LEVELS.HOLD, floorState, rate, newPending, Y0opt,
         reason: `HOLD (anahtar hızı 0: tepe Y0≈${Y0opt.toExponential(2)}, hiçbir izinli parametre seti pozitif sonlu-anahtar hızı vermiyor) — mTLS AÇIK, teslimat temiz havuzdan` };
     }
     const level = seDb >= Math.max(this.targetSeDb, seReq) ? LEVELS.NORMAL : LEVELS.ADAPT;
-    return { level, floorState, rate, newPending,
+    return { level, floorState, rate, newPending, Y0opt,
       reason: level === LEVELS.NORMAL ? `NORMAL — SE ${seDb.toFixed(1)} dB ≥ hedef ${this.targetSeDb} dB`
-        : `ADAPT — SE ${seDb.toFixed(1)} dB < hedef ${this.targetSeDb} dB ama ≥ gerekli ${seReq.toFixed(1)} dB; parametreler tepe-tutulmuş Y0≈${Y0opt.toExponential(2)} için yeniden seçildi (R=${rate.R.toExponential(2)}/darbe)` };
+        : `ADAPT — SE ${seDb.toFixed(1)} dB < hedef ${this.targetSeDb} dB ama ≥ eşik ${seReq.toFixed(1)} dB; parametreler tepe-tutulmuş Y0≈${Y0opt.toExponential(2)} için yeniden seçildi (R=${rate.R.toExponential(2)}/darbe)` };
+  }
+
+  _peakY0Peek(nowMs, Y0eff) {
+    const live = this._y0Window.filter((e) => e.t >= nowMs - this.y0PeakHoldMs);
+    return live.length ? live.reduce((m, e) => Math.max(m, e.y), 0) : Y0eff;
   }
 
   _peakY0(nowMs, Y0eff) {
@@ -387,8 +527,35 @@ class AdaptiveShieldingMitigation {
     const r = this._rateOf(b.params, b.maxY0); // bloğun EN KÖTÜ Y0'ı ile (muhafazakâr)
     const bits = Math.floor(r.R * this.blockPulses);
     if (b.tainted) this.quarantinedBits += bits;
-    else { this.cleanPoolBits += bits; this.releasedBits += bits; }
-    return { bits, tainted: b.tainted, endMs };
+    let kept = bits;
+    if (!b.tainted) {
+      kept = Math.min(bits, Math.max(0, this.poolCapacityBits - this.cleanPoolBits));
+      this.overflowBits += bits - kept;
+      this.cleanPoolBits += kept; this.releasedBits += kept;
+    }
+    const rec = { startMs: b.startMs, endMs, bits: b.tainted ? bits : kept, tainted: b.tainted, params: { ...b.params } };
+    this.blockLog.push(rec);
+    return rec;
+  }
+
+  /**
+   * ÇEKME (pull) API'si — çok-düğümlü relay için. Son kararın seviyesine göre
+   * önümüzdeki dtMs içinde havuzdan verilebilecek en fazla bit: BLOCK → 0;
+   * HOLD → (izole yol) havuz·(1−e^(−dt/τ)), (izole değil) 0; NORMAL/ADAPT → havuz.
+   * Ağ kullanımında ingest'e demandBps=0 verilir ve teslimat YALNIZ grant() ile yapılır.
+   */
+  grantable(dtMs) {
+    const d = this.lastDecision;
+    if (!d || d.level === LEVELS.BLOCK) return 0;
+    if (d.level === LEVELS.HOLD) return this.deliveryPathIsolated ? this.cleanPoolBits * (1 - Math.exp(-dtMs / this.holdHorizonMs)) : 0;
+    return this.cleanPoolBits;
+  }
+
+  grant(bits, dtMs) {
+    const g = Math.max(0, Math.min(bits, this.grantable(dtMs)));
+    this.cleanPoolBits -= g;
+    this.deliveredBits += g;
+    return g;
   }
 
   /**
@@ -432,7 +599,8 @@ function sameParams(a, b) {
 }
 
 module.exports = {
-  LEVELS, CODE_RATE_LADDER, F_MIN, DEFAULT_GRID, DEFAULT_SWITCH_HYSTERESIS, Y0_BUCKET_DB,
-  seRequiredForThreatDb, ingressEffectiveY0, finiteKeyRate, optimizeDecoyParameters,
-  AdaptiveShieldingMitigation,
+  LEVELS, CODE_RATE_LADDER, F_MIN, DEFAULT_GRID, DEFAULT_SWITCH_HYSTERESIS, DEFAULT_UPGRADE_GUARD_DB, Y0_BUCKET_DB,
+  DEFAULT_SE_MEASUREMENT_UNCERTAINTY_DB,
+  seRequiredForThreatDb, ingressEffectiveY0, finiteKeyRate, finiteKeyRateFromGains, optimizeDecoyParameters,
+  ShieldLevelTracker, AdaptiveShieldingMitigation,
 };

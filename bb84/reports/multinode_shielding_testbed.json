@@ -1,0 +1,5856 @@
+{
+  "generatedAt": "2026-10-11T10:33:44.480Z",
+  "stage": "all",
+  "checks": [
+    {
+      "name": "S1 Saha izleri: bakım kapısı, gerçek kısa sızıntı, conta yaşlanması (SE_gerekli'yi geçiyor), yakın verici ve her düğümde EFT/kopma artefaktları mevcut",
+      "ok": true,
+      "detail": "8 olay · ASY gerçek SE 54.1. dakikada SE_gerekli'nin (38.0 dB) altına iniyor · artefaktlar {\"AVR\":{\"eft\":13,\"dropout\":10},\"MSL\":{\"eft\":12,\"dropout\":7},\"BKR\":{\"eft\":17,\"dropout\":14},\"ASY\":{\"eft\":13,\"dropout\":13},\"KDK\":{\"eft\":15,\"dropout\":15},\"ATS\":{\"eft\":11,\"dropout\":12}}"
+    },
+    {
+      "name": "S2 GÜVENLİK (yer gerçeği): uyarlamalı sistem sızıntı penceresine değen HİÇBİR bloğu serbest bırakmadı, sızıntılı kökenli 0 bit ve izole olmayan sızan düğümden 0 bit teslim etti",
+      "ok": true,
+      "detail": "serbest bırakılan 26113 blok, sızıntılı 0 · karantina 2687 blok (3.25 Gbit) · sızıntılı köken 0 bit · teslimat-yolu ihlali 0 bit"
+    },
+    {
+      "name": "S3 BULGU: eski politikalar teslim KANALINI kapatıyor ama anahtar KÖKENİNİ izlemiyor — sızıntı sırasında üretilen bloklar havuza giriyor ve kanal açılınca teslim ediliyor",
+      "ok": true,
+      "detail": "legacy-strict: 1291 sızıntılı blok serbest, 405063 sızıntılı-kökenli bit teslim, teslimat-yolu ihlali 8000 bit · legacy-debounce: 1291 blok, 405063 bit, teslimat-yolu ihlali 104000 bit (debounce'un 630 ms toleransı KDK'da sızarken teslimata izin veriyor)"
+    },
+    {
+      "name": "S4 Süreklilik: uyarlamalı sistem eski politikaların ikisinden de fazla uçtan-uca anahtar teslim etti ve daha az mTLS kesintisi yaşadı",
+      "ok": true,
+      "detail": "teslim/talep: uyarlamalı 99.19% · legacy-strict 64.05% · legacy-debounce 64.80% · mTLS kesintisi (olay/toplam süre): 1/60.6 s · 1054/3006 s · 2/2936 s · talep başına erişilebilirlik (uyarlamalı): AVR↔ASY 100.00%, MSL↔KDK 97.74%, BKR↔ATS 100.00%, AVR↔KDK 97.74% · AVR↔ASY legacy-strict 18.20%"
+    },
+    {
+      "name": "S5 Uyarlamalı sistemde mTLS yalnız GERÇEK sürdürülmüş taban ihlalinde (bakım kapısı) kesiliyor; EFT artefaktı, sensör kopması, kısa gerçek sızıntı ve yaşlanma kesinti üretmiyor",
+      "ok": true,
+      "detail": "uyarlamalı: 1 kesinti (KDK 1, kapı olayı 1) · legacy-strict 1054 kesinti (artefaktların her biri)"
+    },
+    {
+      "name": "S6 Köken defteri ↔ denetleyici havuzları tutarlı (tüm politikalar, < 1 bit), hiçbir teslim karşılıksız değil",
+      "ok": true,
+      "detail": "adaptive: fark 0.0085 bit, açık 0 · adaptive-u0: fark 0.0085 bit, açık 0 · adaptive-cap16M: fark 0.0001 bit, açık 0 · legacy-strict: fark 0.0101 bit, açık 0 · legacy-debounce: fark 0.0101 bit, açık 0"
+    },
+    {
+      "name": "S7 Yeniden yönlendirme: KDK kapısı açıkken BKR↔ATS talebi KDK'yı atlayan yoldan karşılanıyor",
+      "ok": true,
+      "detail": "kapı penceresinde teslim 100.00% · kullanılan yollar: BKR→AVR→MSL→ASY→ATS"
+    },
+    {
+      "name": "S8 Dinamik optimizasyon: MSL yakın-verici penceresinde (içeri giriş, Y0↑) AVR→MSL linki uyarlamalı parametrelerle anahtar üretmeye devam ediyor; sabit parametreli eski sistem 0 üretiyor",
+      "ok": true,
+      "detail": "pencere (8 dk) içinde serbest bırakılan bit: uyarlamalı 576.8 Mbit · legacy-debounce 0 · parametre geçişi toplam 20 (60 dk, 8 link)"
+    },
+    {
+      "name": "S9 Ölçüm-belirsizliği koruma bandı (Monte Carlo, 1000 ani-sığ düşüş): bant 0 iken olayların bir kısmında sızıntılı blok serbest kalıyor, ±1 dB bantla HİÇ",
+      "ok": true,
+      "detail": "u=0: 20/1000 olayda 20 sızıntılı blok (11.1 Mbit) · u=1: 0 · bu 60 dk'lık izde bant 0 da ihlal üretmedi (yavaş kaymada gürültü mandalı erken tetikliyor); bandın bedeli: karantina 2.81 → 3.25 Gbit"
+    },
+    {
+      "name": "S11 SINIR (dürüstlük): sürdürülmüş HOLD'daki süreklilik TAMPON boyutuna bağlı — havuz 16 Mbit/link ile sınırlanınca ASY'nin kalıcı HOLD'unda AVR↔ASY aç kalıyor; güvenlik değişmiyor",
+      "ok": true,
+      "detail": "AVR↔ASY erişilebilirlik: sınırsız tampon 100.00% (HOLD havuzundan 74 Mbit; 60. dk'da link havuzları 4.2/3.8/1.7/1.2/5.3/6.7/1.6/4.2 Gbit) · 16 Mbit tampon 90.86%, en uzun kesinti 327 s · ASY dışa-sızıntı HOLD'u 601 s (gerçek SE 5.9 dk boyunca SE_gerekli altında; ±1 dB bant HOLD'u daha erken başlatıyor) · kaba köprüleme süresi ≈ 2×16 Mbit / 120 kbps ≈ 267 s < HOLD süresi · taşan 28.7 Gbit · sızıntılı köken 0 — daraltma kısa parazitleri köprüler, kalıcı bozulma BAKIM ister"
+    },
+    {
+      "name": "S10 Belirlenimcilik: aynı izlerle uyarlamalı koşu birebir aynı metrikleri veriyor",
+      "ok": true,
+      "detail": "teslim 999854288 bit = 999854288 bit"
+    },
+    {
+      "name": "L1 Gerçek PKI (CA + localhost + 6 SAE sertifikası) üretildi, 6 ayrı KME süreci gerçek mTLS ile ayağa kalktı",
+      "ok": true,
+      "detail": "KME portları 19600, 19601, 19602, 19603, 19604, 19605 · kapı yazımı 2669 · enjekte edilen uçtan-uca anahtar 20930"
+    },
+    {
+      "name": "L2 Olaylardan önce 4 talebin hepsi gerçek ETSI-014 akışıyla (enc_keys → dec_keys) anahtar alıyor, master/slave birebir",
+      "ok": true,
+      "detail": "AVR↔ASY 5/5 · MSL↔KDK 5/5 · BKR↔ATS 5/5 · AVR↔KDK 5/5"
+    },
+    {
+      "name": "L3 MSL EFT artefaktı (200 ms): karar matrisi HOLD'a geçiyor ama MSL'nin KME'si mTLS'i hiç kesmiyor (teslim yolu izole)",
+      "ok": true,
+      "detail": "MSL durumları HOLD_FLOOR/HOLD_EGRESS/OK · MSL yoklamaları 90, başarısız 0"
+    },
+    {
+      "name": "L4 KDK bakım kapısı (4 s, SE 15 dB): önce teslim kapanıyor (HOLD, izole değil → 503), ~630 ms sonra KME mTLS oturumlarını GERÇEKTEN kesiyor (BLOCK), 6,3 s marjlı iyileşmeden sonra açılıyor",
+      "ok": true,
+      "detail": "6000–6600 ms: http-503 · TLS kesintisi 6802→16217 ms (kapı 6000→10000 ms) · sonrasında ok"
+    },
+    {
+      "name": "L5 KDK uçlu talepler kapı + kurtarma boyunca master KME'nin kapısında reddediliyor (karşı düğüm teslim almıyor), sonra geri geliyor",
+      "ok": true,
+      "detail": "kapı+kurtarma: MSL↔KDK 16 akış, AVR↔KDK 16 akış — hepsi 503 · sonrasında MSL↔KDK 8/8 başarılı"
+    },
+    {
+      "name": "L6 BKR↔ATS: KDK BLOCK'tayken ağ KDK'yı atlayan yola geçiyor, BKR'nin kendi 250 ms gerçek sızıntısında bile (izole) akışlar kesintisiz",
+      "ok": true,
+      "detail": "36/36 akış başarılı · KDK BLOCK sırasında yol(lar): BKR→AVR→MSL→ASY→ATS"
+    },
+    {
+      "name": "L7 SE izleyicisi çöken düğüm (AVR, kapı dosyası tazelenmiyor): KME ≤ maxAge sonra FAIL-CLOSED — mTLS kesiliyor, AVR-master akışları duruyor",
+      "ok": true,
+      "detail": "19000 ms'den sonra AVR yoklamaları: tls-cut (10) · AVR↔ASY/AVR↔KDK akışları: 4/4 reddedildi, 4/4 reddedildi"
+    },
+    {
+      "name": "L8 KÖKEN (gerçek API üzerinden): SAE'lerin aldığı her anahtar test ağının enjekte ettiği anahtarla bayt-bayt aynı, hiçbiri sızıntılı kökenli değil, hiçbiri iki kez verilmedi",
+      "ok": true,
+      "detail": "alınan 400 anahtar · kayıtta 400 · bayt eşleşmesi 400 · sızıntılı köken 0 · tekrar 0"
+    },
+    {
+      "name": "L9 Canlı koşunun yer-gerçeği denetimi: sızıntılı blok serbest bırakılmadı, teslimat-yolu ihlali yok",
+      "ok": true,
+      "detail": "serbest 118 blok · karantina 58 blok · sızıntılı köken 0 · teslimat-yolu ihlali 0"
+    },
+    {
+      "name": "ÇEKİRDEĞE DOKUNULMADI (photonnet_core.js SHA-256 öncesi = sonrası = mühürlü değer)",
+      "ok": true,
+      "detail": "8f879fde86be0129…"
+    }
+  ],
+  "sim": {
+    "minutes": 60,
+    "seRequiredDb": 38.01,
+    "events": [
+      {
+        "node": "KDK",
+        "kind": "bakım kapısı açık",
+        "startMs": 765716,
+        "durMs": 53551,
+        "trueSeDb": 15
+      },
+      {
+        "node": "BKR",
+        "kind": "kısa gerçek sızıntı",
+        "startMs": 29828,
+        "durMs": 126,
+        "trueSeDb": 25
+      },
+      {
+        "node": "BKR",
+        "kind": "kısa gerçek sızıntı",
+        "startMs": 1359035,
+        "durMs": 313,
+        "trueSeDb": 25
+      },
+      {
+        "node": "BKR",
+        "kind": "kısa gerçek sızıntı",
+        "startMs": 1794827,
+        "durMs": 117,
+        "trueSeDb": 25
+      },
+      {
+        "node": "BKR",
+        "kind": "kısa gerçek sızıntı",
+        "startMs": 2495460,
+        "durMs": 393,
+        "trueSeDb": 25
+      },
+      {
+        "node": "BKR",
+        "kind": "kısa gerçek sızıntı",
+        "startMs": 3288534,
+        "durMs": 195,
+        "trueSeDb": 25
+      },
+      {
+        "node": "ASY",
+        "kind": "conta yaşlanması",
+        "startMs": 0,
+        "durMs": 3600000,
+        "fromSeDb": 65,
+        "toSeDb": 34.74
+      },
+      {
+        "node": "MSL",
+        "kind": "yakın verici (ortam alanı 112 dBµV/m)",
+        "startMs": 1800000,
+        "durMs": 480000
+      }
+    ],
+    "asyTrueCrossMs": 3248000,
+    "measurementArtefacts": {
+      "AVR": {
+        "eft": 13,
+        "dropout": 10
+      },
+      "MSL": {
+        "eft": 12,
+        "dropout": 7
+      },
+      "BKR": {
+        "eft": 17,
+        "dropout": 14
+      },
+      "ASY": {
+        "eft": 13,
+        "dropout": 13
+      },
+      "KDK": {
+        "eft": 15,
+        "dropout": 15
+      },
+      "ATS": {
+        "eft": 11,
+        "dropout": 12
+      }
+    },
+    "runs": {
+      "adaptive": {
+        "policy": "adaptive",
+        "seMeasurementUncertaintyDb": 1,
+        "demands": [
+          {
+            "pair": "AVR↔ASY",
+            "offeredBits": 432000000,
+            "deliveredBits": 431999820.00015503,
+            "okSteps": 72000,
+            "steps": 72000,
+            "outageMs": 0,
+            "longestOutageMs": 0,
+            "holdPoolBits": 74009969.1625128,
+            "availability": 1,
+            "deliveredFrac": 0.9999995833336922
+          },
+          {
+            "pair": "MSL↔KDK",
+            "offeredBits": 216000000,
+            "deliveredBits": 211112824.07263455,
+            "okSteps": 70371,
+            "steps": 72000,
+            "outageMs": 81450,
+            "longestOutageMs": 61850,
+            "holdPoolBits": 797999.3350000047,
+            "availability": 0.977375,
+            "deliveredFrac": 0.9773741855214563
+          },
+          {
+            "pair": "BKR↔ATS",
+            "offeredBits": 216000000,
+            "deliveredBits": 215999820.00013843,
+            "okSteps": 72000,
+            "steps": 72000,
+            "outageMs": 0,
+            "longestOutageMs": 0,
+            "holdPoolBits": 2738997.717500041,
+            "availability": 1,
+            "deliveredFrac": 0.9999991666673076
+          },
+          {
+            "pair": "AVR↔KDK",
+            "offeredBits": 144000000,
+            "deliveredBits": 140741824.07261795,
+            "okSteps": 70371,
+            "steps": 72000,
+            "outageMs": 81450,
+            "longestOutageMs": 61850,
+            "holdPoolBits": 657999.1775000031,
+            "availability": 0.977375,
+            "deliveredFrac": 0.9773737782820691
+          }
+        ],
+        "nodes": {
+          "AVR": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3583950,
+              "HOLD_FLOOR": 1150,
+              "HOLD_EGRESS": 14950
+            }
+          },
+          "MSL": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3586750,
+              "HOLD_FLOOR": 950,
+              "HOLD_EGRESS": 12350
+            }
+          },
+          "BKR": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3574000,
+              "HOLD_FLOOR": 2950,
+              "HOLD_EGRESS": 23100
+            }
+          },
+          "ASY": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 2997650,
+              "HOLD_FLOOR": 1300,
+              "HOLD_EGRESS": 601100
+            }
+          },
+          "KDK": {
+            "mtlsCuts": 1,
+            "mtlsDownMs": 60650,
+            "stateMs": {
+              "OK": 3518600,
+              "HOLD_FLOOR": 2100,
+              "HOLD_EGRESS": 18700,
+              "BLOCK": 60650
+            }
+          },
+          "ATS": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3583950,
+              "HOLD_FLOOR": 1150,
+              "HOLD_EGRESS": 14950
+            }
+          }
+        },
+        "leakyProvenanceBits": 0,
+        "deliveryPathViolationBits": 0,
+        "releasedLeakyBlocks": 0,
+        "releasedBlocks": 26113,
+        "quarantinedBlocks": 2687,
+        "ecFailBlocks": 1,
+        "ecFailBits": 1386954,
+        "ledgerShortfall": 0,
+        "levelMs": {
+          "NORMAL": 19572600,
+          "HOLD": 2043350,
+          "ADAPT": 6941850,
+          "BLOCK": 242600
+        },
+        "ledgerPoolMismatchBits": 0.00850677490234375,
+        "finalPoolBits": {
+          "AVR|MSL": 4194588329,
+          "AVR|BKR": 3760397748,
+          "ASY|MSL": 1690384469,
+          "BKR|KDK": 1184968065,
+          "ASY|ATS": 5330447979,
+          "ATS|KDK": 6734898907,
+          "KDK|MSL": 1577355551,
+          "ASY|KDK": 4232982140
+        },
+        "overflowBits": 0,
+        "quarantinedBits": 3249896226,
+        "paramSwitches": 20,
+        "totalDelivered": 999854288.145546,
+        "totalOffered": 1008000000,
+        "mtlsCutsTotal": 1,
+        "mtlsDownMsTotal": 60650,
+        "wallMs": 13757
+      },
+      "adaptive-u0": {
+        "policy": "adaptive",
+        "seMeasurementUncertaintyDb": 0,
+        "demands": [
+          {
+            "pair": "AVR↔ASY",
+            "offeredBits": 432000000,
+            "deliveredBits": 431999820.00015503,
+            "okSteps": 72000,
+            "steps": 72000,
+            "outageMs": 0,
+            "longestOutageMs": 0,
+            "holdPoolBits": 59789975.08750715,
+            "availability": 1,
+            "deliveredFrac": 0.9999995833336922
+          },
+          {
+            "pair": "MSL↔KDK",
+            "offeredBits": 216000000,
+            "deliveredBits": 211112824.07263455,
+            "okSteps": 70371,
+            "steps": 72000,
+            "outageMs": 81450,
+            "longestOutageMs": 61850,
+            "holdPoolBits": 797999.3350000047,
+            "availability": 0.977375,
+            "deliveredFrac": 0.9773741855214563
+          },
+          {
+            "pair": "BKR↔ATS",
+            "offeredBits": 216000000,
+            "deliveredBits": 215999820.00013843,
+            "okSteps": 72000,
+            "steps": 72000,
+            "outageMs": 0,
+            "longestOutageMs": 0,
+            "holdPoolBits": 2654997.787500039,
+            "availability": 1,
+            "deliveredFrac": 0.9999991666673076
+          },
+          {
+            "pair": "AVR↔KDK",
+            "offeredBits": 144000000,
+            "deliveredBits": 140741824.07261795,
+            "okSteps": 70371,
+            "steps": 72000,
+            "outageMs": 81450,
+            "longestOutageMs": 61850,
+            "holdPoolBits": 657999.1775000031,
+            "availability": 0.977375,
+            "deliveredFrac": 0.9773737782820691
+          }
+        ],
+        "nodes": {
+          "AVR": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3583950,
+              "HOLD_FLOOR": 1150,
+              "HOLD_EGRESS": 14950
+            }
+          },
+          "MSL": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3586750,
+              "HOLD_FLOOR": 950,
+              "HOLD_EGRESS": 12350
+            }
+          },
+          "BKR": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3574000,
+              "HOLD_FLOOR": 2950,
+              "HOLD_EGRESS": 23100
+            }
+          },
+          "ASY": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3116150,
+              "HOLD_FLOOR": 1300,
+              "HOLD_EGRESS": 482600
+            }
+          },
+          "KDK": {
+            "mtlsCuts": 1,
+            "mtlsDownMs": 60650,
+            "stateMs": {
+              "OK": 3518600,
+              "HOLD_FLOOR": 2100,
+              "HOLD_EGRESS": 18700,
+              "BLOCK": 60650
+            }
+          },
+          "ATS": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3583950,
+              "HOLD_FLOOR": 1150,
+              "HOLD_EGRESS": 14950
+            }
+          }
+        },
+        "leakyProvenanceBits": 0,
+        "deliveryPathViolationBits": 0,
+        "releasedLeakyBlocks": 0,
+        "releasedBlocks": 26446,
+        "quarantinedBlocks": 2354,
+        "ecFailBlocks": 1,
+        "ecFailBits": 1386954,
+        "ledgerShortfall": 0,
+        "levelMs": {
+          "NORMAL": 19572600,
+          "HOLD": 1690650,
+          "ADAPT": 7294550,
+          "BLOCK": 242600
+        },
+        "ledgerPoolMismatchBits": 0.008501052856445312,
+        "finalPoolBits": {
+          "AVR|MSL": 4194672329,
+          "AVR|BKR": 3760481748,
+          "ASY|MSL": 1770731375,
+          "BKR|KDK": 1184884065,
+          "ASY|ATS": 5529812227,
+          "ATS|KDK": 6734940907,
+          "KDK|MSL": 1577397551,
+          "ASY|KDK": 4395179959
+        },
+        "overflowBits": 0,
+        "quarantinedBits": 2807903253,
+        "paramSwitches": 20,
+        "totalDelivered": 999854288.145546,
+        "totalOffered": 1008000000,
+        "mtlsCutsTotal": 1,
+        "mtlsDownMsTotal": 60650,
+        "wallMs": 12695
+      },
+      "adaptive-cap16M": {
+        "policy": "adaptive",
+        "seMeasurementUncertaintyDb": 1,
+        "demands": [
+          {
+            "pair": "AVR↔ASY",
+            "offeredBits": 432000000,
+            "deliveredBits": 393320423.04763913,
+            "okSteps": 65417,
+            "steps": 72000,
+            "outageMs": 329150,
+            "longestOutageMs": 327050,
+            "holdPoolBits": 35330572.20999843,
+            "availability": 0.9085694444444444,
+            "deliveredFrac": 0.9104639422399053
+          },
+          {
+            "pair": "MSL↔KDK",
+            "offeredBits": 216000000,
+            "deliveredBits": 211112824.07263455,
+            "okSteps": 70371,
+            "steps": 72000,
+            "outageMs": 81450,
+            "longestOutageMs": 61850,
+            "holdPoolBits": 797999.3350000047,
+            "availability": 0.977375,
+            "deliveredFrac": 0.9773741855214563
+          },
+          {
+            "pair": "BKR↔ATS",
+            "offeredBits": 216000000,
+            "deliveredBits": 215707675.96513817,
+            "okSteps": 71902,
+            "steps": 72000,
+            "outageMs": 4900,
+            "longestOutageMs": 700,
+            "holdPoolBits": 2446853.6825000355,
+            "availability": 0.9986388888888889,
+            "deliveredFrac": 0.9986466479867507
+          },
+          {
+            "pair": "AVR↔KDK",
+            "offeredBits": 144000000,
+            "deliveredBits": 140741824.07261795,
+            "okSteps": 70371,
+            "steps": 72000,
+            "outageMs": 81450,
+            "longestOutageMs": 61850,
+            "holdPoolBits": 657999.1775000031,
+            "availability": 0.977375,
+            "deliveredFrac": 0.9773737782820691
+          }
+        ],
+        "nodes": {
+          "AVR": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3583950,
+              "HOLD_FLOOR": 1150,
+              "HOLD_EGRESS": 14950
+            }
+          },
+          "MSL": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3586750,
+              "HOLD_FLOOR": 950,
+              "HOLD_EGRESS": 12350
+            }
+          },
+          "BKR": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3574000,
+              "HOLD_FLOOR": 2950,
+              "HOLD_EGRESS": 23100
+            }
+          },
+          "ASY": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 2997650,
+              "HOLD_FLOOR": 1300,
+              "HOLD_EGRESS": 601100
+            }
+          },
+          "KDK": {
+            "mtlsCuts": 1,
+            "mtlsDownMs": 60650,
+            "stateMs": {
+              "OK": 3518600,
+              "HOLD_FLOOR": 2100,
+              "HOLD_EGRESS": 18700,
+              "BLOCK": 60650
+            }
+          },
+          "ATS": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3583950,
+              "HOLD_FLOOR": 1150,
+              "HOLD_EGRESS": 14950
+            }
+          }
+        },
+        "leakyProvenanceBits": 0,
+        "deliveryPathViolationBits": 0,
+        "releasedLeakyBlocks": 0,
+        "releasedBlocks": 26113,
+        "quarantinedBlocks": 2687,
+        "ecFailBlocks": 1,
+        "ecFailBits": 159999.8999999836,
+        "ledgerShortfall": 0,
+        "levelMs": {
+          "NORMAL": 19572600,
+          "HOLD": 2043350,
+          "ADAPT": 6941850,
+          "BLOCK": 242600
+        },
+        "ledgerPoolMismatchBits": 0.00005479156970977783,
+        "finalPoolBits": {
+          "AVR|MSL": 15998000,
+          "AVR|BKR": 16000000,
+          "ASY|MSL": 2095,
+          "BKR|KDK": 15997000,
+          "ASY|ATS": 2781,
+          "ATS|KDK": 15997000,
+          "KDK|MSL": 15995000,
+          "ASY|KDK": 16000000
+        },
+        "overflowBits": 28657239955.325043,
+        "quarantinedBits": 3249896226,
+        "paramSwitches": 20,
+        "totalDelivered": 960882747.1580298,
+        "totalOffered": 1008000000,
+        "mtlsCutsTotal": 1,
+        "mtlsDownMsTotal": 60650,
+        "wallMs": 12140
+      },
+      "legacy-strict": {
+        "policy": "legacy-strict",
+        "seMeasurementUncertaintyDb": 1,
+        "demands": [
+          {
+            "pair": "AVR↔ASY",
+            "offeredBits": 432000000,
+            "deliveredBits": 78641967.23251463,
+            "okSteps": 13107,
+            "steps": 72000,
+            "outageMs": 2944650,
+            "longestOutageMs": 2817450,
+            "holdPoolBits": 0,
+            "availability": 0.18204166666666666,
+            "deliveredFrac": 0.1820415908160061
+          },
+          {
+            "pair": "MSL↔KDK",
+            "offeredBits": 216000000,
+            "deliveredBits": 212636822.80263576,
+            "okSteps": 70879,
+            "steps": 72000,
+            "outageMs": 56050,
+            "longestOutageMs": 53600,
+            "holdPoolBits": 0,
+            "availability": 0.9844305555555556,
+            "deliveredFrac": 0.9844297351973877
+          },
+          {
+            "pair": "BKR↔ATS",
+            "offeredBits": 216000000,
+            "deliveredBits": 212552822.8726357,
+            "okSteps": 70851,
+            "steps": 72000,
+            "outageMs": 57450,
+            "longestOutageMs": 36700,
+            "holdPoolBits": 0,
+            "availability": 0.9840416666666667,
+            "deliveredFrac": 0.9840408466325726
+          },
+          {
+            "pair": "AVR↔KDK",
+            "offeredBits": 144000000,
+            "deliveredBits": 141749822.81261915,
+            "okSteps": 70875,
+            "steps": 72000,
+            "outageMs": 56250,
+            "longestOutageMs": 53600,
+            "holdPoolBits": 0,
+            "availability": 0.984375,
+            "deliveredFrac": 0.9843737695320774
+          }
+        ],
+        "nodes": {
+          "AVR": {
+            "mtlsCuts": 23,
+            "mtlsDownMs": 1150,
+            "stateMs": {
+              "OK": 3598900,
+              "BLOCK": 1150
+            }
+          },
+          "MSL": {
+            "mtlsCuts": 19,
+            "mtlsDownMs": 950,
+            "stateMs": {
+              "OK": 3599100,
+              "BLOCK": 950
+            }
+          },
+          "BKR": {
+            "mtlsCuts": 36,
+            "mtlsDownMs": 2950,
+            "stateMs": {
+              "OK": 3597100,
+              "BLOCK": 2950
+            }
+          },
+          "ASY": {
+            "mtlsCuts": 922,
+            "mtlsDownMs": 2944500,
+            "stateMs": {
+              "OK": 655550,
+              "BLOCK": 2944500
+            }
+          },
+          "KDK": {
+            "mtlsCuts": 31,
+            "mtlsDownMs": 55100,
+            "stateMs": {
+              "OK": 3544950,
+              "BLOCK": 55100
+            }
+          },
+          "ATS": {
+            "mtlsCuts": 23,
+            "mtlsDownMs": 1150,
+            "stateMs": {
+              "OK": 3598900,
+              "BLOCK": 1150
+            }
+          }
+        },
+        "leakyProvenanceBits": 405063,
+        "deliveryPathViolationBits": 7999.992499999999,
+        "releasedLeakyBlocks": 1291,
+        "releasedBlocks": 28800,
+        "quarantinedBlocks": 0,
+        "ecFailBlocks": 0,
+        "ecFailBits": 0,
+        "ledgerShortfall": 0,
+        "levelMs": {
+          "NORMAL": 19788250,
+          "BLOCK": 9012150
+        },
+        "ledgerPoolMismatchBits": 0.010102272033691406,
+        "finalPoolBits": {
+          "AVR|MSL": 746426921,
+          "AVR|BKR": 1684475620,
+          "ASY|MSL": 2512224432,
+          "BKR|KDK": 1229738226,
+          "ASY|ATS": 6292058775,
+          "ATS|KDK": 7193877881,
+          "KDK|MSL": 1623332969,
+          "ASY|KDK": 3970534237
+        },
+        "overflowBits": 0,
+        "quarantinedBits": 0,
+        "paramSwitches": 0,
+        "totalDelivered": 645581435.7204053,
+        "totalOffered": 1008000000,
+        "mtlsCutsTotal": 1054,
+        "mtlsDownMsTotal": 3005800,
+        "wallMs": 6707
+      },
+      "legacy-debounce": {
+        "policy": "legacy-debounce",
+        "seMeasurementUncertaintyDb": 1,
+        "demands": [
+          {
+            "pair": "AVR↔ASY",
+            "offeredBits": 432000000,
+            "deliveredBits": 86927963.78001793,
+            "okSteps": 14488,
+            "steps": 72000,
+            "outageMs": 2875600,
+            "longestOutageMs": 2875600,
+            "holdPoolBits": 0,
+            "availability": 0.20122222222222222,
+            "deliveredFrac": 0.20122213837967112
+          },
+          {
+            "pair": "MSL↔KDK",
+            "offeredBits": 216000000,
+            "deliveredBits": 212360823.03263554,
+            "okSteps": 70787,
+            "steps": 72000,
+            "outageMs": 60650,
+            "longestOutageMs": 60650,
+            "holdPoolBits": 0,
+            "availability": 0.9831527777777778,
+            "deliveredFrac": 0.9831519584844238
+          },
+          {
+            "pair": "BKR↔ATS",
+            "offeredBits": 216000000,
+            "deliveredBits": 212360823.03263554,
+            "okSteps": 70787,
+            "steps": 72000,
+            "outageMs": 60650,
+            "longestOutageMs": 60650,
+            "holdPoolBits": 0,
+            "availability": 0.9831527777777778,
+            "deliveredFrac": 0.9831519584844238
+          },
+          {
+            "pair": "AVR↔KDK",
+            "offeredBits": 144000000,
+            "deliveredBits": 141573823.03261894,
+            "okSteps": 70787,
+            "steps": 72000,
+            "outageMs": 60650,
+            "longestOutageMs": 60650,
+            "holdPoolBits": 0,
+            "availability": 0.9831527777777778,
+            "deliveredFrac": 0.9831515488376316
+          }
+        ],
+        "nodes": {
+          "AVR": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3600050
+            }
+          },
+          "MSL": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3600050
+            }
+          },
+          "BKR": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3600050
+            }
+          },
+          "ASY": {
+            "mtlsCuts": 1,
+            "mtlsDownMs": 2875600,
+            "stateMs": {
+              "OK": 724450,
+              "BLOCK": 2875600
+            }
+          },
+          "KDK": {
+            "mtlsCuts": 1,
+            "mtlsDownMs": 60650,
+            "stateMs": {
+              "OK": 3539400,
+              "BLOCK": 60650
+            }
+          },
+          "ATS": {
+            "mtlsCuts": 0,
+            "mtlsDownMs": 0,
+            "stateMs": {
+              "OK": 3600050
+            }
+          }
+        },
+        "leakyProvenanceBits": 405063,
+        "deliveryPathViolationBits": 103999.90249999995,
+        "releasedLeakyBlocks": 1291,
+        "releasedBlocks": 28800,
+        "quarantinedBlocks": 0,
+        "ecFailBlocks": 0,
+        "ecFailBits": 0,
+        "ledgerShortfall": 0,
+        "levelMs": {
+          "NORMAL": 19991650,
+          "BLOCK": 8808750
+        },
+        "ledgerPoolMismatchBits": 0.010128974914550781,
+        "finalPoolBits": {
+          "AVR|MSL": 738359924,
+          "AVR|BKR": 1684642620,
+          "ASY|MSL": 2504019435,
+          "BKR|KDK": 1229887226,
+          "ASY|ATS": 6292163775,
+          "ATS|KDK": 7193964881,
+          "KDK|MSL": 1623746969,
+          "ASY|KDK": 3970558237
+        },
+        "overflowBits": 0,
+        "quarantinedBits": 0,
+        "paramSwitches": 0,
+        "totalDelivered": 653223432.877908,
+        "totalOffered": 1008000000,
+        "mtlsCutsTotal": 2,
+        "mtlsDownMsTotal": 2936250,
+        "wallMs": 7244
+      }
+    },
+    "windows": {
+      "adaptive": {
+        "doorBkrAts": {
+          "offered": 3213000,
+          "delivered": 3212997.3225000496,
+          "paths": [
+            "BKR→AVR→MSL→ASY→ATS"
+          ]
+        },
+        "txAvrMslReleasedBits": 576810538
+      },
+      "adaptive-u0": {
+        "doorBkrAts": {
+          "offered": 3213000,
+          "delivered": 3212997.3225000496,
+          "paths": [
+            "BKR→AVR→MSL→ASY→ATS"
+          ]
+        },
+        "txAvrMslReleasedBits": 576810538
+      },
+      "adaptive-cap16M": {
+        "doorBkrAts": {
+          "offered": 3213000,
+          "delivered": 3212997.3225000496,
+          "paths": [
+            "BKR→AVR→MSL→ASY→ATS"
+          ]
+        },
+        "txAvrMslReleasedBits": 76393952.24499187
+      },
+      "legacy-strict": {
+        "doorBkrAts": {
+          "offered": 3213000,
+          "delivered": 92999.92249999996,
+          "paths": [
+            "BKR→AVR→MSL→ASY→ATS"
+          ]
+        },
+        "txAvrMslReleasedBits": 0
+      },
+      "legacy-debounce": {
+        "doorBkrAts": {
+          "offered": 3213000,
+          "delivered": 35999.97,
+          "paths": [
+            "BKR→KDK→ATS"
+          ]
+        },
+        "txAvrMslReleasedBits": 0
+      }
+    },
+    "guardBandMonteCarlo": {
+      "u=0": {
+        "trials": 1000,
+        "trialsWithLeak": 20,
+        "leakyBlocks": 20,
+        "leakyBits": 11114523
+      },
+      "u=1": {
+        "trials": 1000,
+        "trialsWithLeak": 0,
+        "leakyBlocks": 0,
+        "leakyBits": 0
+      }
+    },
+    "notes": {
+      "ecFailBlocksAdaptive": 1,
+      "ecFailExplanation": "Ani ortam-alanı sıçramasında (MSL verici açılışı) Y0 ölçümünün 1 s penceresi gecikir; o anki bloğun kod oranı gerçek Y0'da çözülemez. Gerçek sistemde EC doğrulama özeti bunu yakalar ve blok ATILIR (güvenlik sorunu değil, verim kaybı); simülasyon bu bitleri serbest saydı — üst sınır olarak raporlanır."
+    }
+  },
+  "live": {
+    "root": "/tmp/photonnet-multinode-8l8r1d",
+    "kmes": {
+      "AVR": {
+        "port": 19600,
+        "pid": 3557,
+        "baseUrl": "https://localhost:19600",
+        "logPath": "/tmp/photonnet-multinode-8l8r1d/kme-AVR.log",
+        "log": [
+          "[KME] Kalkan kapısı kapandı — 3 açık mTLS oturumu KESİLİYOR: kalkan kapısı BAYAT (yaş 1077 ms, sınır 1000 ms) — SE izleyicisi durmuş olabilir",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: kalkan kapısı BAYAT (yaş 1193 ms, sınır 1000 ms) — SE izleyicisi durmuş olabilir",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: kalkan kapısı BAYAT (yaş 1280 ms, sınır 1000 ms) — SE izleyicisi durmuş olabilir",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: kalkan kapısı BAYAT (yaş 1448 ms, sınır 1000 ms) — SE izleyicisi durmuş olabilir",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: kalkan kapısı BAYAT (yaş 1477 ms, sınır 1000 ms) — SE izleyicisi durmuş olabilir",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: kalkan kapısı BAYAT (yaş 1702 ms, sınır 1000 ms) — SE izleyicisi durmuş olabilir"
+        ]
+      },
+      "MSL": {
+        "port": 19601,
+        "pid": 3558,
+        "baseUrl": "https://localhost:19601",
+        "logPath": "/tmp/photonnet-multinode-8l8r1d/kme-MSL.log",
+        "log": []
+      },
+      "BKR": {
+        "port": 19602,
+        "pid": 3564,
+        "baseUrl": "https://localhost:19602",
+        "logPath": "/tmp/photonnet-multinode-8l8r1d/kme-BKR.log",
+        "log": []
+      },
+      "ASY": {
+        "port": 19603,
+        "pid": 3570,
+        "baseUrl": "https://localhost:19603",
+        "logPath": "/tmp/photonnet-multinode-8l8r1d/kme-ASY.log",
+        "log": []
+      },
+      "KDK": {
+        "port": 19604,
+        "pid": 3572,
+        "baseUrl": "https://localhost:19604",
+        "logPath": "/tmp/photonnet-multinode-8l8r1d/kme-KDK.log",
+        "log": [
+          "[KME] Kalkan kapısı kapandı — 1 açık mTLS oturumu KESİLİYOR: düğüm kalkanı BLOCK — mTLS kapalı (fail-closed)",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: düğüm kalkanı BLOCK — mTLS kapalı (fail-closed)",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: düğüm kalkanı BLOCK — mTLS kapalı (fail-closed)",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: düğüm kalkanı BLOCK — mTLS kapalı (fail-closed)",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: düğüm kalkanı BLOCK — mTLS kapalı (fail-closed)",
+          "[KME] Kalkan kapısı mTLS oturumunu KESTİ: düğüm kalkanı BLOCK — mTLS kapalı (fail-closed)"
+        ]
+      },
+      "ATS": {
+        "port": 19605,
+        "pid": 3578,
+        "baseUrl": "https://localhost:19605",
+        "logPath": "/tmp/photonnet-multinode-8l8r1d/kme-ATS.log",
+        "log": []
+      }
+    },
+    "probes": [
+      {
+        "t": 107,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 108,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 108,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 108,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 108,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 108,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 467,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 467,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 499,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 500,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 501,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 501,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 719,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 720,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 752,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 754,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 753,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 754,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 971,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 972,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 1004,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 1006,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 1006,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 1006,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 1224,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 1224,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 1257,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 1258,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 1260,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 1262,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 1476,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 1477,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 1510,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 1510,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 1514,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 1533,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 1728,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 1729,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 1762,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 1764,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 1765,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 1785,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 1981,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 1985,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 2015,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 2015,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 2017,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 2037,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 2232,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 2236,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 2267,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 2268,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 2270,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 2288,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 2490,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 2491,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 2519,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 2520,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 2522,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 2539,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 2744,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 2744,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 2770,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 2772,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 2774,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 2791,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 2995,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 2996,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 3021,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 3023,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 3026,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 3043,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 3247,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 3248,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 3273,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 3275,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 3277,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 3295,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 3499,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 3500,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 3525,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 3526,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 3529,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 3547,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 3751,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 3752,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 3776,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 3778,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 3780,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 3799,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 4002,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 4003,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 4028,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 4029,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 4033,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 4050,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 4255,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 4254,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 4280,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 4280,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 4285,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 4302,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 4506,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 4507,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 4533,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 4533,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 4537,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 4553,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 4758,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 4759,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 4784,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 4785,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 4788,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 4805,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 5011,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 5014,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 5036,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 5036,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 5039,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 5057,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 5263,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 5265,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 5287,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 5289,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 5289,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 5309,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 5529,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 5529,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 5538,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 5541,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 5541,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 5560,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 5781,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 5781,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 5789,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 5792,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 5793,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 5812,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 6033,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 6034,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 6041,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 6043,
+        "node": "KDK",
+        "kind": "http-503"
+      },
+      {
+        "t": 6045,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 6063,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 6285,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 6286,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 6292,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 6295,
+        "node": "KDK",
+        "kind": "http-503"
+      },
+      {
+        "t": 6296,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 6315,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 6537,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 6537,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 6544,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 6546,
+        "node": "KDK",
+        "kind": "http-503"
+      },
+      {
+        "t": 6548,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 6569,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 6789,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 6789,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 6796,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 6803,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 6802,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 6820,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 7041,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 7042,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 7052,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 7056,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 7062,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 7074,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 7294,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 7297,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 7303,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 7307,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 7315,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 7326,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 7546,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 7548,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 7556,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 7559,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 7568,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 7577,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 7798,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 7799,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 7810,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 7811,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 7824,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 7847,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 8049,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 8050,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 8062,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 8062,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 8078,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 8098,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 8301,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 8303,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 8316,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 8316,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 8332,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 8351,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 8553,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 8557,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 8567,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 8568,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 8586,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 8603,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 8805,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 8808,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 8819,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 8819,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 8840,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 8857,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 9057,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 9059,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 9070,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 9071,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 9093,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 9109,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 9309,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 9310,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 9321,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 9322,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 9350,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 9361,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 9560,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 9561,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 9572,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 9573,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 9604,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 9618,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 9812,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 9818,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 9823,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 9824,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 9857,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 9869,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 10063,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 10069,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 10075,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 10075,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 10111,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 10124,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 10315,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 10324,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 10326,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 10326,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 10365,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 10375,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 10567,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 10575,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 10578,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 10579,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 10622,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 10629,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 10822,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 10826,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 10829,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 10830,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 10880,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 10877,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 11073,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 11077,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 11081,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 11082,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 11133,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 11135,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 11324,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 11329,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 11333,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 11336,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 11390,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 11391,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 11576,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 11584,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 11585,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 11587,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 11642,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 11646,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 11827,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 11838,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 11839,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 11836,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 11898,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 11901,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 12079,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 12090,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 12090,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 12092,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 12149,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 12156,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 12330,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 12341,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 12343,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 12342,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 12400,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 12409,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 12582,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 12593,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 12595,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 12594,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 12654,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 12664,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 12834,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 12845,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 12846,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 12851,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 12908,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 12917,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 13086,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 13096,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 13097,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 13102,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 13163,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 13170,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 13337,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 13349,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 13350,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 13356,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 13414,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 13423,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 13589,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 13600,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 13601,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 13607,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 13669,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 13679,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 13841,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 13851,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 13853,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 13859,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 13920,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 13932,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 14092,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 14102,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 14104,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 14110,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 14171,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 14186,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 14343,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 14353,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 14355,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 14362,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 14426,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 14440,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 14595,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 14604,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 14607,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 14617,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 14677,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 14694,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 14846,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 14857,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 14859,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 14868,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 14934,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 14949,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 15097,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 15108,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 15112,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 15122,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 15186,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 15202,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 15348,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 15360,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 15363,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 15374,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 15440,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 15456,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 15599,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 15612,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 15614,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 15626,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 15692,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 15710,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 15851,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 15863,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 15866,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 15880,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 15944,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 15963,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 16102,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 16114,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 16117,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 16131,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 16198,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 16217,
+        "node": "KDK",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 16354,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 16365,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 16369,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 16402,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 16460,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 16471,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 16606,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 16616,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 16621,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 16653,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 16715,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 16725,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 16858,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 16868,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 16872,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 16904,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 16966,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 16977,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 17110,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 17119,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 17124,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 17156,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 17218,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 17228,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 17361,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 17370,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 17376,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 17408,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 17470,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 17480,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 17613,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 17621,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 17628,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 17660,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 17722,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 17731,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 17864,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 17873,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 17879,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 17912,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 17973,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 17982,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 18115,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 18125,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 18130,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 18164,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 18225,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 18234,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 18367,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 18377,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 18382,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 18416,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 18477,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 18486,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 18618,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 18630,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 18633,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 18668,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 18728,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 18738,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 18869,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 18881,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 18885,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 18919,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 18979,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 18990,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 19121,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 19133,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 19136,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 19171,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 19231,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 19247,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 19373,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 19385,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 19388,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 19423,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 19483,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 19511,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 19625,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 19636,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 19640,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 19675,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 19735,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 19763,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 19877,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 19888,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 19895,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 19927,
+        "node": "AVR",
+        "kind": "ok"
+      },
+      {
+        "t": 19987,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 20015,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 20128,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 20140,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 20145,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 20179,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 20247,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 20266,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 20379,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 20396,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 20396,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 20434,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 20499,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 20518,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 20631,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 20649,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 20650,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 20688,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 20750,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 20770,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 20882,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 20901,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 20902,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 20943,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 21001,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 21022,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 21133,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 21154,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 21154,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 21200,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 21253,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 21272,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 21386,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 21405,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 21406,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 21454,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 21504,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 21524,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 21637,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 21656,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 21658,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 21708,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 21755,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 21776,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 21888,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 21908,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 21909,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 21961,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 22006,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 22028,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 22140,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 22160,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 22161,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 22216,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 22261,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 22279,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 22392,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 22412,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 22416,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 22469,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 22513,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 22530,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 22645,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 22664,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 22668,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 22723,
+        "node": "AVR",
+        "kind": "tls-cut"
+      },
+      {
+        "t": 22764,
+        "node": "MSL",
+        "kind": "ok"
+      },
+      {
+        "t": 22782,
+        "node": "KDK",
+        "kind": "ok"
+      },
+      {
+        "t": 22897,
+        "node": "BKR",
+        "kind": "ok"
+      },
+      {
+        "t": 22916,
+        "node": "ASY",
+        "kind": "ok"
+      },
+      {
+        "t": 22919,
+        "node": "ATS",
+        "kind": "ok"
+      },
+      {
+        "t": 22976,
+        "node": "AVR",
+        "kind": "tls-cut"
+      }
+    ],
+    "flows": [
+      {
+        "t": 1107,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 1259,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 1407,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 1557,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 1730,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 1885,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 2029,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 2173,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 2345,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 2491,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 2632,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 2777,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 2949,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 3098,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 3239,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 3379,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 3553,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 3702,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 3843,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 3984,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 4156,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 4305,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 4447,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 4588,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 4760,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 4908,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 5050,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 5191,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 5369,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 5528,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 5653,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 5797,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 5972,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 6133,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (HOLD_FLOOR)",
+        "keyCount": 0
+      },
+      {
+        "t": 6256,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 6404,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (HOLD_FLOOR)",
+        "keyCount": 0
+      },
+      {
+        "t": 6575,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 6736,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 6859,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 7005,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 7179,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 7338,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 7462,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 7607,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 7782,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 7939,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 8066,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 8210,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 8392,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 8542,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 8668,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 8820,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 8994,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 9143,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 9271,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 9421,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 9602,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 9744,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 9874,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 10022,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 10205,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 10346,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 10477,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 10624,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 10808,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 10948,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 11080,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 11227,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 11414,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 11549,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 11682,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 11829,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 12017,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 12151,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 12285,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 12431,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 12621,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 12753,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 12887,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 13032,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 13224,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 13355,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 13490,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 13634,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 13830,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 13957,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 14093,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 14235,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 14435,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 14558,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 14696,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 14837,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 15038,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 15159,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 15298,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 15441,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 15641,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 15761,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 15901,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 16042,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 16243,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 16362,
+        "pair": "MSL↔KDK",
+        "ok": false,
+        "encStatus": 503,
+        "message": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (BLOCK)",
+        "keyCount": 0
+      },
+      {
+        "t": 16503,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 16644,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 16846,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 16964,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 17105,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 17252,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 17448,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 17571,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 17708,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 17855,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 18052,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 18175,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 18310,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 18458,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 18655,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 18780,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 18913,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 19061,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 19258,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 19383,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 19515,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 19664,
+        "pair": "AVR↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 19860,
+        "pair": "AVR↔ASY",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 19985,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 20117,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 20267,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      },
+      {
+        "t": 20463,
+        "pair": "AVR↔ASY",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      },
+      {
+        "t": 20591,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 20721,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 20871,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      },
+      {
+        "t": 21068,
+        "pair": "AVR↔ASY",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      },
+      {
+        "t": 21199,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 21324,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 21476,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      },
+      {
+        "t": 21671,
+        "pair": "AVR↔ASY",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      },
+      {
+        "t": 21803,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 21928,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 22080,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      },
+      {
+        "t": 22275,
+        "pair": "AVR↔ASY",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      },
+      {
+        "t": 22407,
+        "pair": "MSL↔KDK",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 22531,
+        "pair": "BKR↔ATS",
+        "ok": true,
+        "encStatus": 200,
+        "decStatus": 200,
+        "keyCount": 4
+      },
+      {
+        "t": 22684,
+        "pair": "AVR↔KDK",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      },
+      {
+        "t": 22879,
+        "pair": "AVR↔ASY",
+        "ok": false,
+        "error": "ECONNRESET",
+        "keyCount": 0
+      }
+    ],
+    "timeline": [
+      {
+        "t": 108,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": null,
+          "MSL↔KDK": null,
+          "BKR↔ATS": null,
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 674,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 1177,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 1681,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 2183,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 2685,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 3185,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 3686,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 4190,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "HOLD_FLOOR",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→BKR→KDK→ASY",
+          "MSL↔KDK": "MSL→ASY→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→BKR→KDK"
+        }
+      },
+      {
+        "t": 4691,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "HOLD_EGRESS",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→BKR→KDK→ASY",
+          "MSL↔KDK": "MSL→ASY→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→BKR→KDK"
+        }
+      },
+      {
+        "t": 5192,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 5697,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 6200,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "HOLD_FLOOR",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 6702,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 7203,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 7707,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 8211,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 8712,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 9215,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 9715,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 10216,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 10719,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 11220,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 11722,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 12223,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "HOLD_FLOOR",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 12724,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "HOLD_EGRESS",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 13225,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 13726,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 14228,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 14730,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 15232,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 15733,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 16233,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "BLOCK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": null,
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": null
+        }
+      },
+      {
+        "t": 16734,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 17235,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 17737,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 18237,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→AVR→MSL→ASY→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 18741,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 19242,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 19741,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 20242,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 20744,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 21244,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 21749,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 22252,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      },
+      {
+        "t": 22752,
+        "nodes": {
+          "AVR": "OK",
+          "MSL": "OK",
+          "BKR": "OK",
+          "ASY": "OK",
+          "KDK": "OK",
+          "ATS": "OK"
+        },
+        "paths": {
+          "AVR↔ASY": "AVR→MSL→ASY",
+          "MSL↔KDK": "MSL→KDK",
+          "BKR↔ATS": "BKR→KDK→ATS",
+          "AVR↔KDK": "AVR→MSL→KDK"
+        }
+      }
+    ],
+    "gateWrites": 2669,
+    "injectedKeys": 20930,
+    "allUp": true,
+    "events": [
+      {
+        "node": "MSL",
+        "kind": "EFT ölçüm artefaktı",
+        "startMs": 4000,
+        "durMs": 200
+      },
+      {
+        "node": "KDK",
+        "kind": "bakım kapısı açık",
+        "startMs": 6000,
+        "durMs": 4000
+      },
+      {
+        "node": "BKR",
+        "kind": "kısa gerçek sızıntı",
+        "startMs": 12000,
+        "durMs": 250
+      },
+      {
+        "node": "AVR",
+        "kind": "SE izleyici çöktü (kapı tazelenmiyor)",
+        "startMs": 19000,
+        "durMs": 4000
+      }
+    ],
+    "metrics": {
+      "policy": "adaptive",
+      "seMeasurementUncertaintyDb": 1,
+      "demands": [
+        {
+          "pair": "AVR↔ASY",
+          "offeredBits": 2741520,
+          "deliveredBits": 2741518.8577000173,
+          "okSteps": 454,
+          "steps": 454,
+          "outageMs": 0,
+          "longestOutageMs": 0,
+          "holdPoolBits": 0,
+          "availability": 1,
+          "deliveredFrac": 0.9999995833333396
+        },
+        {
+          "pair": "MSL↔KDK",
+          "offeredBits": 1370760,
+          "deliveredBits": 747719.3769000036,
+          "okSteps": 247,
+          "steps": 454,
+          "outageMs": 10384,
+          "longestOutageMs": 10384,
+          "holdPoolBits": 54119.95489999998,
+          "availability": 0.5440528634361234,
+          "deliveredFrac": 0.545477966164758
+        },
+        {
+          "pair": "BKR↔ATS",
+          "offeredBits": 1370760,
+          "deliveredBits": 1370758.857700012,
+          "okSteps": 454,
+          "steps": 454,
+          "outageMs": 0,
+          "longestOutageMs": 0,
+          "holdPoolBits": 57119.95239999999,
+          "availability": 1,
+          "deliveredFrac": 0.9999991666666753
+        },
+        {
+          "pair": "AVR↔KDK",
+          "offeredBits": 913840,
+          "deliveredBits": 498479.3768999999,
+          "okSteps": 247,
+          "steps": 454,
+          "outageMs": 10384,
+          "longestOutageMs": 10384,
+          "holdPoolBits": 0,
+          "availability": 0.5440528634361234,
+          "deliveredFrac": 0.54547773888208
+        }
+      ],
+      "nodes": {
+        "AVR": {
+          "mtlsCuts": 0,
+          "mtlsDownMs": 0,
+          "stateMs": {
+            "OK": 22750
+          }
+        },
+        "MSL": {
+          "mtlsCuts": 0,
+          "mtlsDownMs": 0,
+          "stateMs": {
+            "OK": 21850,
+            "HOLD_FLOOR": 250,
+            "HOLD_EGRESS": 650
+          }
+        },
+        "BKR": {
+          "mtlsCuts": 0,
+          "mtlsDownMs": 0,
+          "stateMs": {
+            "OK": 21800,
+            "HOLD_FLOOR": 300,
+            "HOLD_EGRESS": 650
+          }
+        },
+        "ASY": {
+          "mtlsCuts": 0,
+          "mtlsDownMs": 0,
+          "stateMs": {
+            "OK": 22750
+          }
+        },
+        "KDK": {
+          "mtlsCuts": 1,
+          "mtlsDownMs": 9700,
+          "stateMs": {
+            "OK": 12400,
+            "HOLD_FLOOR": 650,
+            "BLOCK": 9700
+          }
+        },
+        "ATS": {
+          "mtlsCuts": 0,
+          "mtlsDownMs": 0,
+          "stateMs": {
+            "OK": 22750
+          }
+        }
+      },
+      "leakyProvenanceBits": 0,
+      "deliveryPathViolationBits": 0,
+      "releasedLeakyBlocks": 0,
+      "releasedBlocks": 118,
+      "quarantinedBlocks": 58,
+      "ecFailBlocks": 0,
+      "ecFailBits": 0,
+      "ledgerShortfall": 0,
+      "levelMs": {
+        "NORMAL": 134700,
+        "HOLD": 6250,
+        "BLOCK": 41050
+      },
+      "ledgerPoolMismatchBits": 1.4435499906539917e-7,
+      "finalPoolBits": {
+        "AVR|MSL": 29294789,
+        "AVR|BKR": 23150924,
+        "ASY|MSL": 16024833,
+        "BKR|KDK": 7481818,
+        "ASY|ATS": 42581079,
+        "ATS|KDK": 25029866,
+        "KDK|MSL": 8293089,
+        "ASY|KDK": 18113899
+      },
+      "overflowBits": 0,
+      "quarantinedBits": 45725379,
+      "paramSwitches": 8,
+      "totalDelivered": 5358476.469200033,
+      "totalOffered": 6396880,
+      "mtlsCutsTotal": 1,
+      "mtlsDownMsTotal": 9700
+    },
+    "flowCount": 145,
+    "probeCount": 544
+  },
+  "allChecksPassed": true
+}

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-11T09:31:01.883Z",
+  "generatedAt": "2026-10-11T10:33:24.506Z",
   "checks": [
     {
       "name": "(A) SE_gerekli tersi emissionDetectabilityCheck ile birebir tutarlı (tespit ⟺ SE < SE_gerekli)",
@@ -24,17 +24,17 @@
     {
       "name": "(E) SE_gerekli ≤ SE < hedef: mevcut önkoşul REDDEDER, bu katman ADAPT + mTLS AÇIK + R>0",
       "ok": true,
-      "detail": "mtlsHandshakePrecondition(SE=45) allowed=false · katman: ADAPT, mTLS=true, R=5.12e-4/darbe — gevşetme yalnız açık tehdit modeliyle (bkz. B)"
+      "detail": "mtlsHandshakePrecondition(SE=45) allowed=false · katman: ADAPT, mTLS=true, R=5.09e-4/darbe — gevşetme yalnız açık tehdit modeliyle (bkz. B)"
     },
     {
-      "name": "(F) 200 ms'lik 25 dB düşüşü: BLOCK yok, mTLS hiç kopmuyor, HOLD penceresi karantinada, havuz muhasebesi korunuyor, aç kalınmıyor",
+      "name": "(F) 200 ms'lik 25 dB düşüşü: BLOCK yok, mTLS hiç kopmuyor, HOLD penceresine değen bloklar lekeli, havuz muhasebesi korunuyor, aç kalınmıyor",
       "ok": true,
-      "detail": "seviye süreleri {\"NORMAL\":23550,\"HOLD\":6500} ms · HOLD 5000→11450 ms (düşüş 200 ms + dışa-sızıntı kurtarma histerezisi 6300 ms) · karantina 3343290 bit (asla havuza dönmedi) · korunum P0+serbest−teslim=havuz ✓ · aç kalınan süre 0 ms · KARŞILAŞTIRMA: mevcut debounce tek başına bu düşüşte mTLS'i açık tutar ama yalnız el sıkışmayı yönetir, anahtar serbest bırakma kararı İÇERMEZ — o 200 ms'ye değen bloklar ayrıca karantinaya alınmazdı (bulgu)"
+      "detail": "seviye süreleri {\"NORMAL\":29200,\"HOLD\":850} ms · HOLD 5000→5800 ms (düşüş 200 ms ≤ 630 ms → GEÇİCİ epizot, marjlı-iyi 630 ms kurtarma) · HOLD'a değen 2 blok ([4000,5000) [5000,6000)) hepsi lekeli ✓, karantina 0 bit (o blokların en kötü Y0'ı düşüş anındaki içeri-giriş gürültüsü → R=0; yani anahtar zaten oluşmadı) · korunum P0+serbest−teslim=havuz ✓ · aç kalınan süre 0 ms · KARŞILAŞTIRMA: mevcut debounce tek başına bu düşüşte mTLS'i açık tutar ama yalnız el sıkışmayı yönetir, anahtar serbest bırakma kararı İÇERMEZ — o 200 ms'ye değen bloklar ayrıca karantinaya alınmazdı (bulgu)"
     },
     {
-      "name": "(G) Dışa-sızıntı kurtarması: SE_gerekli+1 dB'de 14 s sonra hâlâ HOLD; +5,5 dB'de ~6300 ms sonra serbest",
+      "name": "(G) Dışa-sızıntı kurtarması: eşik+1 dB'de 14 s sonra hâlâ HOLD; eşik+5,5 dB'de ~6300 ms sonra serbest",
       "ok": true,
-      "detail": "SE_gerekli=38.01 dB · +1 dB → HOLD (marjsız iyileşme sayılmaz) · +5,5 dB → 7300 ms'de ADAPT"
+      "detail": "eşik=39.01 dB (SE_gerekli 38.01 + belirsizlik 1 dB) · +1 dB → HOLD (marjsız iyileşme sayılmaz) · +5,5 dB → 7300 ms'de ADAPT"
     },
     {
       "name": "(H) HOLD'da üstel daraltma: τ sonunda havuz ≈ e^−1, hiç aç kalınmıyor; naif teslimat havuzu ~1 s'de bitirir; izole olmayan yolda teslimat 0",
@@ -44,12 +44,12 @@
     {
       "name": "(I) SE 41↔42 dB titreşiminde parametre salınımı yok (tepe-tutma + %5 histerezis); korumasız kontrol deneyinde salınım VAR",
       "ok": true,
-      "detail": "korumalı: 1 geçiş · korumasız (histerezis=0, tepe-tutma=0): 201 geçiş / 201 okuma — korumasızda her kova kendi optimumunu dayatıyor, kod oranı diğer kovada çözülemiyor"
+      "detail": "korumalı: 1 geçiş · korumasız (histerezis=0, tepe-tutma=0, Y0 yükseltme bandı=0): 201 geçiş / 201 okuma — korumasızda her kova kendi optimumunu dayatıyor, kod oranı diğer kovada çözülemiyor"
     },
     {
       "name": "(J) İçeri-giriş gürültüsü anahtar hızını 0'a indirince HOLD (BLOCK değil), mTLS açık",
       "ok": true,
-      "detail": "SE 32,5 dB (taban 30, SE_gerekli 32.01) → Y0≈5.72e-4 → HOLD, mTLS=true · \"HOLD (anahtar hızı 0: tepe Y0≈5.72e-4, hiçbir izinli parametre seti pozitif sonlu-anahtar …\""
+      "detail": "SE 32,5 dB (taban 30, eşik 32.01) → Y0≈5.72e-4 → HOLD, mTLS=true · \"HOLD (anahtar hızı 0: tepe Y0≈5.72e-4, hiçbir izinli parametre seti pozitif sonlu-anahtar …\""
     },
     {
       "name": "(K) Ölçülmüş vakum-decoy Y0'ı verilince model yerine o kullanılıyor (SE iyi görünse bile)",
@@ -65,6 +65,21 @@
       "name": "(M) Aynı senaryo iki kez → birebir aynı havuz/karantina/teslimat",
       "ok": true,
       "detail": "havuz = · karantina = · teslimat ="
+    },
+    {
+      "name": "(N) grant API: NORMAL'de havuzun tamamı, HOLD'da havuz·(1−e^(−dt/τ)), izole değilse 0, BLOCK'ta 0; verilen miktar havuzdan düşülüyor",
+      "ok": true,
+      "detail": "NORMAL 1000000 · HOLD 14326.4 (beklenen 14326.4) · izole değil 0 · BLOCK 0"
+    },
+    {
+      "name": "(O) ShieldLevelTracker: ±1 dB ölçüm belirsizliği bandı SE_gerekli'nin hemen üstündeki okumayı güvenli SAYMIYOR; bant 0 iken sayıyor",
+      "ok": true,
+      "detail": "SE_gerekli 38 dB, okuma 38,5 dB: bant 1 dB → HOLD_EGRESS · bant 0 → OK (gerçek SE 37,5 dB olabilir — sızıntı fark edilmezdi)"
+    },
+    {
+      "name": "(P) Geçici (≤630 ms) epizot: marjsız 630 ms iyi okumayla kurtarılıyor — gerçek SE eşiğin yalnız 2 dB üstündeyken bile; uzun epizot 5 dB marj + 6300 ms istiyor",
+      "ok": true,
+      "detail": "SE 50: tek örnek → OK @1700 ms, 1 s epizot → OK @8300 ms · SE 41 (eşik+2): tek artefakt → OK @1700 ms (eski kural: KALICI kilit), 1 s gerçek düşüş → 12 s sonra hâlâ HOLD (44 dB marj yok) — güvenlik kurtarma süresine değil köşeli-parantez lekelemesine dayanır"
     },
     {
       "name": "ÇEKİRDEĞE VE YENİDEN KULLANILAN MODÜLLERE DOKUNULMADI",
@@ -176,23 +191,23 @@
     "legacyAllowed": false,
     "level": "ADAPT",
     "mtls": true,
-    "R": 0.0005123718753551271
+    "R": 0.0005087225871326121
   },
   "transient": {
     "levelTimeMs": {
-      "NORMAL": 23550,
-      "HOLD": 6500
+      "NORMAL": 29200,
+      "HOLD": 850
     },
     "holdStartMs": 5000,
-    "holdEndMs": 11450,
-    "quarantinedBits": 3343290,
-    "releasedBits": 12258730,
-    "deliveredBits": 8666464,
+    "holdEndMs": 5800,
+    "quarantinedBits": 0,
+    "releasedBits": 15602020,
+    "deliveredBits": 9000000,
     "starvedMs": 0,
     "legacyDebounceCut": false
   },
   "egressRecovery": {
-    "seReqDb": 38.01,
+    "seReqDb": 39.01,
     "at1dB": "HOLD",
     "releaseAtMs": 7300
   },

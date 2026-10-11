@@ -1,6 +1,6 @@
 # Uyarlamalı Kalkan Mitigasyonu ("Anında Kesinti Yerine Akıllı Daraltma") — Tasarım Belgesi
 
-Uygulama: `bb84/adaptive_shielding_mitigation.js` · Öz-testler: `bb84/adaptive_shielding_mitigation_test.js` (14/14) · Rapor: `bb84/reports/adaptive_shielding_mitigation.json`
+Uygulama: `bb84/adaptive_shielding_mitigation.js` · Öz-testler: `bb84/adaptive_shielding_mitigation_test.js` (17/17) · Rapor: `bb84/reports/adaptive_shielding_mitigation.json`
 
 ## §0 — İstek ve dürüstlük notu
 
@@ -36,7 +36,7 @@ adaptive_shielding_mitigation.js  ◄── YENİ
 karar: { level, mtlsAllowed, newKeyDisposition, deliveryCapBps, activeParams, pendingParams }
 ```
 
-Katman KME sunucusuna ve `production_gate.js` kriter 9'a **bağlanmadı**. Bağlanması, mevcut `mtlsHandshakePrecondition` politikasının değişmesi anlamına geldiği için (§3) ayrı bir karar gerektirir.
+Katman `production_gate.js` kriter 9'a **bağlanmadı**; bağlanması, mevcut `mtlsHandshakePrecondition` politikasının değişmesi anlamına geldiği için (§3) ayrı bir karar gerektirir. KME sunucusuna bağlantı yalnız çok-düğümlü test ağı üzerinden ve isteğe bağlı bayraklarla (`--shield-gate`, `--keystore-inbox`) yapılır; bkz. `docs/MULTINODE_SHIELDING_TESTBED.md`. Bayraklar verilmezse KME'nin davranışı değişmez.
 
 ## §2 — Dört seviye
 
@@ -51,7 +51,7 @@ Katman KME sunucusuna ve `production_gate.js` kriter 9'a **bağlanmadı**. Bağl
 
 **Taban.** Mevcut `SeFailsafeDebounce` sınıfı değiştirilmeden kullanılır. Ona hedefi tabana eşit kurulmuş bir değerlendirme verilir (`ok = SE ≥ 30`), böylece yalnız tabanı yönetir. 630 ms debounce, 6300 ms kurtarma histerezisi, 5 dB kurtarma marjı ve soğuk başlangıçta gecikmesiz BLOCK aynen geçerlidir.
 
-**Dışa-sızıntı mandalı.** SE < SE_gerekli olduğu anda HOLD başlar (gecikme yok, çünkü sızıntı anahtarı anında tehlikeye atar). Çıkış için SE ≥ SE_gerekli + 5 dB koşulunun kesintisiz 6300 ms sürmesi gerekir. Bu, debounce ile aynı Schmitt + zaman histerezisi sabitleridir ve marjsız iyileşme sayılmaz (test G).
+**Dışa-sızıntı mandalı (`ShieldLevelTracker`).** Eşik = SE_gerekli + u'dur; u, SE ölçüm belirsizliğidir (varsayılan ±1 dB, belgelenmiş cihaz doğruluğu). Ölçülen SE eşiğin altına indiği anda HOLD başlar (gecikme yok, çünkü sızıntı anahtarı anında tehlikeye atar). Bant olmadan, gerçek SE SE_gerekli'nin hemen altındayken ölçüm hâlâ üstte görünebilir. Çok-düğümlü test ağının Monte Carlo deneyi bunu ölçtü: 1000 ani-sığ düşüşte bant 0 iken olayların %2'sinde sızıntılı blok serbest kaldı, ±1 dB bantla hiçbirinde kalmadı. Çıkış kuralı epizodun süresine bağlıdır. Geçici epizotta (ilk ve son kötü okuma arası ≤ 630 ms; ör. tek EFT artefaktı veya sensör kopması) eşiğin üstünde 630 ms kesintisiz okuma yeter. Uzun epizotta eşik + 5 dB'nin 6300 ms boyunca kesintisiz sağlanması gerekir; bunlar debounce ile aynı Schmitt + zaman histerezisi sabitleridir (testler G, P). Güvenlik bu sürelere dayanmaz, köşeli-parantez lekelemesine dayanır (§5). Bu ayrım test ağında bulunan bir kusuru düzeltir: tüm epizotlarda 5 dB marj istendiğinde, gerçek SE eşik ile eşik + 5 arasındayken tek bir artefakt düğümü kalıcı olarak HOLD'a kilitliyordu. Aynı sınıf düğüm düzeyinde de (mTLS, relay uygunluğu) kullanılır.
 
 ## §3 — Politika değişikliği (açıkça)
 
@@ -78,7 +78,7 @@ Bu gevşetme yalnızca tehdit modeli girdileri (kaynak seviyesi, gözlemci mesaf
 
 Tablonun gösterdiği ilk şey, devreye alma parametreleriyle sabit çalışan bir sistemin kod oranını uyarlamadığı sürece Y0 = 10⁻⁴'te bile kod çözemediğidir. İkincisi, kazancın büyük kısmını kod oranı uyarlamasının tek başına sağladığı, decoy oranlarının ise yüksek gürültüde ek olarak ~%110'luk bir kazanç getirdiğidir. Blok boyutu da sonucu etkiler: N = 10⁸'de decoy+vakum payı %50'ye çıkar (s/d/v .5/.35/.15). Bu bir ızgara sınır artefaktı değildir; ps ızgarası 0,2'ye genişletildiğinde optimum değişmez (test D).
 
-**Kararlılık.** Optimizasyon iki önlemle salınımdan korunur. Birincisi tepe-tutmadır ("hızlı saldırı, yavaş bırakma"): optimizasyon, son 6300 ms'deki en kötü Y0 için yapılır, böylece seçilen kod oranı yakın geçmişteki her gürültü seviyesinde çözülebilir kalır. İkincisi oran histerezisidir: yeni optimuma ancak mevcut setten en az %5 iyiyse (ya da mevcut set R = 0 veriyorsa) geçilir. Ayrıca Y0, 0,5 dB'lik kovalara nicemlenir ve kovanın üst kenarında optimize edilir. Test (I), SE 41↔42 dB arasında her 100 ms'de bir gidip gelirken korumalı denetleyicinin 1 geçiş yaptığını, korumasız kontrol deneyinin ise 201 okumada 201 geçiş yaptığını gösterir. Korumasız durumda her kova kendi optimumunu dayatıyor ve o optimumun kod oranı komşu kovada çözülemiyor.
+**Kararlılık.** Optimizasyon iki önlemle salınımdan korunur. Birincisi tepe-tutmadır ("hızlı saldırı, yavaş bırakma"): optimizasyon, son 6300 ms'deki en kötü Y0 için yapılır, böylece seçilen kod oranı yakın geçmişteki her gürültü seviyesinde çözülebilir kalır. İkincisi oran histerezisidir: yeni optimuma ancak mevcut setten en az %5 iyiyse (ya da mevcut set R = 0 veriyorsa) geçilir. Ayrıca Y0, 0,5 dB'lik kovalara nicemlenir ve kovanın üst kenarında optimize edilir. Üçüncü önlem, test ağında ölçülen Y0 gürültüsünün ortaya çıkardığı bir salınımı giderir: kova sınırında gezinen ölçüm, iki parametre seti arasında ~30 s'de bir gidip gelmeye yol açıyordu. Bu yüzden geçişler asimetriktir. Düşürme yalnız zorunlu olduğunda yapılır (mevcut set R = 0 veriyorsa). Yükseltmenin adayı ise 1 dB daha gürültülü bir kanalda da kod çözebilmelidir. 8 linkte geçiş sayısı bu kuraldan önce yalnız ilk 10 dakikada 162 iken, kuraldan sonra 60 dakikanın tamamında 20'dir. Tepe-tutma penceresi yalnız kalkan OK iken beslenir. Aksi halde 200 ms'lik bir düşüşün o anki Y0'ı 6,3 s boyunca "anahtar hızı 0" HOLD'una yol açıyordu. Karar hızları kova başına önbelleklenir, bu sayede 60 dakikalık 8 linkli ağ simülasyonu ~13 s sürer. Test (I), SE 41↔42 dB arasında her 100 ms'de bir gidip gelirken korumalı denetleyicinin 1 geçiş yaptığını, korumasız kontrol deneyinin ise 201 okumada 201 geçiş yaptığını gösterir. Korumasız durumda her kova kendi optimumunu dayatıyor ve o optimumun kod oranı komşu kovada çözülemiyor.
 
 **Blok sınırı.** Decoy sonlu-anahtar tahmini, bir blok içinde sabit μ ve ν varsayar. Bu yüzden yeni parametreler `pendingParams` olarak bekler ve yalnız bir sonraki blok sınırında `activeParams` olur. Bir okumadan çıkan öneri, o okumadan önce başlamış bir bloğa geriye dönük uygulanmaz.
 
@@ -90,11 +90,13 @@ Tablonun gösterdiği ilk şey, devreye alma parametreleriyle sabit çalışan b
 
 **Teslimat yolu.** KME'nin bellek ve veri yolu sızan kafesin içindeyse, HOLD sırasında temiz havuzdan yapılan teslimat da sızabilir. Bu nedenle `deliveryPathIsolated` açıkça verilmek zorundadır. `false` değeri HOLD'da teslimatı 0'a indirir (test H).
 
-**Örnek senaryo (test F).** SE 62 dB'de çalışan sistemde 5000. ms'de 200 ms boyunca SE 25 dB'e düşüyor. Sonuç: hiç BLOCK oluşmuyor ve mTLS hiç kopmuyor. HOLD 5000→11450 ms sürüyor (200 ms düşüş + 6300 ms kurtarma). Karantinaya 3,34·10⁶ bit giriyor (6 blok) ve aç kalınan süre 0. Korunum testi P₀ + serbest − teslim = havuz eşitliğini sağlıyor. Aynı senaryo iki kez koşulduğunda sonuç birebir aynı (test M).
+**Örnek senaryo (test F).** SE 62 dB'de çalışan sistemde 5000. ms'de 200 ms boyunca SE 25 dB'e düşüyor. Sonuç: hiç BLOCK oluşmuyor ve mTLS hiç kopmuyor. HOLD 5000→5800 ms sürüyor; bu geçici bir epizot olduğu için 630 ms kurtarma yetiyor. HOLD'a değen iki blok ([4000,5000) ve [5000,6000)) lekeleniyor. Karantinadaki bit 0, çünkü o blokların en kötü Y0'ı düşüş anındaki içeri-giriş gürültüsü ve kod zaten çözülemezdi. Aç kalınan süre de 0. Korunum testi P₀ + serbest − teslim = havuz eşitliğini sağlıyor. Aynı senaryo iki kez koşulduğunda sonuç birebir aynı (test M).
 
 **Mevcut debounce ile karşılaştırma (bulgu).** Mevcut `SeFailsafeDebounce` aynı 200 ms'lik düşüşte mTLS'i doğru şekilde açık tutar. Ancak yalnız el sıkışmayı yönetir ve anahtar serbest bırakma kararı içermez. Yani bugünkü sistemde 30 dB tabanının 630 ms'ye kadar süren ihlalleri sırasında üretilen anahtar ayrıca karantinaya alınmıyordu. Bu katman bu boşluğu kapatıyor.
 
 ## §6 — Test özeti
+
+Çok-düğümlü test ağı sonrası eklenenler: (N) çekme API'si (`grantable`/`grant`), (O) ölçüm-belirsizliği bandı, (P) geçici/uzun epizot kurtarması. İsteğe bağlı `poolCapacityBits` KME depolama sınırını modeller (taşan bitler `overflowBits`).
 
 (A) SE_gerekli ↔ emissionDetectabilityCheck 12/12 · (B) sessiz varsayılan yok · (C) tam ≥ kod ≥ sabit, 4 noktada sabit=0 iken R>0, ν iç nokta · (D) blok boyutu etkisi ve sınır artefaktı kontrolü · (E) politika farkı · (F) 200 ms düşüş · (G) marjlı dışa-sızıntı kurtarması · (H) daraltma, naif karşılaştırma ve izole olmayan yol · (I) salınım yok, kontrol deneyiyle · (J) R=0 → HOLD, BLOCK değil · (K) ölçülmüş Y0 önceliği · (L) sürdürülmüş ihlal → BLOCK, 6300 ms kurtarma, soğuk başlangıç · (M) belirlenimcilik · bütünlük (8 dosya SHA-256). Komşu testler (`mtls_failsafe_debounce`, `faraday_cage_shielding`, `rf_noise_bridge`, `network_shielding_bridge`, `shielded_detector_physics`, `chaos_decoy_state_finite_key`) yeniden koşuldu ve geçti.
 
