@@ -63,6 +63,6 @@ Simüle sahada (S2) bu iz özelinde maruziyet 0 çıktı, çünkü KDK kapı aç
 ## §4 — Sınırlar
 
 - **Bildirimler yalnızca bir olay listesi.** Gerçek bir SAE yönetim kanalı bu projede yok; ETSI 014 böyle bir kanal tanımlamaz.
-- **Kapı açma "izni" yalnızca bir fonksiyon.** Teknisyenin bu prosedüre uyması operasyonel bir varsayımdır. Fiziksel kilit veya kapı sensörüyle bağlantı yok.
+- **Kapı açma izni artık bir kilit HAL'ine bağlı (sonradan eklendi).** `doorMayOpen()` doğruyken koordinatör Ed25519 imzalı, tek kullanımlık bir açma yetkisi üretir; simüle akıllı kilit bunu bağımsız doğrular, kapı sensörü yetkisiz açılışı INCIDENT olarak bildirir. Bkz. `docs/CABINET_LOCK_HAL_DESIGN.md`. Kilit donanımı hâlâ simüledir.
 - **Ön-boşaltma süresi ve ceza ağırlığı politika parametreleri.** 24 saat ve 2000 km değerleri ölçümden türetilmedi.
 - **Koordinatör çok-düğümlü test ağının gerçek süreç aşamasına bağlanmadı.** Orada KDK kapısı bilinçli olarak habersiz açılıyor; bu, BLOCK ve TLS kesme yolunu test etmek için bırakıldı.

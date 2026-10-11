@@ -308,3 +308,11 @@ olmadan anlayabilir — bu, `hal/` paketinin PhotonNet'in geri kalanına
   kontrol/veri kanallarını düzgün ayırıyorsa (örn. ayrı bir port/soket ile)
   bu kısıtlamayı kaldırabilirsiniz — bkz. `binary_click_hardware.py`
   başlığındaki "BİLİNEN BASİTLEŞTİRME" notu.
+
+## Kabin kilidi HAL'i (Node tarafı)
+
+Bu dizindeki Python HAL, foton-sayım donanımı içindir. Faraday kafesi kabin kilidi için AYNI ilkeyle
+(küçük, vendor'dan bağımsız sözleşme; yeni cihaz = tek sınıf) yazılmış Node tarafı HAL
+`bb84/cabinet_lock_hal.js` dosyasındadır: `CabinetLockHAL` sözleşmesi, Ed25519 imzalı tek kullanımlık
+açma yetkisi, simüle akıllı kilit ve gerçek HTTP API. Ayrıntı: `bb84/docs/CABINET_LOCK_HAL_DESIGN.md`.
+Kilit donanımı simüledir.

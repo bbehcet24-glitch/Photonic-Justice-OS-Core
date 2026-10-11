@@ -16,6 +16,8 @@
  *                  devam eder ve planlı kesinti BİLDİRİMİ alır.
  *                  Ayrıca planlı HER pencereden preDrainHours (vars. 24 saat) önce
  *                  kendiliğinden DRAIN başlar — ADVISORY ile erken planlanan bakımda da.
+ *   INCIDENT     — kabin kilidi HAL'i yetkisiz açılış bildirdi (TAMPER/OVERRIDE):
+ *                  düğüm HEMEN ağ dışı, clearIncident'a kadar (bkz. cabinet_lock_hal.js).
  *   MAINTENANCE  — bakım penceresi [başlangıç, bitiş): düğüm relay / uç / mTLS
  *                  DIŞI (KME kapısı level=MAINTENANCE, self.mtlsAllowed=false).
  *                  Teknisyen kafes kapısını ANCAK `doorMayOpen()` doğruyken açar:
@@ -48,6 +50,7 @@ class MaintenanceTrafficCoordinator {
     this.nodes = new Map(); // nodeId → { mode, since, reason, window:{startH,endH}|null }
     this.notices = [];      // SAE / operatör bildirimleri
     this.log = [];
+    this.incidents = [];    // yetkisiz kapı açılışları (kilit HAL'inden)
   }
   _get(id) { if (!this.nodes.has(id)) this.nodes.set(id, { mode: "NORMAL", since: null, reason: null, window: null }); return this.nodes.get(id); }
   _set(id, mode, tH, reason) {
@@ -61,10 +64,10 @@ class MaintenanceTrafficCoordinator {
     const n = this._get(ev.nodeId);
     if (ev.kind === "ALERT") {
       if (this.opts.drainLevels.includes(ev.level)) {
-        if (n.mode !== "MAINTENANCE") this._set(ev.nodeId, "DRAIN", ev.atHours, `${ev.level} uyarısı (${ev.basis || "RUL"})`);
+        if (n.mode !== "MAINTENANCE" && n.mode !== "INCIDENT") this._set(ev.nodeId, "DRAIN", ev.atHours, `${ev.level} uyarısı (${ev.basis || "RUL"})`);
       } else if (ev.level === "ADVISORY" && n.mode === "NORMAL") this._set(ev.nodeId, "PLANNED", ev.atHours, "ADVISORY: bakım planlandı");
     } else if (ev.kind === "STEP_CHANGE" && ev.direction === "düşüş") {
-      if (n.mode !== "MAINTENANCE") this._set(ev.nodeId, "DRAIN", ev.atHours, "ani SE düşüşü — muayene bekleniyor");
+      if (n.mode !== "MAINTENANCE" && n.mode !== "INCIDENT") this._set(ev.nodeId, "DRAIN", ev.atHours, "ani SE düşüşü — muayene bekleniyor");
     } else if (ev.kind === "DOWNGRADE" && n.mode === "DRAIN" && !n.window) {
       this._set(ev.nodeId, ev.level === "ADVISORY" ? "PLANNED" : "NORMAL", ev.atHours, `uyarı ${ev.level} düzeyine düştü`);
     }
@@ -88,7 +91,7 @@ class MaintenanceTrafficCoordinator {
         this._set(id, "DRAIN", tH, `bakım penceresi öncesi boşaltma (${this.opts.preDrainHours} saat)`);
       }
       // Pencere bitişi aşılsa bile MAINTENANCE sürer — yalnız completeMaintenance kaldırır (bakım uzayabilir).
-      if (n.window && tH >= n.window.startH && n.mode !== "MAINTENANCE") this._set(id, "MAINTENANCE", tH, `planlı bakım penceresi (${n.window.reason || "iş emri"})`);
+      if (n.window && tH >= n.window.startH && n.mode !== "MAINTENANCE" && n.mode !== "INCIDENT") this._set(id, "MAINTENANCE", tH, `planlı bakım penceresi (${n.window.reason || "iş emri"})`);
     }
   }
 
@@ -101,7 +104,7 @@ class MaintenanceTrafficCoordinator {
     const drainPenaltyKm = {}, maintenance = [];
     for (const [id, n] of this.nodes) {
       if (n.mode === "DRAIN") drainPenaltyKm[id] = this.opts.drainPenaltyKm;
-      if (n.mode === "MAINTENANCE") maintenance.push(id);
+      if (n.mode === "MAINTENANCE" || n.mode === "INCIDENT") maintenance.push(id);
     }
     return { drainPenaltyKm, maintenance };
   }
@@ -111,6 +114,48 @@ class MaintenanceTrafficCoordinator {
     const n = this._get(id);
     return n.mode === "MAINTENANCE" && !!n.window && tH >= n.window.startH && !network.planUsesNode(id);
   }
+
+  /**
+   * Kabin kilidi HAL'i (cabinet_lock_hal.js) ile bağlantı: doorMayOpen doğruysa Ed25519 imzalı,
+   * kısa ömürlü, tek kullanımlık AÇMA YETKİSİ üretir; yetki "boşaltıldı" beyanını taşır.
+   * @returns {{granted, token?, reason?}}
+   */
+  authorizeDoor(id, tH, network, authority, { nowMs, workOrderId, technicianId, ttlMs = 120000 }) {
+    const n = this._get(id);
+    if (!this.doorMayOpen(id, tH, network)) {
+      const reason = n.mode === "INCIDENT" ? "düğümde açık olay (INCIDENT) — önce incelenmeli"
+        : n.mode !== "MAINTENANCE" ? `düğüm ${n.mode} — bakım penceresi başlamadı`
+        : network.planUsesNode(id) ? "ağ planı düğümü hâlâ kullanıyor (boşaltma bitmedi)" : "planlı pencere yok";
+      this.log.push({ nodeId: id, atHours: tH, kind: "UNLOCK_REFUSED", reason });
+      return { granted: false, reason };
+    }
+    const token = authority.issue({ nodeId: id, workOrderId, technicianId, nbfMs: nowMs, expMs: nowMs + ttlMs,
+      attestation: { drained: true, planCheckedAtMs: nowMs, windowStartH: n.window.startH } });
+    this.log.push({ nodeId: id, atHours: tH, kind: "UNLOCK_AUTHORIZED", workOrderId, technicianId });
+    return { granted: true, token };
+  }
+
+  /**
+   * Kilit/kapı sensörü olayı. Yetkisiz açılış (TAMPER, OVERRIDE, yetkisiz DOOR_OPENED ya da
+   * bakım dışı bir düğümde açılış) → INCIDENT: düğüm HEMEN ağ dışı. Çağıran, SE izleyicisinin
+   * bir sonraki örneğini beklemeden ağı YENİDEN PLANLAMALIDIR (replanNow).
+   */
+  onLockEvent(ev, tH) {
+    const n = this._get(ev.nodeId);
+    const unauthorized = ev.type === "TAMPER" || ev.type === "OVERRIDE" || (ev.type === "DOOR_OPENED" && (!ev.authorized || n.mode !== "MAINTENANCE"));
+    if (unauthorized) {
+      this._set(ev.nodeId, "INCIDENT", tH, `yetkisiz kabin açılışı (${ev.type})`);
+      const inc = { nodeId: ev.nodeId, type: ev.type, atHours: tH, sensorAtMs: ev.atMs, detail: ev.detail };
+      this.incidents.push(inc);
+      this.notices.push({ type: "security-incident", nodeId: ev.nodeId, message: `${ev.nodeId} kabini yetkisiz açıldı (${ev.type}) — düğüm ağdan çıkarıldı, yerinde inceleme gerekli.` });
+      return { replanNow: true, incident: inc };
+    }
+    if (ev.type === "UNLOCK_FAILED") this.log.push({ nodeId: ev.nodeId, atHours: tH, kind: "UNLOCK_FAILED", reason: ev.reason });
+    return { replanNow: false };
+  }
+
+  /** Olay incelendi, kafes SE'si doğrulandı → NORMAL. */
+  clearIncident(id, tH) { const n = this._get(id); if (n.mode === "INCIDENT") this._set(id, n.window ? "MAINTENANCE" : "NORMAL", tH, "olay incelendi, kapatıldı"); }
 
   mode(id) { return this._get(id).mode; }
 }

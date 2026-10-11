@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-10-11T20:43:43.148Z",
+  "checks": [
+    {
+      "name": "H1 Ed25519 açma yetkisi: geçerli belge kabul; kurcalanmış, sahte anahtar, başka düğüm, zaman dışı, aşırı ömür, boşaltma beyanı yok/bayat, çözülemeyen ve TEKRAR kullanılan belgelerin hepsi reddediliyor ve kilit KİLİTLİ kalıyor",
+      "ok": true,
+      "detail": "geçerli: AÇILDI · kurcalanmış içerik → red (imza geçersiz) · başka anahtarla imza → red (imza geçersiz) · başka düğüm → red (belge başka düğüm için (MSL)) · henüz geçerli değil → red (belge henüz geçerli değil (nbf)) · süresi dolmuş → red (belgenin süresi dolmuş (exp)) · ömür kilit sınırını aşıyor → red (belge ömrü kilit sınırını aşıyor) · boşaltma beyanı yok → red (boşaltma beyanı yok ya da bayat) · boşaltma beyanı bayat → red (boşaltma beyanı yok ya da bayat) · çözülemeyen belge → red (belge biçimi geçersiz) · tekrar (aynı belge) → red (belge daha önce kullanılmış (tekrar))"
+    },
+    {
+      "name": "H2 Kilitleme şartı: pencereden önce ve ağ planı KDK'yı kullanırken koordinatör yetki VERMİYOR, kilitli kapı açılamıyor; plan KDK'yı bıraktıktan sonra yetki → kilit açılıyor → yetkili giriş",
+      "ok": true,
+      "detail": "ret 1: \"düğüm DRAIN — bakım penceresi başlamadı\" · kilitliyken kapı açılabildi mi: false · ret 2: \"ağ planı düğümü hâlâ kullanıyor (boşaltma bitmedi)\" · plan yenilendi → yetki verildi → kilit UNLOCKED → kapı yetkili açıldı: true"
+    },
+    {
+      "name": "H3 Fail-secure: eyleyici sıkışınca KİLİTLİ kalıyor (UNLOCK_FAILED) ve kapı açılamıyor; açılıp kapısı açılmayan kilit 30 s sonra kendiliğinden kilitleniyor; kilit API'si yanıt vermezse istemci zaman aşımında 'KİLİTLİ varsayılır' dönüyor ve kilit gerçekten kilitli",
+      "ok": true,
+      "detail": "sıkışık eyleyici → eyleyici arızası, kapı açıldı mı: false · onarım sonrası: açıldı → 30 s içinde kapı açılmadı → LOCKED · API yanıtsız → 409 ms sonra \"zaman aşımı (400 ms) — kilit KİLİTLİ varsayılır (fail-secure)\", kilit LOCKED"
+    },
+    {
+      "name": "H4 Gerçek HTTP kilit API'si (127.0.0.1): yetki → POST unlock 200 → yetkili giriş → kapanış → yeniden kilit; olaylar HTTP ile alınıyor; aynı belgenin tekrarı ve sahte imzalı belge 403",
+      "ok": true,
+      "detail": "http://127.0.0.1:35103 · durum LOCKED → unlock HTTP 200 (UNLOCKED) → olaylar [UNLOCKED, DOOR_OPENED, DOOR_CLOSED, RELOCKED] · tekrar HTTP 403 \"belge daha önce kullanılmış (tekrar)\" · sahte HTTP 403 \"imza geçersiz\" · son durum LOCKED"
+    },
+    {
+      "name": "H5 Zorla açma (40 deneme, açılış fazı rastgele): yalnız SE izleyicisiyle maruziyet bir sonraki 50 ms örneğine kadar sürüyor; kapı sensörü + olay-tetikli yeniden planlamayla sensör gecikmesine (5 ms) iniyor; her denemede INCIDENT",
+      "ok": true,
+      "detail": "yalnız SE: ortalama 4365 bit, en çok 7827 bit (≈160 bit/ms × açılıştan sonraki örneğe kalan süre) · kapı sensörü: ortalama 787 bit, en çok 800 bit (160 bit/ms × 5 ms = 800) · INCIDENT 40/40 — NOT: sıfır değil; zorla açmada maruziyet ancak sensör gecikmesine kadar küçülür"
+    },
+    {
+      "name": "H6 Koordineli bakım (ağ + kilit): yetki ancak boşaltmadan sonra, kapı açıkken KDK'dan geçen bit 0, kapanış → yeniden kilit → bakım tamamlandı → NORMAL; normal işletimde mekanik acil anahtar → OVERRIDE → INCIDENT → aynı adımda düğüm plan dışı → inceleme sonrası NORMAL",
+      "ok": true,
+      "detail": "zaman çizelgesi: yetki+unlock@10000:UNLOCKED · UNLOCKED@10000 · DOOR_OPENED@11005 · DOOR_CLOSED@26005 · RELOCKED@26005 · bakım tamamlandı@30000 · kapı açıkken KDK'dan geçen 0 bit · bakım sonrası mod NORMAL · acil anahtar 1500 ms → olay 1550 ms'de işlendi, plan KDK'yı 1550 ms'de bıraktı · olay kaydı: OVERRIDE · bildirim: \"KDK kabini yetkisiz açıldı (OVERRIDE) — düğüm ağdan çıkarıld…\""
+    },
+    {
+      "name": "Bütünlük: çekirdek, ağ, karar katmanı ve KME sunucusu SHA-256'sı test boyunca değişmedi; kilit HAL'i çekirdeği import etmiyor",
+      "ok": true,
+      "detail": "4 dosya değişmedi"
+    }
+  ],
+  "forcedOpen": {
+    "trials": 40,
+    "meanExposureBitsSeOnly": 4365,
+    "maxExposureBitsSeOnly": 7827,
+    "meanExposureBitsDoorSensor": 787,
+    "maxExposureBitsDoorSensor": 800,
+    "sensorLatencyMs": 5
+  },
+  "allChecksPassed": true
+}
