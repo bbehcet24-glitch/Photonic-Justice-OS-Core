@@ -1,0 +1,59 @@
+{
+  "generatedAt": "2026-10-11T20:25:40.430Z",
+  "checks": [
+    {
+      "name": "M1 Koordinatör: ADVISORY→PLANNED (ağ değişmez), WARNING→DRAIN, pencere→MAINTENANCE (süre aşılsa da tamamlanana kadar), tamamlama→NORMAL; ani düşüş→DRAIN; uyarı düşerse DRAIN kalkar; planlı kesinti bildirimi üretiliyor",
+      "ok": true,
+      "detail": "X: PLANNED → DRAIN → DRAIN → MAINTENANCE → MAINTENANCE → NORMAL · Y (STEP_CHANGE): DRAIN · Z (WARNING→DOWNGRADE): NORMAL · bildirim: \"X düğümünde planlı bakım: SAE↔KME hizmeti 30.0–32.0. saatlerde kesilecek; transit trafik ö…\""
+    },
+    {
+      "name": "M2 DRAIN: KDK WARNING aldığı anda BKR↔ATS transit trafiği KDK'yı atlayan yola geçiyor (KDK hâlâ sağlıklıyken); KDK'nın kendi uç talepleri pencereye kadar hizmet almaya devam ediyor",
+      "ok": true,
+      "detail": "kaydırma yokken yol: BKR→KDK→ATS · DRAIN'de: BKR→AVR→MSL→ASY→ATS · KDK uç talepleri (MSL↔KDK, AVR↔KDK) DRAIN boyunca hizmette: true"
+    },
+    {
+      "name": "M4 Önce kur, sonra kes: koordineli bakımda kafes kapısı ancak düğüm boşaltıldıktan sonra açılıyor → izole olmayan KDK'dan teslimat-yolu maruziyeti 0; habersiz açılışta > 0. Transit BKR↔ATS her iki durumda kesintisiz",
+      "ok": true,
+      "detail": "habersiz: kapı 22000 ms'de açıldı, maruziyet 8000 bit · koordineli: pencere 20000 ms, ağ planı KDK'yı bıraktıktan sonra kapı 21050 ms'de açıldı, maruziyet 0 bit, kapı sonrası KDK'dan geçen bit 0 · BKR↔ATS teslim 100.00%"
+    },
+    {
+      "name": "M5 Nedensellik: habersiz açılıştaki maruziyet TAM OLARAK kapının açıldığı örnekleme aralığında (önceki okumayla yönlendirilmiş) KDK'dan geçen trafiktir — sonraki aralıkta karar zaten değişmiş",
+      "ok": true,
+      "detail": "açılış aralığında KDK'dan geçen 8000 bit = ölçülen maruziyet 8000 bit · sonraki aralık: 0 bit (50 ms × KDK'dan geçen 160 kbps ≈ 8000 bit)"
+    },
+    {
+      "name": "M4b Planlı kesinti: KDK'nın SAE↔KME hizmeti pencere başında (bildirimle) kapanıyor — kapı açılmadan ÖNCE; habersiz durumda mTLS ancak kafes açıldıktan ~630 ms sonra debounce ile kesiliyor",
+      "ok": true,
+      "detail": "koordineli: mTLS kapanışı 20000 ms < kapı 21050 ms · habersiz: kapı 22000 ms → mTLS kesintisi 22650 ms · bildirim: planned-outage"
+    },
+    {
+      "name": "M3 Alternatif yol yoksa DRAIN trafiği KESMİYOR: A–B–C hattında B boşaltılıyor, A↔C yine B üzerinden tam karşılanıyor (ceza ağırlığı, dışlama değil)",
+      "ok": true,
+      "detail": "A↔C teslim 100.00% · B planlı durum: DRAIN"
+    },
+    {
+      "name": "M6 Uçtan uca zincir (sokak dolabı, saatlik, aylar): çevresel prognostik → iş emri → pencereden ≥24 saat önce DRAIN (WARNING ya da planlı ön-boşaltma) → bakım → tamamlama; bakım GERÇEK eşik geçişinden ÖNCE",
+      "ok": true,
+      "detail": "WARNING null. gün · DRAIN 334. gün · iş emri vadesi 335. gün · bakım 335. gün · gerçek eşik geçişi (bakım yapılmasaydı) 363.6. gün · DRAIN süresi 1.0 gün (\"bakım penceresi öncesi boşaltma (24 saat)\") · koordinatör geçişleri: PLANNED → DRAIN → MAINTENANCE → NORMAL — ADVISORY ile planlanan bakım WARNING'e gerek bırakmadı"
+    },
+    {
+      "name": "M7 KME kapı belgesi: MAINTENANCE düğümün kapısı self.mtlsAllowed=false, level=MAINTENANCE ve peers.KDK.deliveryAllowed=false taşıyor — mevcut --shield-gate mantığıyla (bkz. multinode testbed L4/L7) oturumlar kesilir, karşı KME'ler bu düğüme anahtar vermez",
+      "ok": true,
+      "detail": "senaryo sonunda KDK durumu MAINTENANCE → kapı {\"node\":\"KDK\",\"mtlsAllowed\":false,\"level\":\"MAINTENANCE\"}"
+    },
+    {
+      "name": "Bütünlük: çekirdek ve yeniden kullanılan modüllerin SHA-256'sı test boyunca değişmedi; koordinatör çekirdeği import etmiyor",
+      "ok": true,
+      "detail": "5 dosya değişmedi · core 8f879fde86be0129…"
+    }
+  ],
+  "chain": {
+    "warningHDay": null,
+    "drainHDay": 334,
+    "orderDueHDay": 335,
+    "maintenanceHDay": 335,
+    "doneHDay": 335.1,
+    "crossHDay": 363.6
+  },
+  "allChecksPassed": true
+}

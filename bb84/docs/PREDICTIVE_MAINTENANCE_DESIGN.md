@@ -147,4 +147,4 @@ Bakım sayıları benzer: 22'ye karşı 21. Bedeli ise şu: kestirimci bakım co
 - SE'nin saatlik toplu ölçümü, sürekli bir SE izleme donanımının varlığını varsayar. Projede böyle bir donanım yoktur.
 - Katsayılar, üretici hızlandırılmış yaşlandırma verisiyle (ısı-nem, tuz sisi + IEEE 299) yeniden belirlenmelidir. Saha olay oranları da varsayımdır.
 
-**Henüz bağlanmayanlar.** Uyarılar çok-düğümlü ağa bağlanmadı. Önerilen sonraki adım şu: WARNING alan bir düğüm, bakım penceresi öncesinde ağ katmanında ceza ağırlığı alır, böylece trafik önceden kaydırılır. `production_gate.js` ve CI'a da bağlanmadı.
+**Ağ bağlantısı (sonradan yapıldı).** Uyarılar `maintenance_traffic_coordinator.js` ile çok-düğümlü ağa bağlandı: WARNING/CRITICAL/ani düşüş ve planlı her pencereden 24 saat önce DRAIN (transit trafik kayar), pencerede planlı kesinti. Bkz. `docs/MAINTENANCE_TRAFFIC_SHIFT_DESIGN.md`. `production_gate.js` ve CI'a hâlâ bağlı değil.

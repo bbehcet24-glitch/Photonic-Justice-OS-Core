@@ -89,7 +89,7 @@ Uçtan-uca anahtarlar KME'ye `--keystore-inbox` dizini üzerinden verilir: dosya
 | mTLS kesintisi (olay / toplam süre) | **1 / 60,7 s** | 1054 / 3006 s | 2 / 2936 s |
 | sızıntılı blok serbest bırakıldı | **0** | 1291 | 1291 |
 | sızıntılı kökenli bit teslim edildi | **0** | 405 063 | 405 063 |
-| izole olmayan sızan düğümden teslim | **0** | 8 000 bit | 104 000 bit |
+| izole olmayan sızan düğümden teslim | **0** (bu izde; sınır: habersiz olay başına ≤ 1 aralık) | 8 000 bit | 112 000 bit |
 | karantina | 2687 blok (3,25 Gbit) | — | — |
 
 **Bulgu 1: eski politikalar kanalı kapatıyor, kökeni izlemiyor (S3).** Durumsuz önkoşul ve debounce yalnız SAE↔KME bağlantısını yönetir. Sızıntı sırasında da QKD katmanı anahtar üretmeye devam eder ve bu anahtar havuza girer. Kanal yeniden açıldığında teslim edilir. Örnekte KDK kapısı açıkken KDK→ATS linki ATS'deki alıcıda gürültü görmez ve anahtar üretmeyi sürdürür. Kapı kapanınca bu anahtarlar dağıtılır. Uyarlamalı sistemde o pencereye değen her blok karantinadadır (S2).
@@ -119,7 +119,7 @@ Senaryo ve gözlenenler:
 - **L6 — BKR↔ATS.** KDK BLOCK'tayken ağ BKR→AVR→MSL→ASY→ATS yoluna geçti. BKR'nin kendi 250 ms'lik gerçek sızıntısında (12,0 s) bile 36/36 akış başarılı oldu.
 - **L7 — AVR'nin SE izleyicisinin çökmesi (19 s, kapı dosyası tazelenmiyor).** KME ~1 s sonra fail-closed duruma geçti: tüm yoklamalarda TLS kesildi ve AVR-master akışlarının hepsi reddedildi.
 - **L8 — Köken.** SAE'lerin gerçek API üzerinden aldığı 404 anahtarın tamamı, enjekte edilen anahtarla bayt-bayt aynı. Hiçbiri sızıntılı kökenli değil, hiçbiri iki kez verilmedi.
-- **L9.** Canlı koşunun yer-gerçeği denetiminde sızıntılı serbest blok sayısı 0, teslimat-yolu ihlali 0.
+- **L9.** Canlı koşunun yer-gerçeği denetimi: sızıntılı serbest blok 0, sızıntılı köken 0. Teslimat-yolu maruziyeti ~8 kbit / 1 aralık (8160 bit; gerçek zamanlı aralık ~51 ms). Bu, habersiz kapının açıldığı 50 ms'lik aralığın, bir önceki okumayla yönlendirilmiş trafiğidir (bkz. §5-7). İlk sürüm burada "0" raporluyordu, çünkü ağ teslimi nedensel değildi.
 
 ## §5 — Test ağının karar katmanında bulduğu ve düzelttiği kusurlar
 
@@ -136,6 +136,13 @@ Bu kusurlar tek bağlantılı birim testlerde görünmüyordu; ancak gerçekçi 
 **5) Tek-yollu tahsis tuzağı.** Neredeyse boş bir HOLD linki en kısa yolda kalınca talep aç kalıyordu. Çözüm: artık-kapasite turları (§1).
 
 **6) Keep-alive açığı.** Yalnız yeni bağlantıları reddetmek yetmezdi; açık oturumlar BLOCK boyunca kullanılabilirdi. Çözüm: açık oturumlar izlenir ve kapı kapandığında 200 ms içinde kesilir.
+
+**7) Nedensel olmayan teslim (sonradan, bakım-trafik kaydırma çalışmasında bulundu).**
+
+- **Kusur:** Ağ katmanı (t₋₁, t] aralığını, aralığın SONUNDAKİ okumayla verilen kararla teslim ediyordu. Bu da habersiz bir kafes açılışının ilk aralığını "zaten bilerek" yönlendirmek anlamına geliyordu.
+- **Çözüm:** Aralık, bir önceki adımda yapılan planla teslim edilir; ardından okumalar alınır ve yeni plan yapılır.
+- **Sonuç:** Habersiz olayda izole olmayan düğümden bir aralık kadar maruziyet kaçınılmazdır (canlı koşuda ~8 kbit). Simüle sahada bu iz özelinde 0 çıktı, çünkü KDK kapı açılırken artefakt yüzünden zaten HOLD'daydı. Bu yüzden S2 ve L9 artık "habersiz olay başına en fazla bir aralık" sınırını doğruluyor.
+- **Planlı bakım:** Bu maruziyet planlı bakımda 0'dır. Bkz. `docs/MAINTENANCE_TRAFFIC_SHIFT_DESIGN.md`.
 
 ## §6 — Kapsam dışı
 

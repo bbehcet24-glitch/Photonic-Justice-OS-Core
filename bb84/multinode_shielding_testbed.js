@@ -195,14 +195,14 @@ class SimRunner {
       policy, seMeasurementUncertaintyDb,
       demands: TOPOLOGY.demands.map((d) => ({ pair: `${d.src}↔${d.dst}`, offeredBits: 0, deliveredBits: 0, okSteps: 0, steps: 0, outageMs: 0, longestOutageMs: 0, cur: 0, holdPoolBits: 0 })),
       nodes: Object.fromEntries(TOPOLOGY.nodes.map((n) => [n.id, { mtlsCuts: 0, mtlsDownMs: 0, stateMs: {} }])),
-      leakyProvenanceBits: 0, deliveryPathViolationBits: 0, releasedLeakyBlocks: 0, releasedBlocks: 0, quarantinedBlocks: 0,
+      leakyProvenanceBits: 0, deliveryPathViolationBits: 0, deliveryPathViolationSteps: 0, releasedLeakyBlocks: 0, releasedBlocks: 0, quarantinedBlocks: 0,
       ecFailBlocks: 0, ecFailBits: 0, ledgerShortfall: 0, levelMs: {},
     };
     this.prevMtls = {};
   }
 
   /** i: iz indeksi (gerçek SE/ölçüm), nowMs: denetleyicilere verilen saat. */
-  step(i, nowMs) {
+  step(i, nowMs, hints) {
     const { traces, net, ledger, m } = this;
     const se = {}, y0 = {};
     for (const n of TOPOLOGY.nodes) se[n.id] = traces.nodes[n.id].meas[i];
@@ -210,7 +210,7 @@ class SimRunner {
       const B = traces.nodes[l.b];
       y0[l.key] = this.meters.get(l.key).sample(trueY0(B.ambient[i], B.trueSe[i]), net.activeParams(l.key).pv, DT);
     }
-    const r = net.step(nowMs, { se, y0 });
+    const r = net.step(nowMs, { se, y0 }, hints);
     // blok kökeni: GERÇEK SE ile denetle
     for (const l of net.links) {
       const L = r.links[l.key];
@@ -232,6 +232,7 @@ class SimRunner {
       }
     }
     // teslim + köken + teslimat yolu denetimi
+    let stepViolation = false;
     r.demands.forEach((d, di) => {
       const M = m.demands[di];
       d.leakyBits = 0;
@@ -253,9 +254,10 @@ class SimRunner {
           const n = this.net.nodeById.get(id), T = traces.nodes[id];
           return !n.deliveryPathIsolated && (T.trueSe[i] < SE_REQ || (i > 0 && T.trueSe[i - 1] < SE_REQ));
         });
-        if (bad) { m.deliveryPathViolationBits += d.deliveredBits; d.pathViolation = true; }
+        if (bad) { m.deliveryPathViolationBits += d.deliveredBits; d.pathViolation = true; stepViolation = true; }
       }
     });
+    if (stepViolation) m.deliveryPathViolationSteps++;
     for (const n of TOPOLOGY.nodes) {
       const st = r.nodes[n.id]; const N = m.nodes[n.id];
       N.stateMs[st.state] = (N.stateMs[st.state] || 0) + DT;
@@ -361,9 +363,10 @@ function runSimStage(out, chk) {
   chk("S1 Saha izleri: bakım kapısı, gerçek kısa sızıntı, conta yaşlanması (SE_gerekli'yi geçiyor), yakın verici ve her düğümde EFT/kopma artefaktları mevcut",
     !!door && traces.events.some((e) => e.kind === "kısa gerçek sızıntı") && asyCross != null && !!tx && arte,
     `${traces.events.length} olay · ASY gerçek SE ${(asyCross / 60e3).toFixed(1)}. dakikada SE_gerekli'nin (${SE_REQ.toFixed(1)} dB) altına iniyor · artefaktlar ${JSON.stringify(out.sim.measurementArtefacts)}`);
-  chk("S2 GÜVENLİK (yer gerçeği): uyarlamalı sistem sızıntı penceresine değen HİÇBİR bloğu serbest bırakmadı, sızıntılı kökenli 0 bit ve izole olmayan sızan düğümden 0 bit teslim etti",
-    a.releasedLeakyBlocks === 0 && a.leakyProvenanceBits === 0 && a.deliveryPathViolationBits === 0,
-    `serbest bırakılan ${a.releasedBlocks} blok, sızıntılı ${a.releasedLeakyBlocks} · karantina ${a.quarantinedBlocks} blok (${(a.quarantinedBits / 1e9).toFixed(2)} Gbit) · sızıntılı köken ${a.leakyProvenanceBits} bit · teslimat-yolu ihlali ${a.deliveryPathViolationBits} bit`);
+  const kdkDoorEvents = traces.events.filter((e) => e.node === "KDK" && e.kind === "bakım kapısı açık").length;
+  chk("S2 GÜVENLİK (yer gerçeği): uyarlamalı sistem sızıntı penceresine değen HİÇBİR bloğu serbest bırakmadı ve sızıntılı kökenli 0 bit teslim etti; izole olmayan sızan düğümden teslimat en fazla HABERSİZ kapı olayı başına BİR örnekleme aralığı (nedensel teslim — bkz. maintenance_traffic_shift_test M4/M5)",
+    a.releasedLeakyBlocks === 0 && a.leakyProvenanceBits === 0 && a.deliveryPathViolationSteps <= kdkDoorEvents,
+    `serbest bırakılan ${a.releasedBlocks} blok, sızıntılı ${a.releasedLeakyBlocks} · karantina ${a.quarantinedBlocks} blok (${(a.quarantinedBits / 1e9).toFixed(2)} Gbit) · sızıntılı köken ${a.leakyProvenanceBits} bit · teslimat-yolu maruziyeti ${Math.round(a.deliveryPathViolationBits)} bit / ${a.deliveryPathViolationSteps} aralık (habersiz KDK kapı olayı ${kdkDoorEvents}; bu izde KDK kapı açılırken artefakt nedeniyle zaten HOLD'daydı)`);
   chk("S3 BULGU: eski politikalar teslim KANALINI kapatıyor ama anahtar KÖKENİNİ izlemiyor — sızıntı sırasında üretilen bloklar havuza giriyor ve kanal açılınca teslim ediliyor",
     s.leakyProvenanceBits > 0 && d.leakyProvenanceBits > 0,
     `legacy-strict: ${s.releasedLeakyBlocks} sızıntılı blok serbest, ${Math.round(s.leakyProvenanceBits)} sızıntılı-kökenli bit teslim, teslimat-yolu ihlali ${Math.round(s.deliveryPathViolationBits)} bit · legacy-debounce: ${d.releasedLeakyBlocks} blok, ${Math.round(d.leakyProvenanceBits)} bit, teslimat-yolu ihlali ${Math.round(d.deliveryPathViolationBits)} bit (debounce'un 630 ms toleransı KDK'da sızarken teslimata izin veriyor)`);
@@ -395,7 +398,7 @@ function runSimStage(out, chk) {
   const asyHoldS = ((a.nodes.ASY.stateMs.HOLD_EGRESS || 0) / 1e3);
   const bridgeS = (2 * 16e6) / TOPOLOGY.demands[0].demandBps; // ASY'nin 2 izole linkindeki dolu tampon / talep
   chk("S11 SINIR (dürüstlük): sürdürülmüş HOLD'daki süreklilik TAMPON boyutuna bağlı — havuz 16 Mbit/link ile sınırlanınca ASY'nin kalıcı HOLD'unda AVR↔ASY aç kalıyor; güvenlik değişmiyor",
-    c64.demands[0].availability < a.demands[0].availability && c64.releasedLeakyBlocks === 0 && c64.leakyProvenanceBits === 0 && c64.deliveryPathViolationBits === 0,
+    c64.demands[0].availability < a.demands[0].availability && c64.releasedLeakyBlocks === 0 && c64.leakyProvenanceBits === 0 && c64.deliveryPathViolationSteps <= kdkDoorEvents,
     `AVR↔ASY erişilebilirlik: sınırsız tampon ${pct(a.demands[0].availability)} (HOLD havuzundan ${(a.demands[0].holdPoolBits / 1e6).toFixed(0)} Mbit; 60. dk'da link havuzları ${Object.values(a.finalPoolBits).map((b) => (b / 1e9).toFixed(1)).join("/")} Gbit) · ` +
     `16 Mbit tampon ${pct(c64.demands[0].availability)}, en uzun kesinti ${(c64.demands[0].longestOutageMs / 1e3).toFixed(0)} s · ASY dışa-sızıntı HOLD'u ${asyHoldS.toFixed(0)} s (gerçek SE ${asyHoldMin} dk boyunca SE_gerekli altında; ±1 dB bant HOLD'u daha erken başlatıyor) · ` +
     `kaba köprüleme süresi ≈ 2×16 Mbit / 120 kbps ≈ ${bridgeS.toFixed(0)} s < HOLD süresi · taşan ${(c64.overflowBits / 1e9).toFixed(1)} Gbit · sızıntılı köken ${c64.leakyProvenanceBits} — daraltma kısa parazitleri köprüler, kalıcı bozulma BAKIM ister`);
@@ -605,9 +608,9 @@ function liveChecks(out, chk) {
     recv.length > 0 && recv.every((k) => k.reg && k.b64ok && k.match && !k.reg.leaky) && new Set(ids).size === ids.length,
     `alınan ${recv.length} anahtar · kayıtta ${recv.filter((k) => k.reg).length} · bayt eşleşmesi ${recv.filter((k) => k.b64ok).length} · sızıntılı köken ${recv.filter((k) => k.reg && k.reg.leaky).length} · tekrar ${ids.length - new Set(ids).size}`);
   const lm = L.metrics;
-  chk("L9 Canlı koşunun yer-gerçeği denetimi: sızıntılı blok serbest bırakılmadı, teslimat-yolu ihlali yok",
-    lm.releasedLeakyBlocks === 0 && lm.leakyProvenanceBits === 0 && lm.deliveryPathViolationBits === 0,
-    `serbest ${lm.releasedBlocks} blok · karantina ${lm.quarantinedBlocks} blok · sızıntılı köken ${lm.leakyProvenanceBits} · teslimat-yolu ihlali ${lm.deliveryPathViolationBits}`);
+  chk("L9 Canlı koşunun yer-gerçeği denetimi: sızıntılı blok serbest bırakılmadı, sızıntılı köken 0; habersiz KDK kapı açılışında teslimat-yolu maruziyeti TEK örnekleme aralığıyla sınırlı (planlı bakımda 0 — bkz. maintenance_traffic_shift_test)",
+    lm.releasedLeakyBlocks === 0 && lm.leakyProvenanceBits === 0 && lm.deliveryPathViolationSteps <= 1,
+    `serbest ${lm.releasedBlocks} blok · karantina ${lm.quarantinedBlocks} blok · sızıntılı köken ${lm.leakyProvenanceBits} · teslimat-yolu maruziyeti ${Math.round(lm.deliveryPathViolationBits)} bit / ${lm.deliveryPathViolationSteps} aralık (kapının açıldığı aralık, bir önceki okumayla yönlendirilmişti)`);
   // raporu inceltmek için ham kayıtları özetle
   L.flowCount = L.flows.length; L.probeCount = L.probes.length;
   L.flows = L.flows.map(({ keys, ...f }) => ({ ...f, keyCount: keys ? keys.length : 0 }));
