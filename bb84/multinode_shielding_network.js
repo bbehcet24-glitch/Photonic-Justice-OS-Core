@@ -97,25 +97,8 @@ class ShieldedQkdNetwork {
     }
 
     // ── Linkler ──
-    this.links = topo.links.map((l) => {
-      const eta = linkEta(l.km, cfg.etaOpts);
-      const a = this.nodeById.get(l.a), b = this.nodeById.get(l.b);
-      const ctl = new A.AdaptiveShieldingMitigation({
-        threat: cfg.threat,
-        ingress: { ambientFieldDbuVm: b.ambientFieldDbuVm, susceptibilityDbuVm: cfg.ingress.susceptibilityDbuVm, refDarkYield: cfg.ingress.refDarkYield },
-        deliveryPathIsolated: a.deliveryPathIsolated && b.deliveryPathIsolated,
-        channel: { eta }, blockPulses: this.blockPulses, pulseRateHz: this.pulseRateHz,
-        initialCleanPoolBits: cfg.initialCleanPoolBits || 0, optimizationCache: cache, seMeasurementUncertaintyDb: u,
-        poolCapacityBits: cfg.poolCapacityBits,
-        targetSeDb: this.targetSeDb,
-      });
-      const rec = { ...l, key: linkKey(l.a, l.b), eta, ctl, blockLogSeen: 0 };
-      if (this.policy !== "adaptive") {
-        // Eski sistem: devreye alma parametreleri SABİT, karantina YOK, kendi havuzu.
-        rec.legacy = { params: { ...ctl.activeParams }, pool: cfg.initialCleanPoolBits || 0, block: null, blockLog: [], released: 0 };
-      }
-      return rec;
-    });
+    this._cfg = cfg; this._cache = cache;
+    this.links = topo.links.map((l) => this._makeLink(l));
     this.linkByKey = new Map(this.links.map((l) => [l.key, l]));
     this.lastMs = null;
     this.nodeState = new Map();
@@ -123,6 +106,54 @@ class ShieldedQkdNetwork {
     this.prevLinkUp = null;
     this.nominalDtMs = cfg.nominalDtMs || 50;
   }
+
+  _makeLink(l, { insertionLossDb = 0, initialPoolBits } = {}) {
+    const cfg = this._cfg, cache = this._cache;
+    {
+      const etaOpts = { ...(cfg.etaOpts || {}) };
+      etaOpts.insertionLossDb = (etaOpts.insertionLossDb != null ? etaOpts.insertionLossDb : 3) + insertionLossDb;
+      const eta = linkEta(l.km, etaOpts);
+      const a = this.nodeById.get(l.a), b = this.nodeById.get(l.b);
+      const ctl = new A.AdaptiveShieldingMitigation({
+        threat: cfg.threat,
+        ingress: { ambientFieldDbuVm: b.ambientFieldDbuVm, susceptibilityDbuVm: cfg.ingress.susceptibilityDbuVm, refDarkYield: cfg.ingress.refDarkYield },
+        deliveryPathIsolated: a.deliveryPathIsolated && b.deliveryPathIsolated,
+        channel: { eta }, blockPulses: this.blockPulses, pulseRateHz: this.pulseRateHz,
+        initialCleanPoolBits: initialPoolBits != null ? initialPoolBits : (cfg.initialCleanPoolBits || 0), optimizationCache: cache,
+        seMeasurementUncertaintyDb: cfg.seMeasurementUncertaintyDb != null ? cfg.seMeasurementUncertaintyDb : A.DEFAULT_SE_MEASUREMENT_UNCERTAINTY_DB,
+        poolCapacityBits: cfg.poolCapacityBits,
+        targetSeDb: this.targetSeDb,
+      });
+      const rec = { ...l, key: linkKey(l.a, l.b), eta, ctl, blockLogSeen: 0, insertionLossDb };
+      if (this.policy !== "adaptive") {
+        // Eski sistem: devreye alma parametreleri SABİT, karantina YOK, kendi havuzu.
+        rec.legacy = { params: { ...ctl.activeParams }, pool: cfg.initialCleanPoolBits || 0, block: null, blockLog: [], released: 0 };
+      }
+      return rec;
+    }
+  }
+
+  /**
+   * Çalışırken link ekle — OPTİK BYPASS sanal linki (A–X–B fiberleri X'te pasif olarak birleştirilir,
+   * X anahtar materyali GÖRMEZ). Aynı uç çiftinde doğrudan link varsa reddedilir (qkd_network_scale
+   * anahtarı [a,b] sıralı; çakışma birleşmeye yol açardı).
+   */
+  addLink({ a, b, km, insertionLossDb = 0, virtual = true, via = null, initialPoolBits = 0 }) {
+    const key = linkKey(a, b);
+    if (this.linkByKey.has(key)) throw new Error(`addLink: ${key} zaten var`);
+    if (this.policy !== "adaptive") throw new Error("addLink: yalnız 'adaptive' politikada");
+    const rec = this._makeLink({ a, b, km }, { insertionLossDb, initialPoolBits });
+    Object.assign(rec, { virtual, via });
+    this.links.push(rec); this.linkByKey.set(key, rec);
+    return key;
+  }
+  /** Fiber anahtarlandı → link askıda (anahtar üretimi yok, havuz verilemez) / geri bağlandı. */
+  setLinkEnabled(key, enabled) {
+    const l = this.linkByKey.get(key);
+    if (!l) throw new Error(`setLinkEnabled: ${key} yok`);
+    if (enabled) l.ctl.resume(); else l.ctl.suspend(this.lastMs);
+  }
+  linkEnabled(key) { const l = this.linkByKey.get(key); return !!l && !l.ctl.suspended; }
 
   /** Bir linkin şu an yürürlükteki parametreleri (vakum payı test ağının Y0 ölçümü için gerekir). */
   activeParams(key) {
@@ -229,12 +260,19 @@ class ShieldedQkdNetwork {
 
     // B) Yeni okumalar: düğümler (+ planlı bakım durumu)
     const maint = new Set(hints.maintenance || []);
-    const drain = hints.drainPenaltyKm || {};
+    const quar = new Set(hints.quarantine || []);
+    const prob = new Set(hints.probation || []);
+    const drain = {};
+    for (const src of [hints.drainPenaltyKm || {}, hints.nodePenaltyKm || {}]) for (const [k, v] of Object.entries(src)) drain[k] = (drain[k] || 0) + v;
     const nodes = {};
     for (const n of this.topology.nodes) {
       const st = this._nodeStep(n.id, meas.se[n.id], nowMs);
-      if (maint.has(n.id)) Object.assign(st, { shieldState: st.state, state: "MAINTENANCE", planned: "MAINTENANCE", mtlsAllowed: false, relayAllowed: false, deliveryAllowed: false });
-      else if (drain[n.id] > 0) st.planned = "DRAIN";
+      if (quar.has(n.id)) Object.assign(st, { shieldState: st.state, state: "QUARANTINE", planned: "QUARANTINE", mtlsAllowed: false, relayAllowed: false, deliveryAllowed: false });
+      else if (maint.has(n.id)) Object.assign(st, { shieldState: st.state, state: "MAINTENANCE", planned: "MAINTENANCE", mtlsAllowed: false, relayAllowed: false, deliveryAllowed: false });
+      else {
+        if (prob.has(n.id)) Object.assign(st, { planned: "PROBATION", relayAllowed: false }); // gözetim: yalnız uç, transit YOK
+        if (drain[n.id] > 0) st.planned = st.planned || "DRAIN";
+      }
       nodes[n.id] = st;
     }
     this.nodeState = nodes;
@@ -278,29 +316,43 @@ class ShieldedQkdNetwork {
     const plan = [];
     let pending = this.topology.demands.map((d, di) => ({ di, src: d.src, dst: d.dst, remBits: (d.demandBps * dtPlan) / 1000, full: (d.demandBps * dtPlan) / 1000 }))
       .filter((x) => nodes[x.src].deliveryAllowed && nodes[x.dst].deliveryAllowed);
+    // UÇ-YALNIZ düğümler (teslim alabilir ama transit yasak — ör. PROBATION): bu düğümün linkleri yalnız
+    // o düğümde BİTEN/BAŞLAYAN talepler için ağa eklenir; diğer talepler onları göremez → transit imkânsız.
+    // Uç-yalnız düğüm yoksa davranış önceki sürümle birebir aynı (tek grup).
+    const endpointOnly = new Set(this.topology.nodes.filter((n) => !nodes[n.id].relayAllowed && nodes[n.id].deliveryAllowed).map((n) => n.id));
     for (let round = 0; round < MAX_ROUTING_ROUNDS && pending.length; round++) {
       const minUseful = Math.max(1e-6, 0.01 * Math.min(...pending.map((x) => x.remBits)));
-      const netLinks = [];
-      for (const l of this.links) {
-        const L = links[l.key];
-        if (L.level === "BLOCK" || !(residual.get(l.key) > minUseful) || !usableNode(l.a) || !usableNode(l.b)) continue;
-        const pen = (L.level === "HOLD" ? this.holdRoutePenaltyKm : 0) + (drain[l.a] || 0) + (drain[l.b] || 0);
-        netLinks.push({ a: l.a, b: l.b, km: l.km + pen });
+      const groups = new Map();
+      for (const x of pending) {
+        const own = [x.src, x.dst].filter((id) => endpointOnly.has(id)).sort().join(",");
+        if (!groups.has(own)) groups.set(own, []);
+        groups.get(own).push(x);
       }
-      if (!netLinks.length) break;
-      const net = NS.buildNetwork({ nodes: this.topology.nodes.map((n) => n.id), links: netLinks });
-      for (const [k, v] of net.linkInfo) v.rateBps = (residual.get(k) * 1000) / dtPlan; // kapasite = kalan havuz bütçesi
-      const res = NS.runNetwork({ net, demands: pending.map((x) => ({ src: x.src, dst: x.dst, demandBps: (x.remBits * 1000) / dtPlan })) });
-      for (const pd of res.perDemand) {
-        const x = pending.find((y) => y.src === pd.src && y.dst === pd.dst);
-        const p = NS.shortestPath(net, pd.src, pd.dst);
-        // runNetwork deliveredBps'i 0,1'e YUVARLAR (yukarı da olabilir) → bütçeyi aşmamak için 0,05 bps düş.
-        const bits = Math.min((Math.max(0, pd.deliveredBps - 0.05) * dtPlan) / 1000, x.remBits);
-        if (!(bits > 0) || !p) continue;
-        let e = plan.find((q) => q.di === x.di); if (!e) { e = { di: x.di, segments: [] }; plan.push(e); }
-        e.segments.push({ nodes: p.nodes, linkKeys: p.linkKeys, bitsPerMs: bits / dtPlan, hold: p.linkKeys.some((k) => links[k].level === "HOLD") });
-        x.remBits -= bits;
-        for (const k of p.linkKeys) residual.set(k, residual.get(k) - bits);
+      for (const [own, members] of groups) {
+        const allowedEndOnly = new Set(own ? own.split(",") : []);
+        const nodeOk = (id) => usableNode(id) || allowedEndOnly.has(id);
+        const netLinks = [];
+        for (const l of this.links) {
+          const L = links[l.key];
+          if (L.level === "BLOCK" || L.level === "SUSPENDED" || !(residual.get(l.key) > minUseful) || !nodeOk(l.a) || !nodeOk(l.b)) continue;
+          const pen = (L.level === "HOLD" ? this.holdRoutePenaltyKm : 0) + (drain[l.a] || 0) + (drain[l.b] || 0);
+          netLinks.push({ a: l.a, b: l.b, km: l.km + pen });
+        }
+        if (!netLinks.length) continue;
+        const net = NS.buildNetwork({ nodes: this.topology.nodes.map((n) => n.id), links: netLinks });
+        for (const [k, v] of net.linkInfo) v.rateBps = (residual.get(k) * 1000) / dtPlan; // kapasite = kalan havuz bütçesi
+        const res = NS.runNetwork({ net, demands: members.map((x) => ({ src: x.src, dst: x.dst, demandBps: (x.remBits * 1000) / dtPlan })) });
+        for (const pd of res.perDemand) {
+          const x = members.find((y) => y.src === pd.src && y.dst === pd.dst);
+          const p = NS.shortestPath(net, pd.src, pd.dst);
+          // runNetwork deliveredBps'i 0,1'e YUVARLAR (yukarı da olabilir) → bütçeyi aşmamak için 0,05 bps düş.
+          const bits = Math.min((Math.max(0, pd.deliveredBps - 0.05) * dtPlan) / 1000, x.remBits);
+          if (!(bits > 0) || !p) continue;
+          let e = plan.find((q) => q.di === x.di); if (!e) { e = { di: x.di, segments: [] }; plan.push(e); }
+          e.segments.push({ nodes: p.nodes, linkKeys: p.linkKeys, bitsPerMs: bits / dtPlan, hold: p.linkKeys.some((k) => links[k].level === "HOLD") });
+          x.remBits -= bits;
+          for (const k of p.linkKeys) residual.set(k, residual.get(k) - bits);
+        }
       }
       pending = pending.filter((x) => x.remBits > 0.01 * x.full);
     }

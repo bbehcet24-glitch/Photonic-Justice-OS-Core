@@ -369,6 +369,9 @@ class AdaptiveShieldingMitigation {
     this.block = null;
     this.history = [];
     this.blockLog = [];           // kapanan her blok: {startMs, endMs, bits, tainted} — yer-gerçeği denetimi için
+    this.suspended = false;       // optik bypass ile fiber başka yola anahtarlandı mı
+    this.partition = "main";      // 'main' | 'quarantine' (karantina alt ağı)
+    this.partitionBits = 0; this.revokedBits = 0;
   }
 
   _paramsOf(o) { return { mu: o.mu, nu: o.nu, ps: o.ps, pd: o.pd, pv: o.pv, codeRate: o.r }; }
@@ -406,6 +409,12 @@ class AdaptiveShieldingMitigation {
   /** Bir SE okumasını işle. reading: { seDb, demandBps=0, measuredY0? } */
   ingest(reading, nowMs) {
     if (!Number.isFinite(nowMs)) throw new TypeError("ingest: nowMs AÇIK verilmeli (test edilebilirlik ve nedensellik).");
+    if (this.suspended) {
+      // Fiber fiziksel olarak başka yere anahtarlandı (optik bypass) — anahtar üretimi yok, havuz donuk.
+      this.lastDecision = { atMs: nowMs, level: "SUSPENDED", reason: "link askıda (optik anahtarlama)", mtlsAllowed: true, newKeyDisposition: "NONE", deliveryCapBps: 0,
+        activeParams: { ...this.activeParams }, pendingParams: { ...this.pendingParams }, cleanPoolBits: this.cleanPoolBits, quarantinedBits: this.quarantinedBits };
+      return this.lastDecision;
+    }
     const seDb = reading && Number.isFinite(reading.seDb) ? reading.seDb : -Infinity; // okuma yok → en kötü (fail-closed)
     const demandBps = Math.max(0, (reading && reading.demandBps) || 0);
 
@@ -528,6 +537,13 @@ class AdaptiveShieldingMitigation {
     const bits = Math.floor(r.R * this.blockPulses);
     if (b.tainted) this.quarantinedBits += bits;
     let kept = bits;
+    if (!b.tainted && this.partition === "quarantine") {
+      // KARANTİNA BÖLMESİ: blok temiz olsa bile ana havuza GİRMEZ — yalnız teşhis/telemetri; bölme kapanınca imha.
+      this.partitionBits += bits;
+      const recQ = { startMs: b.startMs, endMs, bits, tainted: false, partition: "quarantine", params: { ...b.params } };
+      this.blockLog.push(recQ);
+      return recQ;
+    }
     if (!b.tainted) {
       kept = Math.min(bits, Math.max(0, this.poolCapacityBits - this.cleanPoolBits));
       this.overflowBits += bits - kept;
@@ -546,10 +562,36 @@ class AdaptiveShieldingMitigation {
    */
   grantable(dtMs) {
     const d = this.lastDecision;
+    if (this.suspended || this.partition === "quarantine") return 0;
     if (!d || d.level === LEVELS.BLOCK) return 0;
     if (d.level === LEVELS.HOLD) return this.deliveryPathIsolated ? this.cleanPoolBits * (1 - Math.exp(-dtMs / this.holdHorizonMs)) : 0;
     return this.cleanPoolBits;
   }
+
+  /**
+   * OPTİK BYPASS: fiber başka bir yola anahtarlanınca link askıya alınır. Yarım blok ATILIR
+   * (sayılmaz); havuz korunur ama askıdayken verilemez. resume() yeni bloğu temiz başlatır.
+   */
+  suspend(nowMs) {
+    if (this.suspended) return;
+    this.suspended = true; this.suspendedAtMs = nowMs;
+    if (this.block) this.discardedPartialBlocks = (this.discardedPartialBlocks || 0) + 1;
+    this.block = null;
+  }
+  resume() { if (!this.suspended) return; this.suspended = false; this.lastMs = null; this.lastDecision = null; this.block = null; this._y0Window = []; }
+
+  /**
+   * KARANTİNA ALT AĞI: 'quarantine' bölmesinde link ÇALIŞMAYA devam eder (QBER/Y0 telemetrisi),
+   * ama üretilen anahtar ana havuza girmez ve verilemez. 'main'e dönüşte bölme anahtarı İMHA edilir.
+   */
+  setPartition(name) {
+    if (name !== "main" && name !== "quarantine") throw new TypeError("setPartition: 'main' | 'quarantine'");
+    if (name === this.partition) return;
+    if (name === "main") { this.destroyedPartitionBits = (this.destroyedPartitionBits || 0) + this.partitionBits; this.partitionBits = 0; }
+    this.partition = name;
+  }
+  /** Şüpheli düğümle paylaşılan havuz İPTAL — düğüm o anahtarları sızdırmış olabilir. */
+  revokePool() { this.revokedBits = (this.revokedBits || 0) + this.cleanPoolBits; this.cleanPoolBits = 0; }
 
   grant(bits, dtMs) {
     const g = Math.max(0, Math.min(bits, this.grantable(dtMs)));
