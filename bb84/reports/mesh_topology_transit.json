@@ -1,0 +1,43 @@
+{
+  "generatedAt": "2026-10-12T23:16:40.011Z",
+  "part": "1/3 topoloji + transit daraltma",
+  "checks": [
+    {
+      "name": "T1 Kesim düğümleri: hat A–B–C–D → {B, C}; halka → yok; yıldız → merkez; test ağı (6 düğüm, 8 link) → yok",
+      "ok": true,
+      "detail": "hat: {C, B} · halka: {} · yıldız: {H} · test ağı: {}"
+    },
+    {
+      "name": "T2 Bypass analizi: test ağında KDK dahil her düğümün transit talepleri o düğüm dışlanınca da ulaşılabilir; KDK'nın kendi talepleri transit listesinde değil; A–B–C hattında B kesim düğümü ve A↔C 'bypass edilemez' raporlanıyor",
+      "ok": true,
+      "detail": "KDK transit: AVR↔ASY ✓, BKR↔ATS ✓ · hat B: A↔C bypassable=false"
+    },
+    {
+      "name": "T3 Ceza eğrisi: m ≥ 10 dB → 0; 0 < m < 10 → 1500·(1 − m/10)²; m ≤ 0 veya ölçüm yok → 1500 km (kapalı başarısızlık); marja göre tekdüze azalan, 10 dB ve 0 dB'de sıçrama yok",
+      "ok": true,
+      "detail": "12 dB→0 · 10 dB→0 · 8 dB→60 · 6 dB→240 · 4 dB→540 · 2 dB→960 · 0.5 dB→1354 · 0 dB→1500 · -3 dB→1500 · NaN dB→1500 · tekdüze: true"
+    },
+    {
+      "name": "T4 Kademeli daraltma (test ağı, 3 s): KDK marjı 23 dB → ceza 0, BKR↔ATS KDK üzerinden; 9,5 dB → ceza ~4 km, transit KDK'da KALIYOR (kısa yol farkı 31 km'den küçük); 6 dB → ceza ~240 km, transit KDK'yı terk ediyor; üç durumda da KDK'nın uç talepleri tam karşılanıyor ve hiçbir düğüm karantinaya alınmıyor",
+      "ok": true,
+      "detail": "23 dB: ceza 0.0 km, BKR↔ATS BKR→KDK→ATS, KDK uç %100.00 · 9,5 dB: ceza 3.7 km, BKR↔ATS BKR→KDK→ATS, KDK uç %100.00 · 6 dB: ceza 240.0 km, BKR↔ATS BKR→AVR→MSL→ASY→ATS, KDK uç %100.00"
+    },
+    {
+      "name": "T5 Kesim düğümü: A–B–C hattında B'nin marjı 2 dB (ceza ~960 km); A↔C yine B üzerinden TAM karşılanıyor — ceza bir tercih ağırlığı, dışlama değil",
+      "ok": true,
+      "detail": "B cezası 960 km · A↔C teslim %100.00"
+    },
+    {
+      "name": "T6 Karşılaştırma: kademeli bypass kapalıyken aynı 6 dB marjda BKR↔ATS KDK üzerinden kalıyor — T4'teki kayma cezadan geliyor, başka bir yan etkiden değil",
+      "ok": true,
+      "detail": "kapalı: ceza 0, BKR↔ATS BKR→KDK→ATS, KDK'dan geçen transit 174000 bit"
+    },
+    {
+      "name": "Çekirdek ve yeniden kullanılan modüller değişmedi (photonnet_core.js SHA-256 = 8f879fde…dc7b05)",
+      "ok": true,
+      "detail": "photonnet_core.js 8f879fde86be… · adaptive_shielding_mitigation.js e422b7ba63f3… · qkd_network_scale.js b5bdf72ef541…"
+    }
+  ],
+  "passed": 7,
+  "total": 7
+}
