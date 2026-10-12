@@ -1,0 +1,215 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="1010" viewBox="0 0 1600 1010" font-family="Inter, 'DejaVu Sans', sans-serif">
+  <defs>
+    <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#475569"/></marker>
+    <marker id="arP" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#7c3aed"/></marker>
+    <style>
+      .t  { font-size: 15px; font-weight: 700; fill: #0f172a; }
+      .f  { font-size: 11.5px; fill: #475569; font-family: 'DejaVu Sans Mono', monospace; }
+      .b  { font-size: 12.5px; fill: #1e293b; }
+      .s  { font-size: 11.5px; fill: #334155; }
+      .lab{ font-size: 11px; fill: #475569; }
+      .ln { stroke: #475569; stroke-width: 1.6; fill: none; }
+      .h  { font-size: 17px; font-weight: 700; fill: #0f172a; }
+    </style>
+  </defs>
+  <rect width="1600" height="1010" fill="#f8fafc"/>
+
+  <!-- Başlık -->
+  <text x="40" y="44" font-size="24" font-weight="800" fill="#0f172a">PhotonNet — kalkan farkındalıklı QKD ağı: katmanlar ve veri akışı</text>
+  <text x="40" y="70" font-size="13" fill="#475569">BB84 simülatörü · photonnet_core.js değişmedi (SHA-256 8f879fde…dc7b05) · tüm donanım simüle · ok = veri/karar akışı</text>
+
+  <!-- ═══ SOL: mimari ═══ -->
+  <!-- Satır 1: sensörler -->
+  <g>
+    <rect x="40"  y="100" width="182" height="64" rx="10" fill="#e2e8f0" stroke="#94a3b8"/>
+    <text x="54" y="124" class="t">Kafes SE ölçümü</text><text x="54" y="144" class="s">düğüm başına, 50 ms</text>
+    <rect x="232" y="100" width="182" height="64" rx="10" fill="#e2e8f0" stroke="#94a3b8"/>
+    <text x="246" y="124" class="t">Çevre sensörleri</text><text x="246" y="144" class="s">sıcaklık · nem · gerilme</text><text x="246" y="158" class="s">ortam RF alanı</text>
+    <rect x="424" y="100" width="182" height="64" rx="10" fill="#e2e8f0" stroke="#94a3b8"/>
+    <text x="438" y="124" class="t">Dedektör Y0</text><text x="438" y="144" class="s">link başına, alıcıda ölçülür</text>
+    <rect x="616" y="100" width="182" height="64" rx="10" fill="#e2e8f0" stroke="#94a3b8"/>
+    <text x="630" y="124" class="t">Bağımsız RF probu</text><text x="630" y="144" class="s">operatöre ait, ayrı</text><text x="630" y="158" class="s">güven alanı</text>
+    <rect x="808" y="100" width="182" height="64" rx="10" fill="#e2e8f0" stroke="#94a3b8"/>
+    <text x="822" y="124" class="t">Kapı sensörü</text><text x="822" y="144" class="s">reed, 5 ms gecikme</text><text x="822" y="158" class="s">TAMPER / OVERRIDE</text>
+  </g>
+  <!-- ölçüm veri yolu -->
+  <g>
+    <line x1="131" y1="164" x2="131" y2="196" class="ln"/><line x1="323" y1="164" x2="323" y2="196" class="ln"/>
+    <line x1="515" y1="164" x2="515" y2="196" class="ln"/><line x1="707" y1="164" x2="707" y2="196" class="ln"/>
+    <line x1="899" y1="164" x2="899" y2="196" class="ln"/>
+    <line x1="40" y1="198" x2="990" y2="198" stroke="#64748b" stroke-width="4" stroke-linecap="round"/>
+    <text x="996" y="202" class="lab">ölçüm</text>
+    <line x1="190" y1="200" x2="190" y2="244" class="ln" marker-end="url(#ar)"/><text x="198" y="226" class="lab">SE, Y0</text>
+    <line x1="510" y1="200" x2="510" y2="244" class="ln" marker-end="url(#ar)"/><text x="518" y="226" class="lab">SE, çevre</text>
+    <line x1="835" y1="200" x2="835" y2="244" class="ln" marker-end="url(#ar)"/><text x="843" y="226" class="lab">Y0, ortam alanı, prob, kilit olayı</text>
+  </g>
+
+  <!-- Satır 2: karar / kestirim / mesh -->
+  <g>
+    <rect x="40" y="246" width="300" height="134" rx="12" fill="#dbeafe" stroke="#3b82f6" stroke-width="1.5"/>
+    <text x="56" y="272" class="t">Uyarlamalı karar katmanı</text>
+    <text x="56" y="290" class="f">adaptive_shielding_mitigation.js</text>
+    <text x="56" y="312" class="b">NORMAL · ADAPT · HOLD · BLOCK</text>
+    <text x="56" y="331" class="s">eşik: SE_gerekli 38,0 + 1 dB belirsizlik</text>
+    <text x="56" y="349" class="s">sonlu-anahtar decoy + LDPC kod oranı</text>
+    <text x="56" y="367" class="s">blok karantinası · üstel HOLD kısması</text>
+
+    <rect x="360" y="246" width="300" height="134" rx="12" fill="#fef3c7" stroke="#d97706" stroke-width="1.5"/>
+    <text x="376" y="272" class="t">Kestirimci bakım</text>
+    <text x="376" y="290" class="f">predictive_maintenance.js</text>
+    <text x="376" y="306" class="f">environmental_aging_model.js</text>
+    <text x="376" y="328" class="s">Peck/Arrhenius · Coffin–Manson · Miner</text>
+    <text x="376" y="346" class="s">Kalman [L, s] → RUL p10/p50/p90</text>
+    <text x="376" y="366" class="b">ADVISORY · WARNING · CRITICAL</text>
+
+    <rect x="680" y="246" width="310" height="134" rx="12" fill="#ede9fe" stroke="#7c3aed" stroke-width="1.5"/>
+    <text x="696" y="272" class="t">Mesh izolasyonu</text>
+    <text x="696" y="290" class="f">mesh_isolation.js</text>
+    <text x="696" y="312" class="s">marj-kademeli transit cezası 0–1500 km</text>
+    <text x="696" y="330" class="s">kanıt atfı (alıcı / verici / belirsiz)</text>
+    <text x="696" y="348" class="s">karantina: CLEAR → QUARANTINED → PROBATION</text>
+    <text x="696" y="366" class="s">optik bypass planlayıcı (kesim düğümü analizi)</text>
+  </g>
+
+  <!-- Satır 3: koordinatör + kilit -->
+  <g>
+    <line x1="510" y1="380" x2="510" y2="438" class="ln" marker-end="url(#ar)"/><text x="518" y="414" class="lab">uyarılar, iş emri</text>
+    <rect x="360" y="440" width="280" height="118" rx="12" fill="#ffedd5" stroke="#ea580c" stroke-width="1.5"/>
+    <text x="376" y="466" class="t">Bakım koordinatörü</text>
+    <text x="376" y="484" class="f">maintenance_traffic_coordinator.js</text>
+    <text x="376" y="506" class="s">NORMAL → PLANNED → DRAIN (24 s önce)</text>
+    <text x="376" y="524" class="s">→ MAINTENANCE · yetkisiz açılış → INCIDENT</text>
+    <text x="376" y="544" class="b">doorMayOpen(): pencere ∧ plan bıraktı</text>
+
+    <rect x="700" y="440" width="220" height="118" rx="12" fill="#fee2e2" stroke="#dc2626" stroke-width="1.5"/>
+    <text x="716" y="466" class="t">Kabin kilidi HAL'i</text>
+    <text x="716" y="484" class="f">cabinet_lock_hal.js</text>
+    <text x="716" y="506" class="s">Ed25519 tek kullanımlık,</text>
+    <text x="716" y="524" class="s">kısa ömürlü açma yetkisi</text>
+    <text x="716" y="544" class="s">fail-secure · HTTP API (simüle)</text>
+    <line x1="640" y1="478" x2="698" y2="478" class="ln" marker-end="url(#ar)"/><text x="646" y="472" class="lab">yetki</text>
+    <line x1="700" y1="512" x2="642" y2="512" class="ln" marker-end="url(#ar)"/><text x="648" y="528" class="lab">olaylar</text>
+    <line x1="920" y1="500" x2="945" y2="500" class="ln"/><line x1="945" y1="500" x2="945" y2="382" class="ln" marker-end="url(#ar)" stroke-dasharray="4 3"/>
+    <text x="930" y="470" class="lab" transform="rotate(-90 930 470)">kilit INCIDENT</text>
+  </g>
+
+  <!-- Satır 4: ağ -->
+  <g>
+    <line x1="190" y1="380" x2="190" y2="598" class="ln" marker-end="url(#ar)"/>
+    <text x="198" y="470" class="lab">link düzeyi,</text><text x="198" y="484" class="lab">verilebilir bit</text>
+    <line x1="470" y1="558" x2="470" y2="598" class="ln" marker-end="url(#ar)"/><text x="402" y="584" class="lab">DRAIN/MAINT.</text>
+    <line x1="560" y1="598" x2="560" y2="560" class="ln" marker-end="url(#ar)"/><text x="568" y="584" class="lab">planUsesNode()</text>
+    <line x1="975" y1="380" x2="975" y2="598" class="ln" stroke="#7c3aed" marker-end="url(#arP)"/>
+    <text x="967" y="590" class="lab" fill="#6d28d9" text-anchor="end">ipuçları + havuz iptali, bölme, sanal link</text>
+    <rect x="40" y="600" width="950" height="126" rx="12" fill="#dcfce7" stroke="#16a34a" stroke-width="1.5"/>
+    <text x="56" y="626" class="t">Çok-düğümlü kalkanlı QKD ağı</text>
+    <text x="300" y="626" class="f">multinode_shielding_network.js  (+ qkd_network_scale.js, değiştirilmeden)</text>
+    <text x="56" y="652" class="s">• nedensel teslim: (t₋₁, t] aralığı önceki planla teslim edilir, sonra okumalar alınır, sonra yeni plan yapılır</text>
+    <text x="56" y="672" class="s">• max-min tahsis, artık-kapasite turlarıyla çok-yollu aktarım · güvenilir düğüm röle</text>
+    <text x="56" y="692" class="s">• yol cezaları: HOLD +1000 km · DRAIN +2000 km · transit (marj) 0–1500 km · SUSPENDED link yönlendirilmez</text>
+    <text x="56" y="712" class="s">• QUARANTINE: düğüm relay/uç/mTLS dışı · PROBATION: yalnız uç, transit yok · sanal link: addLink(via=X), setLinkEnabled</text>
+  </g>
+
+  <!-- Satır 5: KME + SAE -->
+  <g>
+    <line x1="300" y1="726" x2="300" y2="766" class="ln" marker-end="url(#ar)"/><text x="308" y="752" class="lab">kapı belgesi, anahtar gelen kutusu</text>
+    <rect x="40" y="768" width="600" height="80" rx="12" fill="#ccfbf1" stroke="#0d9488" stroke-width="1.5"/>
+    <text x="56" y="794" class="t">KME — ETSI GS QKD 014 sunucusu</text>
+    <text x="330" y="794" class="f">etsi014_kme_server.js</text>
+    <text x="56" y="816" class="s">--shield-gate kapalı-başarısız: belge bayat (&gt; 2 s), yok ya da BLOCK → TLS oturumları</text>
+    <text x="56" y="834" class="s">≤ 200 ms içinde kesilir · --keystore-inbox: anahtarlar atomik yüklenir, dosya silinir</text>
+    <line x1="640" y1="808" x2="698" y2="808" class="ln" marker-end="url(#ar)"/><text x="646" y="800" class="lab">mTLS</text>
+    <rect x="700" y="768" width="290" height="80" rx="12" fill="#f1f5f9" stroke="#64748b" stroke-width="1.5"/>
+    <text x="716" y="794" class="t">SAE uygulamaları</text>
+    <text x="716" y="816" class="s">anahtar tüketicileri; planlı kesinti</text>
+    <text x="716" y="834" class="s">bildirimi alır</text>
+  </g>
+
+  <!-- ═══ SAĞ: örnek durum ═══ -->
+  <rect x="1030" y="100" width="540" height="430" rx="14" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1048" y="128" class="h">Örnek: KDK karantinada, optik bypass etkin</text>
+  <g>
+    <!-- normal fiberler -->
+    <g stroke="#94a3b8" stroke-width="3">
+      <line x1="1110" y1="200" x2="1290" y2="180"/>
+      <line x1="1110" y1="200" x2="1110" y2="380"/>
+      <line x1="1290" y1="180" x2="1470" y2="270"/>
+      <line x1="1470" y1="270" x2="1480" y2="450"/>
+    </g>
+    <!-- KDK'ya dokunan, bölmede çalışan linkler -->
+    <g stroke="#f97316" stroke-width="3">
+      <line x1="1290" y1="180" x2="1300" y2="370"/>
+      <line x1="1470" y1="270" x2="1300" y2="370"/>
+    </g>
+    <!-- anahtarlanan (askıdaki) fiberler -->
+    <g stroke="#94a3b8" stroke-width="3" stroke-dasharray="7 6">
+      <line x1="1110" y1="380" x2="1300" y2="370"/>
+      <line x1="1300" y1="370" x2="1480" y2="450"/>
+    </g>
+    <!-- sanal link -->
+    <path d="M1118,398 Q1200,430 1282,414" stroke="#7c3aed" stroke-width="4" fill="none"/>
+    <rect x="1282" y="404" width="38" height="20" rx="4" fill="#7c3aed"/>
+    <text x="1301" y="418" font-size="10" fill="#fff" text-anchor="middle" font-weight="700">OS</text>
+    <path d="M1320,414 Q1400,440 1466,468" stroke="#7c3aed" stroke-width="4" fill="none"/>
+    <!-- km etiketleri -->
+    <g class="lab">
+      <text x="1192" y="180">18 km</text><text x="1060" y="294">22 km</text><text x="1384" y="214">30 km</text>
+      <text x="1484" y="364">14 km</text><text x="1252" y="282">35 km</text><text x="1398" y="342">16 km</text>
+      <text x="1186" y="368">41 km</text><text x="1398" y="400">12 km</text>
+    </g>
+    <!-- düğümler -->
+    <g font-size="12.5" font-weight="700" text-anchor="middle">
+      <circle cx="1110" cy="200" r="24" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/><text x="1110" y="205">AVR</text>
+      <circle cx="1290" cy="180" r="24" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/><text x="1290" y="185">MSL</text>
+      <circle cx="1470" cy="270" r="24" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/><text x="1470" y="275">ASY</text>
+      <circle cx="1110" cy="380" r="24" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/><text x="1110" y="385">BKR</text>
+      <circle cx="1480" cy="450" r="24" fill="#bbf7d0" stroke="#16a34a" stroke-width="2"/><text x="1480" y="455">ATS</text>
+      <circle cx="1300" cy="370" r="26" fill="#fecaca" stroke="#dc2626" stroke-width="3"/><text x="1300" y="375">KDK</text>
+    </g>
+    <text x="1196" y="336" font-size="11" font-weight="700" fill="#b91c1c">KARANTİNA</text>
+    <text x="1196" y="350" font-size="10.5" fill="#b91c1c">havuz iptal</text>
+    <!-- açıklama -->
+    <g font-size="11.5" fill="#334155">
+      <line x1="1048" y1="470" x2="1074" y2="470" stroke="#7c3aed" stroke-width="4"/>
+      <text x="1082" y="474">sanal BKR–ATS: 53 km, +1,5 dB, ~138 kbps; KDK'daki optik</text>
+      <text x="1082" y="489">anahtar (OS) fotonları ölçmez → KDK anahtarı görmez</text>
+      <line x1="1048" y1="506" x2="1074" y2="506" stroke="#94a3b8" stroke-width="3" stroke-dasharray="7 6"/>
+      <text x="1082" y="510">anahtarlanan fiber (askıda)</text>
+      <line x1="1280" y1="506" x2="1306" y2="506" stroke="#f97316" stroke-width="3"/>
+      <text x="1314" y="510">karantina bölmesi (ana havuza girmez)</text>
+    </g>
+    <text x="1048" y="152" font-size="11.5" fill="#334155">BKR↔ATS: KDK hariç en kısa yol 3 güvenilir ara düğüm (AVR, MSL, ASY) → bypass ile 0</text>
+  </g>
+
+  <!-- Karantina durum makinesi -->
+  <rect x="1030" y="546" width="540" height="200" rx="14" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1048" y="574" class="h">Karantina durum makinesi</text>
+  <g font-size="12.5" font-weight="700" text-anchor="middle">
+    <rect x="1048" y="616" width="110" height="40" rx="8" fill="#bbf7d0" stroke="#16a34a"/><text x="1103" y="641">CLEAR</text>
+    <rect x="1240" y="616" width="140" height="40" rx="8" fill="#fecaca" stroke="#dc2626"/><text x="1310" y="641">QUARANTINED</text>
+    <rect x="1440" y="616" width="114" height="40" rx="8" fill="#fef3c7" stroke="#d97706"/><text x="1497" y="641">PROBATION</text>
+  </g>
+  <line x1="1158" y1="628" x2="1238" y2="628" class="ln" marker-end="url(#ar)"/>
+  <text x="1048" y="600" class="lab">güçlü kanıt (herhangi bir alan): 20 ardışık örnek oran ≥ 3 · prob ≥ 6 dB · kilit INCIDENT</text>
+  <line x1="1380" y1="628" x2="1438" y2="628" class="ln" marker-end="url(#ar)"/>
+  <line x1="1440" y1="646" x2="1382" y2="646" class="ln" marker-end="url(#ar)" stroke="#dc2626"/>
+  <text x="1390" y="666" class="lab" fill="#b91c1c">nüks</text>
+  <path d="M1497,656 V690 H1103 V658" class="ln" marker-end="url(#ar)"/>
+  <text x="1170" y="684" class="lab">gözetim 30 s temiz</text>
+  <text x="1048" y="712" class="s">QUARANTINED → PROBATION: BAĞIMSIZ kanıt (komşu alıcı / prob) 30 s temiz;</text>
+  <text x="1048" y="729" class="s">kendi-raporu tek başına YETMEZ · kaynak yoksa yalnız operatör onayı</text>
+
+  <!-- Testler -->
+  <rect x="1030" y="762" width="540" height="86" rx="14" fill="#ffffff" stroke="#cbd5e1"/>
+  <text x="1048" y="788" class="h">Öz-testler</text>
+  <text x="1048" y="810" class="s">mesh: topoloji + transit 7/7 · karantina 9/9 · optik bypass 8/8</text>
+  <text x="1048" y="830" class="s">regresyon: karar 17/17 · bakım 9/9 · kilit 7/7 · kestirim 13/13 · test ağı 21/21</text>
+
+  <!-- Sınırlar -->
+  <rect x="40" y="868" width="1530" height="118" rx="14" fill="#fff7ed" stroke="#fdba74"/>
+  <text x="56" y="894" class="h">Bu sistemin YAPMADIKLARI</text>
+  <text x="56" y="918" class="s">• production_gate.js ve CI'a bağlı değil · kilit, optik anahtar, RF probu ve kafes SE sensörü donanımı simüle · 20 s yeniden yapılandırma ve 1,5 dB anahtar kaybı literatürden alınmış varsayım</text>
+  <text x="56" y="938" class="s">• Karantina bir güven kararıdır: Y0 artışının nedenini (saldırı mı, donanım mı) ayırt etmez, yalnız "çevreyle açıklanamıyor" der · tek alıcı linkli düğümde kaynak ayırt edilemez → iki uç da karantinaya girer</text>
+  <text x="56" y="958" class="s">• Algılama gecikmesi (≈ 0,95 s) boyunca şüpheli düğümden trafik geçer · habersiz kafes açılışında bir örnekleme aralığı maruziyet kaçınılmaz · bypass KDK'nın tek verici fiberini alınca komşu kanıtı kaybolur</text>
+  <text x="56" y="978" class="s">• Aging modeli parametreleri (n = 2,7, Ea = 0,79 eV) contalar için kalibre edilmedi · eşikler (oran 3, 6 dB, 30 s, 2000 km …) politika değerleridir, ölçümden türetilmedi</text>
+</svg>
