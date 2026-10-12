@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-10-12T23:24:14.499Z",
+  "part": "3/3 optik bypass",
+  "checks": [
+    {
+      "name": "B1 Planlayıcı (KDK): 6 komşu çiftinden doğrudan linki olan 2'si (MSL–ASY, ASY–ATS) aday değil → 4 aday; sanal link uzunluğu = iki fiberin toplamı, η 3 + 1,5 dB kayıpla; hız uzunlukla kesin azalıyor; seçilen fiberler ayrık; seçim BKR–ATS (BKR↔ATS'nin güvenilir ara düğümü 3 → 0)",
+      "ok": true,
+      "detail": "ATS–MSL 47 km 193.8 kbps · BKR–ATS 53 km 137.8 kbps · BKR–ASY 57 km 108.6 kbps · BKR–MSL 76 km 22.8 kbps · seçilen: BKR–ATS · tasarruf 3 ara düğüm"
+    },
+    {
+      "name": "B2 Dışlama + yarar şartı: ATS de karantinadayken KDK bypass planı ATS'yi hiçbir adaya koymuyor (kalan komşular BKR, MSL, ASY; MSL–ASY doğrudan bağlı → 2 aday); kalan adayların hiçbiri güvenilir ara düğüm tasarrufu sağlamadığı için bypass SEÇİLMİYOR (boşuna fiber askıya alınmaz)",
+      "ok": true,
+      "detail": "adaylar: BKR–MSL, BKR–ASY · seçilen: yok (tasarruf 0)"
+    },
+    {
+      "name": "B3 Fizibilite: A–X–B hattında fiberler 150 + 150 km → sanal link 300 km'de hız eşik (10 kbps) altında; bypass ÖNERİLMİYOR ve neden raporlanıyor",
+      "ok": true,
+      "detail": "aday A–B 300 km, 0.00e+0 bps · eylem: OPTİK BYPASS YOK (fizibıl/yararlı çift yok)"
+    },
+    {
+      "name": "B4 Kesim düğümü: A–X–B hattında X kilit olayıyla karantinada. Bypass YOKKEN A↔B 29 s boyunca %0 (dürüst kesinti); bypass ile 20 s anahtarlama → sanal A–B linki (40 km, via X) etkin, ilk blok sonrası A↔B tam karşılanıyor ve X hiçbir teslim yolunda değil",
+      "ok": true,
+      "detail": "bypass yok: %0.0 · bypass: ACTIVE @21000 ms, ilk teslim @22050 ms (sanal linkin havuzu boş başlıyor, ilk blok 1000 ms) · 25–30 s: %100.00, yol A→B"
+    },
+    {
+      "name": "B5a Bypass kurulumu: kilit INCIDENT @1 s → aynı adımda karantina + anahtarlama başladı, BKR–KDK ve KDK–ATS fiberleri HEMEN askıda; 20 s sonra sanal BKR–ATS linki etkin; etkin dönemde BKR↔ATS doğrudan BKR→ATS (güvenilir ara düğüm 0) ve hiçbir talep KDK'dan geçmiyor",
+      "ok": true,
+      "detail": "anahtarlama @1000 · etkin @21000 · askıdaki fiberler: true · etkin dönemde BKR↔ATS: BKR→ATS, teslim %100.00 · KDK yolda: false"
+    },
+    {
+      "name": "B5b Geri dönüş: bağımsız prob @30 s'den itibaren temiz → PROBATION @60 s; sanal link AYNI adımda askıda (REVERTING) ve BKR↔ATS uzun yola dönüyor; 20 s sonra fiberler geri bağlandı; CLEAR @90 s ve transit yeniden KDK üzerinden",
+      "ok": true,
+      "detail": "PROBATION @60000 · geri alındı @80000 · CLEAR @90000 · REVERTING'de BKR↔ATS: BKR→AVR→MSL→ASY→ATS · CLEAR sonrası: BKR→KDK→ATS"
+    },
+    {
+      "name": "B6 Bilinen sınır: bypass KDK'nın TEK verici fiberini (KDK→ATS) aldığı için komşu kanıtı kayboluyor (neighbor = null); bağımsız prob yokken KDK 69 s boyunca karantinada kalıyor — kendi-raporu temiz olsa da; serbest bırakma yalnız operatör onayıyla",
+      "ok": true,
+      "detail": "69 s sonra: QUARANTINED · KDK kanıtı: self=1.06, neighbor=null · operatör onayı → PROBATION"
+    },
+    {
+      "name": "Çekirdek ve yeniden kullanılan modüller değişmedi (photonnet_core.js SHA-256 = 8f879fde…dc7b05)",
+      "ok": true,
+      "detail": "photonnet_core.js 8f879fde86be… · adaptive_shielding_mitigation.js e422b7ba63f3… · qkd_network_scale.js b5bdf72ef541…"
+    }
+  ],
+  "passed": 8,
+  "total": 8
+}

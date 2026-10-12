@@ -136,7 +136,9 @@ function planOpticalBypass(network, x, { o = DEFAULTS, excluded = new Set() } = 
   const feas = cands.filter((c) => c.feasible);
   let best = { set: [], score: 0, rate: 0 };
   const rec = (i, used, set) => {
-    if (i === feas.length) { const sc = score(set), rt = set.reduce((s, c) => s + c.rateBps, 0); if (sc > best.score || (sc === best.score && rt > best.rate)) best = { set: [...set], score: sc, rate: rt }; return; }
+    // Yalnız YARARLI (sc > 0) kümeler: tasarrufsuz bir bypass fiberleri boşuna askıya alır ve kanıt kaybettirir
+    // (parça-3 testi B2'de eşitlik bozucunun tasarrufu 0 olan BKR–ASY'yi seçtiği görüldü).
+    if (i === feas.length) { const sc = score(set), rt = set.reduce((s, c) => s + c.rateBps, 0); if (sc > 0 && (sc > best.score || (sc === best.score && rt > best.rate))) best = { set: [...set], score: sc, rate: rt }; return; }
     rec(i + 1, used, set);
     const c = feas[i];
     if (!used.has(c.a) && !used.has(c.b)) { used.add(c.a); used.add(c.b); set.push(c); rec(i + 1, used, set); set.pop(); used.delete(c.a); used.delete(c.b); }
