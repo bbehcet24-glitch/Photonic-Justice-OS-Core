@@ -207,20 +207,57 @@ class MeshIsolationController {
     return A.ingressEffectiveY0({ seDb, ambientFieldDbuVm: ambientDbuVm, susceptibilityDbuVm: ing.susceptibilityDbuVm, refDarkYield: ing.refDarkYield, baseY0: 1e-5 }).Y0eff;
   }
   /**
+   * KANIT ATFI. a→b linkindeki Y0'ı b'nin dedektörü ölçer; açıklanamayan bir artışın kaynağı
+   * verici a (fibere ışık enjeksiyonu) da olabilir alıcı b (dedektöre RF girişi) de. Tek link bunu
+   * ayırt edemez. İlk sürüm her artışı vericiye "komşu kanıtı" olarak yazıyordu; parça-2 testi
+   * bunun, gürültülü bir alıcının (KDK) ona ışık gönderen MASUM komşularını (BKR, MSL, ASY)
+   * karantinaya soktuğunu gösterdi. Kural (en az sayıda düğümle açıklama ilkesi):
+   *   • b'nin ≥ 2 alıcı linki VAR ve HEPSİ açıklanamayan → ortak etken alıcı: neden 'rx' (b'nin kendi kanıtı)
+   *   • b'nin başka bir alıcı linki TEMİZ → b'nin dedektörü sağlam: neden 'tx' (a'nın komşu kanıtı)
+   *   • a'nın başka bir verici linki de (alıcı-kaynaklı olmayan biçimde) açıklanamayan → ortak etken verici: 'tx'
+   *   • aksi hâlde 'ambiguous' → KAPALI BAŞARISIZLIK: kanıt İKİ uca da yazılır (ikisi de karantinaya
+   *     girebilir). Tek alıcı linkli düğümlerde kaynak ayırt EDİLEMEZ; bağımsız RF probu bunu çözebilir.
+   * Varsayım: RF girişi bir kabindeki tüm alıcıları birlikte etkiler; seçici enjeksiyon tek fiberde olabilir.
+   */
+  attributeEvidence(meas) {
+    const net = this.net, thr = this.o.unexplainedRatio;
+    const ls = net.links.filter((l) => !l.virtual && net.linkEnabled(l.key)).map((l) => {
+      const y = meas.y0[l.key], rx = l.b;
+      const r = Number.isFinite(y) ? y / this.expectedY0(meas.ambient[rx], meas.se[rx]) : null;
+      return { l, r, anom: r != null && r >= thr };
+    }).filter((x) => x.r != null);
+    const rxOf = (id) => ls.filter((x) => x.l.b === id), txOf = (id) => ls.filter((x) => x.l.a === id);
+    const rxExplained = (id) => { const r = rxOf(id); return r.length >= 2 && r.every((x) => x.anom); };
+    for (const x of ls) {
+      if (!x.anom) { x.cause = null; continue; }
+      const a = x.l.a, b = x.l.b;
+      if (rxExplained(b)) x.cause = "rx";
+      else if (rxOf(b).some((m) => m !== x && !m.anom)) x.cause = "tx";
+      else if (txOf(a).some((m) => m !== x && m.anom && !rxExplained(m.l.b))) x.cause = "tx";
+      else x.cause = "ambiguous";
+    }
+    const med = (a) => { if (!a.length) return null; const s = [...a].sort((p, q) => p - q); return s[Math.floor(s.length / 2)]; };
+    const perNode = {};
+    for (const n of net.topology.nodes) {
+      const self = rxOf(n.id).filter((x) => x.cause !== "tx").map((x) => x.r);
+      const nb = txOf(n.id).filter((x) => x.cause !== "rx").map((x) => x.r);
+      perNode[n.id] = { self: med(self), neighbor: nb.length ? Math.max(...nb) : null };
+    }
+    return { perLink: Object.fromEntries(ls.map((x) => [x.l.key, { ratio: x.r, cause: x.cause }])), perNode };
+  }
+  /**
    * @param meas { se:{node:dB}, y0:{linkKey:Y0}, ambient:{node:dBµV/m}, probe:{node:dB|undefined}, lockIncident:{node:bool} }
    */
   update(t, meas) {
     const net = this.net, hints = { nodePenaltyKm: {}, quarantine: [], probation: [] };
     const thr = net.seRequiredDb + A.DEFAULT_SE_MEASUREMENT_UNCERTAINTY_DB;
+    const ev = this.attributeEvidence(meas);
+    this.lastEvidence = ev;
     for (const n of net.topology.nodes) {
       const id = n.id;
-      // ── kanıt: kendi alıcı linkleri (self) ve verici olduğu linklerde komşu alıcı (neighbor) ──
-      const ratio = (l) => { const rx = l.b, y = meas.y0[l.key]; if (!Number.isFinite(y)) return null; return y / this.expectedY0(meas.ambient[rx], meas.se[rx]); };
-      const mine = net.links.filter((l) => !l.virtual && l.b === id && net.linkEnabled(l.key)).map(ratio).filter((x) => x != null);
-      const theirs = net.links.filter((l) => !l.virtual && l.a === id && net.linkEnabled(l.key)).map(ratio).filter((x) => x != null);
-      const med = (a) => { if (!a.length) return null; const b = [...a].sort((x, y) => x - y); return b[Math.floor(b.length / 2)]; };
       if (this.enableQuarantine) {
-        const tr = this.qm.observe(id, t, { self: med(mine), neighbor: theirs.length ? Math.max(...theirs) : null, probeDb: meas.probe ? meas.probe[id] : null, lockIncident: !!(meas.lockIncident && meas.lockIncident[id]) });
+        const e = ev.perNode[id];
+        const tr = this.qm.observe(id, t, { self: e.self, neighbor: e.neighbor, probeDb: meas.probe ? meas.probe[id] : null, lockIncident: !!(meas.lockIncident && meas.lockIncident[id]) });
         if (tr) this._onTransition(id, tr, t);
       }
       const qs = this.qm.state(id);

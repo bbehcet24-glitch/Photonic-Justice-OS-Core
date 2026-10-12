@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-10-12T23:22:00.405Z",
+  "part": "2/3 karantina",
+  "checks": [
+    {
+      "name": "Q1 Tetikleyiciler: 19 ardışık şüpheli örnek (oran 4) → CLEAR, 20. → QUARANTINED; 19+temiz+19 kesintili seri → CLEAR; bağımsız prob 7 dB ve kilit INCIDENT TEK örnekte → QUARANTINED",
+      "ok": true,
+      "detail": "19 → CLEAR, 20 → QUARANTINED · kesintili → CLEAR · prob → QUARANTINED (bağımsız RF probu 7.0 dB açıklanamayan alan) · kilit → QUARANTINED (kabin kilidi INCIDENT)"
+    },
+    {
+      "name": "Q2 Asimetrik serbest bırakma: yalnız kendi-raporu temiz düğüm 120 s sonra hâlâ QUARANTINED; bağımsız komşu kanıtı temiz düğüm, tetikten sonraki ilk temiz örnekten (50 ms) itibaren 30 s'de PROBATION, 30 s daha sonra CLEAR; gözetimdeki nüks (prob 9 dB) anında geri QUARANTINED; bağımsız kaynağı olmayan düğüm yalnız operatör onayıyla PROBATION'a geçiyor; kendi-raporu kötüyken bağımsız temizlik sayacı başlamıyor",
+      "ok": true,
+      "detail": "yalnız-self 120 s: QUARANTINED · komşu temiz: PROBATION @30050 ms, CLEAR @60050 ms · nüks: PROBATION @30050, geri karantina @40000 ms · operatör: PROBATION"
+    },
+    {
+      "name": "Q3a Karantina girişi: KDK'nın üç alıcı linkinde Y0 = 3,3e-5 (çevre modelinin ×3,2'si, SE nominal) → 20. örnekte (≈0,95 s) QUARANTINED; dokunan 4 linkin havuzu İPTAL edildi; gerekçe 'kendi alıcılarında açıklanamayan Y0'; KDK'ya ışık gönderen komşular (BKR, MSL, ASY) karantinaya ALINMIYOR (kanıt atfı: üç alıcı linkinin hepsi etkilendiği için neden alıcı)",
+      "ok": true,
+      "detail": "karantina @1950 ms · iptal edilen havuz 22.55 Mbit · gerekçe: kendi alıcılarında açıklanamayan Y0 (×3.2, çevre sensörleri bunu açıklamıyor) · başka düğüm geçişi: 0"
+    },
+    {
+      "name": "Q3b Karantina süresince: KDK'dan geçen teslim 0 bit (transit ve uç); dokunan linklerde ana havuz 0 ve verilebilir 0; üretilen anahtar YALNIZ bölmede birikiyor; KDK'ya dokunmayan talepler (AVR↔ASY, BKR↔ATS) tam karşılanıyor; KDK'nın uç talepleri karşılanmıyor (dürüst kesinti)",
+      "ok": true,
+      "detail": "süre 33.0 s · KDK'dan geçen 0 bit · ana havuz en çok 0, verilebilir en çok 0 · bölmede 146.50 Mbit · diğer talepler %99.95 · KDK uç teslimi 0 bit · kanıt birikimi sırasında (0,95 s) KDK'dan geçen 152 kbit — algılama gecikmesinin bedeli"
+    },
+    {
+      "name": "Q3c Serbest bırakma: gürültü 5 s'de bitiyor → bağımsız komşu kanıtı (ATS'nin KDK→ATS linki) 30 s temiz → PROBATION @35 s; bölme anahtarı İMHA edildi; gözetimde KDK'nın uç talepleri yeniden hizmet alıyor ama BKR↔ATS transiti KDK'dan geçmiyor; 30 s sonra CLEAR @65 s ve transit KDK'ya dönüyor",
+      "ok": true,
+      "detail": "PROBATION @35000 ms · CLEAR @65000 ms · imha edilen bölme anahtarı 146.50 Mbit · gözetimde KDK uç teslimi %100.0 (iptal edilen havuzun yerine gözetimde üretilen yeni bloklar) · gözetimde BKR↔ATS: BKR→AVR→MSL→ASY→ATS · temizden sonra: BKR→KDK→ATS"
+    },
+    {
+      "name": "Q4 Yalan söyleyen düğüm: KDK'nın kendi alıcıları temiz rapor ediyor, ATS ise KDK→ATS linkinde açıklanamayan Y0 (×3,4) ölçüyor → 20. örnekte QUARANTINED (gerekçe 'komşu alıcı'); komşu kanıtı sürdüğü 43 s boyunca kendi-raporu temiz olsa da serbest bırakma YOK; ölçümü yapan ATS karantinaya ALINMIYOR (ATS'nin ASY→ATS alıcı linki temiz → neden verici)",
+      "ok": true,
+      "detail": "karantina @1950 ms · gerekçe: komşu alıcıda açıklanamayan Y0 (×3.4) · 43.0 s boyunca durum: QUARANTINED · KDK→ATS nedeni: tx · karantinaya giren düğümler: KDK"
+    },
+    {
+      "name": "Q5 Açıklanan artış: AYNI Y0 = 3,3e-5, ama KDK'nın SE'si 45 dB'ye düştüğü için çevre modeli bunu bekliyor (oran ~1,1) → 4 s boyunca karantina YOK; bunun yerine kademeli transit cezası (~240 km) devrede ve BKR↔ATS KDK'yı terk ediyor",
+      "ok": true,
+      "detail": "karantina: yok · beklenen Y0 3.00e-5 · ceza 241 km · BKR↔ATS: BKR→AVR→MSL→ASY→ATS"
+    },
+    {
+      "name": "Q6 Belirsiz atıf: yalnız AVR→MSL linki açıklanamayan, MSL'in başka alıcı linki yok ve AVR'nin öteki verici linki temiz → kaynak ayırt EDİLEMEZ, iki uç da karantinaya alınıyor (kapalı başarısızlık); AVR'nin İKİ verici linki birden etkilenince ortak etken verici → yalnız AVR",
+      "ok": true,
+      "detail": "tek link: neden ambiguous, karantina {AVR, MSL} · iki link: neden tx/tx, karantina {AVR}"
+    },
+    {
+      "name": "Çekirdek ve yeniden kullanılan modüller değişmedi (photonnet_core.js SHA-256 = 8f879fde…dc7b05)",
+      "ok": true,
+      "detail": "photonnet_core.js 8f879fde86be… · adaptive_shielding_mitigation.js e422b7ba63f3… · qkd_network_scale.js b5bdf72ef541…"
+    }
+  ],
+  "passed": 9,
+  "total": 9
+}
