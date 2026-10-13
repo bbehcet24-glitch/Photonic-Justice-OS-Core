@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-10-13T00:24:44.804Z",
+  "part": "3/3 kayıt/oynatma + HTTP cihaz",
+  "checks": [
+    {
+      "name": "R1 JSONL gidiş-dönüş: 5 s (kapı, dedektöre giriş, kopma ve tekrar-seq arızaları dahil) kaydedilip oynatılan akış, doğrudan akışla 101/101 adımda BİREBİR aynı ölçüm + çevre çıktısını veriyor",
+      "ok": true,
+      "detail": "eşit adım 101/101 · 599 çerçeve, 138 KiB"
+    },
+    {
+      "name": "R2 CSV gidiş-dönüş: aynı akış düz CSV'den (y0 'anahtar=değer;…', se 'A:db:doyma|B:…') oynatılınca da birebir aynı",
+      "ok": true,
+      "detail": "eşit adım 101/101 · 45 KiB"
+    },
+    {
+      "name": "R3 Bozuk kayıt: JSONL'e eklenen 3 bozuk satır (geçersiz JSON, frame alanı yok, yarım satır) ve CSV'ye eklenen 2 bozuk satır (sütun sayısı, sayı olmayan seq) satır numarasıyla raporlanıp ATLANIYOR, oynatma kesilmeden doğrudan akışla aynı sonucu veriyor; başlığı uyumsuz CSV tümden reddediliyor",
+      "ok": true,
+      "detail": "JSONL hataları: satır 11: Expected property name or '}' in JSON at position 1 (line 1 column 2) | satır 51: receivedMs/frame yok | satır 91: Unterminated string in JSON at position 40 (line 1 column 41) · CSV hataları: satır 21: sütun sayısı 3 ≠ 12 | satır 41: receivedMs/seq sayı değil · başlık: başlık uyumsuz"
+    },
+    {
+      "name": "R4 Gerçek zamanlı oynatma ×50: 5 s'lik kayıt ~100 ms duvar saatinde (80–400 ms), tüm zaman grupları sırası korunarak ve hiçbir çerçeve kaybolmadan teslim",
+      "ok": true,
+      "detail": "duvar saati 100 ms · grup 101 · çerçeve 599/599 · sıralı: true"
+    },
+    {
+      "name": "H1 HTTP cihaz (127.0.0.1, gerçek soket): GET /v1/frames üzerinden okunan 101 adım, süreç-içi mock sürücüyle BİREBİR aynı ölçümleri veriyor",
+      "ok": true,
+      "detail": "eşit adım 101/101 · istek 101"
+    },
+    {
+      "name": "H2 HTTP arızaları (zaman aşımı 100 ms): 300 ms gecikme, 503, bozuk JSON, yarım gövde ve yanıtsız sunucu → çerçeve yok, tüm SE değerleri NaN, hata metni raporlanıyor; 30 ms gecikme tolere ediliyor; mod düzelince okuma normale dönüyor",
+      "ok": true,
+      "detail": "latency30: 6 çerçeve · latency300: 0 çerçeve (zaman aşımı (100 ms)) · http503: 0 çerçeve (HTTP 503) · malformed: 0 çerçeve (Expected ':' after property name in JSON at position 38 (line 1 column 39)) · truncated: 0 çerçeve (Unterminated string in JSON at position 638 (line 1 column 639)) · hang: 0 çerçeve (zaman aşımı (100 ms)) · ok: 6 çerçeve"
+    },
+    {
+      "name": "H3 Ağ kapalı-başarısız: cihaz yanıt vermeyi kestiği İLK adımda izole olmayan KDK röle/uç dışı; 650 ms sonra TÜM düğümler BLOCK; sunucu kapatılınca bağlantı reddi (zaman aşımı değil) raporlanıyor; aynı portta yeniden açılınca çerçeveler hemen geri geliyor (düğümlerin OK'e dönüşü kalkan histerezisine bağlı)",
+      "ok": true,
+      "detail": "askı adımında KDK kullanılabilir: false (zaman aşımı (100 ms)) · debounce sonrası hepsi BLOCK: true · kapalı sunucu hatası: \"fetch failed\" · yeniden açılınca çerçeve: true"
+    },
+    {
+      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = 8f879fde…dc7b05)",
+      "ok": true,
+      "detail": "8f879fde86be0129…"
+    }
+  ],
+  "passed": 8,
+  "total": 8
+}
