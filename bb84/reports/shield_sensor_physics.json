@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-10-13T00:19:18.657Z",
+  "part": "1/3 fiziksel senaryolar + uçtan uca",
+  "checks": [
+    {
+      "name": "P1 Tekrarlanabilirlik: aynı tohum 200 örnekte birebir aynı çerçeveler; farklı tohum her örnekte farklı; değerler zamanın saf fonksiyonu (5 s → 0,25 s → 5 s okuması aynı değeri veriyor, yalnız seq ilerliyor)",
+      "ok": true,
+      "detail": "aynı tohum eşit: true · farklı tohumla farklı örnek: 200/200 · sıra-dışı okuma tutarlı: true"
+    },
+    {
+      "name": "P2 Sensör istatistiği (ASY, 3000 örnek): SE ortalaması gerçek değerin ±0,05 dB içinde, σ 0,27–0,33 dB, tüm okumalar 0,1 dB ızgarasında; Y0 tahmini yansız (±%1) ve göreli σ, Poisson beklentisi 1/√λ'nın ±%15'i içinde",
+      "ok": true,
+      "detail": "SE ort 65.004 (gerçek 65), σ 0.305 dB · Y0 ort/gerçek 0.9993, göreli σ 3.14% (beklenen 3.16%, λ=1002)"
+    },
+    {
+      "name": "P3 Kafes kapısı (KDK, 1–4 s): 200 ms rampanın ortasında SE ara değerde, platoda 15 ± 1 dB, kapanınca nominale dönüyor; diğer düğümler etkilenmiyor; KDK'nın alıcı linkinde Y0 içeri-giriş modelinin öngördüğü değere (SE 15 dB, ortam 88 dBµV/m) yükseliyor",
+      "ok": true,
+      "detail": "rampa ortası 38.5 dB · plato 14.9, 14.7, 15.5 dB · kapanış sonrası 61.8 dB · diğer düğümler sabit: true · Y0 1.998e-2 (model 1.996e-2)"
+    },
+    {
+      "name": "P4 Conta yaşlanması (ASY, 60 s'de 12 dB): gerçek SE tekdüze azalıyor; ölçülen SE'nin doğrusal eğimi −0,2 dB/s'nin ±%3'ü içinde (gürültü ve nicemleme eğimi bozmuyor)",
+      "ok": true,
+      "detail": "tekdüze: true · ölçülen eğim -0.2003 dB/s · 60 s sonra gerçek 53.0 dB"
+    },
+    {
+      "name": "P5 Açıklanan/açıklanamayan: MSL yakınında 112 dBµV/m verici → ortam sensörü görüyor, ölçülen Y0 / model ≈ 1 (açıklanıyor); ATS dedektörüne giriş (rogueRf ×4) → ortam sensörü görmüyor, oran ≈ 4 (açıklanamıyor) ve bağımsız prob ~9 dB görüyor; MSL'nin probu sessiz",
+      "ok": true,
+      "detail": "MSL ortam 112.0 dBµV/m, oran 1.004, prob 0.18 dB · ATS oran 4.00, prob 8.99 dB"
+    },
+    {
+      "name": "P6 Enjeksiyon (KDK→ATS fiberine ×5): yalnız ATS|KDK linkinin gerçek Y0'ı değişiyor (×5), diğer 7 link aynı; ölçümü yapan alıcı ATS",
+      "ok": true,
+      "detail": "değişen linkler: ATS|KDK · oran 5.000 · alıcı ATS"
+    },
+    {
+      "name": "P7 Uçtan uca (sensör beslemesi → doğrulayıcı → ağ + mesh, 60 s): habersiz kapı @5 s → KDK BLOCK (debounce sonrası), kapı süresince karantina YOK (Y0 artışı SE düşüşüyle açıklanıyor); KDK→ATS enjeksiyonu @30 s → ~1 s içinde YALNIZ KDK karantinada (ölçen ATS değil); kestirimci bakım örneği her adımda geçerli",
+      "ok": true,
+      "detail": "ilk BLOCK @5800 ms · kapı süresince karantina: false · karantina @30950 ms (komşu alıcıda açıklanamayan Y0 (×5.1)) · karantinadaki düğümler: KDK · bakım örneği geçerli: true"
+    },
+    {
+      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = 8f879fde…dc7b05), qkd_network_scale.js değişmedi",
+      "ok": true,
+      "detail": "photonnet_core.js 8f879fde86be… · qkd_network_scale.js b5bdf72ef541…"
+    }
+  ],
+  "passed": 8,
+  "total": 8
+}
