@@ -286,7 +286,8 @@ class ShieldedQkdNetwork {
       const Y0 = meas.y0[l.key];
       let level, newBlocks;
       if (this.policy === "adaptive") {
-        const d = l.ctl.ingest({ seDb: seLink, demandBps: 0, measuredY0: Y0 }, nowMs);
+        // y0Invalid: sensör beslemesi bu linkin Y0 ölçümünü DOĞRULAYAMADI (shield_sensor_hal.js) → aralık lekelenir
+        const d = l.ctl.ingest({ seDb: seLink, demandBps: 0, measuredY0: Y0, y0Invalid: !!(meas.y0Invalid && meas.y0Invalid[l.key]) }, nowMs);
         newBlocks = l.ctl.blockLog.slice(l.blockLogSeen).map((b) => ({ ...b }));
         l.blockLogSeen = l.ctl.blockLog.length;
         level = d.level;

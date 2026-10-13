@@ -1,0 +1,53 @@
+{
+  "generatedAt": "2026-10-13T00:23:24.223Z",
+  "part": "2/3 sensör arızaları",
+  "checks": [
+    {
+      "name": "F1 Kopma (KDK, 2–4 s çerçeve yok): SE = NaN ve gerekçe 'çerçeve yok'; KDK kopmanın İLK adımında röle/uç dışı (izole olmayan düğüm, HOLD_FLOOR); 630 ms debounce sonrası BLOCK; veri dönünce (uzun epizot, 5 dB marj + 6,3 s) tekrar OK",
+      "ok": true,
+      "detail": "kopma boyunca SE NaN ve kullanılamaz: true · ilk BLOCK @2650 ms · 12 s sonra OK: true · durumlar: HOLD_FLOOR→BLOCK"
+    },
+    {
+      "name": "F2 Reddedilen çerçeveler: 300 ms gecikmeli (AVR) 'bayat' → NaN, 100 ms gecikmeli (MSL) kabul (sınır 150 ms); 200 ms ileri zamanlı (BKR) 'gelecekte' → NaN; tekrar eden seq (ASY, 1–2 s) → NaN; 150 dB SE (ATS) 'aralık dışı' → NaN; negatif Y0 (KDK alıcıları) → Y0 geçersiz, SE geçerli",
+      "ok": true,
+      "detail": "sayaçlar: bayat=60, zaman damgası gelecekte=60, SE aralık dışı=60, seq tekrarı/geri=21 · ASY tekrar sonrası toparlandı: true"
+    },
+    {
+      "name": "F3 Takılı SE sensörü (KDK, 2 s'den itibaren donuk) + kapı açılışı @2,5 s: tek sensörde takılma 40. özdeş örnekte (~3,95 s) algılanıp SE geçersiz (NaN) oluyor — kapı açılışı bu yüzden ~1,45 s GEÇ görülüyor (dürüst bulgu: algılama penceresi kadar gizlenir); çift sensörde B sensörü kapıyı rampa sırasında görüyor (küçüğü kullanılıyor)",
+      "ok": true,
+      "detail": "tek sensör: takılı bayrağı @3950 ms, kapı görüldü @3950 ms (gecikme 1450 ms) · çift sensör: kapı görüldü @2600 ms"
+    },
+    {
+      "name": "F4 Doyma: gerçek SE 105 dB, ölçer tavanı 100 dB → okuma 100 'doymuş (alt sınır)' olarak KABUL (gerçek değer en az bu kadar → muhafazakâr); ortam alanı 150 dBµV/m, sensör tavanı 140 → GEÇERSİZ (düşük gösterirdi → beklenen Y0 düşük → güvensiz yön)",
+      "ok": true,
+      "detail": "AVR SE 100 (SE-A doymuş (alt sınır)) · MSL ortam NaN (ortam alanı doymuş (geçersiz))"
+    },
+    {
+      "name": "F5 Kayma: conta 30 s'de 12 dB kaybediyor, A sensörü +0,4 dB/s yukarı kayıyor → tek sensörde ölçülen SE gerçeğin ~12 dB ÜSTÜNDE kalıyor ve doğrulayıcı bunu ALGILAYAMIYOR (dürüst sınır: referans/ikinci sensör gerekir); çift sensörde uyuşmazlık 3 dB'yi 1 s aşınca bayrak, küçüğü kullanıldığı için ölçülen SE gerçeğin en çok ~1 dB üstünde",
+      "ok": true,
+      "detail": "tek sensör: en büyük iyimser hata 12.4 dB, bayrak null · çift sensör: bayrak @10650 ms, en büyük iyimser hata 0.98 dB"
+    },
+    {
+      "name": "F6 Y0 telemetrisi kesikken (ATS, 10–15 s) KDK→ATS fiberine ×5 enjeksiyon: SE normal olduğu için seviye NORMAL kalıyor; bayrakla eksik okumaların kapsadığı aralığa değen 7 blok (sınırdaki 9–10 s ve 15–16 s dahil) LEKELİ (0 bit serbest), dışındakiler temiz; bayraksız eski yol aynı blokları içeri-giriş MODELİNİN Y0'ıyla (gerçeğin 1/5'i) serbest bırakıyordu",
+      "ok": true,
+      "detail": "bayraklı: 7 blok, 7 lekeli, serbest 0 bit, aralık dışı temiz: true · eski yol: 7 blok, serbest 14.466 Mbit (model Y0 ile)"
+    },
+    {
+      "name": "F7 Mesh: KDK kilit olayıyla karantinada; tek komşu kanıtı KDK→ATS linki ama ATS'nin ortam sensörü 2 s'den beri yok → beklenen Y0 hesaplanamıyor, oran NaN → kanıt YOK sayılıyor (temiz değil) → 44 s boyunca serbest bırakma yok. Düzeltmeden önce NaN oran filtreyi geçip temiz kanıt gibi sayılıyordu (aynı senaryoda ~31 s'de PROBATION)",
+      "ok": true,
+      "detail": "serbest bırakma: yok · KDK komşu kanıtı: null · ATS|KDK atıf tablosunda: false"
+    },
+    {
+      "name": "F8 Sürücü istisnası: besleme çökmüyor, tüm SE/Y0/ortam değerleri NaN, tüm Y0'lar doğrulanamadı olarak işaretli, hata metni raporlanıyor",
+      "ok": true,
+      "detail": "driverError: \"USB sensör bağlantısı koptu\" · çerçeve: 0"
+    },
+    {
+      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = 8f879fde…dc7b05)",
+      "ok": true,
+      "detail": "8f879fde86be0129…"
+    }
+  ],
+  "passed": 9,
+  "total": 9
+}

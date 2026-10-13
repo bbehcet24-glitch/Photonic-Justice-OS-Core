@@ -226,8 +226,8 @@ class MeshIsolationController {
     const ls = net.links.filter((l) => !l.virtual && net.linkEnabled(l.key)).map((l) => {
       const y = meas.y0[l.key], rx = l.b;
       const r = Number.isFinite(y) ? y / this.expectedY0(meas.ambient[rx], meas.se[rx]) : null;
-      return { l, r, anom: r != null && r >= thr };
-    }).filter((x) => x.r != null);
+      return { l, r, anom: Number.isFinite(r) && r >= thr };
+    }).filter((x) => Number.isFinite(x.r)); // NaN oran (ör. ortam sensörü yok) KANIT DEĞİLDİR — temiz de sayılmaz
     const rxOf = (id) => ls.filter((x) => x.l.b === id), txOf = (id) => ls.filter((x) => x.l.a === id);
     const rxExplained = (id) => { const r = rxOf(id); return r.length >= 2 && r.every((x) => x.anom); };
     for (const x of ls) {

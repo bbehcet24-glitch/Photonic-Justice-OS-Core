@@ -421,6 +421,11 @@ class AdaptiveShieldingMitigation {
     // (a) Etkin Y0: ölçülmüş vakum verimi varsa O; yoksa içeri-giriş modeli.
     const ing = ingressEffectiveY0({ seDb: Number.isFinite(seDb) ? seDb : 0, ...this.ingress, baseY0: this.channel.baseY0 });
     const Y0eff = reading && Number.isFinite(reading.measuredY0) ? reading.measuredY0 : ing.Y0eff;
+    // Y0 ölçümü AÇIKÇA doğrulanamadı (sensör beslemesi y0Invalid=true): model değeri yalnız karar için
+    // kullanılır, bu aralıktaki anahtar SERBEST BIRAKILAMAZ (parametre tahmini eksik → blok lekelenir).
+    // Bayrak verilmezse (eski çağıranlar) davranış birebir aynı.
+    const y0Unverified = !!(reading && reading.y0Invalid === true);
+    if (y0Unverified) this.y0UnverifiedReadings = (this.y0UnverifiedReadings || 0) + 1;
 
     // (b) Seviye kararı (tepe-tutma penceresi _decideLevel içinde beslenir).
     const lvl = this._decideLevel(seDb, nowMs, Y0eff);
@@ -431,8 +436,8 @@ class AdaptiveShieldingMitigation {
     //     YENİ parametre önerisi ancak muhasebeden SONRA bekleyen sete
     //     yazılır — böylece t_now'dan önce başlamış bir bloğa geriye dönük
     //     uygulanamaz.
-    if (this.lastMs != null) this._accountInterval(this.lastMs, nowMs, lvl.level, Y0eff);
-    else this._startBlock(nowMs, !RELEASABLE.has(lvl.level), Y0eff);
+    if (this.lastMs != null) this._accountInterval(this.lastMs, nowMs, lvl.level, Y0eff, y0Unverified);
+    else this._startBlock(nowMs, !RELEASABLE.has(lvl.level) || y0Unverified, Y0eff);
     if (lvl.newPending) { this.pendingParams = lvl.newPending; this.paramSwitches++; }
 
     const decision = {
@@ -605,11 +610,11 @@ class AdaptiveShieldingMitigation {
    * KÖŞELİ-PARANTEZ KURALI: aralığın iki ucundaki okumalardan BİRİ bile
    * serbest-bırakılabilir değilse, aralığa değen blok LEKELENİR.
    */
-  _accountInterval(tPrev, tNow, newLevel, Y0eff) {
+  _accountInterval(tPrev, tNow, newLevel, Y0eff, y0Unverified = false) {
     const prev = this.lastDecision;
     const dt = tNow - tPrev;
     if (dt <= 0) return;
-    const intervalTainted = !RELEASABLE.has(prev.level) || !RELEASABLE.has(newLevel);
+    const intervalTainted = !RELEASABLE.has(prev.level) || !RELEASABLE.has(newLevel) || y0Unverified;
     if (intervalTainted) this.block.tainted = true;
     this.block.maxY0 = Math.max(this.block.maxY0, Y0eff);
 
