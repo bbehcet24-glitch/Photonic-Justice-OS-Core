@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T22:29:27.577Z",
+  "generatedAt": "2026-10-22T23:47:59.678Z",
   "checks": [
     {
       "name": "(A) KLASİK KANAL MAC: çekirdek primitifi ZAYIF (tahrifat ~%41 kaçar), standart MAC ~%0",
@@ -20,6 +20,11 @@
       "name": "(D) GO/NO-GO: sertleştirilmiş durum → YAZILIM KAPISI GEÇER; kalan engeller DONANIM",
       "ok": true,
       "detail": "sertleştirilmiş (standart MAC + monitör + crypto QRNG + ℓ>0@%2.8 + casus-iptal + ETSI): yazılım kriterleri GEÇTİ, engel yok. Kalan 4 DONANIM kriteri: Anahtar QRNG (donanım entropisi); Dedektör kalibrasyonu (gerçek donanım); Elektromanyetik sızıntı (Faraday kafesi); mTLS el sıkışma ön-koşulu (fiziksel katman kalkanlaması)"
+    },
+    {
+      "name": "(E2) QBER İPTAL KANITI: yalnız 'eavesdropAborts: true' beyanı ve uçurumun üstündeki %11 eşiği BLOKLANIR; kanıtlı politika (eşik ≤ ℓ-uçurumu) geçer",
+      "ok": true,
+      "detail": "beyan → \"kanıt yok — yalnız beyan (eavesdropAborts=true) kabul edilmez; qber_ab…\" · %11 → \"iptal eşiği %11.00, ℓ = 0 uçurumunun (%9.32, n=1000000) ÜSTÜNDE — eşik ile uçurum arasında…\" · kanıtlı: QBER_test ≥ %9.32 (ℓ = 0 uçurumu, n=1000000, k=250000) → anahtar İPTAL; öz-test: uçurum üstü ABORT, altı PROCE…"
     },
     {
       "name": "(E) FAIL-CLOSED: tek bir güvenlik değişmezi bozulunca kapı BLOKLAR (üretime izin yok)",
@@ -86,7 +91,7 @@
       {
         "name": "Casus-iptal (QBER eşiği)",
         "status": "pass",
-        "detail": "QBER > eşik → anahtar iptal; saat kurtarma casusu maskelemiyor"
+        "detail": "QBER_test ≥ %9.32 (ℓ = 0 uçurumu, n=1000000, k=250000) → anahtar İPTAL; öz-test: uçurum üstü ABORT, altı PROCEED, %25 casus ABORT"
       },
       {
         "name": "ETSI 014 uyumu (KME)",
@@ -113,7 +118,9 @@
   "failClosed": {
     "weakMac": true,
     "mulberry": true,
-    "insecure": true
+    "insecure": true,
+    "claimOnly": true,
+    "eleven": true
   },
   "hardwareBoundary": [
     "Anahtar QRNG (donanım entropisi)",

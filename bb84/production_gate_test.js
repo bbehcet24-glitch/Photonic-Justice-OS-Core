@@ -69,7 +69,7 @@ function main() {
   const securePos = QKDSecurityProof.secureKeyLength(1e6, realQber).secure;
   const hardened = {
     macMissRatePct: strongMiss, monitorActive: true, qrngFit: true, qrngHardware: false,
-    secureKeyPositive: securePos, realQberPct: (realQber * 100).toFixed(2), eavesdropAborts: true, etsiConformant: true,
+    secureKeyPositive: securePos, realQberPct: (realQber * 100).toFixed(2), eavesdropAborts: true, qberAbort: new (require("./qber_abort_policy.js").QberAbortPolicy)().gateEvidence(), etsiConformant: true,
   };
   const gateH = G.productionGate(hardened);
   out.gateHardened = { pass: gateH.pass, verdict: gateH.verdict, blockers: gateH.blockers.length,
@@ -83,7 +83,12 @@ function main() {
   const gWeakMac = G.productionGate({ ...hardened, macMissRatePct: coreMiss });
   const gMulberry = G.productionGate({ ...hardened, qrngFit: false });
   const gInsecure = G.productionGate({ ...hardened, secureKeyPositive: false });
-  out.failClosed = { weakMac: !gWeakMac.pass, mulberry: !gMulberry.pass, insecure: !gInsecure.pass };
+  const gClaimOnly = G.productionGate({ ...hardened, qberAbort: undefined });            // yalnız boolean beyan
+  const gEleven = G.productionGate({ ...hardened, qberAbort: { ...hardened.qberAbort, thresholdQber: 0.11 } }); // eski %11 eşiği
+  out.failClosed = { weakMac: !gWeakMac.pass, mulberry: !gMulberry.pass, insecure: !gInsecure.pass, claimOnly: !gClaimOnly.pass, eleven: !gEleven.pass };
+  chk("(E2) QBER İPTAL KANITI: yalnız 'eavesdropAborts: true' beyanı ve uçurumun üstündeki %11 eşiği BLOKLANIR; kanıtlı politika (eşik ≤ ℓ-uçurumu) geçer",
+    !gClaimOnly.pass && !gEleven.pass && gateH.criteria.find((c) => c.name.startsWith("Casus-iptal")).status === "pass",
+    `beyan → "${gClaimOnly.blockers[0].detail.slice(0, 70)}…" · %11 → "${gEleven.blockers[0].detail.slice(0, 90)}…" · kanıtlı: ${gateH.criteria.find((c) => c.name.startsWith("Casus-iptal")).detail.slice(0, 110)}…`);
   chk("(E) FAIL-CLOSED: tek bir güvenlik değişmezi bozulunca kapı BLOKLAR (üretime izin yok)",
     !gWeakMac.pass && !gMulberry.pass && !gInsecure.pass,
     `zayıf MAC → BLOKLANDI ("${gWeakMac.blockers[0].name}") · mulberry32 anahtar → BLOKLANDI ("${gMulberry.blockers[0].name}") · ` +

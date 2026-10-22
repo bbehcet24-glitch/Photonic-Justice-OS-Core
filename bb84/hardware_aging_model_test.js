@@ -193,7 +193,7 @@ function main() {
   const mtlsEarly = J.mtlsHandshakePrecondition(agedEarly);
   const mtlsLate = J.mtlsHandshakePrecondition(agedLate);
   const baseState = { macMissRatePct: 0, monitorActive: true, qrngFit: true, qrngHardware: false,
-    secureKeyPositive: true, realQberPct: "2.78", eavesdropAborts: true, etsiConformant: true };
+    secureKeyPositive: true, realQberPct: "2.78", eavesdropAborts: true, qberAbort: new (require("./qber_abort_policy.js").QberAbortPolicy)().gateEvidence(), etsiConformant: true };
   const gateEarly = G.productionGate({ ...baseState, faraday: agedEarly });
   const gateLate = G.productionGate({ ...baseState, faraday: agedLate });
   out.endOfLife = {

@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-10-22T23:48:57.502Z",
+  "checks": [
+    {
+      "name": "Q1 ℓ = 0 uçurumu çekirdeğin formülünden: çekirdeğin tek-parametreli n=k kısayolu (secureKeyLength) n = 10⁶'da %9,59 veriyor (detector_recalibration raporuyla aynı); politika iki-parametreli Serfling μ kullanıyor, aynı n = k'da %9,50 (daha muhafazakâr); blok boyuyla tekdüze artıyor; hepsi %11'in altında",
+      "ok": true,
+      "detail": "n=k=10⁶: çekirdek kısayolu %9.588, politika (iki-parametreli μ) %9.498 · k = n/4: n=2e+3: %0.79 · n=1e+4: %5.39 · n=1e+5: %8.30 · n=1e+6: %9.32 · n=1e+8: %9.76"
+    },
+    {
+      "name": "Q2 Kararlar: uçurumun 0,01 puan üstü ABORT, 0,1 puan altı PROCEED (ℓ > 0); test örneklemi yok → ABORT; hiçbir QBER'de ℓ > 0 olmayan küçük blok → ABORT (QBER 0 olsa bile)",
+      "ok": true,
+      "detail": "uçurum %9.319 · üstü: ABORT · altı: PROCEED, ℓ=6933 · NaN: ABORT (test örneklemi yok — QBER kestirilemedi) · n=100: ABORT (blok çok küçük (n=100, k=25): hiçbir QBER'de ℓ > 0 değil)"
+    },
+    {
+      "name": "Q3 Kâhinsiz kestirim: k = %20 test biti açıklanıp anahtardan çıkarılıyor (k + n = N, ayrık); QBER_test kâhin QBER'in 4σ içinde",
+      "ok": true,
+      "detail": "N=200000, k=40000, n=160000 · kâhin %3.063, test %3.087 (σ=%0.086)"
+    },
+    {
+      "name": "Q4 Çekirdek oturumu (50 km, 4096 darbe): çekirdeğin kâhin QBER'i %11'in altında, bayrak YOK, anahtarı kullanırdı; politika ABORT — mesaj boyunda (n ≈ 10³) uçurum çok düşük, sonlu-anahtar anlamında güvenli anahtar ÇIKMIYOR",
+      "ok": true,
+      "detail": "4096 darbeden sifted 184 bit · çekirdek kâhin QBER %1.63, bayrak false · politika: n=147, k=37, QBER_test %2.70, uçurum %0.00 → ABORT (blok çok küçük (n=147, k=37): hiçbir QBER'de ℓ > 0 değil)"
+    },
+    {
+      "name": "Q5 Çekirdek + intercept-resend casusu: QBER ~%25, çekirdek bayrağı ve politika ikisi de iptal",
+      "ok": true,
+      "detail": "çekirdek QBER %23.79, bayrak true · politika ABORT"
+    },
+    {
+      "name": "Q6 Havuzlanmış blok (200 çekirdek oturumu, 50 km, ~3·10⁴ anahtar biti): uçurum %7'nin üstüne çıkıyor → PROCEED, ℓ > 0, anahtar test bitlerinden ayrık; aynı havuz casus altında ABORT",
+      "ok": true,
+      "detail": "temiz: sifted 38737, n=30990, k=7747, QBER_test %2.31, uçurum %7.17, ℓ=12273 (n'nin %39.6'i) · casus: QBER_test %26.09 → ABORT"
+    },
+    {
+      "name": "Q7 Kapı kanıtı: etkin eşik ≤ ℓ-uçurumu (n = 10⁶, k = 2,5·10⁵) ve öz-test üç kararı doğru veriyor",
+      "ok": true,
+      "detail": "eşik %9.32, uçurum %9.32 · {\"aboveCliff\":\"ABORT\",\"belowCliff\":\"PROCEED\",\"intercept25\":\"ABORT\"}"
+    },
+    {
+      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256)",
+      "ok": true,
+      "detail": "8f879fde86be0129…"
+    }
+  ],
+  "passed": 8,
+  "total": 8
+}

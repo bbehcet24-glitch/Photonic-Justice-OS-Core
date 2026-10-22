@@ -112,9 +112,19 @@ function productionGate(state) {
   // 4) Sonlu-anahtar güvenliği (Faz 3 gerçek QBER'de ℓ>0)
   add("Sonlu-anahtar güvenliği (gerçek QBER)", state.secureKeyPositive ? "pass" : "fail",
     state.secureKeyPositive ? `ℓ>0 gerçek QBER %${state.realQberPct}'de` : "ℓ≤0 — güvenli anahtar üretilemiyor");
-  // 5) Casus-iptal davranışı (Faz 1/2)
-  add("Casus-iptal (QBER eşiği)", state.eavesdropAborts ? "pass" : "fail",
-    state.eavesdropAborts ? "QBER > eşik → anahtar iptal; saat kurtarma casusu maskelemiyor" : "casus tespiti yok");
+  // 5) Casus-iptal davranışı — KANIT İSTER (boolean beyan değil). DÜZELTME: önceki sürüm
+  // state.eavesdropAborts=true beyanını kabul ediyordu; oysa çekirdeğin %11 bayrağı anahtarı
+  // iptal etmiyor ve sonlu-anahtar uçurumunun (n=10⁶'da ≈%9,5) ÜSTÜNDE duruyordu.
+  // state.qberAbort = QberAbortPolicy.gateEvidence() (bkz. qber_abort_policy.js).
+  {
+    const qa = state.qberAbort;
+    let ok5 = false, d5;
+    if (!qa) d5 = `kanıt yok — yalnız beyan (eavesdropAborts=${!!state.eavesdropAborts}) kabul edilmez; qber_abort_policy.gateEvidence() gerekli`;
+    else if (!(qa.thresholdQber <= qa.cliffQber + 1e-12)) d5 = `iptal eşiği %${(100 * qa.thresholdQber).toFixed(2)}, ℓ = 0 uçurumunun (%${(100 * qa.cliffQber).toFixed(2)}, n=${qa.n}) ÜSTÜNDE — eşik ile uçurum arasındaki oturumlar güvensiz anahtar üretir`;
+    else if (qa.verified !== true) d5 = "politika öz-testi başarısız (uçurumun iki yanında doğru karar verilmedi)";
+    else { ok5 = true; d5 = `QBER_test ≥ %${(100 * qa.thresholdQber).toFixed(2)} (ℓ = 0 uçurumu, n=${qa.n}, k=${qa.k}) → anahtar İPTAL; öz-test: uçurum üstü ${qa.checks.aboveCliff}, altı ${qa.checks.belowCliff}, %25 casus ${qa.checks.intercept25}`; }
+    add("Casus-iptal (QBER eşiği)", ok5 ? "pass" : "fail", d5);
+  }
   // 6) ETSI 014 uyumu (Faz 0)
   add("ETSI 014 uyumu (KME)", state.etsiConformant ? "pass" : "fail",
     state.etsiConformant ? "vendor-neutral istemci uçtan uca geçti (Faz 0)" : "KME uyumsuz");

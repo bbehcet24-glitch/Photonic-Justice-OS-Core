@@ -75,7 +75,7 @@ function main() {
 
   // ══ (E) PRODUCTION_GATE ENTEGRASYONU ══
   const baseState = { macMissRatePct: 0, monitorActive: true, qrngFit: true, qrngHardware: false,
-    secureKeyPositive: true, realQberPct: "2.78", eavesdropAborts: true, etsiConformant: true };
+    secureKeyPositive: true, realQberPct: "2.78", eavesdropAborts: true, qberAbort: new (require("./qber_abort_policy.js").QberAbortPolicy)().gateEvidence(), etsiConformant: true };
   const gateNoFaraday = G.productionGate(baseState); // faraday alanı YOK — mevcut davranış korunmalı
   const gateWithGoodCage = G.productionGate({ ...baseState, faraday: evalNew });
   const gateWithBadCage = G.productionGate({ ...baseState, faraday: evalOld });
