@@ -154,7 +154,10 @@ Y0⁺ kullanmak, e1U'yu YANLIŞLIKLA KÜÇÜK/tehlikeli gösterirdi).
 ## 5. Epsilon bütçesi — UNION BOUND ile birleştirme
 
 Y1LowerFinite, ÜÇ bağımsız Chernoff uygulaması (Q_μ⁺, Q_ν⁻, Y0⁺) kullanır
-— her biri kendi ε/3 payıyla. e1UpperFinite, İKİ bağımsız uygulama daha
+— her biri ε/5 payıyla (DÜZELTME: bu satır ve kod önceden ε/3 diyordu; e1UpperFinite'ın
+iki ε/5 payıyla birlikte toplam 3·ε/3 + 2·ε/5 = 1,4·ε harcanıyordu — aşağıdaki "toplam = ε"
+iddiasıyla çelişiyordu. Artık beş sınırın hepsi ε/5; `estimateDecoyFiniteKey` harcanan
+toplamı `epsSpent` olarak döndürür ve öz-test bunun TAM epsPE olduğunu doğrular). e1UpperFinite, İKİ bağımsız uygulama daha
 kullanır ((EνQν)⁺, Y0⁻) — her biri kendi ε/5 payıyla (TOPLAM 5 pay,
 Y1LowerFinite'ın ÜÇÜ + e1UpperFinite'ın İKİSİ — Y0⁺ ile Y0⁻ AYNI ölçümün
 İKİ AYRI ucu olduğundan İKİ AYRI Chernoff uygulaması SAYILIR, tek bir pay

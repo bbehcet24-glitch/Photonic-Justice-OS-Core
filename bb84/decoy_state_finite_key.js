@@ -77,14 +77,17 @@ function finiteRateBounds({ count, pulses, epsilon }) {
  */
 function estimateY1LowerFinite({ mu, nu, muRun, nuRun, vacRun, epsPE }) {
   if (!(epsPE > 0) || epsPE >= 1) throw new RangeError("estimateY1LowerFinite: epsPE (0,1) aralığında olmalı.");
-  const eps3 = epsPE / 3;
-  const QmuUpper = finiteRateBounds({ count: muRun.detected, pulses: muRun.pulses, epsilon: eps3 }).upper;
-  const QnuLower = finiteRateBounds({ count: nuRun.detected, pulses: nuRun.pulses, epsilon: eps3 }).lower;
-  const Y0Upper = finiteRateBounds({ count: vacRun.detected, pulses: vacRun.pulses, epsilon: eps3 }).upper;
+  // DÜZELTME: önceki sürüm burada epsPE/3 kullanıyordu; e1UpperFinite'ın iki sınırı (epsPE/5) ile
+  // birlikte toplam 3·ε/3 + 2·ε/5 = 1,4·ε harcanıyordu (§5'in iddia ettiği 1·ε DEĞİL). Beş sınırın
+  // hepsi epsPE/5 alır → union bound toplamı TAM epsPE. Daha küçük pay → daha geniş (muhafazakâr) sınır.
+  const eps5 = epsPE / 5;
+  const QmuUpper = finiteRateBounds({ count: muRun.detected, pulses: muRun.pulses, epsilon: eps5 }).upper;
+  const QnuLower = finiteRateBounds({ count: nuRun.detected, pulses: nuRun.pulses, epsilon: eps5 }).lower;
+  const Y0Upper = finiteRateBounds({ count: vacRun.detected, pulses: vacRun.pulses, epsilon: eps5 }).upper;
   // GÜVENLİ (küçük) Y1L için: Qν→ALT, Qμ→ÜST, Y0→ÜST (bkz. DESIGN.md §4,
   // ∂Y1L/∂Qν>0, ∂Y1L/∂Qμ<0, ∂Y1L/∂Y0<0 işaret analizi).
   const Y1LowerFinite = decoy.estimateY1Lower({ Qmu: QmuUpper, Qnu: QnuLower, mu, nu, Y0: Y0Upper });
-  return { Y1LowerFinite, inputs: { QmuUpper, QnuLower, Y0Upper }, epsPerBound: eps3, boundCount: 3 };
+  return { Y1LowerFinite, inputs: { QmuUpper, QnuLower, Y0Upper }, epsPerBound: eps5, boundCount: 3 };
 }
 
 /**
@@ -123,6 +126,8 @@ function estimateDecoyFiniteKey({ mu, nu, muRun, nuRun, vacRun, epsPE }) {
     e1UpperFinite: e1.e1UpperFinite,
     epsPE,
     boundCount: y1.boundCount + e1.boundCount, // =5 — union bound'un kaç bağımsız Chernoff uygulamasına dağıtıldığı
+    // Harcanan toplam başarısızlık olasılığı (union bound) — epsPE'ye EŞİT olmalı (test edilir).
+    epsSpent: y1.boundCount * y1.epsPerBound + e1.boundCount * e1.epsPerBound,
     y1Inputs: y1.inputs,
     e1Inputs: e1.inputs,
   };

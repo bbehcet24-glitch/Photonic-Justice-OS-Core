@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-11T10:33:24.506Z",
+  "generatedAt": "2026-10-22T23:45:59.307Z",
   "checks": [
     {
       "name": "(A) SE_gerekli tersi emissionDetectabilityCheck ile birebir tutarlı (tespit ⟺ SE < SE_gerekli)",
@@ -19,12 +19,12 @@
     {
       "name": "(D) Küçük blokta (N=1e8) decoy+vakum payı büyük blokta (N=1e11) olduğundan BÜYÜK (sonlu-istatistik maliyeti)",
       "ok": true,
-      "detail": "N=1e8: s/d/v=0.5/0.35/0.15 R=5.92e-5 · N=1e11: s/d/v=0.95/0.025/0.025 R=4.02e-4 · ps=0.5 ızgara alt ucu ama ızgara 0.2'ye genişletilince optimum AYNI kalıyor (gerçek iç optimum, sınır artefaktı değil) ✓"
+      "detail": "N=1e8: s/d/v=0.5/0.35/0.15 R=5.85e-5 · N=1e11: s/d/v=0.95/0.025/0.025 R=4.02e-4 · ps=0.5 ızgara alt ucu ama ızgara 0.2'ye genişletilince optimum AYNI kalıyor (gerçek iç optimum, sınır artefaktı değil) ✓"
     },
     {
       "name": "(E) SE_gerekli ≤ SE < hedef: mevcut önkoşul REDDEDER, bu katman ADAPT + mTLS AÇIK + R>0",
       "ok": true,
-      "detail": "mtlsHandshakePrecondition(SE=45) allowed=false · katman: ADAPT, mTLS=true, R=5.09e-4/darbe — gevşetme yalnız açık tehdit modeliyle (bkz. B)"
+      "detail": "mtlsHandshakePrecondition(SE=45) allowed=false · katman: ADAPT, mTLS=true, R=5.08e-4/darbe — gevşetme yalnız açık tehdit modeliyle (bkz. B)"
     },
     {
       "name": "(F) 200 ms'lik 25 dB düşüşü: BLOCK yok, mTLS hiç kopmuyor, HOLD penceresine değen bloklar lekeli, havuz muhasebesi korunuyor, aç kalınmıyor",
@@ -102,14 +102,14 @@
       "pd": 0.035,
       "pv": 0.015,
       "r": 0.8,
-      "R": 0.000663091995758077
+      "R": 0.0006627530882106426
     },
     "rows": [
       {
         "Y0": 0.00001,
-        "fixed": 0.000663091995758077,
-        "codeOnly": 0.000663091995758077,
-        "full": 0.000663091995758077,
+        "fixed": 0.0006627530882106426,
+        "codeOnly": 0.0006627530882106426,
+        "full": 0.0006627530882106426,
         "mu": 0.55,
         "nu": 0.06,
         "ps": 0.95,
@@ -118,9 +118,9 @@
       },
       {
         "Y0": 0.00005,
-        "fixed": 0.00061867858294259,
-        "codeOnly": 0.00061867858294259,
-        "full": 0.0006223172171126439,
+        "fixed": 0.0006182720608366433,
+        "codeOnly": 0.0006182720608366433,
+        "full": 0.000621960752445286,
         "mu": 0.55,
         "nu": 0.08,
         "ps": 0.95,
@@ -130,8 +130,8 @@
       {
         "Y0": 0.0001,
         "fixed": 0,
-        "codeOnly": 0.00044580060828848387,
-        "full": 0.0004735063680939277,
+        "codeOnly": 0.00044534091304703204,
+        "full": 0.00047316319540933555,
         "mu": 0.45,
         "nu": 0.1,
         "ps": 0.95,
@@ -141,8 +141,8 @@
       {
         "Y0": 0.0002,
         "fixed": 0,
-        "codeOnly": 0.00015437201998080955,
-        "full": 0.00032598793947883904,
+        "codeOnly": 0.00015383501035003898,
+        "full": 0.00032566300969587026,
         "mu": 0.7,
         "nu": 0.08,
         "ps": 0.9,
@@ -152,8 +152,8 @@
       {
         "Y0": 0.0003,
         "fixed": 0,
-        "codeOnly": 0.00009449977833276035,
-        "full": 0.00020629200773353927,
+        "codeOnly": 0.00009390288505434167,
+        "full": 0.00020604321768488945,
         "mu": 0.45,
         "nu": 0.08,
         "ps": 0.85,
@@ -164,7 +164,7 @@
         "Y0": 0.0004,
         "fixed": 0,
         "codeOnly": 0,
-        "full": 0.00008096165239685095,
+        "full": 0.00008076245712437439,
         "mu": 0.6,
         "nu": 0.08,
         "ps": 0.75,
@@ -178,20 +178,20 @@
       "ps": 0.5,
       "pd": 0.35,
       "pv": 0.15,
-      "R": 0.00005917593766058781
+      "R": 0.00005852603737850192
     },
     "N1e11": {
       "ps": 0.95,
       "pd": 0.025,
       "pv": 0.025,
-      "R": 0.00040205066958666665
+      "R": 0.00040186590769076007
     }
   },
   "policy": {
     "legacyAllowed": false,
     "level": "ADAPT",
     "mtls": true,
-    "R": 0.0005087225871326121
+    "R": 0.0005079893013925021
   },
   "transient": {
     "levelTimeMs": {
@@ -201,7 +201,7 @@
     "holdStartMs": 5000,
     "holdEndMs": 5800,
     "quarantinedBits": 0,
-    "releasedBits": 15602020,
+    "releasedBits": 15583904,
     "deliveredBits": 9000000,
     "starvedMs": 0,
     "legacyDebounceCut": false

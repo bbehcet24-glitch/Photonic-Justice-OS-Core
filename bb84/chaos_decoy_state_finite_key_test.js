@@ -14,7 +14,7 @@
 //   4) Y1LowerFinite, AYNI verinin ASİMPTOTİK (nokta-tahmin) Y1Lower'ından
 //      HER ZAMAN küçük/eşit (finite-key düzeltmesi GERÇEKTEN daha muhafazakâr).
 //   5) pulses→∞ iken Y1LowerFinite → asimptotik Y1Lower (yakınsama).
-//   6) combinedSecurityEpsilon: union-bound toplamı doğru.
+//   6) combinedSecurityEpsilon: union-bound toplamı doğru; estimateDecoyFiniteKey 5 sınıra TAM epsPE dağıtıyor (1,4·ε hatası düzeltildi).
 //   7) çekirdek VE decoy_state_protocol.js bu çalışma boyunca DEĞİŞMEDİ.
 //
 // İstatistiksel testler (1, 3) rastgele-örneklem tabanlı olduğundan, bu
@@ -191,6 +191,12 @@ function testCombinedSecurityEpsilon() {
   let threw = false;
   try { fk.combinedSecurityEpsilon({ decoyEpsPE: 0 }); } catch (e) { threw = e instanceof RangeError; }
   check("decoyEpsPE<=0 RangeError fırlatıyor", threw);
+
+  // DÜZELTME doğrulaması: beş Chernoff sınırının harcadığı toplam ε TAM epsPE (önceden 1,4·epsPE idi).
+  const run = (p, k) => ({ pulses: p, detected: k, errors: Math.round(k * 0.03) });
+  const est = fk.estimateDecoyFiniteKey({ mu: 0.5, nu: 0.1, muRun: run(1e8, 2.5e6), nuRun: run(1e7, 5e4), vacRun: run(1e7, 100), epsPE: 1e-10 });
+  check("estimateDecoyFiniteKey: 5 sınırın union-bound toplamı TAM epsPE (önceki sürüm 1,4·epsPE harcıyordu)",
+    est.boundCount === 5 && approxEqual(est.epsSpent, 1e-10, 1e-24), `boundCount=${est.boundCount}, epsSpent=${est.epsSpent}, epsPE=1e-10`);
 }
 
 function testCoreAndDecoyProtocolUntouched() {
