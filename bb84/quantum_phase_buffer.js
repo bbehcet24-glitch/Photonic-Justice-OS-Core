@@ -47,6 +47,17 @@ const DEFAULTS = Object.freeze({
   correctionIntervalS: 50e-6,
   // §3'te geriye-çözülen tolerans: sin²(δ/2)=targetErrorContribution
   targetErrorContribution: 0.01,
+  // İZLEME (pilot-ton fotodiyodu) eyleyiciden (ısıtıcı) ÇOK daha hızlıdır: 0 = her darbede
+  // izlenir. Tutma kararı İZLEMEYE bağlıdır, düzeltme fırsatına değil (bkz. düzeltme notu).
+  monitorIntervalS: 0,
+  // İzleme ölçüm gürültüsü (rad, 1σ). 0 = gürültüsüz (eski varsayım; ÖLÇÜLMEMİŞ).
+  monitorNoiseRad: 0,
+  // Isıtıcının düzeltmeyi TAMAMLAMA süresi. 0 = anlık (eski model). >0 iken düzeltme bitene
+  // kadar darbeler TUTULUR ve δ düzeltme SONUNDA sıfırlanır.
+  settleS: 0,
+  // Tutma eşiği δ_max − holdMarginRad. İzleme en az bir darbe gecikmeli olduğundan, eşiği
+  // geçen ilk darbe tutulamaz; ~3·σ·√(darbe periyodu) kadar pay bu sızıntıyı kapatır.
+  holdMarginRad: 0,
 });
 
 /** δ_max'ı hedef bit-hata katkısından GERİYE ÇÖZER — keyfi sabit YAZILMAZ. */
@@ -114,8 +125,16 @@ class QuantumPhaseBuffer {
     this.deltaMaxRad = opts.deltaMaxRad ?? deltaMaxFromTargetError(opts.targetErrorContribution);
     this.correctionIntervalS = opts.correctionIntervalS ?? DEFAULTS.correctionIntervalS;
     this.onCorrection = opts.onCorrection || (() => {});
+    this.monitorIntervalS = opts.monitorIntervalS ?? DEFAULTS.monitorIntervalS;
+    this.monitorNoiseRad = opts.monitorNoiseRad ?? DEFAULTS.monitorNoiseRad;
+    this.settleS = opts.settleS ?? DEFAULTS.settleS;
+    this.holdMarginRad = opts.holdMarginRad ?? DEFAULTS.holdMarginRad;
+    this.monitorRng = opts.monitorRng || Math.random;
     this.timeSinceLastCorrectionS = 0;
-    this.holding = false; // TUTMA durumunda mı (düzeltme arifesinde eşik aşıldı)
+    this.timeSinceMonitorS = 0;
+    this._settleUntilS = null;      // düzeltme sürüyor (ısıtıcı yerleşiyor) → bu zamana kadar TUT
+    this.unheldOverThreshold = 0;   // eşiği aşmış ama izleme gecikmesi yüzünden TUTULAMAMIŞ darbe sayısı (dürüst sayaç)
+    this.holding = false; // TUTMA durumunda mı: izleme |δ|>δ_max gördü ya da düzeltme sürüyor
     this.correctionLog = [];
     this.pulseLog = []; // her darbe için { tS, held, deltaAtEncode }
     this._elapsedS = 0;
@@ -131,34 +150,58 @@ class QuantumPhaseBuffer {
     this.driftModel.step(dtS);
     this._elapsedS += dtS;
     this.timeSinceLastCorrectionS += dtS;
+    this.timeSinceMonitorS += dtS;
+    // Düzeltme (ısıtıcı yerleşmesi) bittiyse δ sıfırlanır ve tutma kalkar.
+    if (this._settleUntilS != null && this._elapsedS >= this._settleUntilS) {
+      this.driftModel.correct(); this._settleUntilS = null; this.holding = false;
+    }
+    // Bu darbe, ÖNCEKİ izleme kararıyla kodlanır (nedensel: karar en az bir darbe gecikmeli).
     const rec = { tS: this._elapsedS, held: this.holding, deltaAtEncode: this.driftModel.delta };
+    if (!rec.held && Math.abs(rec.deltaAtEncode) > this.deltaMaxRad) this.unheldOverThreshold++;
     this.pulseLog.push(rec);
+    // İzleme: sonraki darbeler için tutma kararı (düzeltme sürerken tutma zaten açık).
+    if (this._settleUntilS == null && this.timeSinceMonitorS >= this.monitorIntervalS) {
+      this.timeSinceMonitorS = 0;
+      this.holding = Math.abs(this._measure()) > this.deltaMaxRad - this.holdMarginRad;
+    }
     return { held: rec.held, deltaAtEncode: rec.deltaAtEncode };
+  }
+
+  _measure() {
+    if (!(this.monitorNoiseRad > 0)) return this.driftModel.delta;
+    let u = 0, v = 0; while (u === 0) u = this.monitorRng(); while (v === 0) v = this.monitorRng();
+    return this.driftModel.delta + this.monitorNoiseRad * Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
   }
 
   /**
    * Düzeltme fırsatı penceresi — YALNIZCA `correctionIntervalS` geçtiyse
    * gerçek bir "ölçüm+düzeltme" denemesi yapar (ısıtıcının fiziksel yanıt
-   * süresi sınırı, bkz. tasarım belgesi §2). Eşik aşılmışsa `holding=true`
-   * yapar, düzeltir, sonra `holding=false`'a döner (düzeltme ANLIK kabul
-   * edilir — gerçek sistemde bunun kendisi de bir gecikme taşır, bu basit
-   * modelde ihmal edilmiştir, bkz. tasarım belgesi §7).
+   * süresi sınırı, bkz. tasarım belgesi §2).
+   *
+   * DÜZELTME (hata giderildi): önceki sürüm `holding=true` yapıp AYNI çağrıda
+   * `holding=false`'a döndürüyordu; tickPulse() bu ara durumu hiç görmediği için
+   * HİÇBİR darbe tutulmuyordu ve iki düzeltme fırsatı arasında |δ|>δ_max ile
+   * kodlanan darbeler sessizce gönderiliyordu (fail-closed iddiası çalışmıyordu).
+   * Artık: (1) tutma kararı her darbede çalışan İZLEMEYE bağlı (tickPulse);
+   * (2) settleS > 0 ise düzeltme bitene kadar tutma sürer, δ düzeltme sonunda
+   * sıfırlanır; settleS = 0 iken (varsayılan) düzeltme anlık ve δ yörüngesi eski
+   * sürümle BİREBİR aynı (düzeltme zamanları değişmez).
    * @returns {boolean} bu çağrıda bir düzeltme YAPILDI mı
    */
   maybeCorrect() {
     if (this.timeSinceLastCorrectionS < this.correctionIntervalS) return false;
     this.timeSinceLastCorrectionS = 0;
     const measuredDelta = this.driftModel.delta; // pilot-ton "ölçümü" — bu basit modelde GÜRÜLTÜSÜZ okunur
+    if (this._settleUntilS != null) return false; // önceki düzeltme hâlâ yerleşiyor
     if (Math.abs(measuredDelta) > this.deltaMaxRad) {
-      this.holding = true;
-      this.driftModel.correct();
       this.correctionLog.push({
         tS: this._elapsedS,
         measuredDeltaRad: measuredDelta,
         deltaMaxRad: this.deltaMaxRad,
       });
       this.onCorrection({ tS: this._elapsedS, measuredDeltaRad: measuredDelta });
-      this.holding = false;
+      if (this.settleS > 0) { this.holding = true; this._settleUntilS = this._elapsedS + this.settleS; }
+      else { this.driftModel.correct(); this.holding = false; }
       return true;
     }
     return false;
@@ -169,6 +212,7 @@ class QuantumPhaseBuffer {
       elapsedS: this._elapsedS,
       pulseCount: this.pulseLog.length,
       heldCount: this.pulseLog.filter((p) => p.held).length,
+      unheldOverThreshold: this.unheldOverThreshold,
       correctionCount: this.correctionLog.length,
       deltaMaxRad: this.deltaMaxRad,
       currentDeltaRad: this.driftModel.delta,

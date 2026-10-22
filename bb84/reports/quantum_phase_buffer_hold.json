@@ -1,0 +1,47 @@
+{
+  "generatedAt": "2026-10-22T23:44:46.691Z",
+  "checks": [
+    {
+      "name": "B1 Eski algoritma hiç darbe tutmuyor ve eşik üstü darbelerin hepsini gönderiyor; düzeltilmiş tampon bunların büyük kısmını tutuyor (kalan: izleme gecikmesi, bkz. B3)",
+      "ok": true,
+      "detail": "eski: tutulan 0, |δ|>δ_max ile gönderilen 28250/200000 · yeni: tutulan 27298, |δ|>δ_max ile gönderilen 3662"
+    },
+    {
+      "name": "B2 settleS = 0 (varsayılan): δ yörüngesi 200 000 darbede ve düzeltme zamanları eski sürümle BİREBİR aynı — yalnız tutma bayrakları değişti",
+      "ok": true,
+      "detail": "yörünge aynı: true · düzeltme 952 adet, zamanlar aynı: true"
+    },
+    {
+      "name": "B3 Tutulmayan darbelerde |δ| ≤ δ_max; istisna yalnız izleme gecikmesi (eşik geçişi başına en çok 1 darbe) ve sayaçla raporlanıyor",
+      "ok": true,
+      "detail": "eşik geçişi 3662 · gecikme yüzünden tutulamayan 3662 (sayaç 3662)"
+    },
+    {
+      "name": "B3b Tutma payı gecikme sızıntısını kapatıyor: 3σ√T payında eşik üstü gönderilen darbe tek hanelere iniyor, 4σ√T (0.080 rad) payında 0; bedeli daha fazla tutma (verim)",
+      "ok": true,
+      "detail": "3σ: eşik üstü gönderilen 7, tutulan 59553 · 4σ: eşik üstü gönderilen 0, tutulan 73966 · paysız tutulan 27298"
+    },
+    {
+      "name": "B4 settleS = 20 µs: ilk düzeltme başladıktan sonra 20 µs boyunca bütün darbeler tutuluyor; yerleşme bitince δ sıfırlanıp tutma kalkıyor",
+      "ok": true,
+      "detail": "düzeltme @204 µs · yerleşme penceresinde 19 darbe, hepsi tutuldu: true · yerleşme sonrası ilk darbe δ=0.0000 rad · toplam tutulan 41773"
+    },
+    {
+      "name": "B5 Darbe başına hata katkısı: eski sürümde gönderilen darbelerin %14'ü hedefi (%1) aşıyor ve en kötüsü çok üstünde; yeni sürümde aşan pay ~%2 (yalnız gecikme darbeleri, en kötüsü ~%1,8), 4σ paylı sürümde 0 ve en kötüsü ≤ %1",
+      "ok": true,
+      "detail": "hedefi aşan pay / en kötü P_hata — eski: 14.12% / 9.66% · yeni: 2.12% / 1.75% · paylı: 0.00% / 0.93% · ortalama bit hatası eski 0.47%, yeni 0.25%"
+    },
+    {
+      "name": "B6 İzleme gürültüsü (σ = 0,05 rad): yanlış tutmalar artıyor (verim kaybı) ve tutulamayan eşik üstü darbe yaklaşık iki katına çıkıyor (yine de eski sürümün üçte birinden az); gürültüsüz izleme bir VARSAYIM",
+      "ok": true,
+      "detail": "yanlış tutma 11058 · gürültüyle tutulamayan eşik üstü 6476 (gürültüsüz 3662)"
+    },
+    {
+      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256)",
+      "ok": true,
+      "detail": "8f879fde86be0129…"
+    }
+  ],
+  "passed": 8,
+  "total": 8
+}

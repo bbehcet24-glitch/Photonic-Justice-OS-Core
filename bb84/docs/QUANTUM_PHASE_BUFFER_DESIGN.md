@@ -179,3 +179,27 @@ uygulama katmanına bağla" desenindeki AYNI mimari disiplindir.
   ekler; bu belge o terimi AYRI, HENÜZ modellenmemiş bir katkı olarak
   bırakır (SI3N4_PIC_DESIGN.md §8'deki "decoy-state modellenmedi"
   notuyla AYNI dürüstlük disiplini).
+
+## §8 — Düzeltme: tutma bayrağı hiç etkin olmuyordu
+
+**Hata.** `maybeCorrect()`, `holding` alanını aynı çağrının içinde önce `true`, sonra `false` yapıyordu. `tickPulse()` bu ara durumu hiç göremediği için hiçbir darbe tutulmuyordu. İki düzeltme fırsatı (50 µs) arasında |δ| > δ_max ile kodlanan darbeler sessizce gönderiliyordu. Önceki test bu davranışı yakalamamıştı: Test 5 tutma bayraklarını elle kuruyor, Test 6 ise bayrağı bilerek yok sayıyor.
+
+**Düzeltme.**
+
+- Tutma kararı artık her darbede çalışan **izlemeye** (pilot-ton) bağlı, düzeltme fırsatına değil. İzleme eyleyiciden çok daha hızlıdır.
+- `settleS > 0` verilirse ısıtıcı yerleşene kadar darbeler tutulur ve δ düzeltmenin sonunda sıfırlanır.
+- Varsayılan değerlerle (`settleS = 0`) δ yörüngesi ve düzeltme zamanları eski sürümle birebir aynı. Bu yüzden tüketici modüller (Kalman ve asenkron σ kestiricileri, düzeltme kaydı) etkilenmez; testleri değişmeden geçiyor.
+
+**Sonuç** (`quantum_phase_buffer_hold_test.js`, hızlandırılmış σ = 20 rad/√s, 200 000 darbe):
+
+| Sürüm | Hedefi (%1) aşan gönderilmiş darbe | En kötü darbe P_hata |
+|---|---|---|
+| Eski | %14,1 | %9,7 |
+| Yeni | %2,1 | %1,8 |
+| Yeni + 4σ√T tutma payı | 0 | %0,93 |
+
+**Kalan sınırlar.**
+
+- İzleme en az bir darbe gecikmeli; eşiği geçen ilk darbe tutulamıyor. `unheldOverThreshold` sayacı bunu raporluyor, `holdMarginRad` payı ise kapatıyor.
+- Gerçekçi σ = 0,03 rad/√s ve 1 µs periyotta 4σ√T payı 1,2·10⁻⁴ rad. Verim bedeli ihmal edilebilir.
+- İzleme gürültüsü (`monitorNoiseRad`) varsayılan olarak 0 alınıyor; bu bir varsayım. σ = 0,05 rad gürültüde yanlış tutmalar artıyor ve gecikme sızıntısı yaklaşık iki katına çıkıyor.
