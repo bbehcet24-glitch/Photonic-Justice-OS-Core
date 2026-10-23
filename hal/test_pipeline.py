@@ -45,7 +45,7 @@ def main() -> int:
     alice, clicks, r = run_session(distance_km=1.0, eavesdrop=False, duration_s=0.0008, seed=1)
     print(f"  gönderilen darbe={len(alice)} click={len(clicks)} algılanan={r.detected_count} "
           f"QBER={r.qber*100:.2f}% matchRate={r.match_rate*100:.1f}% kayıp={r.lost_count} karanlık={r.dark_click_count}")
-    # phaseProb(1km) = .012 + 1/4000 ≈ %1.23 — QBER bunun civarında olmalı (dark count katkısı + istatistiksel gürültü ile birlikte)
+    # e_d = %1,5 (çekirdek v2, mesafeden bağımsız) — QBER bunun civarında olmalı (dark count katkısı + istatistiksel gürültü ile birlikte)
     check("QBER düşük mesafede makul aralıkta (<%8)", r.qber < 0.08, f"QBER={r.qber*100:.2f}%")
     check("baz uzlaşma oranı teorik ~%50'ye yakın", 0.35 < r.match_rate < 0.65, f"matchRate={r.match_rate*100:.1f}%")
     check("dinleme YANLIŞ ALARM vermiyor", not r.eavesdrop_detected)

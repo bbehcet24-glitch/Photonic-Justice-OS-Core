@@ -4,7 +4,8 @@ SimulatedHardware — gerçek donanım gelene kadar TÜM boru hattını
 uca test etmeyi sağlayan sahte bir HardwareInterface implementasyonu.
 
 FİZİK KÖKENİ: kayıp/gürültü modeli PhotonNet2.jsx'teki propPhoton()'dan
-BİLEREK PORTLANDI (fiberT loss formülü, phaseProb = .012+km/4000 faz-kayması,
+BİLEREK PORTLANDI (fiberT loss formülü, QKD anahtar kanalının sabit hizalama hatası
+e_d = QKD_MISALIGNMENT_E_D = 0,015 — çekirdek v2, bkz. bb84/docs/CORE_CHANGELOG.md —,
 DETECTOR_DARK_RATE_HZ karanlık sayım oranı) — böylece bu simüle donanımın
 ürettiği QBER, tarayıcı simülasyonuyla VE önceki QBER-doğrulama raporundaki
 Qiskit-eşdeğeri sonuçlarla tutarlı bir referans noktasında kalır. AMA burada
@@ -16,6 +17,7 @@ geçişte hiçbir üst katmanın değişmeyeceğini garanti eder.
 """
 from __future__ import annotations
 
+import math
 import random
 import time
 
@@ -41,9 +43,18 @@ def _fiber_transmittance(distance_km: float) -> float:
     return 10 ** (-(_FIBER_LOSS_DB_PER_KM * distance_km) / 10)
 
 
+# Çekirdek v2 (photonnet_core.js QKD_MISALIGNMENT_E_D): QKD anahtar kanalı aktif polarizasyon takibi
+# varsayar; hizalama hatası mesafeden bağımsızdır. Eski v1 formülü (.012 + km/4000) fizik dışı doğrusal
+# bir artış veriyordu ve kaldırıldı. Mesafeyle QBER artışı yalnız karanlık sayımdan gelir.
+QKD_MISALIGNMENT_E_D = 0.015
+
+
 def _phase_flip_probability(distance_km: float) -> float:
-    """propPhoton()'daki `phaseProb = .012 + km/4000` ile BİREBİR AYNI."""
-    return 0.012 + distance_km / 4000.0
+    """deriveSiftedKey → propPhoton(…, {fixedPhaseProb: QKD_MISALIGNMENT_E_D}) ile AYNI (çekirdek v2).
+    distance_km yalnız imza uyumluluğu için tutulur."""
+    if not (isinstance(distance_km, (int, float)) and math.isfinite(distance_km) and distance_km >= 0):
+        raise ValueError(f"distance_km negatif olmayan sonlu bir sayı olmalı (alınan: {distance_km!r})")
+    return QKD_MISALIGNMENT_E_D
 
 
 class SimulatedAliceSource:
