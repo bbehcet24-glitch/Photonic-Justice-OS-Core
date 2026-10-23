@@ -52,6 +52,9 @@ const { applyFieldAging, mulberry32 } = require("./hardware_aging_model.js");
 
 const args = Object.fromEntries(process.argv.slice(2).map((a) => { const m = /^--([^=]+)(?:=(.*))?$/.exec(a); return m ? [m[1], m[2] ?? true] : [a, true]; }));
 const STAGE = args.stage || "all";
+// --enc-dec-gap-ms=N (yalnız doğrulama): enc_keys ile dec_keys arasına N ms ekler → kalkan kapısı geçişlerinin
+// yarı-açık anahtar üretme olasılığı ~%3'ten neredeyse %100'e çıkar; ertelenmiş-dec yolu canlı olarak sınanır.
+const ENC_DEC_GAP_MS = Math.max(0, +(args["enc-dec-gap-ms"] || 0));
 const SIM_MINUTES = +(args.minutes || 60);
 const DT = 50;
 
@@ -78,6 +81,7 @@ const TOPOLOGY = {
 const THREAT = { sourceLevelDbuVm: 100, observerDistanceM: 0.3, noiseFloorDbuVm: 40, freqHz: 1e9 };
 const INGRESS = { susceptibilityDbuVm: 40, refDarkYield: 1e-5 };
 const DP = require("./detector_profile.js");
+const { classifyL8 } = require("./key_provenance_audit.js");
 const BASE_Y0 = () => DP.baseY0(); // gerçek (simüle) temel Y0 = etkin dedektör profili (config.json)
 const SE_REQ = A.seRequiredForThreatDb(THREAT).seRequiredDb;
 const PULSE_HZ = 1e9, BLOCK_PULSES = 1e9, INITIAL_POOL = 5e6;
@@ -416,7 +420,7 @@ function runSimStage(out, chk) {
 // ═══════════════════════════════════════════════════════════════════
 // AŞAMA 2 — gerçek süreçler (PKI + 6 KME + gerçek mTLS ETSI-014)
 // ═══════════════════════════════════════════════════════════════════
-const LIVE = { durationMs: 23000, eftMs: [4000, 4200], doorMs: [6000, 10000], bkrLeakMs: [12000, 12250], staleNode: "AVR", staleAtMs: 19000, gateMaxAgeMs: 1000, basePort: 19600 };
+const LIVE = { durationMs: 23000, eftMs: [4000, 4200], doorMs: [6000, 10000], bkrLeakMs: [12000, 12250], staleNode: "AVR", staleAtMs: 19000, gateMaxAgeMs: 1000, basePort: +(args["base-port"] || 19600) }; // --base-port: paralel koşularda port çakışmasını önler
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function sh(cmd, argv, opts = {}) { return execFileSync(cmd, argv, { stdio: ["ignore", "pipe", "pipe"], ...opts }).toString(); }
 function writeAtomic(fp, obj) { const tmp = `${fp}.${process.pid}.tmp`; fs.writeFileSync(tmp, JSON.stringify(obj)); fs.renameSync(tmp, fp); }
@@ -443,9 +447,11 @@ async function runLiveStage(out, chk) {
 
     // ── 6 KME süreci ──
     const gateFile = (id) => path.join(root, `gate-${id}.json`);
+    const gateWriteLog = { t0: null }; // karar döngüsü başlayınca t0 atanır; açılış yazımları kanıt dışı
     const inbox = (id) => path.join(root, `inbox-${id}`);
     const writeGate = (id, nodes, now) => {
       const st = nodes ? nodes[id] : { state: "OK", mtlsAllowed: true };
+      if (gateWriteLog.t0 != null) (gateWriteLog[id] = gateWriteLog[id] || []).push(now - gateWriteLog.t0); // L8: kapı tazelik kanıtı
       writeAtomic(gateFile(id), { issuedAtMs: now, maxAgeMs: LIVE.gateMaxAgeMs, self: { node: id, mtlsAllowed: st.mtlsAllowed, level: st.state },
         peers: Object.fromEntries(TOPOLOGY.nodes.map((n) => [n.id, nodes ? { deliveryAllowed: nodes[n.id].deliveryAllowed, level: nodes[n.id].state } : { deliveryAllowed: true, level: "OK" }])) });
       live.gateWrites++;
@@ -485,6 +491,7 @@ async function runLiveStage(out, chk) {
     } });
     live.events = traces.events;
     const t0 = Date.now();
+    gateWriteLog.t0 = t0;
     const runner = new SimRunner(traces, { policy: "adaptive", seMeasurementUncertaintyDb: 1, optimizationCache: new Map(), nowOffsetMs: t0 });
     const registry = new Map();
     const acc = TOPOLOGY.demands.map(() => ({ bits: 0, leaky: false }));
@@ -492,21 +499,44 @@ async function runLiveStage(out, chk) {
     const rel = () => Date.now() - t0;
 
     // ── SAE akışları (talep başına) ve düğüm yoklamaları ──
+    // ETSI-014 İKİ ADIMLIDIR (master enc_keys → slave dec_keys). Kalkan kapısı iki çağrı ARASINDA kapanırsa
+    // KME slave'e teslimi doğru şekilde reddeder (503) ve master'da "yarı-açık" anahtar kalır — bu bir yarış
+    // DEĞİL, fail-closed davranışın kendisidir (docs/L8_FLAKE_ANALYSIS.md). Gerçek bir slave SAE bu key_ID'leri
+    // saklar ve kapı açılınca dec_keys'i YENİDEN dener; burada da öyle: bekleyenler her turda önce denenir.
+    const decCall = (d, ids) => LIB.httpsCall({ baseUrl: live.kmes[d.src].baseUrl, method: "POST", apiPath: `/api/v1/keys/SAE-${d.src}/dec_keys`, body: { key_IDs: ids.map((key_ID) => ({ key_ID })) }, cert: certs[d.dst].cert, key: certs[d.dst].key, ca, timeoutMs: 3000 });
     const flowWorker = async (di) => {
       const d = TOPOLOGY.demands[di];
+      let pending = []; // yarı-açık key_ID'ler (master'da, slave'e henüz verilmedi)
       await sleep(1000 + 150 * di); // ısınma: ilk anahtarların gelen kutusundan yüklenmesi (soğuk depo → 503 beklenir)
       while (!stop) {
-        const t = rel(); const rec = { t, pair: `${d.src}↔${d.dst}`, ok: false };
+        if (pending.length) { // ertelenmiş dec (ETSI-014: slave key_ID'lerle istediği zaman çeker)
+          const rec = { t: rel(), pair: `${d.src}↔${d.dst}`, master: d.src, slave: d.dst, deferred: true, ok: false };
+          try {
+            const dk = await decCall(d, pending);
+            rec.decStatus = dk.status; rec.tDecDone = rel(); rec.decMsg = dk.json && dk.json.message;
+            const byId = dk.status === 200 ? Object.fromEntries(dk.json.keys.map((k) => [k.key_ID, k.key])) : {};
+            rec.keys = pending.map((id) => ({ id, enc: null, dec: byId[id] ?? null }));
+            if (dk.status === 200) { rec.ok = true; pending = []; }
+          } catch (e) { rec.error = e.code || e.message; }
+          live.flows.push(rec);
+          // slave hâlâ alamıyorsa da yeni enc denenir (gerçek SAE'ler bekleyen key_ID tutarken yeni anahtar isteyebilir);
+          // kapı kapalıyken KME enc'i zaten 503 ile reddeder — L5 bu denemeleri görür.
+        }
+        const t = rel(); const rec = { t, pair: `${d.src}↔${d.dst}`, master: d.src, slave: d.dst, ok: false };
         try {
           const ek = await LIB.httpsCall({ baseUrl: live.kmes[d.src].baseUrl, method: "POST", apiPath: `/api/v1/keys/SAE-${d.dst}/enc_keys`, body: { number: 4 }, cert: certs[d.src].cert, key: certs[d.src].key, ca, timeoutMs: 3000 });
-          rec.encStatus = ek.status;
+          rec.encStatus = ek.status; rec.tEncDone = rel();
           if (ek.status === 200) {
             const v = LIB.validateKeyContainer(ek.json, 32);
-            const dk = await LIB.httpsCall({ baseUrl: live.kmes[d.src].baseUrl, method: "POST", apiPath: `/api/v1/keys/SAE-${d.src}/dec_keys`, body: { key_IDs: ek.json.keys.map((k) => ({ key_ID: k.key_ID })) }, cert: certs[d.dst].cert, key: certs[d.dst].key, ca, timeoutMs: 3000 });
-            rec.decStatus = dk.status;
-            const byId = dk.status === 200 ? Object.fromEntries(dk.json.keys.map((k) => [k.key_ID, k.key])) : {};
-            rec.keys = ek.json.keys.map((k) => ({ id: k.key_ID, match: byId[k.key_ID] === k.key, reg: registry.get(k.key_ID) || null, b64ok: (registry.get(k.key_ID) || {}).b64 === k.key }));
-            rec.ok = v.ok && dk.status === 200 && rec.keys.every((k) => k.match);
+            let dk = null;
+            if (ENC_DEC_GAP_MS > 0) await sleep(ENC_DEC_GAP_MS); // yalnız stres doğrulaması: yarış penceresini büyütür
+            try { dk = await decCall(d, ek.json.keys.map((k) => k.key_ID)); }
+            catch (e) { rec.decError = e.code || e.message; } // bağlantı kesildi: anahtarlar yine yarı-açık
+            rec.decStatus = dk ? dk.status : null; rec.tDecDone = rel(); rec.decMsg = dk && dk.json && dk.json.message;
+            const byId = dk && dk.status === 200 ? Object.fromEntries(dk.json.keys.map((k) => [k.key_ID, k.key])) : {};
+            rec.keys = ek.json.keys.map((k) => ({ id: k.key_ID, enc: k.key, dec: byId[k.key_ID] ?? null }));
+            rec.ok = v.ok && dk && dk.status === 200 && rec.keys.every((k) => k.dec === k.enc);
+            if (!dk || dk.status !== 200) pending = pending.concat(ek.json.keys.map((k) => k.key_ID)); // EKLE (bekleyenleri ezme)
           } else rec.message = ek.json && ek.json.message;
         } catch (e) { rec.error = e.code || e.message; }
         live.flows.push(rec);
@@ -552,6 +582,8 @@ async function runLiveStage(out, chk) {
           live.injectedKeys += nk;
         });
         live.timeline.push({ t: now - t0, nodes: Object.fromEntries(Object.entries(r.nodes).map(([k, v]) => [k, v.state])),
+          delivery: Object.fromEntries(Object.entries(r.nodes).map(([k, v]) => [k, v.deliveryAllowed])), // yazılan kapıdaki peers[].deliveryAllowed
+          mtls: Object.fromEntries(Object.entries(r.nodes).map(([k, v]) => [k, v.mtlsAllowed])),         // yazılan kapıdaki self.mtlsAllowed
           paths: Object.fromEntries(r.demands.map((d) => [`${d.src}↔${d.dst}`, d.path])) });
       }
       await sleep(Math.max(1, DT - (Date.now() - now)));
@@ -559,6 +591,10 @@ async function runLiveStage(out, chk) {
     stop = true;
     await Promise.all(workers);
     live.metrics = runner.finish();
+    live.endMs = rel();
+    Object.defineProperty(live, "registry", { value: registry, enumerable: false }); // L8 denetimi için; rapora yazılmaz
+    const { t0: _gt0, ...gw } = gateWriteLog;
+    Object.defineProperty(live, "gateWrites", { value: gw, enumerable: false });
     for (const n of TOPOLOGY.nodes) live.kmes[n.id].log = fs.readFileSync(live.kmes[n.id].logPath, "utf8").split("\n").filter((l) => /Kalkan|REDDED|HATA/.test(l)).slice(0, 6);
   } finally {
     for (const p of procs) { try { p.kill("SIGTERM"); } catch (e) { /* zaten kapanmış */ } }
@@ -571,7 +607,8 @@ async function runLiveStage(out, chk) {
 function liveChecks(out, chk) {
   const L = out.live;
   const probes = (node, from, to) => L.probes.filter((p) => p.node === node && p.t >= from && p.t < to);
-  const flows = (pair, from, to) => L.flows.filter((f) => f.pair === pair && f.t >= from && f.t < to);
+  // ertelenmiş dec denemeleri (yarı-açık anahtarların tamamlanması) yalnız L8'de değerlendirilir; L2–L7 talep başına enc→dec turlarına bakar
+  const flows = (pair, from, to) => L.flows.filter((f) => !f.deferred && f.pair === pair && f.t >= from && f.t < to);
   const door = LIVE.doorMs, stale = LIVE.staleAtMs;
   chk("L1 Gerçek PKI (CA + localhost + 6 SAE sertifikası) üretildi, 6 ayrı KME süreci gerçek mTLS ile ayağa kalktı",
     L.allUp, `KME portları ${Object.values(L.kmes).map((k) => k.port).join(", ")} · kapı yazımı ${L.gateWrites} · enjekte edilen uçtan-uca anahtar ${L.injectedKeys}`);
@@ -606,11 +643,10 @@ function liveChecks(out, chk) {
   chk("L7 SE izleyicisi çöken düğüm (AVR, kapı dosyası tazelenmiyor): KME ≤ maxAge sonra FAIL-CLOSED — mTLS kesiliyor, AVR-master akışları duruyor",
     avrCut.length > 0 && avrCut.every((p) => p.kind === "tls-cut") && avrFlows.every((fs_) => fs_.length > 0 && fs_.every((f) => !f.ok)),
     `${stale} ms'den sonra AVR yoklamaları: ${[...new Set(avrCut.map((p) => p.kind))].join("/")} (${avrCut.length}) · AVR↔ASY/AVR↔KDK akışları: ${avrFlows.map((fs_) => `${fs_.filter((f) => !f.ok).length}/${fs_.length} reddedildi`).join(", ")}`);
-  const recv = L.flows.filter((f) => f.keys).flatMap((f) => f.keys);
-  const ids = recv.map((k) => k.id);
-  chk("L8 KÖKEN (gerçek API üzerinden): SAE'lerin aldığı her anahtar test ağının enjekte ettiği anahtarla bayt-bayt aynı, hiçbiri sızıntılı kökenli değil, hiçbiri iki kez verilmedi",
-    recv.length > 0 && recv.every((k) => k.reg && k.b64ok && k.match && !k.reg.leaky) && new Set(ids).size === ids.length,
-    `alınan ${recv.length} anahtar · kayıtta ${recv.filter((k) => k.reg).length} · bayt eşleşmesi ${recv.filter((k) => k.b64ok).length} · sızıntılı köken ${recv.filter((k) => k.reg && k.reg.leaky).length} · tekrar ${ids.length - new Set(ids).size}`);
+  const l8 = classifyL8({ flows: L.flows, registry: L.registry, timeline: L.timeline, endMs: L.endMs, gateWrites: L.gateWrites, gateMaxAgeMs: LIVE.gateMaxAgeMs });
+  L.provenance = { ...l8, violations: l8.violations.slice(0, 20) };
+  chk("L8 KÖKEN (gerçek API üzerinden): master'a ve slave'e verilen her anahtar test ağının enjekte ettiği anahtarla bayt-bayt aynı, hiçbiri sızıntılı kökenli değil, hiçbiri iki kez verilmedi; enc→dec arasında kalan yarı-açık anahtarların gerekçesi kanıtla eşleşiyor (slave teslimi kapandı / master kapısı bayat ya da BLOCK / taşıma hatası) ve koşul kalkınca ertelenmiş dec ile tamamlanıyor",
+    l8.ok, l8.summary);
   const lm = L.metrics;
   chk("L9 Canlı koşunun yer-gerçeği denetimi: sızıntılı blok serbest bırakılmadı, sızıntılı köken 0; habersiz KDK kapı açılışında teslimat-yolu maruziyeti TEK örnekleme aralığıyla sınırlı (planlı bakımda 0 — bkz. maintenance_traffic_shift_test)",
     lm.releasedLeakyBlocks === 0 && lm.leakyProvenanceBits === 0 && lm.deliveryPathViolationSteps <= 1,

@@ -1,0 +1,136 @@
+{
+  "generatedAt": "2026-10-23T16:25:12.512Z",
+  "checks": [
+    {
+      "name": "H1 Yarış penceresi zorlandı: enc_keys 200 → kapı slave (KDK) için kapandı → dec_keys 503 (kalkan kapısı) — canlı testteki L8 kaydının birebir aynısı, her koşuda",
+      "ok": true,
+      "detail": "enc 200 · dec 503: Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (HOLD_FLOOR)"
+    },
+    {
+      "name": "H2 Yarı-açık 4 anahtar depoda 'master'a verildi' olarak kalıyor, sonraki enc_keys onları TEKRAR vermiyor (çift teslim yok)",
+      "ok": true,
+      "detail": "kullanılabilir stok 4 (8 − 4 yarı-açık) · ikinci enc 200, çakışma 0"
+    },
+    {
+      "name": "H3 Kapı yeniden açılınca ERTELENMİŞ dec_keys aynı key_ID'lerle 200 dönüyor; baytlar master'a verilenle ve gelen kutusuna enjekte edilenle birebir aynı — anahtar kaybolmuyor",
+      "ok": true,
+      "detail": "dec 200 · bayt eşleşmesi true"
+    },
+    {
+      "name": "H4 Aynı key_ID'lerle üçüncü dec_keys reddediliyor (tamamlanan anahtar silindi, replay yok)",
+      "ok": true,
+      "detail": "dec 400: key_ID bulunamadı (rota=KDK-MSL): b31b51e4-f133-4135-91a1-ac62b9384dc0"
+    },
+    {
+      "name": "H5 Düzeltilmiş L8 sınıflandırıcısı 14 durumda beklenen kararı veriyor: kanıtla eşleşen red (slave-kapalı / master-bayat / taşıma) + ertelenmiş tamamlama geçer; kanıtsız red, uyumsuz bayt, sızıntılı köken, tekrar, kayıtsız anahtar, hiç tamamlanmayan yarı-açık kalır",
+      "ok": true,
+      "detail": "✓ temiz akış → geçer · ✓ slave-kapalı: KDK kapısı enc→dec arasında kapandı + ertelenmiş tamamlama (canlı kayıt #1) → geçer · ✓ slave-kapalı: koşu sonunda kapı hâlâ kapalı (açıklanır, bekler) → geçer · ✓ master-bayat: AVR SE izleyicisi çöktü, dec ECONNRESET (canlı kayıt #2), koşu sonuna dek tazelenmedi → geçer · ✓ master-bayat: 503 'BAYAT' (canlı kayıt #3) → geçer · ✓ taşıma hatası (kapı tazeyken ECONNRESET) + ertelenmiş tamamlama → geçer · ✓ red ama slave kapısı AÇIKKEN (açıklanamaz) → kalır · ✓ 'BAYAT' deniyor ama master kapısı tazeydi (açıklanamaz) → kalır · ✓ taşıma hatası, hiç tamamlanmadı → kalır · ✓ slave-kapalı, kapı açıldıktan sonra da hiç tamamlanmadı → kalır · ✓ dec 200 ama bayt uyuşmuyor → kalır · ✓ sızıntılı kökenli anahtar teslim → kalır · ✓ aynı key_ID iki kez enc ile verildi → kalır · ✓ kayıtta olmayan anahtar → kalır"
+    },
+    {
+      "name": "H6 Eski L8 kuralı (alınan her anahtar reg ∧ bayt ∧ match) aynı kayıtta YANLIŞ ALARM veriyordu: köken temiz (kayıtta, bayt aynı, sızıntısız) ama dec reddedildiği için match=false — kararsızlığın tamamı bu",
+      "ok": true,
+      "detail": "eski kural → KALIR · yeni sınıflandırıcı → geçer"
+    }
+  ],
+  "live": {
+    "encStatus": 200,
+    "dec1Status": 503,
+    "dec1Msg": "Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izinli değil (HOLD_FLOOR)",
+    "storedAfterHalfOpen": 4,
+    "enc2Status": 200,
+    "overlap": 0,
+    "dec2Status": 200,
+    "deferredBytesMatch": true,
+    "dec3Status": 400,
+    "dec3Msg": "key_ID bulunamadı (rota=KDK-MSL): b31b51e4-f133-4135-91a1-ac62b9384dc0"
+  },
+  "classifier": [
+    {
+      "label": "temiz akış",
+      "expect": true,
+      "got": true,
+      "summary": "master 1 · slave 1 · yarı-açık 0 (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 0) · ihlal 0"
+    },
+    {
+      "label": "slave-kapalı: KDK kapısı enc→dec arasında kapandı + ertelenmiş tamamlama (canlı kayıt #1)",
+      "expect": true,
+      "got": true,
+      "summary": "master 2 · slave 2 · yarı-açık 2 [slave-kapalı 2] (ertelenmiş tamamlanan 2, koşu sonunda açıklanan bekleyen 0) · ihlal 0"
+    },
+    {
+      "label": "slave-kapalı: koşu sonunda kapı hâlâ kapalı (açıklanır, bekler)",
+      "expect": true,
+      "got": true,
+      "summary": "master 1 · slave 0 · yarı-açık 1 [slave-kapalı 1] (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 1) · ihlal 0"
+    },
+    {
+      "label": "master-bayat: AVR SE izleyicisi çöktü, dec ECONNRESET (canlı kayıt #2), koşu sonuna dek tazelenmedi",
+      "expect": true,
+      "got": true,
+      "summary": "master 1 · slave 0 · yarı-açık 1 [master-bayat 1] (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 1) · ihlal 0"
+    },
+    {
+      "label": "master-bayat: 503 'BAYAT' (canlı kayıt #3)",
+      "expect": true,
+      "got": true,
+      "summary": "master 1 · slave 0 · yarı-açık 1 [master-bayat 1] (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 1) · ihlal 0"
+    },
+    {
+      "label": "taşıma hatası (kapı tazeyken ECONNRESET) + ertelenmiş tamamlama",
+      "expect": true,
+      "got": true,
+      "summary": "master 1 · slave 1 · yarı-açık 1 [taşıma 1] (ertelenmiş tamamlanan 1, koşu sonunda açıklanan bekleyen 0) · ihlal 0"
+    },
+    {
+      "label": "red ama slave kapısı AÇIKKEN (açıklanamaz)",
+      "expect": false,
+      "got": false,
+      "summary": "master 1 · slave 0 · yarı-açık 1 (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 0) · ihlal 1: dec reddi açıklanamıyor (durum 503, \"Kalkan kapısı: 'SAE-KDK' düğümüne anahtar teslimi şu an izin\", master MSL, slave KDK): a"
+    },
+    {
+      "label": "'BAYAT' deniyor ama master kapısı tazeydi (açıklanamaz)",
+      "expect": false,
+      "got": false,
+      "summary": "master 1 · slave 0 · yarı-açık 1 (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 0) · ihlal 1: dec reddi açıklanamıyor (durum 503, \"Kalkan kapısı: kalkan kapısı BAYAT (yaş 1010 ms)\", master MSL, slave KDK): a"
+    },
+    {
+      "label": "taşıma hatası, hiç tamamlanmadı",
+      "expect": false,
+      "got": false,
+      "summary": "master 1 · slave 0 · yarı-açık 1 [taşıma 1] (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 0) · ihlal 1: yarı-açık anahtar (taşıma) koşul 3010 ms'de kalktıktan sonra 3000 ms içinde tamamlanmadı: a"
+    },
+    {
+      "label": "slave-kapalı, kapı açıldıktan sonra da hiç tamamlanmadı",
+      "expect": false,
+      "got": false,
+      "summary": "master 1 · slave 0 · yarı-açık 1 [slave-kapalı 1] (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 0) · ihlal 1: yarı-açık anahtar (slave-kapalı) koşul 16300 ms'de kalktıktan sonra 3000 ms içinde tamamlanmadı: a"
+    },
+    {
+      "label": "dec 200 ama bayt uyuşmuyor",
+      "expect": false,
+      "got": false,
+      "summary": "master 1 · slave 0 · yarı-açık 0 (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 0) · ihlal 1: slave'e verilen bayt uyuşmuyor: a"
+    },
+    {
+      "label": "sızıntılı kökenli anahtar teslim",
+      "expect": false,
+      "got": false,
+      "summary": "master 1 · slave 1 · yarı-açık 0 (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 0) · ihlal 1: sızıntılı kökenli anahtar master'a verildi: z"
+    },
+    {
+      "label": "aynı key_ID iki kez enc ile verildi",
+      "expect": false,
+      "got": false,
+      "summary": "master 2 · slave 2 · yarı-açık 0 (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 0) · ihlal 1: aynı key_ID iki kez master'a verildi: c"
+    },
+    {
+      "label": "kayıtta olmayan anahtar",
+      "expect": false,
+      "got": false,
+      "summary": "master 1 · slave 0 · yarı-açık 0 (ertelenmiş tamamlanan 0, koşu sonunda açıklanan bekleyen 0) · ihlal 2: kayıtta olmayan anahtar master'a verildi: q; slave'e verilen bayt uyuşmuyor: q"
+    }
+  ],
+  "oldRuleOnLiveRecord": false,
+  "passed": 6,
+  "total": 6
+}
