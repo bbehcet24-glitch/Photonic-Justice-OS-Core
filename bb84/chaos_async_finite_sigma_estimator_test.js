@@ -296,7 +296,7 @@ async function testStopPreventsFurtherWork() {
 function testFilesUntouched() {
   console.log("── Test 10: çekirdek, quantum_phase_buffer.js, correction_log_recorder.js VE kalman_sigma_estimator.js DEĞİŞMEDİ ──");
   const coreHash = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
-  check("bb84/photonnet_core.js SHA-256 beklenen değerle eşleşiyor", coreHash === "157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b", `hash=${coreHash}`);
+  check("bb84/photonnet_core.js SHA-256 beklenen değerle eşleşiyor", coreHash === "421513f72bad1fb32b24c78453f9f6fdcbdbab83bd10f044d58ffc71b42bb3d4", `hash=${coreHash}`);
   const bufferHash = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "quantum_phase_buffer.js"))).digest("hex");
   check("bb84/quantum_phase_buffer.js SHA-256, modül-yükleme ANINDAKİYLE AYNI", bufferHash === HASH_BEFORE.bufferJs);
   const recorderHash = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "correction_log_recorder.js"))).digest("hex");

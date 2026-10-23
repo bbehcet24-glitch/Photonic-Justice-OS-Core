@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "detector": {
+    "active": "snspd",
+    "profiles": {
+      "snspd": {
+        "label": "SNSPD (süperiletken nanotel) — temkinli ticari sınıf",
+        "technology": "snspd",
+        "efficiency": 0.8,
+        "darkCountRateHz": 50,
+        "detectionWindowS": 1.25e-8,
+        "provenance": "assumption",
+        "sources": [
+          "ID Quantique ID281 broşürü: tepe SDE %80–95, karanlık sayım <100 cps ile <1 cps (1300–1600 nm), jitter tipik <30 ps, toparlanma tipik <30 ns"
+        ],
+        "notes": "Verim aralığın alt ucu. Pencere = 80 MHz kaynağın tam periyodu (çekirdek v2 ile aynı, en kötü durum); gerçek sistem jitter'a göre daha dar pencere kullanır. Ölçülmedi."
+      },
+      "ingaas": {
+        "label": "InGaAs/InP SPAD (kapılı) — katman kalibrasyon sınıfı",
+        "technology": "ingaas-spad",
+        "efficiency": 0.1,
+        "darkCountProbPerWindow": 1e-5,
+        "detectionWindowS": 1e-9,
+        "provenance": "assumption",
+        "sources": [
+          "Zhang ve ark., arXiv:1105.3760 (200 MHz kapılı InGaAs/InP): %10 verimde kapı başına 4e-6 karanlık sayım, etkin pencere 200 ps, %6,4 verimde %6,3 afterpulse"
+        ],
+        "notes": "Y0 = 1e-5 adaptif/mesh katmanlarının kalibre edildiği değer (ölçümden 2,5× temkinli). Afterpulse ve ölü zaman modellenmez. Ölçülmedi."
+      }
+    }
+  }
+}

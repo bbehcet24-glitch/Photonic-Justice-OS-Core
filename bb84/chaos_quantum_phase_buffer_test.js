@@ -273,7 +273,7 @@ function testRealCoreComparison() {
 function testCoreUntouched() {
   console.log("\n── Test 7: çekirdek dosyası bu çalışma boyunca DEĞİŞMEDİ ──");
   const hash = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
-  const expected = "157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b";
+  const expected = "421513f72bad1fb32b24c78453f9f6fdcbdbab83bd10f044d58ffc71b42bb3d4";
   check("bb84/photonnet_core.js SHA-256 beklenen değerle eşleşiyor", hash === expected, `hash=${hash}`);
 }
 

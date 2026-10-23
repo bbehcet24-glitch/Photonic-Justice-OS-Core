@@ -49,6 +49,7 @@
  */
 const A = require("./adaptive_shielding_mitigation.js");
 const NETM = require("./multinode_shielding_network.js");
+const DP = require("./detector_profile.js"); // Y0 varsayılanı config.json → etkin dedektör profili (çekirdek v3)
 
 const DEFAULTS = Object.freeze({
   fullMarginDb: 10, maxTransitPenaltyKm: 1500,          // kademeli transit cezası
@@ -124,7 +125,7 @@ function planOpticalBypass(network, x, { o = DEFAULTS, excluded = new Set() } = 
     if (network.linkByKey.has(NETM.linkKey(a.nb, b.nb))) continue; // doğrudan link var
     const km = a.km + b.km;
     const eta = NETM.linkEta(km, { insertionLossDb: 3 + o.switchInsertionLossDb });
-    const opt = A.optimizeDecoyParameters({ N: network.blockPulses, Y0: 1e-5, eta });
+    const opt = A.optimizeDecoyParameters({ N: network.blockPulses, Y0: DP.baseY0(), eta });
     const bps = opt.R * network.pulseRateHz;
     cands.push({ a: a.nb, b: b.nb, km, eta, rateBps: bps, feasible: bps >= o.minBypassBps, fibers: [a.key, b.key] });
   }
@@ -206,7 +207,7 @@ class MeshIsolationController {
   /** Çevre modeline göre beklenen Y0 (ağın kendi ingress modeli; ortam alanı SENSÖRDEN). */
   expectedY0(ambientDbuVm, seDb) {
     const ing = this.net._cfg.ingress;
-    return A.ingressEffectiveY0({ seDb, ambientFieldDbuVm: ambientDbuVm, susceptibilityDbuVm: ing.susceptibilityDbuVm, refDarkYield: ing.refDarkYield, baseY0: 1e-5 }).Y0eff;
+    return A.ingressEffectiveY0({ seDb, ambientFieldDbuVm: ambientDbuVm, susceptibilityDbuVm: ing.susceptibilityDbuVm, refDarkYield: ing.refDarkYield, baseY0: DP.baseY0() }).Y0eff;
   }
   /**
    * KANIT ATFI. a→b linkindeki Y0'ı b'nin dedektörü ölçer; açıklanamayan bir artışın kaynağı

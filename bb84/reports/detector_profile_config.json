@@ -1,0 +1,72 @@
+{
+  "generatedAt": "2026-10-23T15:07:18.222Z",
+  "checks": [
+    {
+      "name": "P1 Şema fail-closed: 14 bozuk yapılandırmanın hepsi JS çekirdeğinde (TypeError/RangeError) VE Python HAL'de (DetectorConfigError) reddediliyor; depodaki config.json kabul ediliyor",
+      "ok": true,
+      "detail": "JS 14/14 · Python 14/14 · geçerli: true"
+    },
+    {
+      "name": "P2 Türetme formülleri iki yönde tutarlı: Y0 = 1 − exp(−R·τ) ↔ R = −ln(1 − Y0)/τ (15 nokta, en kötü göreli hata < 1e-12)",
+      "ok": true,
+      "detail": "en kötü göreli hata 1.1e-16 · SNSPD Y0 6.250e-7 · InGaAs R 10000.1 Hz"
+    },
+    {
+      "name": "P3 Seçim önceliği: config.json (snspd) → PHOTONNET_DETECTOR=ingaas → setActiveDetectorProfile; bilinmeyen kimlik ortamda da API'de de hata veriyor ve durum değişmiyor; profil değişince NoiseGate kalibrasyonu sıfırlanıyor, dinleyici çağrılıyor",
+      "ok": true,
+      "detail": "varsayılan snspd/config · env ingaas/env · env=pmt → RangeError · API pmt → RangeError (durum snspd→snspd) · dinleyici ingaas · NoiseGate sıfırlandı true"
+    },
+    {
+      "name": "P4 Tek kaynak: çekirdek NoiseGate (fiber, gece, tam kapı → Y0), linkEta (verim), adaptif kalkan (baseY0) ve sensör HAL (baseY0) aynı etkin profili okuyor; profil değişince dördü birlikte değişiyor",
+      "ok": true,
+      "detail": "[{\"id\":\"snspd\",\"eta\":true,\"asm\":true,\"sensor\":true,\"ng\":true},{\"id\":\"ingaas\",\"eta\":true,\"asm\":true,\"sensor\":true,\"ng\":true}]"
+    },
+    {
+      "name": "P5 Fizik yönü: 10 km'de algılama sayısı oranı verim oranına (%80/%10 = 8) %10 içinde yakın; decoy modelinde (N = 10¹⁰) SNSPD menzili InGaAs'tan uzun; 50 km'de iki profil de mesajı kanıtlı anahtarla teslim ediyor, InGaAs daha çok darbe harcıyor",
+      "ok": true,
+      "detail": "algılanan SNSPD 40092 / InGaAs 4961 = 8.08 (beklenen 8) · menzil SNSPD 202 km / InGaAs 112 km · 50 km: SNSPD DELIVERED 131072 darbe, InGaAs DELIVERED 917504 darbe"
+    },
+    {
+      "name": "P6 JS çekirdeği ile Python HAL aynı config.json'dan aynı türetilmiş değerleri veriyor (verim, pencere, karanlık sayım Hz ve Y0, teknoloji, köken)",
+      "ok": true,
+      "detail": "2 profil × 7 alan birebir aynı"
+    },
+    {
+      "name": "P7 PhotonNet.html ve PhotonNet_offline.html'e gömülü yapılandırma config.json'un birebir aynısı (file:// ile çevrimdışı çalışır); build_photonnet_html.js --check geçiyor",
+      "ok": true,
+      "detail": "gömülü: true/true · aynı: true · [build_photonnet_html] ✓ SENKRON: PhotonNet.html ve PhotonNet_offline.html kaynakla (PhotonNet2.jsx) ve config.json ile birebir güncel (etkin dedektör: snspd)."
+    },
+    {
+      "name": "P8 Kaynakta sabit dedektör sayısı kalmadı: çekirdekte DETECTOR_DARK_RATE_HZ / SOURCE_GATE_WIDTH_S, katmanlarda baseY0 = 1e-5 / detectorEfficiency = 0,1, Python'da 50 Hz varsayılanı yok",
+      "ok": true,
+      "detail": "çekirdek + 5 katman + hal/types.py temiz"
+    },
+    {
+      "name": "Çekirdek sabitlenmiş sürümle aynı ve hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
+      "ok": true,
+      "detail": "421513f72bad1fb3…"
+    }
+  ],
+  "physics": {
+    "detectedSnspd": 40092,
+    "detectedIngaas": 4961,
+    "ratio": 8.081435194517235,
+    "expectedRatio": 8,
+    "maxKmDecoyN1e10": {
+      "snspd": 202,
+      "ingaas": 112
+    },
+    "session50km": {
+      "snspd": {
+        "status": "DELIVERED",
+        "pulses": 131072
+      },
+      "ingaas": {
+        "status": "DELIVERED",
+        "pulses": 917504
+      }
+    }
+  },
+  "passed": 9,
+  "total": 9
+}

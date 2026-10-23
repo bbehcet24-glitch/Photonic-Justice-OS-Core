@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 "use strict";
+// DEDEKTÖR VARSAYIMI (çekirdek v3, config.json): v2 kabul eşikleri (85 km'de QBER örneklemi, zincir iptal kodu)
+// SNSPD profiline göre ölçüldü; InGaAs'ta (verim %10) aynı darbe sayısı 85 km'de çok küçük örneklem verir.
+const DETECTOR_PIN = require("./detector_profile.js").pinDetectorProfile("snspd", "v2 kabul eşikleri SNSPD ile ölçüldü (verim %80, 50 Hz)");
 /**
  * core_v2_fixes_test.js — ÇEKİRDEK v2 düzeltmelerinin öz-testleri (EIC değerlendirme raporundaki Hata 1–5)
  * ═══════════════════════════════════════════════════════════════════

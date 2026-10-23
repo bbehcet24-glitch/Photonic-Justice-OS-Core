@@ -1,14 +1,25 @@
 {
-  "generatedAt": "2026-10-23T10:17:35.063Z",
+  "generatedAt": "2026-10-23T15:05:33.403Z",
   "assumptions": {
     "pulseRateHz": 1000000000,
-    "detectorEfficiency": 0.1,
     "lossDbPerKm": 0.2,
     "insertionLossDb": 3,
     "eDetector": 0.02,
     "e0": 0.5,
     "fEC": 1.16,
-    "epsPE": 1e-10
+    "epsPE": 1e-10,
+    "detectorProfiles": {
+      "ingaas": {
+        "efficiency": 0.1,
+        "Y0": 0.00001,
+        "provenance": "assumption"
+      },
+      "snspd": {
+        "efficiency": 0.8,
+        "Y0": 6.249998046875406e-7,
+        "provenance": "assumption"
+      }
+    }
   },
   "checks": [
     {
@@ -37,9 +48,14 @@
       "detail": "0 km %2.02 · 80 km %2.54 · 110 km %4.86 · 150 km %33.97"
     },
     {
+      "name": "S6 SNSPD profili (verim %80, Y0 6.25e-7, config.json): SKR her noktada PLOB'un altında ve mesafeyle tekdüze; menzil her blok boyunda InGaAs'tan uzun",
+      "ok": true,
+      "detail": "en yüksek SKR/PLOB 4.43e-2 · menzil SNSPD {\"N1e8\":144,\"N1e10\":203,\"N1e12\":221} vs InGaAs {\"N1e8\":81,\"N1e10\":112,\"N1e12\":119} · 0 km SNSPD 36.50 Mbps"
+    },
+    {
       "name": "Çekirdek sabitlenmiş sürümle aynı (photonnet_core.js SHA-256)",
       "ok": true,
-      "detail": "157d81da543cabfa…"
+      "detail": "421513f72bad1fb3…"
     }
   ],
   "table": [
@@ -49,6 +65,10 @@
       "plobBps": 1003429705.6080472,
       "asymptoticBps": 9303228.10263086,
       "legacyV1CoreMessageQber": 0.012,
+      "snspd_N1e10": {
+        "bps": 36502983.05488914,
+        "qber": 0.020001238395176615
+      },
       "N1e8": {
         "bps": 3142590.212004496,
         "qber": 0.020176679794165472,
@@ -88,6 +108,10 @@
       "plobBps": 732421465.3612658,
       "asymptoticBps": 7367869.0200075265,
       "legacyV1CoreMessageQber": 0.01325,
+      "snspd_N1e10": {
+        "bps": 28480029.750236437,
+        "qber": 0.02000151371807319
+      },
       "N1e8": {
         "bps": 2412171.0632989286,
         "qber": 0.02022172777781333,
@@ -127,6 +151,10 @@
       "plobBps": 548412254.608164,
       "asymptoticBps": 5835916.822019295,
       "legacyV1CoreMessageQber": 0.0145,
+      "snspd_N1e10": {
+        "bps": 22303171.027737442,
+        "qber": 0.020001990992482833
+      },
       "N1e8": {
         "bps": 1840871.1296887717,
         "qber": 0.020278428855544813,
@@ -166,6 +194,10 @@
       "plobBps": 417325779.16269976,
       "asymptoticBps": 4622194.715955401,
       "legacyV1CoreMessageQber": 0.01575,
+      "snspd_N1e10": {
+        "bps": 17504366.273571976,
+        "qber": 0.020002462524862222
+      },
       "N1e8": {
         "bps": 1401990.7806736378,
         "qber": 0.020349793065140388,
@@ -205,6 +237,10 @@
       "plobBps": 321073968.4363269,
       "asymptoticBps": 3660100.803208951,
       "legacyV1CoreMessageQber": 0.017,
+      "snspd_N1e10": {
+        "bps": 13757655.127403779,
+        "qber": 0.02000305653975639
+      },
       "N1e8": {
         "bps": 1039261.5376865306,
         "qber": 0.020372427378538647,
@@ -244,6 +280,10 @@
       "plobBps": 248946512.0155854,
       "asymptoticBps": 2897152.7386569083,
       "legacyV1CoreMessageQber": 0.018250000000000002,
+      "snspd_N1e10": {
+        "bps": 10824721.826684378,
+        "qber": 0.02000380466978428
+      },
       "N1e8": {
         "bps": 687718.0031601929,
         "qber": 0.020607558567184523,
@@ -283,6 +323,10 @@
       "plobBps": 194117445.85050234,
       "asymptoticBps": 2291930.502510797,
       "legacyV1CoreMessageQber": 0.0195,
+      "snspd_N1e10": {
+        "bps": 8523747.555646539,
+        "qber": 0.02000474675404432
+      },
       "N1e8": {
         "bps": 512009.0098661021,
         "qber": 0.020763947788319997,
@@ -322,6 +366,10 @@
       "plobBps": 152003093.44504994,
       "asymptoticBps": 1811703.5249299586,
       "legacyV1CoreMessageQber": 0.02075,
+      "snspd_N1e10": {
+        "bps": 6715216.655653958,
+        "qber": 0.020005932959384975
+      },
       "N1e8": {
         "bps": 379294.57478705735,
         "qber": 0.02096068542856647,
@@ -361,6 +409,10 @@
       "plobBps": 119405091.71847168,
       "asymptoticBps": 1430581.4241735546,
       "legacyV1CoreMessageQber": 0.022,
+      "snspd_N1e10": {
+        "bps": 5291619.182057624,
+        "qber": 0.020007426451431273
+      },
       "N1e8": {
         "bps": 276850.5011373246,
         "qber": 0.021208134119163703,
@@ -400,6 +452,10 @@
       "plobBps": 94026456.46885727,
       "asymptoticBps": 1128067.8025834817,
       "legacyV1CoreMessageQber": 0.02325,
+      "snspd_N1e10": {
+        "bps": 4169677.3552244655,
+        "qber": 0.020009306757499557
+      },
       "N1e8": {
         "bps": 200685.02023511502,
         "qber": 0.02151929049281677,
@@ -439,6 +495,10 @@
       "plobBps": 74180889.13876125,
       "asymptoticBps": 887925.9585913091,
       "legacyV1CoreMessageQber": 0.0245,
+      "snspd_N1e10": {
+        "bps": 3286272.576335126,
+        "qber": 0.0200126331626623
+      },
       "N1e8": {
         "bps": 142667.46793931624,
         "qber": 0.02212148482216901,
@@ -478,6 +538,10 @@
       "plobBps": 58609261.2954493,
       "asymptoticBps": 697287.094766103,
       "legacyV1CoreMessageQber": 0.025750000000000002,
+      "snspd_N1e10": {
+        "bps": 2588617.553215271,
+        "qber": 0.020015861749118912
+      },
       "N1e8": {
         "bps": 99956.65417220126,
         "qber": 0.0226670720590998,
@@ -517,6 +581,10 @@
       "plobBps": 46358947.889144324,
       "asymptoticBps": 545947.7880006812,
       "legacyV1CoreMessageQber": 0.027,
+      "snspd_N1e10": {
+        "bps": 2039696.0981383573,
+        "qber": 0.0200199262943572
+      },
       "N1e8": {
         "bps": 67986.75542448166,
         "qber": 0.023352156939084698,
@@ -556,6 +624,10 @@
       "plobBps": 36701768.75519015,
       "asymptoticBps": 425815.6544926007,
       "legacyV1CoreMessageQber": 0.02825,
+      "snspd_N1e10": {
+        "bps": 1608422.9360673924,
+        "qber": 0.020025043201408334
+      },
       "N1e8": {
         "bps": 44465.00695860587,
         "qber": 0.024211836607600557,
@@ -595,6 +667,10 @@
       "plobBps": 29076602.09329715,
       "asymptoticBps": 330472.7861095062,
       "legacyV1CoreMessageQber": 0.029500000000000002,
+      "snspd_N1e10": {
+        "bps": 1267318.0124418198,
+        "qber": 0.020031484886852587
+      },
       "N1e8": {
         "bps": 27695.121954317845,
         "qber": 0.025289709850284964,
@@ -634,6 +710,10 @@
       "plobBps": 23048307.336104494,
       "asymptoticBps": 254835.51956315164,
       "legacyV1CoreMessageQber": 0.03075,
+      "snspd_N1e10": {
+        "bps": 997504.7799151585,
+        "qber": 0.020039594271298197
+      },
       "N1e8": {
         "bps": 14892.650004912171,
         "qber": 0.02544668034869494,
@@ -673,6 +753,10 @@
       "plobBps": 18277749.032176502,
       "asymptoticBps": 194851.0503820778,
       "legacyV1CoreMessageQber": 0.032,
+      "snspd_N1e10": {
+        "bps": 784193.0774282395,
+        "qber": 0.020049803014691545
+      },
       "N1e8": {
         "bps": 1459.8790127577784,
         "qber": 0.02538830542621712,
@@ -712,6 +796,10 @@
       "plobBps": 14499569.69511509,
       "asymptoticBps": 147314.424571418,
       "legacyV1CoreMessageQber": 0.03325,
+      "snspd_N1e10": {
+        "bps": 615481.0905819477,
+        "qber": 0.020062654461851216
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.06363892566456689,
@@ -751,6 +839,10 @@
       "plobBps": 11505490.467508284,
       "asymptoticBps": 109683.00262532668,
       "legacyV1CoreMessageQber": 0.0345,
+      "snspd_N1e10": {
+        "bps": 482085.68855077354,
+        "qber": 0.0200788325111122
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.07367411716012223,
@@ -790,6 +882,10 @@
       "plobBps": 9131629.051708812,
       "asymptoticBps": 79949.24542001211,
       "legacyV1CoreMessageQber": 0.035750000000000004,
+      "snspd_N1e10": {
+        "bps": 377905.7072392042,
+        "qber": 0.020099197929118386
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.08566983427923236,
@@ -829,6 +925,10 @@
       "plobBps": 7248783.565600344,
       "asymptoticBps": 56508.39855732399,
       "legacyV1CoreMessageQber": 0.037000000000000005,
+      "snspd_N1e10": {
+        "bps": 295653.06304491084,
+        "qber": 0.020124834022960444
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.09984451514526325,
@@ -868,6 +968,10 @@
       "plobBps": 5754935.428265223,
       "asymptoticBps": 38097.24818304685,
       "legacyV1CoreMessageQber": 0.03825,
+      "snspd_N1e10": {
+        "bps": 230637.4161956758,
+        "qber": 0.020157104065927998
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.11636726741540097,
@@ -907,6 +1011,10 @@
       "plobBps": 4569431.016943222,
       "asymptoticBps": 23707.84373949229,
       "legacyV1CoreMessageQber": 0.0395,
+      "snspd_N1e10": {
+        "bps": 179305.3976763607,
+        "qber": 0.020197723478080482
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.13532388864329709,
@@ -946,6 +1054,10 @@
       "plobBps": 3628445.12928736,
       "asymptoticBps": 12545.759676982083,
       "legacyV1CoreMessageQber": 0.04075,
+      "snspd_N1e10": {
+        "bps": 139443.40350699113,
+        "qber": 0.02027144573411002
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.15668102796629196,
@@ -985,6 +1097,10 @@
       "plobBps": 2881430.6089184415,
       "asymptoticBps": 3981.724570754912,
       "legacyV1CoreMessageQber": 0.041999999999999996,
+      "snspd_N1e10": {
+        "bps": 108037.75358056316,
+        "qber": 0.020313200154425132
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.18025534192841655,
@@ -1024,6 +1140,10 @@
       "plobBps": 2288331.4089207524,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.04325,
+      "snspd_N1e10": {
+        "bps": 83973.86784429329,
+        "qber": 0.020394187011399383
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.20569648977176136,
@@ -1063,6 +1183,10 @@
       "plobBps": 1817389.6676443391,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.0445,
+      "snspd_N1e10": {
+        "bps": 60818.42430981547,
+        "qber": 0.020396998149938693
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.23249245692893944,
@@ -1102,6 +1226,10 @@
       "plobBps": 1443416.8696687187,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.04575,
+      "snspd_N1e10": {
+        "bps": 43806.019030413714,
+        "qber": 0.02074899220965655
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.2600019000063257,
@@ -1141,6 +1269,10 @@
       "plobBps": 1146428.7857544986,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.047,
+      "snspd_N1e10": {
+        "bps": 33638.913137115385,
+        "qber": 0.02094250259728755
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.2875113273177869,
@@ -1180,6 +1312,10 @@
       "plobBps": 910566.3263677327,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.04825,
+      "snspd_N1e10": {
+        "bps": 25638.134204098158,
+        "qber": 0.02118589565384355
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.3143072488022155,
@@ -1219,6 +1355,10 @@
       "plobBps": 723241.5913800632,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.0495,
+      "snspd_N1e10": {
+        "bps": 19483.030012222538,
+        "qber": 0.021491957917148634
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.339748325595463,
@@ -1258,6 +1398,10 @@
       "plobBps": 574461.5969290986,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.05075,
+      "snspd_N1e10": {
+        "bps": 14749.375274446324,
+        "qber": 0.021876711567718865
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.3633225496485353,
@@ -1297,6 +1441,10 @@
       "plobBps": 456292.37978683715,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.052000000000000005,
+      "snspd_N1e10": {
+        "bps": 11075.673397716611,
+        "qber": 0.022360208817621786
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.38467958752707765,
@@ -1336,6 +1484,10 @@
       "plobBps": 362434.13137631706,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.053250000000000006,
+      "snspd_N1e10": {
+        "bps": 8199.8223060322,
+        "qber": 0.0229675071274908
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.4036361027930841,
@@ -1375,6 +1527,10 @@
       "plobBps": 287884.225890334,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.05450000000000001,
+      "snspd_N1e10": {
+        "bps": 6053.357517165973,
+        "qber": 0.023729858047364005
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.42015875049451146,
@@ -1414,6 +1570,10 @@
       "plobBps": 228669.87625544405,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.055749999999999994,
+      "snspd_N1e10": {
+        "bps": 4394.723795285049,
+        "qber": 0.024686143264698195
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.43433333258831885,
@@ -1453,6 +1613,10 @@
       "plobBps": 181635.97839185793,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.056999999999999995,
+      "snspd_N1e10": {
+        "bps": 3066.251553280477,
+        "qber": 0.025355609108446107
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.44632895958068375,
@@ -1492,6 +1656,10 @@
       "plobBps": 144276.7180450193,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.058249999999999996,
+      "snspd_N1e10": {
+        "bps": 1876.5527937961128,
+        "qber": 0.02570087316042067
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.45636407107668586,
@@ -1531,6 +1699,10 @@
       "plobBps": 114601.8921437021,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.0595,
+      "snspd_N1e10": {
+        "bps": 1019.0389649383035,
+        "qber": 0.03151934609697767
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.46467832800714803,
@@ -1570,6 +1742,10 @@
       "plobBps": 91030.7750464843,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.06075,
+      "snspd_N1e10": {
+        "bps": 615.1050683102418,
+        "qber": 0.03285392355004277
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.4715118356133552,
@@ -1609,6 +1785,10 @@
       "plobBps": 72307.84565463288,
       "asymptoticBps": 0,
       "legacyV1CoreMessageQber": 0.062,
+      "snspd_N1e10": {
+        "bps": 258.38059429701724,
+        "qber": 0.03322928214635588
+      },
       "N1e8": {
         "bps": 0,
         "qber": 0.47709140707240927,
@@ -1649,6 +1829,12 @@
     "N1e12": 119,
     "Y0_1e6": 151
   },
+  "maxDistanceKmSnspd": {
+    "N1e8": 144,
+    "N1e10": 203,
+    "N1e12": 221
+  },
+  "detectorNote": "S1–S5 InGaAs, S6 SNSPD profilini config.json'dan okur; ikisi aynı kodla taranır (çekirdek v3, docs/DETECTOR_PROFILE_DESIGN.md).",
   "resolvedInconsistency": {
     "what": "Çekirdek v1'de mesaj yolu (propPhoton) QBER'i 0,012 + km/4000 doğrusal formülüyle üretiyordu ve %11'i aşsa bile anahtar kullanılıyordu. Çekirdek v2'de (docs/CORE_CHANGELOG.md) anahtar kanalı sabit hizalama hatası e_d = %1,5 + karanlık sayım kullanır ve SecureMessageSession QBER_test ≥ %11'de iptal eder. Aşağıdaki v1 değerleri yalnız tarihsel karşılaştırma içindir.",
     "at150km": {
@@ -1677,6 +1863,6 @@
       "note": "Bu karşılaştırma donanım farkı nedeniyle yalnız büyüklük mertebesi içindir; PhotonNet varsayılanları InGaAs sınıfı (%10 verim, Y0 = 10⁻⁵)."
     }
   ],
-  "passed": 6,
-  "total": 6
+  "passed": 7,
+  "total": 7
 }

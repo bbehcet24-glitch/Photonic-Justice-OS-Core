@@ -1,5 +1,8 @@
 #!/usr/bin/env node
 "use strict";
+// DEDEKTÖR VARSAYIMI (çekirdek v3, config.json): senaryo (ör. S8 "sabit parametreli eski sistem 0 üretir") InGaAs
+// profiline (verim %10, Y0 = 1e-5) göre kurgulandı; SNSPD ile içeri-giriş penceresinde eski sistem de anahtar üretir.
+const DETECTOR_PIN = require("./detector_profile.js").pinDetectorProfile("ingaas", "senaryo InGaAs kalibrasyonlu (verim %10, Y0 = 1e-5)");
 /**
  * multinode_shielding_testbed.js — 4 seviyeli kalkan karar matrisinin
  * ÇOK-DÜĞÜMLÜ test ağı (iki aşama)
@@ -74,7 +77,8 @@ const TOPOLOGY = {
 };
 const THREAT = { sourceLevelDbuVm: 100, observerDistanceM: 0.3, noiseFloorDbuVm: 40, freqHz: 1e9 };
 const INGRESS = { susceptibilityDbuVm: 40, refDarkYield: 1e-5 };
-const BASE_Y0 = 1e-5;
+const DP = require("./detector_profile.js");
+const BASE_Y0 = () => DP.baseY0(); // gerçek (simüle) temel Y0 = etkin dedektör profili (config.json)
 const SE_REQ = A.seRequiredForThreatDb(THREAT).seRequiredDb;
 const PULSE_HZ = 1e9, BLOCK_PULSES = 1e9, INITIAL_POOL = 5e6;
 const SENSOR_NOISE_DB = 1, DROPOUT_P = 2e-4;
@@ -91,7 +95,7 @@ function poissonEvents(rng, ratePerHour, horizonMs) {
   const out = []; let t = 0;
   for (;;) { t += (-Math.log(1 - rng()) / ratePerHour) * 3600e3; if (t >= horizonMs) return out; out.push(t); }
 }
-const trueY0 = (ambient, se) => BASE_Y0 + A.ingressEffectiveY0({ seDb: se, ambientFieldDbuVm: ambient, susceptibilityDbuVm: INGRESS.susceptibilityDbuVm, refDarkYield: INGRESS.refDarkYield, baseY0: 0 }).Y0eff;
+const trueY0 = (ambient, se) => BASE_Y0() + A.ingressEffectiveY0({ seDb: se, ambientFieldDbuVm: ambient, susceptibilityDbuVm: INGRESS.susceptibilityDbuVm, refDarkYield: INGRESS.refDarkYield, baseY0: 0 }).Y0eff;
 
 // ═══ Saha izleri (gerçek SE, ölçülen SE, ortam alanı) — tüm politikalar için ORTAK ═══
 function buildTraces({ minutes, seed = 20261011, scripted = null }) {
@@ -625,7 +629,7 @@ async function main() {
   if (STAGE === "live" || STAGE === "all") await runLiveStage(out, chk);
   const after = coreHash();
   chk("ÇEKİRDEĞE DOKUNULMADI (photonnet_core.js SHA-256 öncesi = sonrası = mühürlü değer)",
-    before === after && after === "157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b", `${after.slice(0, 16)}…`);
+    before === after && after === "421513f72bad1fb32b24c78453f9f6fdcbdbab83bd10f044d58ffc71b42bb3d4", `${after.slice(0, 16)}…`);
   out.allChecksPassed = out.checks.every((c) => c.ok);
   const rep = path.join(__dirname, "reports", `multinode_shielding_testbed${STAGE === "all" ? "" : "_" + STAGE}.json`);
   fs.writeFileSync(rep, JSON.stringify(out, null, 2));

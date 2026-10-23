@@ -473,20 +473,165 @@ class PointingBudget {
 // sistemlerinin neredeyse tamamı SADECE GECE çalışır — tam olarak bu
 // nedenle (gündüz gökyüzü arka plan gürültüsü SNR bütçesini yutar).
 // ══════════════════════════════════════════════════════════════
-const DETECTOR_DARK_RATE_HZ = 50;          // SNSPD-sınıfı karanlık sayım oranı (didaktik referans değer)
+// ══════════════════════════════════════════════════════════════
+// ÇEKİRDEK v3 — DEDEKTÖR PROFİLİ (tek kaynak: depo kökündeki config.json)
+// Tasarım: bb84/docs/DETECTOR_PROFILE_DESIGN.md. Bu dosyada HİÇBİR dedektör sayısı yoktur;
+// yalnız doğrulama sınırları vardır. Değerler çalışma anında okunur (çekirdek hash'i config'den
+// bağımsızdır). Eksik/bozuk/tanınmayan yapılandırma SESSİZCE varsayılana düşmez → açık hata.
+//   Kaynak sırası: globalThis.__PHOTONNET_CONFIG__ (tarayıcı, derlemede gömülür)
+//                → Node: PHOTONNET_CONFIG yolu → <çekirdek dizini>/../config.json
+//   Etkin profil önceliği: setActiveDetectorProfile(id) > (çağrı başına detectorCtx.detectorProfile)
+//                → Node PHOTONNET_DETECTOR / tarayıcı ?detector= → config.detector.active
+// ══════════════════════════════════════════════════════════════
+const DETECTOR_CONFIG_SCHEMA_VERSION = 1;
+const DETECTOR_TECHNOLOGIES = ["snspd", "ingaas-spad"];
+const _DETECTOR_PROFILE_KEYS = ["label", "technology", "efficiency", "darkCountRateHz", "darkCountProbPerWindow",
+  "detectionWindowS", "provenance", "measuredAt", "sources", "notes"];
+
+function _detCfgFail(where, msg, Kind = TypeError) { throw new Kind(`config.json ${where}: ${msg}`); }
+
+/** config nesnesini doğrular, türetilen alanları ekler ve DONDURULMUŞ normal biçimini döndürür. */
+function validateDetectorConfig(cfg) {
+  if (!cfg || typeof cfg !== "object" || Array.isArray(cfg)) _detCfgFail("kök", "bir JSON nesnesi olmalı");
+  if (cfg.schemaVersion !== DETECTOR_CONFIG_SCHEMA_VERSION) _detCfgFail("schemaVersion", `${DETECTOR_CONFIG_SCHEMA_VERSION} olmalı (alınan: ${JSON.stringify(cfg.schemaVersion)})`, RangeError);
+  const d = cfg.detector;
+  if (!d || typeof d !== "object" || Array.isArray(d)) _detCfgFail("detector", "bir nesne olmalı");
+  for (const k of Object.keys(d)) if (k !== "active" && k !== "profiles") _detCfgFail("detector", `bilinmeyen anahtar "${k}"`);
+  if (!d.profiles || typeof d.profiles !== "object" || Array.isArray(d.profiles) || Object.keys(d.profiles).length === 0) _detCfgFail("detector.profiles", "en az bir profil içeren nesne olmalı");
+  const profiles = {};
+  for (const [id, p] of Object.entries(d.profiles)) {
+    const w = `detector.profiles.${id}`;
+    if (!/^[a-z][a-z0-9_-]{0,31}$/.test(id)) _detCfgFail(w, "kimlik küçük harf/rakam/-/_ olmalı (en çok 32 karakter)");
+    if (!p || typeof p !== "object" || Array.isArray(p)) _detCfgFail(w, "bir nesne olmalı");
+    for (const k of Object.keys(p)) if (!_DETECTOR_PROFILE_KEYS.includes(k)) _detCfgFail(w, `bilinmeyen anahtar "${k}" (yazım hatası olabilir)`);
+    if (typeof p.label !== "string" || !p.label.trim()) _detCfgFail(`${w}.label`, "boş olmayan metin olmalı");
+    if (!DETECTOR_TECHNOLOGIES.includes(p.technology)) _detCfgFail(`${w}.technology`, `${DETECTOR_TECHNOLOGIES.join(" | ")} olmalı`);
+    const num = (k, lo, hi, loOpen) => {
+      const v = p[k];
+      if (typeof v !== "number" || !Number.isFinite(v)) _detCfgFail(`${w}.${k}`, "sonlu bir sayı olmalı");
+      if ((loOpen ? v <= lo : v < lo) || v > hi) _detCfgFail(`${w}.${k}`, `${loOpen ? "(" : "["}${lo}, ${hi}] aralığında olmalı (alınan: ${v})`, RangeError);
+      return v;
+    };
+    const efficiency = num("efficiency", 0, 1, true);
+    const detectionWindowS = num("detectionWindowS", 0, 1e-6, true);
+    const hasRate = p.darkCountRateHz !== undefined, hasProb = p.darkCountProbPerWindow !== undefined;
+    if (hasRate === hasProb) _detCfgFail(w, "darkCountRateHz ve darkCountProbPerWindow alanlarından TAM OLARAK biri verilmeli");
+    let darkCountRateHz, darkCountProbPerWindow;
+    if (hasRate) {
+      darkCountRateHz = num("darkCountRateHz", 0, 1e9, false);
+      darkCountProbPerWindow = -Math.expm1(-darkCountRateHz * detectionWindowS); // 1 − e^(−Rτ), küçük Rτ'da hassas
+    } else {
+      darkCountProbPerWindow = num("darkCountProbPerWindow", 0, 1, false);
+      if (darkCountProbPerWindow >= 1) _detCfgFail(`${w}.darkCountProbPerWindow`, "1'den küçük olmalı", RangeError);
+      darkCountRateHz = -Math.log1p(-darkCountProbPerWindow) / detectionWindowS; // −ln(1 − Y0)/τ, küçük Y0'da hassas
+    }
+    if (p.provenance !== "assumption" && p.provenance !== "measured") _detCfgFail(`${w}.provenance`, `"assumption" ya da "measured" olmalı`);
+    if (p.provenance === "measured" && (typeof p.measuredAt !== "string" || Number.isNaN(Date.parse(p.measuredAt)))) _detCfgFail(`${w}.measuredAt`, "provenance=measured için ISO tarih zorunlu");
+    if (!Array.isArray(p.sources) || p.sources.length === 0 || !p.sources.every((s) => typeof s === "string" && s.trim())) _detCfgFail(`${w}.sources`, "en az bir boş olmayan kaynak metni içeren dizi olmalı");
+    if (p.notes !== undefined && typeof p.notes !== "string") _detCfgFail(`${w}.notes`, "metin olmalı");
+    profiles[id] = Object.freeze({ id, label: p.label, technology: p.technology, efficiency, detectionWindowS,
+      darkCountRateHz, darkCountProbPerWindow, darkCountSpecifiedAs: hasRate ? "rateHz" : "probPerWindow",
+      provenance: p.provenance, measuredAt: p.measuredAt || null, sources: Object.freeze([...p.sources]), notes: p.notes || "" });
+  }
+  if (typeof d.active !== "string" || !profiles[d.active]) _detCfgFail("detector.active", `profiles içindeki bir kimlik olmalı (${Object.keys(profiles).join(", ")}; alınan: ${JSON.stringify(d.active)})`);
+  return Object.freeze({ schemaVersion: cfg.schemaVersion, active: d.active, profiles: Object.freeze(profiles) });
+}
+
+let _detectorConfig = null;      // doğrulanmış normal biçim
+let _detectorActiveId = null;    // çalışma anındaki etkin profil
+let _detectorActiveSource = null; // "config" | "env" | "url" | "api"
+const _detectorListeners = new Set();
+
+function _readDetectorConfigSource() {
+  if (typeof globalThis !== "undefined" && globalThis.__PHOTONNET_CONFIG__) return { cfg: globalThis.__PHOTONNET_CONFIG__, from: "globalThis.__PHOTONNET_CONFIG__" };
+  if (typeof require === "function" && typeof __dirname === "string") {
+    const nodePath = require("path");
+    const p = (typeof process !== "undefined" && process.env && process.env.PHOTONNET_CONFIG) || nodePath.join(__dirname, "..", "config.json");
+    let text;
+    try { text = require("fs").readFileSync(p, "utf8"); }
+    catch (e) { throw new Error(`config.json okunamadı (${p}): ${e.message} — dedektör profili olmadan çekirdek çalışmaz (fail-closed)`); }
+    try { return { cfg: JSON.parse(text), from: p }; }
+    catch (e) { throw new SyntaxError(`config.json geçerli JSON değil (${p}): ${e.message}`); }
+  }
+  throw new Error("Dedektör yapılandırması bulunamadı: tarayıcıda window.__PHOTONNET_CONFIG__ (build_photonnet_html.js gömer), Node'da config.json gerekli");
+}
+
+function _initialDetectorOverride() {
+  if (typeof process !== "undefined" && process.env && process.env.PHOTONNET_DETECTOR) return { id: process.env.PHOTONNET_DETECTOR, source: "env" };
+  if (typeof location !== "undefined" && location && typeof location.search === "string" && typeof URLSearchParams === "function") {
+    const q = new URLSearchParams(location.search).get("detector");
+    if (q) return { id: q, source: "url" };
+  }
+  return null;
+}
+
+function _ensureDetectorConfig() {
+  if (_detectorConfig) return _detectorConfig;
+  const { cfg } = _readDetectorConfigSource();
+  const norm = validateDetectorConfig(cfg);
+  const ov = _initialDetectorOverride();
+  if (ov && !norm.profiles[ov.id]) throw new RangeError(`Bilinmeyen dedektör profili "${ov.id}" (${ov.source === "env" ? "PHOTONNET_DETECTOR" : "?detector="}); tanımlı: ${Object.keys(norm.profiles).join(", ")}`);
+  _detectorConfig = norm;
+  _detectorActiveId = ov ? ov.id : norm.active;
+  _detectorActiveSource = ov ? ov.source : "config";
+  return _detectorConfig;
+}
+
+/** Testler / başka bir yapılandırma kaynağı için: config nesnesini doğrulayıp yükler (etkin = cfg.detector.active). */
+function configureDetectorProfiles(cfg) {
+  const norm = validateDetectorConfig(cfg);
+  _detectorConfig = norm; _detectorActiveId = norm.active; _detectorActiveSource = "config";
+  _notifyDetectorChange();
+  return norm;
+}
+
+function listDetectorProfiles() { return Object.values(_ensureDetectorConfig().profiles); }
+
+/** Etkin profil; id verilirse o profil (bilinmeyen id → RangeError). */
+function activeDetectorProfile(id) {
+  const c = _ensureDetectorConfig();
+  const key = id === undefined || id === null ? _detectorActiveId : id;
+  const p = c.profiles[key];
+  if (!p) throw new RangeError(`Bilinmeyen dedektör profili "${key}"; tanımlı: ${Object.keys(c.profiles).join(", ")}`);
+  return p;
+}
+
+function detectorProfileSource() { _ensureDetectorConfig(); return _detectorActiveSource; }
+
+function setActiveDetectorProfile(id) {
+  const p = activeDetectorProfile(id); // bilinmeyen id → hata, durum DEĞİŞMEZ
+  _detectorActiveId = p.id; _detectorActiveSource = "api";
+  _notifyDetectorChange();
+  return p;
+}
+
+function onDetectorProfileChange(fn) {
+  if (typeof fn !== "function") throw new TypeError("onDetectorProfileChange: fonksiyon bekleniyor");
+  _detectorListeners.add(fn);
+  return () => _detectorListeners.delete(fn);
+}
+
+function _notifyDetectorChange() {
+  const p = _detectorConfig ? _detectorConfig.profiles[_detectorActiveId] : null;
+  if (!p) return;
+  if (typeof noiseGateMiddleware !== "undefined" && noiseGateMiddleware) noiseGateMiddleware.resetForProfile(p);
+  for (const fn of _detectorListeners) { try { fn(p); } catch (_) { /* dinleyici hatası profil değişimini geri almaz */ } }
+}
+
+// Gökyüzü arka planı bir KANAL (serbest uzay) özelliğidir, dedektör değil — profilde değil burada kalır.
 const DAYTIME_BACKGROUND_RATE_HZ = 5e6;    // gündüz gökyüzü arka plan click oranı (gece oranından KATLARCA yüksek)
 const NIGHTTIME_BACKGROUND_RATE_HZ = 200;  // gece gökyüzü arka plan click oranı (yıldız ışığı mertebesinde)
-const SOURCE_GATE_WIDTH_S = 1 / 80e6;      // 80MHz Micius kaynak hızından türetilen algılama penceresi (computeRawKeyRate ile tutarlı)
 
 class DetectorNoiseModel {
   /**
    * @param {boolean} isNight UI'daki "Operasyon Zamanı" kontrolü
+   * @param {string} [profileId] verilmezse etkin dedektör profili
    * @returns {number} [0,1) bir algılama penceresinde hayalet-click olasılığı
    */
-  static phantomClickProbability(isNight) {
+  static phantomClickProbability(isNight, profileId) {
+    const d = activeDetectorProfile(profileId);
     const backgroundRate = isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ;
-    const totalRate = DETECTOR_DARK_RATE_HZ + backgroundRate;
-    return 1 - Math.exp(-totalRate * SOURCE_GATE_WIDTH_S);
+    return 1 - Math.exp(-(d.darkCountRateHz + backgroundRate) * d.detectionWindowS);
   }
 }
 
@@ -576,13 +721,34 @@ function poissonSample(lambda) {
 }
 
 class NoiseGateMiddleware {
-  constructor() {
+  /** @param {object} [profile] dedektör profili (verilmezse etkin profil — bkz. activeDetectorProfile) */
+  constructor(profile) {
+    // ÇEKİRDEK v3: karanlık sayım ve pencere bu profilden. Yapılandırma hatalıysa (ör. tarayıcıda bilinmeyen
+    // ?detector=) yapıcı ÇÖKMEZ — uygulama yüklenip hatayı gösterebilsin diye — ama profil gerektiren her
+    // çağrı aynı hatayı fırlatır (_p()): bozuk yapılandırmayla HİÇBİR olasılık hesaplanmaz.
+    this.profileError = null;
+    try { this.profile = profile || activeDetectorProfile(); } catch (e) { this.profile = null; this.profileError = e; }
     this.tempDriftMk = 0;              // SNSPD'nin nominal çalışma noktasından o anki HAM sapması (mK)
     this.fiberLeakBoostHz = 0;         // demo/organik olarak enjekte edilebilen ekstra sızıntı arka planı
-    this.gateRatio = 1.0;              // [GATE_MIN_RATIO,1] — 1 = tam nominal SOURCE_GATE_WIDTH_S
-    this.calibratedDarkRateHz = DETECTOR_DARK_RATE_HZ; // en son kalibrasyon turunun tahmini
+    this.gateRatio = 1.0;              // [GATE_MIN_RATIO,1] — 1 = profilin tam nominal detectionWindowS'i
+    this.calibratedDarkRateHz = this.profile ? this.profile.darkCountRateHz : NaN; // en son kalibrasyon turunun tahmini
     this.stats = { calibrationRuns: 0, filteredDarkClicks: 0, acceptedDarkClicks: 0, missedRealClicks: 0 };
     this.history = []; // {t, tempDriftMk, rawDarkRateHz, calibratedDarkRateHz, gateRatio} — UI grafiği için kayan pencere
+  }
+
+  /** Doğrulanmış profil; yapılandırma hatalıysa o hatayı fırlatır (fail-closed). */
+  _p() {
+    if (this.profile) return this.profile;
+    throw this.profileError || new Error("NoiseGateMiddleware: dedektör profili yok");
+  }
+
+  /** Dedektör değişti (setActiveDetectorProfile): yeni donanım → kalibrasyon ve kapı durumu sıfırdan başlar. */
+  resetForProfile(profile) {
+    if (!profile || !Number.isFinite(profile.darkCountRateHz) || !Number.isFinite(profile.detectionWindowS)) throw new TypeError("resetForProfile: doğrulanmış bir dedektör profili bekleniyor");
+    this.profile = profile; this.profileError = null;
+    this.tempDriftMk = 0; this.fiberLeakBoostHz = 0; this.gateRatio = 1.0;
+    this.calibratedDarkRateHz = profile.darkCountRateHz;
+    this.history = [];
   }
 
   /** Ortalamaya-dönüşlü rastgele yürüyüş + isteğe bağlı dışarıdan zorlanan bir sıçrama (demo enjeksiyonu). */
@@ -600,13 +766,13 @@ class NoiseGateMiddleware {
 
   /** Şu anki HAM (anlık, kalibrasyon-öncesi) karanlık sayım oranı. */
   rawDarkRateHz() {
-    return DETECTOR_DARK_RATE_HZ * this.thermalDarkRateMultiplier() + this.fiberLeakBoostHz;
+    return this._p().darkCountRateHz * this.thermalDarkRateMultiplier() + this.fiberLeakBoostHz;
   }
 
   /** NOMİNAL (sapma=0, sızıntı=0, kapı=tam açık) hayalet-click olasılığı — AGC hedefinin ölçeklendiği taban. */
   nominalPhantomProbability(isNight) {
     const backgroundRate = isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ;
-    return 1 - Math.exp(-(DETECTOR_DARK_RATE_HZ + backgroundRate) * SOURCE_GATE_WIDTH_S);
+    return 1 - Math.exp(-(this._p().darkCountRateHz + backgroundRate) * this._p().detectionWindowS);
   }
 
   /** HAM (kalibrasyon/kapı UYGULANMADAN önceki) hayalet-click olasılığı — "filtreleme olmasaydı ne olurdu" karşılaştırması için. */
@@ -615,7 +781,7 @@ class NoiseGateMiddleware {
     // ışığı girmez. Önceki sürüm 5 MHz gündüz arka planını fiber QKD'ye de uyguluyor, 50 km'de QBER'i
     // ~%20'ye, 85 km'de ~%39'a çıkarıyordu (dinleme sanılan sahte hata).
     const backgroundRate = !freeSpace ? 0 : (isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ);
-    return 1 - Math.exp(-(this.rawDarkRateHz() + backgroundRate) * SOURCE_GATE_WIDTH_S);
+    return 1 - Math.exp(-(this.rawDarkRateHz() + backgroundRate) * this._p().detectionWindowS);
   }
 
   /**
@@ -661,7 +827,7 @@ class NoiseGateMiddleware {
     this.calibratedDarkRateHz = Math.max(0, this.calibratedDarkRateHz*(1-adaptiveAlpha) + measuredDarkRate*adaptiveAlpha);
 
     const target = this.nominalPhantomProbability(isNight) * GATE_TARGET_MULTIPLIER;
-    const gatedP = 1 - Math.exp(-(this.calibratedDarkRateHz + backgroundRate) * SOURCE_GATE_WIDTH_S * this.gateRatio);
+    const gatedP = 1 - Math.exp(-(this.calibratedDarkRateHz + backgroundRate) * this._p().detectionWindowS * this.gateRatio);
     if (gatedP > target) {
       this.gateRatio = Math.max(GATE_MIN_RATIO, this.gateRatio - GATE_STEP);
     } else if (this.gateRatio < 1) {
@@ -678,7 +844,7 @@ class NoiseGateMiddleware {
   effectivePhantomProbability(isNight, freeSpace = true) {
     const backgroundRate = !freeSpace ? 0 : (isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ);
     const totalRate = this.calibratedDarkRateHz + backgroundRate;
-    const gatedWidth = SOURCE_GATE_WIDTH_S * this.gateRatio;
+    const gatedWidth = this._p().detectionWindowS * this.gateRatio;
     return 1 - Math.exp(-totalRate * gatedWidth);
   }
 
@@ -694,6 +860,14 @@ class NoiseGateMiddleware {
 // kalibrasyon/kapı durumunu paylaşır (bkz. nodeWatchdog/predictiveEngine
 // ile aynı mimari desen).
 const noiseGateMiddleware = new NoiseGateMiddleware();
+
+/** Etkin profil için paylaşılan tekil örnek; çağrı başına farklı profil istenirse o profile ait (nominal, kalibrasyonsuz) örnek. */
+const _profileNoiseGates = new Map();
+function _noiseGateForProfile(profile) {
+  if (noiseGateMiddleware.profile && noiseGateMiddleware.profile.id === profile.id) return noiseGateMiddleware;
+  if (!_profileNoiseGates.has(profile.id) || _profileNoiseGates.get(profile.id).profile !== profile) _profileNoiseGates.set(profile.id, new NoiseGateMiddleware(profile));
+  return _profileNoiseGates.get(profile.id);
+}
 
 // ══════════════════════════════════════════════════════════════
 // EK 1: Haversine — gerçek coğrafi mesafe (lat/lon → km)
@@ -902,6 +1076,9 @@ class QuantumKeyDistribution {
     let lostCount = 0;
     let darkClickCount = 0; // teşhis amaçlı: kaç "algılama" aslında hayalet (karanlık sayım/arka plan) click'ti
     let eveInducedErrors = 0; // teşhis amaçlı: kaç hata GERÇEKTEN Eve'in yanlış-baz ölçümünden kaynaklandı
+    // ÇEKİRDEK v3: dedektör profili — çağrı başına detectorCtx.detectorProfile, yoksa etkin profil.
+    const det = detectorCtx ? activeDetectorProfile(detectorCtx.detectorProfile) : null;
+    const ngForCall = det ? _noiseGateForProfile(det) : null;
     const aliceKeyBits = []; // Alice'in GERÇEKTEN ALGILANAN sifted bit'leri (kayıp olanlar hariç)
     const bobKeyBits = [];   // Bob'un ALDIĞI (yalnızca algılanan) sifted bit'ler
     siftedIndices.forEach((origIdx, k)=>{
@@ -931,7 +1108,11 @@ class QuantumKeyDistribution {
       // gerçek kayıp/saçılma/soğurma/faz-kayması gürültüsü uygulanır;
       // Eve'in etkisi zaten yukarıda ayrı ve doğru şekilde ele alındı.
       const kr = propPhoton(1550, totalKm, 0, false, bitRng, undefined, undefined, { fixedPhaseProb: QKD_MISALIGNMENT_E_D });
-      if (!kr.ok) {
+      // ÇEKİRDEK v3: dedektör modellendiğinde (detectorCtx) foton dedektöre ulaşsa bile profilin verimiyle
+      // (efficiency) algılanır; algılanmazsa kayıptır ve aşağıdaki karanlık-sayım dalına düşer.
+      // detectorCtx yoksa ideal dedektör (verim 1, karanlık sayım yok) — v2 ile aynı davranış.
+      const detectedByDetector = kr.ok && !(det && bitRng() >= det.efficiency);
+      if (!detectedByDetector) {
         // Foton hiç ulaşmadı — normalde gerçek bir dedektörde "click" yok.
         // EK 44 (DetectorNoiseModel) + FAZ 5 (NoiseGateMiddleware): ama
         // karanlık sayım/gündüz arka plan gürültüsü (detectorCtx verilmişse)
@@ -948,7 +1129,7 @@ class QuantumKeyDistribution {
         // bitinden bağımsız rastgele bir değer taşır, bu yüzden sifted
         // kümeye %50 ihtimalle hata olarak katılır — gerçek dedektör
         // davranışıyla tutarlı.
-        const ng = detectorCtx ? noiseGateMiddleware : null;
+        const ng = detectorCtx ? ngForCall : null;
         const freeSpace = !!(detectorCtx && detectorCtx.freeSpace); // deriveSiftedKey bir FİBER kanalıdır (propPhoton 1550 nm); uydu çağıranı freeSpace:true verir
         const gatedP = ng ? ng.effectivePhantomProbability(!!detectorCtx.isNight, freeSpace) : 0;
         const rawP = ng ? ng.rawPhantomProbability(!!detectorCtx.isNight, freeSpace) : 0;
@@ -975,9 +1156,9 @@ class QuantumKeyDistribution {
       // olasılık HER ZAMAN sıfırdır (davranış birebir eskisi gibi kalır);
       // yalnızca kalibrasyon GERÇEKTEN kapıyı daralttığında devreye girer.
       if (detectorCtx) {
-        const missP = noiseGateMiddleware.realClickMissProbability();
+        const missP = ngForCall.realClickMissProbability();
         if (missP > 0 && bitRng() < missP) {
-          noiseGateMiddleware.stats.missedRealClicks++;
+          ngForCall.stats.missedRealClicks++;
           lostCount++;
           return;
         }
@@ -9638,6 +9819,20 @@ function PhotonNet() {
   const [turbulenceStrength,setTurbulenceStrength]     = useState(0.4); // [0,1] → Cn²(0) haritalanır (ScintillationModel)
   const [pointingPrecision,setPointingPrecision]       = useState(0.7); // [0,1] 1=mükemmel izleme, 0=kaba/titrek (PointingBudget)
   const [nightMode,setNightMode]                       = useState(true); // gece=düşük arka plan gürültüsü (DetectorNoiseModel)
+  // ÇEKİRDEK v3: dedektör profili config.json'dan (derlemede gömülü); ?detector=<kimlik> veya metrik
+  // çubuğundaki seçiciyle değiştirilir. Yapılandırma hatalıysa hata gösterilir ve iletim REDDEDİLİR.
+  const readDetectorState = () => {
+    try { return { profile: activeDetectorProfile(), source: detectorProfileSource(), profiles: listDetectorProfiles(), error: null }; }
+    catch (e) { return { profile: null, source: null, profiles: [], error: String((e && e.message) || e) }; }
+  };
+  const [detectorState, setDetectorState] = useState(readDetectorState);
+  const chooseDetector = (id) => {
+    try {
+      setActiveDetectorProfile(id);
+      try { const u = new URL(window.location.href); u.searchParams.set("detector", id); window.history.replaceState(null, "", u.toString()); } catch (_) { /* file:// vb. — URL güncellenemezse seçim yine geçerli */ }
+    } catch (e) { /* bilinmeyen kimlik: durum değişmez, hata aşağıda gösterilir */ }
+    setDetectorState(readDetectorState());
+  };
   const [running,setRunning]     = useState(false);
   const [phase,setPhase]         = useState("BEKLENIYOR");
   const [path,setPath]           = useState(null);
@@ -10434,6 +10629,7 @@ function PhotonNet() {
   // ══════════════════════════════════════════════════════════
   useEffect(()=>{
     rafEngine.register("noise-gate-calibration-tick", 2200, () => {
+      if (!noiseGateMiddleware.profile) return; // dedektör yapılandırması geçersiz: kalibrasyon yapılmaz (hata metrik çubuğunda)
       noiseGateMiddleware.advanceThermalDrift();
       const isNight = nightModeRef.current;
       const result = noiseGateMiddleware.runCalibrationCycle(isNight, Date.now());
@@ -10874,6 +11070,10 @@ function PhotonNet() {
   // Ana iletim fonksiyonu
   async function transmit(){
     if(running||src===dst||!msg.trim())return;
+    if(detectorState.error){ // fail-closed: geçersiz dedektör yapılandırmasıyla anahtar üretilmez
+      addLog(`⛔ İLETİM REDDEDİLDİ — dedektör yapılandırması geçersiz: ${detectorState.error}`,"ERR");
+      return;
+    }
     setRunning(true);setResult(null);setPath(null);setPkts([]);
     setPhase("ROTA HESAPLANIYOR");
 
@@ -12627,6 +12827,16 @@ function PhotonNet() {
         <div style={{fontSize:10,color:m.c,fontWeight:700,letterSpacing:".04em"}}>{m.v}</div>
       </div>
     ))}
+    <div data-testid="detector-selector" title={detectorState.profile ? `${detectorState.profile.label}\nverim %${(detectorState.profile.efficiency*100).toFixed(0)} · karanlık sayım ${detectorState.profile.darkCountRateHz.toPrecision(3)} Hz · Y0 ${detectorState.profile.darkCountProbPerWindow.toExponential(2)} · pencere ${(detectorState.profile.detectionWindowS*1e9).toPrecision(3)} ns\nkaynak: config.json (${detectorState.source}) · ${detectorState.profile.provenance === "measured" ? "ÖLÇÜLDÜ" : "VARSAYIM — ölçülmedi"}` : detectorState.error}
+      style={{display:"flex",flexDirection:"column",padding:"0 12px",borderRight:"1px solid #0a162888",justifyContent:"center",height:"100%",flexShrink:0}}>
+      <div style={{fontSize:7,color:"#1e3a5f",letterSpacing:".1em"}}>DEDEKTÖR</div>
+      {detectorState.error
+        ? <div style={{fontSize:9,color:"#f43f5e",fontWeight:700,maxWidth:260,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>⛔ YAPILANDIRMA HATASI</div>
+        : <select value={detectorState.profile.id} disabled={running} onChange={(e)=>chooseDetector(e.target.value)}
+            style={{fontSize:10,background:"#030610",color:"#00d4ff",border:"1px solid #0a1628",fontWeight:700,fontFamily:"inherit"}}>
+            {detectorState.profiles.map((p)=>(<option key={p.id} value={p.id}>{p.id.toUpperCase()} · η %{(p.efficiency*100).toFixed(0)} · Y0 {p.darkCountProbPerWindow.toExponential(1)}</option>))}
+          </select>}
+    </div>
     <div style={{padding:"0 12px",minWidth:120,display:"flex",flexDirection:"column",justifyContent:"center"}}>
       <div style={{fontSize:7,color:"#1e3a5f",letterSpacing:".1em",marginBottom:2}}>THROUGHPUT</div>
       <Spark data={throughput} color="#00d4ff" h={16}/>
@@ -14355,7 +14565,9 @@ function PhotonNet() {
           </div>
           <div style={{fontSize:9,color:"#475569",lineHeight:1.5,marginBottom:14,
             background:"#020409",border:"1px solid #0a1628",borderRadius:5,padding:"8px 10px"}}>
-            SNSPD (Superconducting Nanowire Single-Photon Detector) mükemmel değildir: sıcaklık
+            Etkin dedektör: <b style={{color:"#00d4ff"}}>{detectorState.profile ? detectorState.profile.label : "— (yapılandırma hatası)"}</b> (config.json; metrik çubuğundaki DEDEKTÖR seçicisi).
+            Termal sürüklenme modeli SNSPD'ye göre kurulmuştur ve iki profile de aynı uygulanır (bilinen sınır).<br/>
+            Tek-foton dedektörü mükemmel değildir: sıcaklık
             sürüklenmesi veya fiber sızıntısı, foton gelmediği hâlde dedektörü <b style={{color:"#00d4ff"}}>hayalet
             bir "click"</b> üretmeye zorlayabilir (karanlık sayım). Bu katman gürültüyü periyodik olarak <b style={{color:"#00d4ff"}}>kalibre
             eder</b> ve zaman-korelasyonlu bir <b style={{color:"#7c3aed"}}>kapı (gate)</b> ile filtreler — kapıyı

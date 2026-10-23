@@ -15,6 +15,8 @@
 // react_bundle.js (React'in kendisi) DEĞİŞMEDİĞİ için yeniden üretilmez —
 // yalnızca uygulama script'i değiştirilir.
 //
+// config.json (dedektör profilleri) doğrulanıp <script id="photonnet-config"> olarak gömülür (çekirdek v3).
+//
 // KULLANIM: node bb84/tools/build_photonnet_html.js           → PhotonNet.html + PhotonNet_offline.html yazar
 //           node bb84/tools/build_photonnet_html.js --check   → yalnız doğrular (CI)
 "use strict";
@@ -32,6 +34,30 @@ const OFFLINE_HTML_PATH = path.join(REPO_ROOT, "PhotonNet_offline.html");
 const CHECK_ONLY = process.argv.includes("--check");
 
 const APP_COMMENT_MARKER = "/* ===== PhotonNet bileşeni";
+const CONFIG_PATH = path.join(REPO_ROOT, "config.json");
+const CONFIG_OPEN = '<script id="photonnet-config">';
+
+/**
+ * config.json'u (dedektör profilleri, çekirdek v3) çekirdeğin KENDİ doğrulayıcısıyla denetler ve HTML'e
+ * gömülecek <script> bloğunu üretir. Bozuk config → derleme durur (HTML'e asla geçersiz yapılandırma girmez).
+ * Gömülen nesne config.json'un birebir kopyasıdır; --check, config değişince HTML'in eskidiğini yakalar.
+ */
+function configScriptBlock() {
+  let cfg;
+  try { cfg = JSON.parse(fs.readFileSync(CONFIG_PATH, "utf-8")); }
+  catch (e) { throw new Error(`[build_photonnet_html] config.json okunamadı/ayrıştırılamadı: ${e.message}`); }
+  process.env.PHOTONNET_CONFIG = CONFIG_PATH;
+  const core = require(path.join(REPO_ROOT, "bb84", "photonnet_core.js"));
+  const norm = core.validateDetectorConfig(cfg); // hata → derleme durur
+  const json = JSON.stringify(cfg).replace(/</g, "\\u003c"); // </script> kaçışı
+  return { norm, block: `${CONFIG_OPEN}
+/* OTOMATİK ÜRETİLDİ — config.json (dedektör profilleri; etkin: ${norm.active}) build_photonnet_html.js tarafından gömüldü.
+   ELLE DÜZENLEMEYİN — config.json'u değiştirip yeniden derleyin. Profil URL ile seçilebilir: ?detector=<kimlik>
+   (tanımlı: ${Object.keys(norm.profiles).join(", ")}). */
+window.__PHOTONNET_CONFIG__ = ${json};
+</script>
+` };
+}
 
 function requireTypescript() {
   try {
@@ -125,7 +151,18 @@ try {
 }
 `;
 
-  const newHtml = html.slice(0, contentStart) + newScriptContent + html.slice(scriptCloseIdx);
+  let newHtml = html.slice(0, contentStart) + newScriptContent + html.slice(scriptCloseIdx);
+
+  // ── config.json gömme: uygulama script'inin HEMEN önüne (varsa eski blok değiştirilir) ──
+  const { norm: cfgNorm, block: cfgBlock } = configScriptBlock();
+  const existing = newHtml.indexOf(CONFIG_OPEN);
+  if (existing !== -1) {
+    const end = newHtml.indexOf("</script>", existing);
+    newHtml = newHtml.slice(0, existing) + cfgBlock.trimEnd() + newHtml.slice(end + "</script>".length);
+  } else {
+    newHtml = newHtml.slice(0, scriptOpenIdx) + cfgBlock + "\n" + newHtml.slice(scriptOpenIdx);
+  }
+  if (newHtml.split(CONFIG_OPEN).length - 1 !== 1) throw new Error("[build_photonnet_html] config bloğu sayısı 1 değil — iptal edildi");
 
   // ── Kendi kendini doğrulama: gömülecek script SÖZDİZİMSEL olarak geçerli mi? ──
   // (Bu script tarayıcı globallerine — React/document/window — bağımlı
@@ -145,7 +182,7 @@ try {
   if (CHECK_ONLY) {
     const stale = [HTML_PATH, OFFLINE_HTML_PATH].filter((f) => !fs.existsSync(f) || fs.readFileSync(f, "utf-8") !== newHtml);
     if (stale.length) { console.error(`[build_photonnet_html] ✗ GÜNCEL DEĞİL: ${stale.map((f) => path.basename(f)).join(", ")} — 'node bb84/tools/build_photonnet_html.js' çalıştırıp commit edin.`); process.exit(1); }
-    console.log("[build_photonnet_html] ✓ SENKRON: PhotonNet.html ve PhotonNet_offline.html kaynakla (PhotonNet2.jsx) birebir güncel.");
+    console.log(`[build_photonnet_html] ✓ SENKRON: PhotonNet.html ve PhotonNet_offline.html kaynakla (PhotonNet2.jsx) ve config.json ile birebir güncel (etkin dedektör: ${cfgNorm.active}).`);
     return;
   }
   fs.writeFileSync(HTML_PATH, newHtml);

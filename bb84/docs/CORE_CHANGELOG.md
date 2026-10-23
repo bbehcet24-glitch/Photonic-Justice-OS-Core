@@ -9,6 +9,47 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 |---|---|---|
 | v1 | `8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05` | `8f879fde…dc7b05` |
 | v2 | `157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b` | `157d81da…81cf3b` |
+| v3 | `421513f72bad1fb32b24c78453f9f6fdcbdbab83bd10f044d58ffc71b42bb3d4` | `421513f7…2bb3d4` |
+
+## v3 (2026-10) — dedektör profili tek `config.json`'dan, dinamik seçim
+
+Gerekçe: v2 sonrası kalan tutarsızlık — çekirdek SNSPD (50 Hz, verim örtük 1), katmanlar InGaAs (Y0 = 10⁻⁵,
+verim %10) varsayıyordu ve bu sayılar koda dağılmıştı. Tasarım: `bb84/docs/DETECTOR_PROFILE_DESIGN.md`.
+Kabul testi: `bb84/detector_profile_config_test.js`.
+
+**Çekirdek hash'i artık yapılandırmadan bağımsızdır:** `config.json` değişince `photonnet_core.js` değişmez;
+profil değerleri çalışma anında okunur (Node: `config.json`, tarayıcı: derlemede gömülen
+`window.__PHOTONNET_CONFIG__`).
+
+Değişenler (çekirdek):
+
+- **Kaldırıldı:** `DETECTOR_DARK_RATE_HZ`, `SOURCE_GATE_WIDTH_S` sabitleri. Değerleri `config.json` →
+  `detector.profiles.snspd`'ye taşındı (50 Hz, 12,5 ns — v2 ile aynı).
+- **Yeni:** `validateDetectorConfig`, `configureDetectorProfiles`, `listDetectorProfiles`, `activeDetectorProfile`,
+  `setActiveDetectorProfile`, `onDetectorProfileChange`, `detectorProfileSource`, `DETECTOR_TECHNOLOGIES`.
+  Bozuk/eksik yapılandırma, bilinmeyen anahtar ya da bilinmeyen profil kimliği → TypeError/RangeError
+  (sessiz varsayılan yok). Türetme `expm1`/`log1p` ile (küçük değerlerde hassas).
+- **`DetectorNoiseModel.phantomClickProbability(isNight, profileId?)`**: etkin profilin karanlık sayımı ve penceresi.
+- **`NoiseGateMiddleware(profile?)`**: karanlık sayım ve pencere profilden; yeni `resetForProfile(p)` (profil
+  değişince kalibrasyon/kapı sıfırlanır) ve `_p()` (yapılandırma hatalıysa her hesap aynı hatayı fırlatır;
+  yapıcı çökmez ki arayüz hatayı gösterebilsin).
+- **`QuantumKeyDistribution.deriveSiftedKey`**: `detectorCtx` verildiğinde profilin **verimi** uygulanır
+  (v2'de örtük olarak 1'di) ve `detectorCtx.detectorProfile` ile çağrı başına profil seçilebilir.
+  `detectorCtx` yoksa ideal dedektör — v2 ile aynı.
+
+**Davranış değişikliği (bilinçli):** varsayılan profil SNSPD, verim %80. Dedektör modellenen yollarda
+(SecureMessageSession, arayüz) v2'ye göre ~%20 daha az algılama olur.
+
+Çekirdek dışı:
+
+- `config.json` (yeni), `bb84/detector_profile.js` (Node köprüsü), `hal/detector_profile.py`
+  (aynı kurallar, Python).
+- `linkEta`, `AdaptiveShieldingMitigation`, `mesh_isolation`, `shield_sensor_hal`,
+  `multinode_shielding_testbed`: verim/Y0 varsayılanları etkin profilden okunur.
+- `hal/types.py` `AcquisitionConfig.dark_count_rate_hz` ve `SimulatedHardware` (verim) profilden.
+- `build_photonnet_html.js`: `config.json`'u çekirdeğin doğrulayıcısıyla denetleyip HTML'e gömer;
+  `--check` config değişikliğini de yakalar.
+- Arayüz: metrik çubuğunda DEDEKTÖR seçicisi; `?detector=<kimlik>`; geçersiz yapılandırmada iletim reddedilir.
 
 ## v2 (2026-10) — "Çekirdeği aç" kararıyla yapılan kritik/yüksek hata düzeltmeleri
 

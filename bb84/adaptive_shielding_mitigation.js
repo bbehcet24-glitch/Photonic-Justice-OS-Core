@@ -82,6 +82,7 @@ const {
   TYPICAL_SE_INSTRUMENT_ACCURACY_DB,
 } = require("./mtls_failsafe_debounce.js");
 const { EMERGENCY_SE_FLOOR_DB } = require("./network_shielding_bridge.js");
+const DP = require("./detector_profile.js"); // baseY0 varsayılanı config.json → etkin dedektör profili (çekirdek v3)
 
 const H = D.binaryEntropy;
 const C_M_PER_S = 299792458;
@@ -294,7 +295,7 @@ class AdaptiveShieldingMitigation {
    *   threat: { sourceLevelDbuVm, observerDistanceM, noiseFloorDbuVm, freqHz } — ZORUNLU
    *   ingress: { ambientFieldDbuVm, susceptibilityDbuVm, refDarkYield } — ZORUNLU (kalibre edilmemiş varsayım)
    *   deliveryPathIsolated: boolean — ZORUNLU (bkz. dürüstlük notu 7)
-   *   channel: { eta, baseY0=1e-5, eDetector=0.02, e0=0.5, epsPE=1e-10 }
+   *   channel: { eta, baseY0=<etkin dedektör profilinin Y0'ı>, eDetector=0.02, e0=0.5, epsPE=1e-10 }
    *   blockPulses (N, vars. 1e10), pulseRateHz (vars. 1e9), targetSeDb (vars. 60)
    *   holdHorizonMs (τ, vars. debounce+kurtarma histerezisi = 6930 ms)
    *   switchHysteresis (vars. 0.05), initialCleanPoolBits (vars. 0), grid,
@@ -316,7 +317,8 @@ class AdaptiveShieldingMitigation {
     this.deliveryPathIsolated = cfg.deliveryPathIsolated;
     const ch = cfg.channel || {};
     if (!Number.isFinite(ch.eta)) throw new TypeError("AdaptiveShieldingMitigation: channel.eta ZORUNLU.");
-    this.channel = { baseY0: 1e-5, eDetector: 0.02, e0: 0.5, epsPE: 1e-10, ...ch };
+    this.channel = { baseY0: DP.baseY0(), eDetector: 0.02, e0: 0.5, epsPE: 1e-10, ...ch };
+    this.detectorProfileId = ch.baseY0 === undefined ? DP.activeDetectorProfile().id : null; // null = baseY0 açıkça verildi
     this.blockPulses = cfg.blockPulses || 1e10;
     this.pulseRateHz = cfg.pulseRateHz || 1e9;
     this.blockDurationMs = (this.blockPulses / this.pulseRateHz) * 1000;

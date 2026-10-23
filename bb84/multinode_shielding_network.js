@@ -43,13 +43,14 @@ const A = require("./adaptive_shielding_mitigation.js");
 const NS = require("./qkd_network_scale.js");
 const { mtlsHandshakePrecondition } = require("./network_shielding_bridge.js");
 const { SeFailsafeDebounce } = require("./mtls_failsafe_debounce.js");
+const DP = require("./detector_profile.js"); // dedektör verimi config.json → etkin profilden (çekirdek v3)
 
 const POLICIES = Object.freeze(["adaptive", "legacy-strict", "legacy-debounce"]);
 const DEFAULT_HOLD_ROUTE_PENALTY_KM = 1000;
 const MAX_ROUTING_ROUNDS = 3;
 
-/** Fiber + ekleme kaybı + dedektör verimi → toplam iletim η. */
-function linkEta(km, { lossDbPerKm = 0.2, insertionLossDb = 3, detectorEfficiency = 0.1 } = {}) {
+/** Fiber + ekleme kaybı + dedektör verimi → toplam iletim η. Verim verilmezse ETKİN dedektör profilinden (config.json). */
+function linkEta(km, { lossDbPerKm = 0.2, insertionLossDb = 3, detectorEfficiency = DP.detectorEfficiency() } = {}) {
   return detectorEfficiency * Math.pow(10, -(lossDbPerKm * km + insertionLossDb) / 10);
 }
 const linkKey = (a, b) => [a, b].sort().join("|"); // qkd_network_scale ile AYNI biçim

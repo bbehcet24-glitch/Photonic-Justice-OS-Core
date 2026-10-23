@@ -127,6 +127,8 @@ const EXPORT_MANIFEST = [
   "poissonSample",
   // ── Katman 1: BB84 çekirdek protokolü (baz uzlaşması + sifted key + QBER) ──
   "QuantumKeyDistribution", "SecureMessageSession", "QKD_MISALIGNMENT_E_D", "MAX_LINK_KM", "MAX_REPEATERS", "MAX_RECONCILE_BITS", "bb84Reconcile",
+  "validateDetectorConfig", "configureDetectorProfiles", "listDetectorProfiles", "activeDetectorProfile",
+  "setActiveDetectorProfile", "onDetectorProfileChange", "detectorProfileSource", "DETECTOR_TECHNOLOGIES",
   // ── Basit OTP gösterim katmanı (QKDSecurityProof/Toeplitz üretim yolundan
   //    AYRI, daha eski/didaktik bir "sifted key'i doğrudan OTP anahtarı
   //    olarak kullan" yolu — hâlâ gerçek ve kendi başına faydalı) ──
@@ -236,6 +238,10 @@ function sanityCheck(content, exportNames) {
   const os = require("os");
   const tmpFile = path.join(os.tmpdir(), `photonnet_core_check_${process.pid}_${Date.now() % 100000}.js`);
   fs.writeFileSync(tmpFile, content);
+  // Çekirdek v3 dedektör profilini çalışma anında config.json'dan okur; geçici dosya /tmp'de olduğu için
+  // deponun config.json'u açıkça gösterilir (yoksa çekirdek fail-closed hata verir — bu da bir denetimdir).
+  const prevCfg = process.env.PHOTONNET_CONFIG;
+  process.env.PHOTONNET_CONFIG = path.join(__dirname, "..", "..", "config.json");
   try {
     delete require.cache[require.resolve(tmpFile)];
     const mod = require(tmpFile);
@@ -256,6 +262,7 @@ function sanityCheck(content, exportNames) {
     }
     return { ok: true, siftedLen: sk.siftedKeyBits.length, qber: sk.qber };
   } finally {
+    if (prevCfg === undefined) delete process.env.PHOTONNET_CONFIG; else process.env.PHOTONNET_CONFIG = prevCfg;
     fs.rmSync(tmpFile, { force: true });
   }
 }

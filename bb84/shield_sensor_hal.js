@@ -34,17 +34,21 @@
 const http = require("http");
 const A = require("./adaptive_shielding_mitigation.js");
 const NETM = require("./multinode_shielding_network.js");
+const DP = require("./detector_profile.js"); // baseY0 varsayılanı config.json → etkin dedektör profili (çekirdek v3)
 
 const SENSOR_DEFAULTS = Object.freeze({
   sampleMs: 50,
   seNoiseDb: 0.3, seQuantDb: 0.1, seMinDb: 0, seMaxDb: 100,          // SE ölçer: dinamik aralık 0–100 dB
   ambientNoiseDb: 0.5, ambientQuantDb: 0.1, ambientMinDbuVm: -10, ambientMaxDbuVm: 140,
   tempNoiseC: 0.1, rhNoisePct: 0.5, probeNoiseDb: 0.5,
-  y0WindowPulses: 1e8, baseY0: 1e-5,                                  // 1 s × 1 GHz × %10 vakum
+  y0WindowPulses: 1e8,                                               // 1 s × 1 GHz × %10 vakum; baseY0 → etkin dedektör profili (sensorDefaults())
   // doğrulayıcı
   maxAgeMs: 150, futureToleranceMs: 50, stuckSamples: 40, dualDisagreeDb: 3, dualDisagreeMs: 1000,
   y0Max: 1, tempRangeC: [-50, 100],
 });
+
+/** SENSOR_DEFAULTS + etkin dedektör profilinin Y0'ı (çağrı anında okunur). */
+const sensorDefaults = () => ({ ...SENSOR_DEFAULTS, baseY0: DP.baseY0() });
 
 // ═══ Sayaç-tabanlı (durumsuz) RNG: aynı (tohum, düğüm, kanal, örnek) → aynı değer ═══
 function hash32(...xs) {
@@ -79,7 +83,7 @@ class PhysicalShieldModel {
   constructor({ topology, ingress, events = [], thermal = {}, ingressMismatchDb = 0, o = {} }) {
     this.topology = topology; this.ingress = ingress; this.events = events;
     this.thermal = { meanC: 25, ampC: 8, rhMean: 50, rhAmp: 15, periodMs: 86400000, vibGrms: 0.05, ...thermal };
-    this.ingressMismatchDb = ingressMismatchDb; this.o = { ...SENSOR_DEFAULTS, ...o };
+    this.ingressMismatchDb = ingressMismatchDb; this.o = { ...sensorDefaults(), ...o };
     this.nodeIdx = new Map(topology.nodes.map((n, i) => [n.id, i]));
   }
   _active(e, t) { const s = e.startMs || 0, d = e.durMs == null ? Infinity : e.durMs; return t >= s && t <= s + d; }
@@ -144,7 +148,7 @@ class MockShieldSensorDriver extends ShieldSensorHAL {
   constructor({ model, seed = 1, sensors = {}, faults = [], o = {} }) {
     super();
     this.model = model; this.seed = seed; this.sensors = sensors; this.faults = faults;
-    this.o = { ...SENSOR_DEFAULTS, ...model.o, ...o };
+    this.o = { ...sensorDefaults(), ...model.o, ...o };
     this.topology = model.topology;
     this.stuckVal = new Map(); this.seq = new Map(this.topology.nodes.map((n) => [n.id, 0]));
     this.rxLinks = new Map(this.topology.nodes.map((n) => [n.id, this.topology.links.filter((l) => l.b === n.id).map((l) => NETM.linkKey(l.a, l.b))]));
@@ -201,7 +205,7 @@ class MockShieldSensorDriver extends ShieldSensorHAL {
 // ═══ 4) Doğrulayıcı (kapalı-başarısız) ═══
 class SensorFrameValidator {
   constructor({ topology, o = {} }) {
-    this.topology = topology; this.o = { ...SENSOR_DEFAULTS, ...o };
+    this.topology = topology; this.o = { ...sensorDefaults(), ...o };
     this.ids = new Set(topology.nodes.map((n) => n.id));
     this.links = topology.links.map((l) => ({ key: NETM.linkKey(l.a, l.b), a: l.a, b: l.b }));
     this.lastSeq = new Map(); this.runs = new Map(); this.disagreeSince = new Map();
@@ -417,7 +421,7 @@ class HttpShieldSensorDriver extends ShieldSensorHAL {
 }
 
 module.exports = {
-  SENSOR_DEFAULTS, PhysicalShieldModel, ShieldSensorHAL, MockShieldSensorDriver, SensorFrameValidator, ShieldSensorFeed,
+  SENSOR_DEFAULTS, sensorDefaults, PhysicalShieldModel, ShieldSensorHAL, MockShieldSensorDriver, SensorFrameValidator, ShieldSensorFeed,
   FrameRecorder, parseRecording, ReplayShieldSensorDriver, SimulatedSensorDeviceServer, HttpShieldSensorDriver,
   _rng: { hash32, u01, gauss, poissonC, strHash },
 };
