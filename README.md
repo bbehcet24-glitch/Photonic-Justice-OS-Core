@@ -80,7 +80,8 @@ PhotonNet2.jsx  (849KB, ~14.700 satır — React uygulamasının TAM kaynağı,
        │  algoritma sınıfları/fonksiyonları require()-edilebilir hale gelir)
        ▼
 bb84/photonnet_core.js  (13.570+ satır, 85 export edilen sembol —
-                          "ÇEKİRDEK", asla elle değiştirilmez)
+                          "ÇEKİRDEK", asla elle değiştirilmez;
+                          sürümleri: bb84/docs/CORE_CHANGELOG.md)
        │
        │  bu depodaki HER "bridge/layer" dosyası çekirdeği YALNIZCA
        │  import edip salt-okunur çağırır — asla üzerine yazmaz/patch'lemez
@@ -96,7 +97,10 @@ Bu deseni denetleyen somut mekanizmalar:
   `timetag_acquisition_bridge.js` gibi diğer "dokunulmaz" bridge
   dosyalarının) SHA-256 özetini karşılaştırıp raporlar — "çekirdeğe
   dokunulmadı" iddiası her çalıştırmada YENİDEN kanıtlanır, sadece bir
-  kere varsayılmaz.
+  kere varsayılmaz. Çekirdek bilinçli olarak yeni sürüme geçtiğinde
+  (şu an **v2**, SHA-256 `157d81da…81cf3b`) eski/yeni hash ve değişen her
+  fonksiyon [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md)'de
+  belgelenir ve tüm sabitlenmiş testler yeni hash'e güncellenip yeniden koşturulur.
 - **`extract_core.js --check`**: CI kapısı — `photonnet_core.js`'in
   `PhotonNet2.jsx` ile senkron olup olmadığını (kaynak değişmiş ama
   çıkarım yeniden üretilip commit edilmemişse) otomatik doğrular, exit
@@ -597,7 +601,8 @@ bozuk girdi) yeniden üretildi, sonra düzeltildi, sonra AYNI gerçek koşulda
 olmalı" gerekçesiyle test edilmeden kabul edilmedi. `photonnet_core.js`
 SHA-256'sı (`8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05`)
 bu 22 commit'in HİÇBİRİNDE değişmedi — her commit öncesi/sonrası ayrıca
-doğrulandı.
+doğrulandı. (Bu hash çekirdek **v1**'e aittir; v2 geçişi ve gerekçesi:
+[`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md).)
 
 ---
 

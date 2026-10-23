@@ -163,10 +163,13 @@ jobs:
       - name: bb84/photonnet_core.js, PhotonNet2.jsx ile senkron mu doğrula
         run: node bb84/tools/extract_core.js --check
 
+      - name: PhotonNet.html ve PhotonNet_offline.html kaynakla senkron mu doğrula
+        run: node bb84/tools/build_photonnet_html.js --check
+
       - name: Kayma tespit edilirse rehberlik ekle
         if: failure()
         run: |
-          echo "::error::bb84/photonnet_core.js kaynakla (PhotonNet2.jsx) senkron değil. Yerel olarak şunu çalıştırıp sonucu commit edin: node bb84/tools/extract_core.js && git add bb84/photonnet_core.js && git commit"
+          echo "::error::bb84/photonnet_core.js veya PhotonNet.html / PhotonNet_offline.html kaynakla (PhotonNet2.jsx) senkron değil. Yerel olarak şunu çalıştırıp sonucu commit edin: node bb84/tools/extract_core.js && node bb84/tools/build_photonnet_html.js && git add bb84/photonnet_core.js PhotonNet.html PhotonNet_offline.html && git commit"
 
   # ── KAPI 3a: mTLS/KME sertifika rotasyon+iptal senaryo analizi ─────
   mtls-kme-scenarios:
