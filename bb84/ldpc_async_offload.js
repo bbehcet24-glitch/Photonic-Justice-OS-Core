@@ -39,6 +39,14 @@
 // bu sınır kullanıcıya açıkça bildirilmiştir.
 //
 // Çekirdeğe (photonnet_core.js) hiçbir şekilde dokunulmaz.
+//
+// ÇEKİRDEK v2 GÜNCELLEMESİ (docs/CORE_CHANGELOG.md, Hata 4): kilitlenme artık
+// çekirdeğin İÇİNDE de giderildi — _finalizeBlock, n > KeyPoolBuffer.LDPC_SYNC_MAX_BITS
+// (8192) bloklarda LDPC'yi senkron çalıştırmaz. Bu dosyadaki runLdpcOnWorker,
+// çekirdeğin yerli kancası olarak doğrudan takılabilir:
+//     core.KeyPoolBuffer.ldpcOffload = runLdpcOnWorker;
+// (kayıt önce "pending", worker bitince "done"). finalizeBlockNonBlocking geriye
+// dönük uyumluluk ve eşdeğerlik testi için tutulur.
 // ══════════════════════════════════════════════════════════════
 const { Worker } = require("worker_threads");
 const path = require("path");

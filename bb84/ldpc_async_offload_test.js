@@ -22,15 +22,25 @@
 //   parçacığını KİLİTLEMEDİĞİNİ — ölçerek kanıtlar. Ardından worker'ın
 //   nihai LDPC sonucunun da orijinalle AYNI olduğunu doğrular.
 //
-// Çekirdeğe (photonnet_core.js) hiçbir şekilde dokunulmaz — yalnızca
-// okunur/require edilir, hiçbir fonksiyonu değiştirilmez.
+//   TEST C (ÇEKİRDEK v2 YERLİ YOLU): çekirdek v2'de _finalizeBlock büyük
+//   bloklarda (n > KeyPoolBuffer.LDPC_SYNC_MAX_BITS) LDPC'yi kendisi
+//   senkron çalıştırmaz: kanca yoksa kayıt "skipped", kanca
+//   (KeyPoolBuffer.ldpcOffload = runLdpcOnWorker) varsa "pending" → "done".
+//   Test C kancalı yolun hızlı döndüğünü ve sonucun referansla aynı
+//   olduğunu, kancasız yolun "skipped" kaydettiğini doğrular.
+//
+// "ORİJİNAL" REFERANS (çekirdek v2): v1'in senkron davranışı, çekirdeğin
+// kendi _finalizeBlock'u LDPC_SYNC_MAX_BITS = Infinity ile çağrılarak
+// yeniden üretilir (bkz. docs/CORE_CHANGELOG.md, Hata 4). Çekirdek
+// dosyası yalnızca okunur/require edilir; statik eşik test boyunca
+// geçici olarak değiştirilip finally'de geri alınır.
 // ══════════════════════════════════════════════════════════════
 const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 
 const CORE_PATH = path.join(__dirname, "photonnet_core.js");
-const CORE_SHA_EXPECTED = "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05";
+const CORE_SHA_EXPECTED = "157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b";
 
 function verifyCoreHash() {
   const hash = crypto.createHash("sha256").update(fs.readFileSync(CORE_PATH)).digest("hex");
@@ -45,7 +55,16 @@ verifyCoreHash();
 
 const core = require("./photonnet_core.js");
 const { KeyPoolBuffer } = core;
-const { finalizeBlockNonBlocking } = require("./ldpc_async_offload.js");
+const { finalizeBlockNonBlocking, runLdpcOnWorker } = require("./ldpc_async_offload.js");
+
+/** v1 eşdeğeri senkron referans: LDPC karşılaştırması eşik olmadan ana iş parçacığında. */
+function finalizeSyncReference(kpb, routeKey, pool, seed) {
+  const prevMax = KeyPoolBuffer.LDPC_SYNC_MAX_BITS, prevHook = KeyPoolBuffer.ldpcOffload;
+  KeyPoolBuffer.LDPC_SYNC_MAX_BITS = Infinity; KeyPoolBuffer.ldpcOffload = null;
+  try { return kpb._finalizeBlock(routeKey, pool, seed); }
+  finally { KeyPoolBuffer.LDPC_SYNC_MAX_BITS = prevMax; KeyPoolBuffer.ldpcOffload = prevHook; }
+}
+const WORKER_WAIT_MS = 180000; // n=150 000 worker LDPC'si tek başına ~20 s; paralel test yükünde birkaç katı sürebilir
 
 function mulberry32(seed) {
   let a = seed >>> 0;
@@ -103,7 +122,7 @@ async function testA_behavioralEquivalence() {
     const poolOrig = { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 };
     const poolNew = { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 };
 
-    const resOrig = kpbOrig._finalizeBlock("routeEQ_A", poolOrig, SEED);
+    const resOrig = finalizeSyncReference(kpbOrig, "routeEQ_A", poolOrig, SEED);
     const resNew = finalizeBlockNonBlocking(kpbNew, "routeEQ_B", poolNew, SEED);
 
     const settled = await waitForLdpcSettled(kpbNew, 0, 15000);
@@ -156,9 +175,9 @@ async function testB_blockingEliminated() {
     const poolOrig = { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 };
     const poolNew = { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 };
 
-    console.log("  Orijinal _finalizeBlock çağrılıyor (senkron Cascade+LDPC dahil — uzun sürmesi BEKLENİYOR)...");
+    console.log("  v1-eşdeğeri senkron _finalizeBlock çağrılıyor (Cascade+LDPC ana iş parçacığında — uzun sürmesi BEKLENİYOR)...");
     const t0 = Date.now();
-    const resOrig = kpbOrig._finalizeBlock("routeBLK_A", poolOrig, SEED);
+    const resOrig = finalizeSyncReference(kpbOrig, "routeBLK_A", poolOrig, SEED);
     const origDispatchMs = Date.now() - t0;
     console.log(`  → orijinal senkron dönüş süresi: ${origDispatchMs} ms`);
 
@@ -169,9 +188,10 @@ async function testB_blockingEliminated() {
     console.log(`  → yeni senkron dönüş (dispatch) süresi: ${newDispatchMs} ms`);
 
     const t2 = Date.now();
-    const settled = await waitForLdpcSettled(kpbNew, 0, 60000);
+    const settled = await waitForLdpcSettled(kpbNew, 0, WORKER_WAIT_MS);
     const ldpcRoundTripMs = Date.now() - t2;
-    if (!settled) findings.push("[KRİTİK] Test B: n=150000 için worker LDPC sonucu 60s içinde tamamlanmadı.");
+    if (!settled) findings.push(`[KRİTİK] Test B: n=150000 için worker LDPC sonucu ${WORKER_WAIT_MS / 1000}s içinde tamamlanmadı.`);
+    report._refLdpc150k = kpbOrig.productionBlocks[0].key.reconciliationComparison.ldpc;
 
     const ldpcOrig = kpbOrig.productionBlocks[0].key.reconciliationComparison.ldpc;
     const ldpcNew = kpbNew.productionBlocks[0].key.reconciliationComparison.ldpc;
@@ -201,12 +221,51 @@ async function testB_blockingEliminated() {
   }
 }
 
+async function testC_coreNativeOffload() {
+  console.log("\n── TEST C: çekirdek v2 yerli yolu (LDPC_SYNC_MAX_BITS + ldpcOffload kancası, n=150000) ──");
+  const N = 150000, QBER = 0.03, SEED = 990002;
+  const origThreshold = KeyPoolBuffer.BLOCK_THRESHOLD_BITS, origHook = KeyPoolBuffer.ldpcOffload;
+  KeyPoolBuffer.BLOCK_THRESHOLD_BITS = N;
+  try {
+    // C1: kancasız → "skipped", ana iş parçacığı kilitlenmez
+    KeyPoolBuffer.ldpcOffload = null;
+    const kSkip = new KeyPoolBuffer();
+    const tS = Date.now();
+    kSkip._finalizeBlock("routeC_skip", { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 }, SEED);
+    const skipMs = Date.now() - tS;
+    const skipRec = kSkip.productionBlocks[0].key.reconciliationComparison.ldpc;
+    const c1 = skipRec.status === "skipped" && skipMs < 3000;
+    if (!c1) findings.push(`[KRİTİK] Test C1: kancasız büyük blok beklenen "skipped"/<3s değil: status=${skipRec.status}, ${skipMs}ms`);
+    console.log(`  ${c1 ? "✓" : "✗"} kancasız: status=${skipRec.status}, dönüş ${skipMs} ms`);
+
+    // C2: kanca = runLdpcOnWorker → "pending" hemen, sonra "done", referansla aynı
+    KeyPoolBuffer.ldpcOffload = runLdpcOnWorker;
+    const kHook = new KeyPoolBuffer();
+    const tH = Date.now();
+    kHook._finalizeBlock("routeC_hook", { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 }, SEED);
+    const hookMs = Date.now() - tH;
+    const pendingAtReturn = kHook.productionBlocks[0].key.reconciliationComparison.ldpc.status === "pending";
+    const settled = await waitForLdpcSettled(kHook, 0, WORKER_WAIT_MS);
+    const rec = kHook.productionBlocks[0].key.reconciliationComparison.ldpc;
+    const ref = report._refLdpc150k;
+    const diffs = ref ? deepFieldDiff(ref, rec, ["protocol", "leakedBits", "residualErrors", "converged", "bpConverged", "bpIterations", "leakRatio"]) : [{ field: "referans yok" }];
+    const c2 = pendingAtReturn && hookMs < 3000 && settled && rec.status === "done" && diffs.length === 0;
+    if (!c2) findings.push(`[KRİTİK] Test C2: kancalı yol: pending=${pendingAtReturn}, ${hookMs}ms, settled=${settled}, status=${rec.status}, fark=${JSON.stringify(diffs)}`);
+    console.log(`  ${c2 ? "✓" : "✗"} kancalı: dönüşte pending=${pendingAtReturn}, dönüş ${hookMs} ms, sonra status=${rec.status}, referansla fark ${diffs.length}`);
+    report.tests.coreNativeOffload = { n: N, skippedDispatchMs: skipMs, skippedStatus: skipRec.status, hookDispatchMs: hookMs, pendingAtReturn, settled, finalStatus: rec.status, diffs, pass: c1 && c2 };
+  } finally {
+    KeyPoolBuffer.BLOCK_THRESHOLD_BITS = origThreshold; KeyPoolBuffer.ldpcOffload = origHook;
+  }
+}
+
 async function main() {
   console.log("═══ ldpc_async_offload.js DOĞRULAMA TESTİ ═══");
   console.log(`Ortam: typeof Worker (tarayıcı) = ${typeof Worker}; worker_threads.Worker = fonksiyon (require ile doğrulandı, aşağıda kullanılacak).`);
 
   await testA_behavioralEquivalence();
   await testB_blockingEliminated();
+  await testC_coreNativeOffload();
+  delete report._refLdpc150k;
 
   report.findings = findings;
   report.overallPass = findings.length === 0;
@@ -217,12 +276,12 @@ async function main() {
 
   console.log("\n═══ SONUÇ ═══");
   if (findings.length === 0) {
-    console.log("✓ Tüm testler geçti: finalizeBlockNonBlocking, orijinal _finalizeBlock ile davranışça eşdeğer VE n=150000 ölçeğinde ana-iş-parçacığı kilitlenmesini ölçülebilir şekilde ortadan kaldırıyor.");
+    console.log("✓ Tüm testler geçti: finalizeBlockNonBlocking ve çekirdek v2'nin ldpcOffload kancası, v1-eşdeğeri senkron _finalizeBlock ile davranışça eşdeğer VE n=150000 ölçeğinde ana-iş-parçacığı kilitlenmesini ölçülebilir şekilde ortadan kaldırıyor.");
   } else {
     console.log(`✗ ${findings.length} bulgu:`);
     for (const f of findings) console.log("  " + f);
   }
-  // Çekirdek yine değişmedi mi? (son bir kez, dürüstlük için)
+  // Çekirdek dosyası yine sabitlenmiş sürümle aynı mı? (son bir kez, dürüstlük için)
   verifyCoreHash();
   process.exitCode = findings.length === 0 ? 0 : 1;
 }

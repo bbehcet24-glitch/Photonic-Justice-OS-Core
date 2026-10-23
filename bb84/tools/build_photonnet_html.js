@@ -15,7 +15,8 @@
 // react_bundle.js (React'in kendisi) DEĞİŞMEDİĞİ için yeniden üretilmez —
 // yalnızca uygulama script'i değiştirilir.
 //
-// KULLANIM: node bb84/tools/build_photonnet_html.js
+// KULLANIM: node bb84/tools/build_photonnet_html.js           → PhotonNet.html + PhotonNet_offline.html yazar
+//           node bb84/tools/build_photonnet_html.js --check   → yalnız doğrular (CI)
 "use strict";
 
 const fs = require("fs");
@@ -24,6 +25,11 @@ const path = require("path");
 const REPO_ROOT = path.resolve(__dirname, "..", "..");
 const SOURCE = path.join(REPO_ROOT, "PhotonNet2.jsx");
 const HTML_PATH = path.join(REPO_ROOT, "PhotonNet.html");
+// PhotonNet_offline.html: önceden ELLE tutulan ikinci kopya kaynaktan geride kalmıştı (4 sekme eksik,
+// 633 nm kaybı farklı — EIC değerlendirme testinde bulundu). İkisi de CDN'siz/sunucusuz çalışır; artık
+// her derlemede AYNI içerikle birlikte yazılır, `--check` ikisinin de güncel olduğunu doğrular.
+const OFFLINE_HTML_PATH = path.join(REPO_ROOT, "PhotonNet_offline.html");
+const CHECK_ONLY = process.argv.includes("--check");
 
 const APP_COMMENT_MARKER = "/* ===== PhotonNet bileşeni";
 
@@ -136,8 +142,15 @@ try {
   }
   fs.unlinkSync(tmpFile);
 
+  if (CHECK_ONLY) {
+    const stale = [HTML_PATH, OFFLINE_HTML_PATH].filter((f) => !fs.existsSync(f) || fs.readFileSync(f, "utf-8") !== newHtml);
+    if (stale.length) { console.error(`[build_photonnet_html] ✗ GÜNCEL DEĞİL: ${stale.map((f) => path.basename(f)).join(", ")} — 'node bb84/tools/build_photonnet_html.js' çalıştırıp commit edin.`); process.exit(1); }
+    console.log("[build_photonnet_html] ✓ SENKRON: PhotonNet.html ve PhotonNet_offline.html kaynakla (PhotonNet2.jsx) birebir güncel.");
+    return;
+  }
   fs.writeFileSync(HTML_PATH, newHtml);
-  console.log(`[build_photonnet_html] ✓ PhotonNet.html güncellendi (${sourceLines} satırlık kaynaktan, ${newHtml.length} bayt toplam, node --check OK).`);
+  fs.writeFileSync(OFFLINE_HTML_PATH, newHtml);
+  console.log(`[build_photonnet_html] ✓ PhotonNet.html ve PhotonNet_offline.html güncellendi (${sourceLines} satırlık kaynaktan, ${newHtml.length} bayt toplam, node --check OK).`);
   console.log(`[build_photonnet_html] React bundle (bundler/react_bundle.js) DOKUNULMADI — yalnızca uygulama script'i değiştirildi.`);
 }
 

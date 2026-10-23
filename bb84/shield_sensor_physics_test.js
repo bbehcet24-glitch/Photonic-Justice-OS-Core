@@ -26,7 +26,7 @@ const TB = require("./multinode_shielding_testbed.js");
 const M = require("./mesh_isolation.js");
 const S = require("./shield_sensor_hal.js");
 
-const CORE_SHA = "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05";
+const CORE_SHA = "157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b";
 const GUARDED = ["photonnet_core.js", "qkd_network_scale.js"];
 const hashes = () => Object.fromEntries(GUARDED.map((f) => [f, crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, f))).digest("hex")]));
 const DT = TB.DT;
@@ -150,7 +150,7 @@ async function main() {
   }
 
   const after = hashes();
-  chk("Çekirdek değişmedi (photonnet_core.js SHA-256 = 8f879fde…dc7b05), qkd_network_scale.js değişmedi",
+  chk("Çekirdek değişmedi (photonnet_core.js SHA-256 = 157d81da…81cf3b), qkd_network_scale.js değişmedi",
     after["photonnet_core.js"] === CORE_SHA && JSON.stringify(before) === JSON.stringify(after),
     GUARDED.map((f) => `${f} ${after[f].slice(0, 12)}…`).join(" · "));
 

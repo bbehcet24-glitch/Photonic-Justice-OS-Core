@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T23:50:03.070Z",
+  "generatedAt": "2026-10-23T10:17:35.063Z",
   "assumptions": {
     "pulseRateHz": 1000000000,
     "detectorEfficiency": 0.1,
@@ -37,9 +37,9 @@
       "detail": "0 km %2.02 · 80 km %2.54 · 110 km %4.86 · 150 km %33.97"
     },
     {
-      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256)",
+      "name": "Çekirdek sabitlenmiş sürümle aynı (photonnet_core.js SHA-256)",
       "ok": true,
-      "detail": "8f879fde86be0129…"
+      "detail": "157d81da543cabfa…"
     }
   ],
   "table": [
@@ -48,7 +48,7 @@
       "eta": 0.05011872336272723,
       "plobBps": 1003429705.6080472,
       "asymptoticBps": 9303228.10263086,
-      "coreMessageQber": 0.012,
+      "legacyV1CoreMessageQber": 0.012,
       "N1e8": {
         "bps": 3142590.212004496,
         "qber": 0.020176679794165472,
@@ -87,7 +87,7 @@
       "eta": 0.03981071705534972,
       "plobBps": 732421465.3612658,
       "asymptoticBps": 7367869.0200075265,
-      "coreMessageQber": 0.01325,
+      "legacyV1CoreMessageQber": 0.01325,
       "N1e8": {
         "bps": 2412171.0632989286,
         "qber": 0.02022172777781333,
@@ -126,7 +126,7 @@
       "eta": 0.0316227766016838,
       "plobBps": 548412254.608164,
       "asymptoticBps": 5835916.822019295,
-      "coreMessageQber": 0.0145,
+      "legacyV1CoreMessageQber": 0.0145,
       "N1e8": {
         "bps": 1840871.1296887717,
         "qber": 0.020278428855544813,
@@ -165,7 +165,7 @@
       "eta": 0.0251188643150958,
       "plobBps": 417325779.16269976,
       "asymptoticBps": 4622194.715955401,
-      "coreMessageQber": 0.01575,
+      "legacyV1CoreMessageQber": 0.01575,
       "N1e8": {
         "bps": 1401990.7806736378,
         "qber": 0.020349793065140388,
@@ -204,7 +204,7 @@
       "eta": 0.0199526231496888,
       "plobBps": 321073968.4363269,
       "asymptoticBps": 3660100.803208951,
-      "coreMessageQber": 0.017,
+      "legacyV1CoreMessageQber": 0.017,
       "N1e8": {
         "bps": 1039261.5376865306,
         "qber": 0.020372427378538647,
@@ -243,7 +243,7 @@
       "eta": 0.01584893192461113,
       "plobBps": 248946512.0155854,
       "asymptoticBps": 2897152.7386569083,
-      "coreMessageQber": 0.018250000000000002,
+      "legacyV1CoreMessageQber": 0.018250000000000002,
       "N1e8": {
         "bps": 687718.0031601929,
         "qber": 0.020607558567184523,
@@ -282,7 +282,7 @@
       "eta": 0.012589254117941673,
       "plobBps": 194117445.85050234,
       "asymptoticBps": 2291930.502510797,
-      "coreMessageQber": 0.0195,
+      "legacyV1CoreMessageQber": 0.0195,
       "N1e8": {
         "bps": 512009.0098661021,
         "qber": 0.020763947788319997,
@@ -321,7 +321,7 @@
       "eta": 0.010000000000000002,
       "plobBps": 152003093.44504994,
       "asymptoticBps": 1811703.5249299586,
-      "coreMessageQber": 0.02075,
+      "legacyV1CoreMessageQber": 0.02075,
       "N1e8": {
         "bps": 379294.57478705735,
         "qber": 0.02096068542856647,
@@ -360,7 +360,7 @@
       "eta": 0.007943282347242814,
       "plobBps": 119405091.71847168,
       "asymptoticBps": 1430581.4241735546,
-      "coreMessageQber": 0.022,
+      "legacyV1CoreMessageQber": 0.022,
       "N1e8": {
         "bps": 276850.5011373246,
         "qber": 0.021208134119163703,
@@ -399,7 +399,7 @@
       "eta": 0.006309573444801934,
       "plobBps": 94026456.46885727,
       "asymptoticBps": 1128067.8025834817,
-      "coreMessageQber": 0.02325,
+      "legacyV1CoreMessageQber": 0.02325,
       "N1e8": {
         "bps": 200685.02023511502,
         "qber": 0.02151929049281677,
@@ -438,7 +438,7 @@
       "eta": 0.005011872336272723,
       "plobBps": 74180889.13876125,
       "asymptoticBps": 887925.9585913091,
-      "coreMessageQber": 0.0245,
+      "legacyV1CoreMessageQber": 0.0245,
       "N1e8": {
         "bps": 142667.46793931624,
         "qber": 0.02212148482216901,
@@ -477,7 +477,7 @@
       "eta": 0.003981071705534973,
       "plobBps": 58609261.2954493,
       "asymptoticBps": 697287.094766103,
-      "coreMessageQber": 0.025750000000000002,
+      "legacyV1CoreMessageQber": 0.025750000000000002,
       "N1e8": {
         "bps": 99956.65417220126,
         "qber": 0.0226670720590998,
@@ -516,7 +516,7 @@
       "eta": 0.0031622776601683794,
       "plobBps": 46358947.889144324,
       "asymptoticBps": 545947.7880006812,
-      "coreMessageQber": 0.027,
+      "legacyV1CoreMessageQber": 0.027,
       "N1e8": {
         "bps": 67986.75542448166,
         "qber": 0.023352156939084698,
@@ -555,7 +555,7 @@
       "eta": 0.0025118864315095794,
       "plobBps": 36701768.75519015,
       "asymptoticBps": 425815.6544926007,
-      "coreMessageQber": 0.02825,
+      "legacyV1CoreMessageQber": 0.02825,
       "N1e8": {
         "bps": 44465.00695860587,
         "qber": 0.024211836607600557,
@@ -594,7 +594,7 @@
       "eta": 0.00199526231496888,
       "plobBps": 29076602.09329715,
       "asymptoticBps": 330472.7861095062,
-      "coreMessageQber": 0.029500000000000002,
+      "legacyV1CoreMessageQber": 0.029500000000000002,
       "N1e8": {
         "bps": 27695.121954317845,
         "qber": 0.025289709850284964,
@@ -633,7 +633,7 @@
       "eta": 0.0015848931924611134,
       "plobBps": 23048307.336104494,
       "asymptoticBps": 254835.51956315164,
-      "coreMessageQber": 0.03075,
+      "legacyV1CoreMessageQber": 0.03075,
       "N1e8": {
         "bps": 14892.650004912171,
         "qber": 0.02544668034869494,
@@ -672,7 +672,7 @@
       "eta": 0.0012589254117941675,
       "plobBps": 18277749.032176502,
       "asymptoticBps": 194851.0503820778,
-      "coreMessageQber": 0.032,
+      "legacyV1CoreMessageQber": 0.032,
       "N1e8": {
         "bps": 1459.8790127577784,
         "qber": 0.02538830542621712,
@@ -711,7 +711,7 @@
       "eta": 0.001,
       "plobBps": 14499569.69511509,
       "asymptoticBps": 147314.424571418,
-      "coreMessageQber": 0.03325,
+      "legacyV1CoreMessageQber": 0.03325,
       "N1e8": {
         "bps": 0,
         "qber": 0.06363892566456689,
@@ -750,7 +750,7 @@
       "eta": 0.0007943282347242814,
       "plobBps": 11505490.467508284,
       "asymptoticBps": 109683.00262532668,
-      "coreMessageQber": 0.0345,
+      "legacyV1CoreMessageQber": 0.0345,
       "N1e8": {
         "bps": 0,
         "qber": 0.07367411716012223,
@@ -789,7 +789,7 @@
       "eta": 0.0006309573444801931,
       "plobBps": 9131629.051708812,
       "asymptoticBps": 79949.24542001211,
-      "coreMessageQber": 0.035750000000000004,
+      "legacyV1CoreMessageQber": 0.035750000000000004,
       "N1e8": {
         "bps": 0,
         "qber": 0.08566983427923236,
@@ -828,7 +828,7 @@
       "eta": 0.0005011872336272725,
       "plobBps": 7248783.565600344,
       "asymptoticBps": 56508.39855732399,
-      "coreMessageQber": 0.037000000000000005,
+      "legacyV1CoreMessageQber": 0.037000000000000005,
       "N1e8": {
         "bps": 0,
         "qber": 0.09984451514526325,
@@ -867,7 +867,7 @@
       "eta": 0.00039810717055349735,
       "plobBps": 5754935.428265223,
       "asymptoticBps": 38097.24818304685,
-      "coreMessageQber": 0.03825,
+      "legacyV1CoreMessageQber": 0.03825,
       "N1e8": {
         "bps": 0,
         "qber": 0.11636726741540097,
@@ -906,7 +906,7 @@
       "eta": 0.00031622776601683794,
       "plobBps": 4569431.016943222,
       "asymptoticBps": 23707.84373949229,
-      "coreMessageQber": 0.0395,
+      "legacyV1CoreMessageQber": 0.0395,
       "N1e8": {
         "bps": 0,
         "qber": 0.13532388864329709,
@@ -945,7 +945,7 @@
       "eta": 0.00025118864315095795,
       "plobBps": 3628445.12928736,
       "asymptoticBps": 12545.759676982083,
-      "coreMessageQber": 0.04075,
+      "legacyV1CoreMessageQber": 0.04075,
       "N1e8": {
         "bps": 0,
         "qber": 0.15668102796629196,
@@ -984,7 +984,7 @@
       "eta": 0.0001995262314968879,
       "plobBps": 2881430.6089184415,
       "asymptoticBps": 3981.724570754912,
-      "coreMessageQber": 0.041999999999999996,
+      "legacyV1CoreMessageQber": 0.041999999999999996,
       "N1e8": {
         "bps": 0,
         "qber": 0.18025534192841655,
@@ -1023,7 +1023,7 @@
       "eta": 0.00015848931924611142,
       "plobBps": 2288331.4089207524,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.04325,
+      "legacyV1CoreMessageQber": 0.04325,
       "N1e8": {
         "bps": 0,
         "qber": 0.20569648977176136,
@@ -1062,7 +1062,7 @@
       "eta": 0.00012589254117941674,
       "plobBps": 1817389.6676443391,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.0445,
+      "legacyV1CoreMessageQber": 0.0445,
       "N1e8": {
         "bps": 0,
         "qber": 0.23249245692893944,
@@ -1101,7 +1101,7 @@
       "eta": 0.0001,
       "plobBps": 1443416.8696687187,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.04575,
+      "legacyV1CoreMessageQber": 0.04575,
       "N1e8": {
         "bps": 0,
         "qber": 0.2600019000063257,
@@ -1140,7 +1140,7 @@
       "eta": 0.00007943282347242814,
       "plobBps": 1146428.7857544986,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.047,
+      "legacyV1CoreMessageQber": 0.047,
       "N1e8": {
         "bps": 0,
         "qber": 0.2875113273177869,
@@ -1179,7 +1179,7 @@
       "eta": 0.0000630957344480193,
       "plobBps": 910566.3263677327,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.04825,
+      "legacyV1CoreMessageQber": 0.04825,
       "N1e8": {
         "bps": 0,
         "qber": 0.3143072488022155,
@@ -1218,7 +1218,7 @@
       "eta": 0.00005011872336272726,
       "plobBps": 723241.5913800632,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.0495,
+      "legacyV1CoreMessageQber": 0.0495,
       "N1e8": {
         "bps": 0,
         "qber": 0.339748325595463,
@@ -1257,7 +1257,7 @@
       "eta": 0.000039810717055349735,
       "plobBps": 574461.5969290986,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.05075,
+      "legacyV1CoreMessageQber": 0.05075,
       "N1e8": {
         "bps": 0,
         "qber": 0.3633225496485353,
@@ -1296,7 +1296,7 @@
       "eta": 0.000031622776601683795,
       "plobBps": 456292.37978683715,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.052000000000000005,
+      "legacyV1CoreMessageQber": 0.052000000000000005,
       "N1e8": {
         "bps": 0,
         "qber": 0.38467958752707765,
@@ -1335,7 +1335,7 @@
       "eta": 0.000025118864315095798,
       "plobBps": 362434.13137631706,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.053250000000000006,
+      "legacyV1CoreMessageQber": 0.053250000000000006,
       "N1e8": {
         "bps": 0,
         "qber": 0.4036361027930841,
@@ -1374,7 +1374,7 @@
       "eta": 0.00001995262314968879,
       "plobBps": 287884.225890334,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.05450000000000001,
+      "legacyV1CoreMessageQber": 0.05450000000000001,
       "N1e8": {
         "bps": 0,
         "qber": 0.42015875049451146,
@@ -1413,7 +1413,7 @@
       "eta": 0.00001584893192461114,
       "plobBps": 228669.87625544405,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.055749999999999994,
+      "legacyV1CoreMessageQber": 0.055749999999999994,
       "N1e8": {
         "bps": 0,
         "qber": 0.43433333258831885,
@@ -1452,7 +1452,7 @@
       "eta": 0.000012589254117941675,
       "plobBps": 181635.97839185793,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.056999999999999995,
+      "legacyV1CoreMessageQber": 0.056999999999999995,
       "N1e8": {
         "bps": 0,
         "qber": 0.44632895958068375,
@@ -1491,7 +1491,7 @@
       "eta": 0.000009999999999999999,
       "plobBps": 144276.7180450193,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.058249999999999996,
+      "legacyV1CoreMessageQber": 0.058249999999999996,
       "N1e8": {
         "bps": 0,
         "qber": 0.45636407107668586,
@@ -1530,7 +1530,7 @@
       "eta": 0.000007943282347242822,
       "plobBps": 114601.8921437021,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.0595,
+      "legacyV1CoreMessageQber": 0.0595,
       "N1e8": {
         "bps": 0,
         "qber": 0.46467832800714803,
@@ -1569,7 +1569,7 @@
       "eta": 0.00000630957344480193,
       "plobBps": 91030.7750464843,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.06075,
+      "legacyV1CoreMessageQber": 0.06075,
       "N1e8": {
         "bps": 0,
         "qber": 0.4715118356133552,
@@ -1608,7 +1608,7 @@
       "eta": 0.000005011872336272725,
       "plobBps": 72307.84565463288,
       "asymptoticBps": 0,
-      "coreMessageQber": 0.062,
+      "legacyV1CoreMessageQber": 0.062,
       "N1e8": {
         "bps": 0,
         "qber": 0.47709140707240927,
@@ -1649,15 +1649,15 @@
     "N1e12": 119,
     "Y0_1e6": 151
   },
-  "knownInconsistency": {
-    "what": "Çekirdeğin mesaj yolu (photonnet_core.js propPhoton) QBER'i 0,012 + km/4000 doğrusal formülüyle üretir; fiziksel decoy modeli 112 km'den sonra anahtar = 0 der. Çekirdek değiştirilemediği için tutarsızlık BELGELENİR; anahtar tüketen yollar qber_abort_policy.js'ten geçmelidir.",
+  "resolvedInconsistency": {
+    "what": "Çekirdek v1'de mesaj yolu (propPhoton) QBER'i 0,012 + km/4000 doğrusal formülüyle üretiyordu ve %11'i aşsa bile anahtar kullanılıyordu. Çekirdek v2'de (docs/CORE_CHANGELOG.md) anahtar kanalı sabit hizalama hatası e_d = %1,5 + karanlık sayım kullanır ve SecureMessageSession QBER_test ≥ %11'de iptal eder. Aşağıdaki v1 değerleri yalnız tarihsel karşılaştırma içindir.",
     "at150km": {
-      "coreMessageQber": 0.0495,
+      "legacyV1CoreMessageQber": 0.0495,
       "physicalQber": 0.339748325595463,
       "physicalSkrBps": 0
     },
     "at200km": {
-      "coreMessageQber": 0.062,
+      "legacyV1CoreMessageQber": 0.062,
       "physicalQber": 0.47709140707240927,
       "physicalSkrBps": 0
     }

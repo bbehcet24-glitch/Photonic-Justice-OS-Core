@@ -17340,7 +17340,7 @@ window.ReactDOM = ReactDOMClientExports;
 <script>
 /* ===== PhotonNet bileşeni — önceden derlenmiş (Babel/CDN gerektirmez) =====
    OTOMATİK ÜRETİLDİ — bb84/tools/build_photonnet_html.js tarafından
-   PhotonNet2.jsx kaynağından (14708 satır) TypeScript
+   PhotonNet2.jsx kaynağından (14892 satır) TypeScript
    transpileModule (JSX→React.createElement) ile yeniden derlendi.
    ELLE DÜZENLEMEYİN — değişiklikler PhotonNet2.jsx'te yapılıp bu script
    yeniden çalıştırılmalı (bkz. dosya başlığı). ===== */
@@ -17428,7 +17428,30 @@ const WL = {
     850: { hex: "#f59e0b", label: "IR-850", loss: 2.50, r: 12.8 },
     633: { hex: "#f43f5e", label: "VIS-633", loss: 9.00, r: 54.0 },
 };
-const fiberT = (nm, km) => Math.pow(10, -((WL[nm] || WL[1550]).loss * km) / 10);
+// ── GİRDİ DOĞRULAMASI (çekirdek v2 — chaos_fuzz_test.js'in 44 "sessiz NaN/Infinity" bulgusu) ──
+// Önceki sürüm geçersiz girdide (NaN, undefined, metin, ±Infinity, negatif mesafe, 0/1 dışı bit)
+// HATA VERMEDEN NaN/Infinity döndürüyordu; bu değerler rota ağırlıklarına, BER'e ve güvenlik
+// kararlarına sessizce sızabiliyordu. Artık geçersiz girdi AÇIK bir TypeError/RangeError fırlatır
+// (kontrollü hata) — "bozuk veri ile devam etme" yerine "dur ve söyle".
+const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
+const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
+const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
+function _requireFiniteNumber(fn, name, v, min = -Infinity, max = Infinity) {
+    if (typeof v !== "number" || !Number.isFinite(v))
+        throw new TypeError(`${fn}: ${name} sonlu bir sayı olmalı (alınan: ${String(v)})`);
+    if (v < min || v > max)
+        throw new RangeError(`${fn}: ${name}=${v} geçerli aralığın [${min}, ${max}] dışında`);
+    return v;
+}
+function _requireBits(fn, bits) {
+    if (!Array.isArray(bits))
+        throw new TypeError(`${fn}: bits bir dizi olmalı`);
+    for (let i = 0; i < bits.length; i++)
+        if (bits[i] !== 0 && bits[i] !== 1)
+            throw new TypeError(`${fn}: bits[${i}]=${String(bits[i])} — yalnız 0 ya da 1 olabilir`);
+    return bits;
+}
+const fiberT = (nm, km) => Math.pow(10, -((WL[nm] || WL[1550]).loss * _requireFiniteNumber("fiberT", "km", km, 0)) / 10);
 // ══════════════════════════════════════════════════════════════
 // AtmosphericWindowModel — LEO UYDU/UZAY BOŞLUĞU (FSO) GEÇİRGENLİK PENCERESİ
 //
@@ -17576,7 +17599,8 @@ function _fsplDb(slantKm, freqHz) {
     return 20 * Math.log10(4 * Math.PI * slantM * freqHz / SPEED_OF_LIGHT_MPS);
 }
 const satQ = (el) => {
-    const elRad = Math.max(5, el) * Math.PI / 180;
+    _requireFiniteNumber("satQ", "el", el);
+    const elRad = Math.max(5, Math.min(90, el)) * Math.PI / 180; // yükselti fiziksel olarak ≤ 90°
     const slantKm = SAT_ALTITUDE_KM / Math.sin(elRad); // eğik mesafe — düşük açıda daha uzun
     const fspl = _fsplDb(slantKm, SAT_FREQ_HZ);
     // Normalizasyon referans noktaları: 90° (en kısa, en iyi) ve 5° (en
@@ -17864,6 +17888,7 @@ const REAL_CLICK_MISS_AT_MIN_GATE = 0.06; // kapı taban genişliğindeyken bile
 // taşabilir riski taşır — bu yüzden büyük λ'da normal yaklaşıklığa
 // (Irwin-Hall/CLT, 6 tekdüze değişkenle) düşer.
 function poissonSample(lambda) {
+    _requireFiniteNumber("poissonSample", "lambda", lambda);
     if (lambda <= 0)
         return 0;
     if (lambda > 60) {
@@ -17908,8 +17933,11 @@ class NoiseGateMiddleware {
         return 1 - Math.exp(-(DETECTOR_DARK_RATE_HZ + backgroundRate) * SOURCE_GATE_WIDTH_S);
     }
     /** HAM (kalibrasyon/kapı UYGULANMADAN önceki) hayalet-click olasılığı — "filtreleme olmasaydı ne olurdu" karşılaştırması için. */
-    rawPhantomProbability(isNight) {
-        const backgroundRate = isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ;
+    rawPhantomProbability(isNight, freeSpace = true) {
+        // ÇEKİRDEK v2: gökyüzü arka planı YALNIZ serbest uzay (uydu/FSO) kanalında vardır; fiberin içine gün
+        // ışığı girmez. Önceki sürüm 5 MHz gündüz arka planını fiber QKD'ye de uyguluyor, 50 km'de QBER'i
+        // ~%20'ye, 85 km'de ~%39'a çıkarıyordu (dinleme sanılan sahte hata).
+        const backgroundRate = !freeSpace ? 0 : (isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ);
         return 1 - Math.exp(-(this.rawDarkRateHz() + backgroundRate) * SOURCE_GATE_WIDTH_S);
     }
     /**
@@ -17968,8 +17996,8 @@ class NoiseGateMiddleware {
         return { rawDarkRateHz: raw, calibratedDarkRateHz: this.calibratedDarkRateHz, gateRatio: this.gateRatio, target };
     }
     /** deriveSiftedKey'in gerçekte kullandığı, KALİBRE EDİLMİŞ + KAPI-DARALTILMIŞ hayalet-click olasılığı. */
-    effectivePhantomProbability(isNight) {
-        const backgroundRate = isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ;
+    effectivePhantomProbability(isNight, freeSpace = true) {
+        const backgroundRate = !freeSpace ? 0 : (isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ);
         const totalRate = this.calibratedDarkRateHz + backgroundRate;
         const gatedWidth = SOURCE_GATE_WIDTH_S * this.gateRatio;
         return 1 - Math.exp(-totalRate * gatedWidth);
@@ -18035,6 +18063,10 @@ function combineSeed(entanglementSeed, segIndex, bitIndex, copy = 0) {
 // Sadece baz eşleşen fotonlar anahtara katılır (~%50 elenir — gerçek BB84).
 // ══════════════════════════════════════════════════════════════
 function bb84Reconcile(bitCount, rng) {
+    if (!Number.isInteger(bitCount) || bitCount < 0)
+        throw new TypeError(`bb84Reconcile: bitCount negatif olmayan bir tam sayı olmalı (alınan: ${String(bitCount)})`);
+    if (bitCount > MAX_RECONCILE_BITS)
+        throw new RangeError(`bb84Reconcile: bitCount ${bitCount} > üst sınır ${MAX_RECONCILE_BITS}`);
     const r = rng || Math.random;
     const aliceBases = [], bobBases = [], matched = [];
     for (let i = 0; i < bitCount; i++) {
@@ -18213,7 +18245,7 @@ class QuantumKeyDistribution {
             // (eski mesafe-bağımlı "risk vergisi" burada devre dışı) — yalnızca
             // gerçek kayıp/saçılma/soğurma/faz-kayması gürültüsü uygulanır;
             // Eve'in etkisi zaten yukarıda ayrı ve doğru şekilde ele alındı.
-            const kr = propPhoton(1550, totalKm, 0, false, bitRng);
+            const kr = propPhoton(1550, totalKm, 0, false, bitRng, undefined, undefined, { fixedPhaseProb: QKD_MISALIGNMENT_E_D });
             if (!kr.ok) {
                 // Foton hiç ulaşmadı — normalde gerçek bir dedektörde "click" yok.
                 // EK 44 (DetectorNoiseModel) + FAZ 5 (NoiseGateMiddleware): ama
@@ -18232,8 +18264,9 @@ class QuantumKeyDistribution {
                 // kümeye %50 ihtimalle hata olarak katılır — gerçek dedektör
                 // davranışıyla tutarlı.
                 const ng = detectorCtx ? noiseGateMiddleware : null;
-                const gatedP = ng ? ng.effectivePhantomProbability(!!detectorCtx.isNight) : 0;
-                const rawP = ng ? ng.rawPhantomProbability(!!detectorCtx.isNight) : 0;
+                const freeSpace = !!(detectorCtx && detectorCtx.freeSpace); // deriveSiftedKey bir FİBER kanalıdır (propPhoton 1550 nm); uydu çağıranı freeSpace:true verir
+                const gatedP = ng ? ng.effectivePhantomProbability(!!detectorCtx.isNight, freeSpace) : 0;
+                const rawP = ng ? ng.rawPhantomProbability(!!detectorCtx.isNight, freeSpace) : 0;
                 const roll = bitRng();
                 if (gatedP > 0 && roll < gatedP) {
                     const phantomBit = bitRng() < 0.5 ? 0 : 1;
@@ -18477,6 +18510,8 @@ class QuantumKeyDistribution {
     }
 }
 // ── OneTimePad — gerçek XOR tabanlı OTP şifreleme ────────────────
+// QKD anahtar kanalında artık hizalama hatası (aktif polarizasyon takibiyle, GYS tipi e_d). VARSAYIM — ölçülmedi.
+const QKD_MISALIGNMENT_E_D = 0.015;
 class OneTimePad {
     // Sifted key mesajdan kısaysa seed'den deterministik genişletir.
     // Matematik deriveOtpKeyBits ile BİREBİR AYNI.
@@ -18496,6 +18531,164 @@ class OneTimePad {
         return { keyBits, cipherBits, decoded, integrityOk: decoded === msg };
     }
 }
+// ══════════════════════════════════════════════════════════════
+// SecureMessageSession — ÇEKİRDEK v2 (Hata 1 + Hata 2 düzeltmesi)
+//
+// ESKİ AKIŞIN SORUNLARI: (a) mesaj bitleri tek fotonlar olarak gönderiliyordu; fotonların çoğu
+// kayboldu ve alıcı BOZUK metin gördü (varsayılan demo: BER %85–100); (b) BB84 anahtarı MESAJ
+// BİTLERİNDEN türetiliyordu; (c) anahtar mesajdan kısaysa mulberry32 ile "uzatılıyordu"; (d) QBER %11'i
+// aşsa bile anahtar kullanılıyordu.
+// YENİ AKIŞ (gerçek QKD'deki gibi): kuantum kanal YALNIZ anahtar taşır, mesaj OTP ile şifrelenip klasik
+// (kimlik-doğrulamalı) kanaldan gider.
+//   1. Alice'in ham bitleri BAĞIMSIZ entropiden (tarayıcıda crypto.getRandomValues) gelir.
+//   2. Turlar hâlinde darbe gönderilir; elenmiş anahtar birikir.
+//   3. Parametre kestirimi: rastgele test alt kümesi AÇIKLANIR ve atılır; QBER_test ≥ %11 → İPTAL.
+//   4. Cascade uzlaşma (gerçek sızıntı ölçülür) → sonlu-anahtar ℓ (iki-parametreli Serfling).
+//   5. ℓ ≥ mesaj uzunluğu olana kadar toplanır; Toeplitz gizlilik yükseltme; OTP; Bob kendi anahtarıyla çözer.
+//   6. Darbe bütçesi biterse İPTAL ("rota çok kayıplı") — anahtar ASLA sahte rastgelelikle uzatılmaz.
+// Güvenilir-düğüm zincirinde her hop'un QBER'i de eşikle denetlenir.
+// ══════════════════════════════════════════════════════════════
+class SecureMessageSession {
+    /**
+     * @param p.msg mesaj metni · p.totalKm · p.nHops (>1 → güvenilir-düğüm zinciri) · p.evesdrop
+     * @param p.detectorCtx deriveSiftedKey bağlamı · p.entropyBits(n) → 0/1 dizisi (QRNG) · p.publicSeed (kamuya açık ayraç tohumu)
+     */
+    constructor(p) {
+        this.o = { ...SecureMessageSession.DEFAULTS, ...(p.opts || {}) };
+        this.msg = p.msg;
+        this.msgBits = t2b(p.msg);
+        this.needBits = this.msgBits.length;
+        this.totalKm = _requireFiniteNumber("SecureMessageSession", "totalKm", p.totalKm, 0, MAX_LINK_KM);
+        this.nHops = Math.max(1, Math.round(p.nHops || 1));
+        this.evesdrop = !!p.evesdrop;
+        this.detectorCtx = p.detectorCtx;
+        if (typeof p.entropyBits !== "function")
+            throw new TypeError("SecureMessageSession: entropyBits(n) zorunlu (bağımsız entropi kaynağı)");
+        this.entropyBits = p.entropyBits;
+        this.publicRng = mulberry32(((p.publicSeed >>> 0) ^ 0x534d5353) >>> 0); // "SMSS"
+        this.qkd = new QuantumKeyDistribution((p.publicSeed >>> 0) ^ 0x51d0c0de);
+        this.A = [];
+        this.B = [];
+        this.pulses = 0;
+        this.rounds = 0;
+        this.lost = 0;
+        this.dark = 0;
+        this.siftedTotal = 0;
+        this.testedTotal = 0;
+        this.matchSum = 0;
+        this.worstHopQber = 0;
+        this.target = this.o.firstCheckSifted;
+        this.lastCheck = null;
+        this.done = null;
+    }
+    _abort(code, reason, extra = {}) {
+        this.done = { done: true, status: "ABORTED", code, reason, ...this._stats(), ...extra };
+        return this.done;
+    }
+    _stats() {
+        return { pulses: this.pulses, totalPulsesAllHops: this.pulses * this.nHops, nHops: this.nHops, rounds: this.rounds, siftedTotal: this.siftedTotal, testedTotal: this.testedTotal,
+            matchRate: this.rounds ? this.matchSum / this.rounds : 0, lost: this.lost, darkClicks: this.dark,
+            worstHopQber: this.worstHopQber, lastCheck: this.lastCheck, needBits: this.needBits };
+    }
+    /** Bir tur. Bitmediyse {done:false, ...}, bittiyse DELIVERED/ABORTED sonucu döner. */
+    step() {
+        if (this.done)
+            return this.done;
+        const o = this.o;
+        const raw = _requireBits("SecureMessageSession.entropyBits", this.entropyBits(o.roundPulses));
+        this.pulses += raw.length;
+        this.rounds++; // darbe bütçesi LİNK başınadır: zincirdeki hop'lar paralel, kendi kaynaklarıyla çalışır
+        let a, b;
+        if (this.nHops > 1) {
+            const ch = this.qkd.deriveSiftedKeyChain(raw, this.totalKm, this.nHops, this.evesdrop, this.detectorCtx);
+            a = ch.keyBits;
+            b = ch.bobKeyBits;
+            this.matchSum += ch.avgMatchRate;
+            this.lost += ch.totalLost;
+            this.worstHopQber = Math.max(this.worstHopQber, ch.worstHop.qber);
+            // Her hop KENDİ parametre kestirimini yapar (güvenilir düğüm); burada en kötü hop'un QBER'i sınanır.
+            if (ch.worstHop.siftedLen >= 200 && ch.worstHop.qber >= o.theoreticalQberLimit)
+                return this._abort("HOP_QBER", `hop #${ch.worstHop.hop} QBER %${(ch.worstHop.qber * 100).toFixed(1)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`);
+        }
+        else {
+            const r = this.qkd.deriveSiftedKey(raw, this.totalKm, this.evesdrop, undefined, this.detectorCtx);
+            a = r.siftedKeyBits;
+            b = r.bobKeyBits;
+            this.matchSum += r.recon.matchRate;
+            this.lost += r.lostCount;
+            this.dark += r.darkClickCount || 0;
+        }
+        for (let i = 0; i < a.length; i++) {
+            this.A.push(a[i]);
+            this.B.push(b[i]);
+        }
+        this.siftedTotal += a.length;
+        if (this.A.length >= this.target) {
+            const r = this._evaluate();
+            if (r)
+                return r;
+        }
+        if (this.pulses >= o.maxPulses)
+            return this._abort("KEY_BUDGET", `link başına ${this.pulses.toLocaleString("tr-TR")} darbede yeterli kanıtlanmış anahtar birikmedi (gereken ${this.needBits} bit) — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; daha kısa hop, ek güvenilir düğüm ya da yakın bir hedef seçin`);
+        return { done: false, ...this._stats() };
+    }
+    _evaluate() {
+        const o = this.o, N = this.A.length;
+        const k = Math.min(N - 1, Math.max(o.minTestBits, Math.round(o.testFraction * N)));
+        const idx = Array.from({ length: N }, (_, i) => i);
+        for (let i = N - 1; i > 0; i--) {
+            const j = Math.floor(this.publicRng() * (i + 1));
+            const t = idx[i];
+            idx[i] = idx[j];
+            idx[j] = t;
+        }
+        let e = 0;
+        for (let i = 0; i < k; i++)
+            if (this.A[idx[i]] !== this.B[idx[i]])
+                e++;
+        const q = e / k;
+        this.testedTotal += k;
+        const keep = idx.slice(k).sort((x, y) => x - y);
+        const A = keep.map((i) => this.A[i]), B = keep.map((i) => this.B[i]); // test bitleri AÇIKLANDI → atıldı
+        this.A = A;
+        this.B = B;
+        const n = A.length, mu = QKDSecurityProof.statisticalFluctuation2(n, k, o.epsPE);
+        const pre = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: o.epsCor, epsPA: o.epsPA, fEC: o.fEC });
+        this.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell };
+        if (q >= o.theoreticalQberLimit)
+            return this._abort("QBER_LIMIT", `QBER_test %${(q * 100).toFixed(2)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} (k=${k} test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`, { qTest: q });
+        if (pre.ell < this.needBits) {
+            this.target = Math.max(this.target * 2, n + 1);
+            return null;
+        }
+        const casc = CascadeReconciliation.reconcile(A, B, Math.max(q, 0.005), mulberry32((this.publicRng() * 4294967296) >>> 0));
+        if (!casc.converged)
+            return this._abort("EC_FAIL", `Cascade uzlaşması yakınsamadı (${casc.residualErrors} kalıntı hata) — anahtar kullanılmadı`, { qTest: q });
+        const proof = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: o.epsCor, epsPA: o.epsPA, fEC: o.fEC, realLeakEC: casc.leakedBits });
+        this.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell, ell: proof.ell, leakEC: casc.leakedBits };
+        if (proof.ell < this.needBits) {
+            this.target = Math.max(this.target * 2, n + 1);
+            return null;
+        }
+        const paSeed = (this.publicRng() * 4294967296) >>> 0;
+        const keyA = QKDSecurityProof.toeplitzHash(A, proof.ell, mulberry32(paSeed));
+        const keyB = QKDSecurityProof.toeplitzHash(casc.correctedBobBits, proof.ell, mulberry32(paSeed));
+        const otpA = keyA.slice(0, this.needBits), otpB = keyB.slice(0, this.needBits);
+        const cipherBits = this.msgBits.map((m, i) => m ^ otpA[i]); // klasik kanaldan giden tek şey
+        const decoded = b2t(cipherBits.map((c, i) => c ^ otpB[i])); // Bob kendi anahtarıyla çözer
+        this.done = { done: true, status: "DELIVERED", code: "OK", reason: null, decoded, cipherBits, otpKeyBits: otpA,
+            spareKeyBits: keyA.slice(this.needBits), qTest: q, proof, leakEC: casc.leakedBits, n, k, ...this._stats() };
+        return this.done;
+    }
+    /** Senkron koşum (testler ve Node). Tarayıcı step()'i turlar arasında olay döngüsüne dönerek çağırır. */
+    run() { let r; do {
+        r = this.step();
+    } while (!r.done); return r; }
+}
+SecureMessageSession.DEFAULTS = Object.freeze({
+    roundPulses: 16384, maxPulses: 4194304, firstCheckSifted: 2048, testFraction: 0.2, minTestBits: 64,
+    theoreticalQberLimit: 0.11, epsPE: 1e-10, epsCor: 1e-15, epsPA: 1e-10, fEC: 1.16,
+});
 // ══════════════════════════════════════════════════════════
 // YOL HARİTASI MADDE 3 — BİÇİMSEL SONLU-ANAHTAR (FINITE-KEY) GÜVENLİK
 // KANITI KATMANI (physics_verification_report.html'de "en zayıf halka"
@@ -19603,8 +19796,17 @@ class KeyPoolBuffer {
         // formülüne GİRMEZ (bkz. LDPCReconciliation sınıf-üstü not: bu
         // simülatördeki optimize-edilmemiş düzenli kod Cascade'den daha
         // verimsiz), yalnızca denetim kaydına eklenir.
-        const ldpcRng = mulberry32((entanglementSeed ^ 0x4c445043 ^ pool.blocksFinalized) >>> 0); // "LDPC"+blok sırası
-        const ldpc = LDPCReconciliation.reconcile(pe.keyBits, bobKeySampleBits, qberEstForEC, ldpcRng);
+        const ldpcSeed = (entanglementSeed ^ 0x4c445043 ^ pool.blocksFinalized) >>> 0; // "LDPC"+blok sırası
+        const ldpcSync = pe.n <= KeyPoolBuffer.LDPC_SYNC_MAX_BITS;
+        const ldpc = ldpcSync ? LDPCReconciliation.reconcile(pe.keyBits, bobKeySampleBits, qberEstForEC, mulberry32(ldpcSeed)) : null;
+        const ldpcRecord = ldpc
+            ? { status: "done", protocol: ldpc.protocol, leakedBits: ldpc.leakedBits,
+                residualErrors: ldpc.residualErrors, converged: ldpc.converged,
+                bpConverged: ldpc.bpConverged, bpIterations: ldpc.iterations,
+                leakRatio: pe.n > 0 ? ldpc.leakedBits / pe.n : null }
+            : (KeyPoolBuffer.ldpcOffload
+                ? { status: "pending", reason: `n=${pe.n} > ${KeyPoolBuffer.LDPC_SYNC_MAX_BITS}: karşılaştırma ana iş parçacığı dışına devredildi` }
+                : { status: "skipped", reason: `n=${pe.n} > ${KeyPoolBuffer.LDPC_SYNC_MAX_BITS}: karşılaştırma (güvenlik kararına girmez) ana iş parçacığını kilitlememek için atlandı` });
         // ── DENETLENEBİLİR HAM KAYIT — productionBlocks'a KALICI olarak ekleniyor ──
         const productionBlock = {
             routeKey, blockIndex: pool.blocksFinalized,
@@ -19620,17 +19822,18 @@ class KeyPoolBuffer {
                     residualErrors: cascade.residualErrors, converged: cascade.converged,
                     leakRatio: pe.n > 0 ? cascade.leakedBits / pe.n : null,
                 },
-                reconciliationComparison: {
-                    ldpc: {
-                        protocol: ldpc.protocol, leakedBits: ldpc.leakedBits,
-                        residualErrors: ldpc.residualErrors, converged: ldpc.converged,
-                        bpConverged: ldpc.bpConverged, bpIterations: ldpc.iterations,
-                        leakRatio: pe.n > 0 ? ldpc.leakedBits / pe.n : null,
-                    },
-                },
+                reconciliationComparison: { ldpc: ldpcRecord },
             },
         };
         this.productionBlocks.push(productionBlock);
+        if (!ldpcSync && KeyPoolBuffer.ldpcOffload) {
+            Promise.resolve(KeyPoolBuffer.ldpcOffload(pe.keyBits, bobKeySampleBits, qberEstForEC, ldpcSeed)).then((r) => {
+                productionBlock.key.reconciliationComparison.ldpc = { status: "done", protocol: r.protocol, leakedBits: r.leakedBits,
+                    residualErrors: r.residualErrors, converged: r.converged, bpConverged: r.bpConverged,
+                    bpIterations: Number.isFinite(r.bpIterations) ? r.bpIterations : r.iterations, // worker_threads sonucu bpIterations, LDPCReconciliation.reconcile iterations döndürür
+                    leakRatio: pe.n > 0 ? r.leakedBits / pe.n : null };
+            }, (err) => { productionBlock.key.reconciliationComparison.ldpc = { status: "error", error: String((err && err.message) || err) }; });
+        }
         // ── DENETİM: PhotonNet'in KENDİSİ de gösterdiği sayıları bu AYNI
         // bağımsız fonksiyondan alır — "biz farklı, denetçi farklı sayı görür" riski YOK.
         const audit = ProductionSecurityAudit.audit(productionBlock);
@@ -19729,6 +19932,13 @@ class KeyPoolBuffer {
     }
 }
 KeyPoolBuffer.BLOCK_THRESHOLD_BITS = 4000; // blok tamamlanma eşiği (gerçek sistemler 10⁴-10⁶ kullanır; burada bu simülatörün mesaj-başına-onlarca/yüzlerce-bit verimine göre demo ölçeğinde seçildi)
+// LDPC karşılaştırmasının ANA İŞ PARÇACIĞINDA (senkron) çalıştırılacağı en büyük blok. DÜZELTME (çekirdek v2):
+// önceki sürüm her blokta LDPC'yi senkron çalıştırıyordu; 46–54 kbit blokta _finalizeBlock ortalama 7,4 s,
+// en çok 12,8 s ana iş parçacığını kilitliyordu (chaos_concurrent_privacy_amplification_test.js). LDPC
+// güvenlik kararına GİRMEZ (yalnız karşılaştırma); büyük bloklarda ya `ldpcOffload` kancasına (ör.
+// bb84/ldpc_async_offload.js'teki worker_threads) devredilir ya da açık bir "atlandı" kaydıyla geçilir.
+KeyPoolBuffer.LDPC_SYNC_MAX_BITS = 8192;
+KeyPoolBuffer.ldpcOffload = null; // (keyBits, bobBits, qberEst, rngSeed) => Promise<ldpcSonucu> | null — ör. bb84/ldpc_async_offload.js runLdpcOnWorker
 KeyPoolBuffer.TEST_FRACTION = 0.2; // PE için ayrılan pay — literatürde tipik %10-%30 aralığından, istatistiksel güç/anahtar-verimi dengesi için
 // Modül-seviyesi tekil örnek — havuz durumu tüm oturum boyunca (sayfa
 // yenilenene kadar) canlı kalır, tıpkı gerçek bir arka-plan QKD anahtar
@@ -20103,6 +20313,7 @@ async function dbEnforceQuota(maxEntries = 100) {
 }
 // DÜZELTME 1: hammingDecode — bit karşılaştırması string'e değil sayıya göre yapılıyor
 function hEnc(bits) {
+    _requireBits("hEnc", bits);
     const o = [];
     for (let i = 0; i < bits.length; i += 4) {
         const b = [...bits.slice(i, i + 4)];
@@ -20128,6 +20339,7 @@ function hEnc(bits) {
 // dokunulmadan geçirilir. bypass=false (varsayılan) TÜM MEVCUT ÇAĞRI
 // YERLERİNİ etkilemez — birebir eski davranış.
 function hDec(bits, withLog = false, bypass = false) {
+    _requireBits("hDec", bits);
     const o = [];
     const syndromeLog = withLog ? [] : null;
     for (let i = 0, blockIdx = 0; i < bits.length; i += 7, blockIdx++) {
@@ -23381,6 +23593,8 @@ function eavesdropProbability(nm, km) {
 // dynamicRedundancyFor) parametre vermez, dolayısıyla eski %95 tavanı
 // BİREBİR korunur.
 function computeRepeaterGain(nm, km, reps, ceilingOverride) {
+    _requireFiniteNumber("computeRepeaterGain", "km", km, 0, MAX_LINK_KM);
+    _requireFiniteNumber("computeRepeaterGain", "reps", reps, 0, MAX_REPEATERS);
     if (!(reps > 0))
         return 1.0;
     const w = WL[nm] || WL[1550];
@@ -23442,6 +23656,8 @@ function computeRepeaterGain(nm, km, reps, ceilingOverride) {
  *   GİBİDİR (defaultThresholds, absorbBias=1.0, hiçbir etki yok).
  */
 function estimateLinkSurvival(nm, km, reps, legaCtx) {
+    _requireFiniteNumber("estimateLinkSurvival", "km", km, 0, MAX_LINK_KM);
+    _requireFiniteNumber("estimateLinkSurvival", "reps", reps, 0, MAX_REPEATERS);
     const gain = computeRepeaterGain(nm, km, reps);
     const sk = reps > 0 ? km / (reps + 1) : km;
     const thresholds = legaCtx
@@ -23516,8 +23732,10 @@ function dynamicRedundancyFor(nm, km, reps, legaCtx, targetArrival = 0.999, maxR
  *   kullanır (bkz. o fonksiyonun başlığı) — verilmezse computeRepeaterGain
  *   standart %95 EDFA tavanını kullanır, davranış BİREBİR eskisi gibi kalır.
  */
-function propPhoton(nm, km, reps, evesdrop, rng, legaCtx, repeaterCeilingOverride) {
+function propPhoton(nm, km, reps, evesdrop, rng, legaCtx, repeaterCeilingOverride, channelOpts) {
     var _a, _b, _c;
+    _requireFiniteNumber("propPhoton", "km", km, 0, MAX_LINK_KM);
+    _requireFiniteNumber("propPhoton", "reps", reps, 0, MAX_REPEATERS);
     const rand = rng || Math.random;
     const w = WL[nm] || WL[1550];
     const sk = reps > 0 ? km / (reps + 1) : km;
@@ -23640,7 +23858,13 @@ function propPhoton(nm, km, reps, evesdrop, rng, legaCtx, repeaterCeilingOverrid
     // PLL'in faz gürültüsünü telafi etme davranışının matematiksel analogu.
     // legaCtx.opllEnabled verilmezse (varsayılan, mevcut TÜM çağrı yerleri)
     // formül BİREBİR ESKİ HALİYLE çalışır — hiçbir damping uygulanmaz.
-    let phaseProb = .012 + km / 4000;
+    // ÇEKİRDEK v2: QKD anahtar türetimi (deriveSiftedKey) channelOpts.fixedPhaseProb ile AKTİF polarizasyon
+    // takibi varsayar → hizalama hatası mesafeden bağımsız sabit e_d (GYS tipi model). Aşağıdaki doğrusal
+    // terim yalnız TAKİPSİZ (didaktik mesaj kanalı) yolda kalır; QBER'in mesafeyle artışı artık yalnız karanlık
+    // sayımdan (DetectorNoiseModel) gelir — "düz, sonra uçurum". 50 Hz SNSPD karanlık sayımı ve 12,5 ns kapıyla
+    // uçurum tek hatta ~270 km'dedir (analitik tahmin); pratikte sınırı ondan çok önce darbe bütçesi/tespit
+    // oranı koyar (SecureMessageSession → KEY_BUDGET).
+    let phaseProb = (channelOpts && Number.isFinite(channelOpts.fixedPhaseProb)) ? channelOpts.fixedPhaseProb : .012 + km / 4000;
     if (legaCtx === null || legaCtx === void 0 ? void 0 : legaCtx.opllEnabled) {
         opticalPLL.tick(nm, km, phaseProb); // referans faz olarak anlık risk beslenir
         phaseProb *= opticalPLL.phaseDampingFactor(nm, km);
@@ -26287,12 +26511,13 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                 React.createElement("span", { style: { display: "inline-block", animation: "spin 1s linear infinite", fontSize: 12 } }, "\u25CE"),
                 React.createElement("span", { style: { fontSize: 10, color: "#00d4ff", fontWeight: 600, whiteSpace: "nowrap" } }, ACTION_LABEL[phase]))),
             React.createElement("div", { style: { marginLeft: "auto", display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 6, flexShrink: 0 } },
-                result && result.routeHealth && !result.routeHealth.healthy && !running && (React.createElement("div", { style: { fontSize: 8, color: "#f59e0b", fontFamily: "monospace",
+                result && result.session && result.session.status === "ABORTED" && !running && (React.createElement("div", { style: { fontSize: 8, color: "#f59e0b", fontFamily: "monospace",
                         background: "#2a1a05", border: "1px solid #f59e0b44", borderRadius: 6,
                         padding: "5px 9px", maxWidth: 280, textAlign: "right", lineHeight: 1.4 } },
-                    "\u26A0 Son rota fiziksel olarak ge\u00E7ilemez s\u0131n\u0131rdayd\u0131 (u\u00E7tan-uca ge\u00E7irgenlik %",
-                    (result.routeHealth.cumulativeTransmittance * 100).toFixed(3),
-                    ") \u2014 tekrar g\u00F6ndermeden \u00F6nce daha k\u0131sa bir mesafe/hedef se\u00E7in veya tekrarlay\u0131c\u0131 say\u0131s\u0131n\u0131 art\u0131r\u0131n.")),
+                    "\u26A0 Son iletim iptal edildi (",
+                    result.session.code,
+                    "): ",
+                    result.session.reason)),
                 React.createElement("button", { onClick: handleSend, disabled: running || !msg.trim(), style: {
                         padding: "11px 22px", borderRadius: 10, border: "none", cursor: "pointer",
                         background: running
@@ -26398,8 +26623,8 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                         React.createElement("span", null,
                             result.totalKm,
                             "km"),
-                        React.createElement("span", { style: { color: +result.er > 10 ? "#f43f5e" : "#10b981" } },
-                            "BER ",
+                        React.createElement("span", { style: { color: "#64748b" }, title: "Didaktik foton kanal\u0131 kayb\u0131/hatas\u0131 \u2014 mesaj art\u0131k OTP ile klasik kanaldan gider, bu oran mesaj b\u00FCt\u00FCnl\u00FC\u011F\u00FCn\u00FC belirlemez" },
+                            "foton kanal\u0131 kay\u0131p ",
                             result.er,
                             "%"),
                         result.bb84MatchRate != null && (React.createElement("span", { style: { color: "#7c3aed" } },
@@ -26493,7 +26718,7 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                         f.epsilon && React.createElement("span", { title: "Composable \u03B5-security: \u03B5_PE+\u03B5_cor+\u03B5_PA (union bound)" },
                             "\u03B5_toplam=",
                             f.epsilon.total.toExponential(1)),
-                        f.reconciliation && (React.createElement("span", { title: `Brassard & Salvail (1993) çok-geçişli Cascade protokolü, GERÇEKTEN çalıştırıldı ve anahtar örneklemi üzerinde ölçüldü — leakEC artık teorik tahmin değil.${f.reconciliationComparison && f.reconciliationComparison.ldpc ? ` (Karşılaştırma: LDPC ${f.reconciliationComparison.ldpc.leakedBits}bit sızıntı, ${f.reconciliationComparison.ldpc.converged ? "yakınsadı" : "yakınsamadı"})` : ""}`, style: { color: f.reconciliation.converged ? "#a78bfa" : "#f43f5e" } },
+                        f.reconciliation && (React.createElement("span", { title: `Brassard & Salvail (1993) çok-geçişli Cascade protokolü, GERÇEKTEN çalıştırıldı ve anahtar örneklemi üzerinde ölçüldü — leakEC artık teorik tahmin değil.${f.reconciliationComparison && f.reconciliationComparison.ldpc ? (f.reconciliationComparison.ldpc.status === "done" ? ` (Karşılaştırma: LDPC ${f.reconciliationComparison.ldpc.leakedBits}bit sızıntı, ${f.reconciliationComparison.ldpc.converged ? "yakınsadı" : "yakınsamadı"})` : ` (LDPC karşılaştırması: ${f.reconciliationComparison.ldpc.status})`) : ""}`, style: { color: f.reconciliation.converged ? "#a78bfa" : "#f43f5e" } },
                             "\uD83D\uDD27 EC(",
                             f.reconciliation.protocol,
                             ")=",
@@ -27932,7 +28157,7 @@ function PhotonNet() {
                 reasons.push(`${health.hopCount} hop (sağlıklı sınır: 6)`);
             if (health.criticallyLowTransmittance)
                 reasons.push(`uçtan-uca geçirgenlik %${(health.cumulativeTransmittance * 100).toFixed(3)}`);
-            addLog(`⚠ ROTA SAĞLIĞI DÜŞÜK: ${reasons.join(", ")} — bu rota fiziksel olarak çöküşe çok yatkın, çoklu-hop kayıp birikimi beklenebilir`, "WARN");
+            addLog(`⚠ ROTA SAĞLIĞI DÜŞÜK (didaktik foton kanalı): ${reasons.join(", ")} — tek fotonlar bu rotada kaybolur; anahtar oturumu güvenilir-düğüm hop'larıyla çalışır, mesaj klasik kanaldan gider`, "WARN");
         }
         // GELECEKTEKİ YOĞUNLUĞU TAHMİN ETME + YOL ÖN-AÇMA (Vakum Koridoru):
         // rota MATEMATİKSEL OLARAK bilindiği an (dalga fonksiyonu simülasyonu
@@ -27952,56 +28177,59 @@ function PhotonNet() {
         // servis çağrısına indirgendi. Değişken adları (recon, siftedKeyBits,
         // qber, eavesdropDetected, otpKeyBits, otpCipherBits, otpDecoded,
         // otpIntegrityOk) BİREBİR KORUNDU — aşağıdaki hiçbir satır değişmedi.
-        const qkd = new QuantumKeyDistribution(entanglementSeed);
-        // EK 44: nightMode canlı iletimde gerçek dedektör-gürültü bağlamına
-        // taşınıyor — replay/mirror/fork bu katmandan (scintillation/pointing
-        // gibi) etkilenmez, geçmiş anların fiziği asla retroaktif değişmez.
-        //
-        // DÜZELTME 9: GÜVENİLİR-DÜĞÜM RÖLE ZİNCİRİ ARAYÜZ ENTEGRASYONU —
-        // kullanıcı isteği üzerine deriveSiftedKeyChain() artık canlı iletimde
-        // gerçekten kullanılıyor. QKD_CHAIN_THRESHOLD_KM ALTINDAKİ rotalarda
-        // davranış BİREBİR ESKİSİ GİBİDİR (tek deriveSiftedKey çağrısı, aynı
-        // seed/rng akışı) — yalnızca GERÇEKTEN gerekli olduğunda (tek-atış
-        // fotonun ~10⁻⁶ ve altına düşen hayatta kalma olasılığı yüzünden
-        // pratik olarak sıfır algılama üretmeye başladığı mesafelerde, bkz.
-        // QBER karşılaştırma raporu — 300km/550km) zincire geçilir.
+        // ══════════════════════════════════════════════════════════
+        // ÇEKİRDEK v2 — GÜVENLİ MESAJ OTURUMU (bkz. SecureMessageSession).
+        // Kuantum kanal YALNIZ anahtar taşır; mesaj kanıtlanmış anahtarla OTP'lenip klasik kanaldan gider.
+        // Eski akış mesaj bitlerini tek foton olarak yolluyor (kayıp → bozuk metin), anahtarı mesaj
+        // bitlerinden türetiyor ve QBER %11'i aşsa bile anahtarı kullanıyordu.
+        // ══════════════════════════════════════════════════════════
         const QKD_CHAIN_THRESHOLD_KM = 150;
-        const QKD_CHAIN_HOP_KM = 60; // gerçekçi güvenilir-düğüm aralığı (bkz. deriveSiftedKeyChain yorumları)
+        const QKD_CHAIN_HOP_KM = 60; // gerçekçi güvenilir-düğüm aralığı
         const usingTrustedChain = totalKm > QKD_CHAIN_THRESHOLD_KM;
-        let recon, siftedKeyBits, bobKeyBits, sentPulsesForBuffer, qber, eavesdropDetected, lostCount, darkClickCount, qkdChain = null;
+        const nHopsQkd = usingTrustedChain ? Math.max(2, Math.ceil(totalKm / QKD_CHAIN_HOP_KM)) : 1;
+        const qkdCtx = { isNight: nightMode, freeSpace: false }; // karasal rota = fiber: gökyüzü arka planı YOK
+        const entropyBits = (n) => {
+            const c = typeof globalThis !== "undefined" ? globalThis.crypto : null;
+            if (!c || typeof c.getRandomValues !== "function")
+                throw new Error("crypto.getRandomValues yok — güvenli entropi olmadan anahtar üretilmez");
+            const u = new Uint8Array(n);
+            for (let off = 0; off < n; off += 65536)
+                c.getRandomValues(u.subarray(off, Math.min(n, off + 65536)));
+            return Array.from(u, x => x & 1);
+        };
+        const session = new SecureMessageSession({ msg, totalKm, nHops: nHopsQkd, evesdrop, detectorCtx: qkdCtx, entropyBits, publicSeed: entanglementSeed });
         if (usingTrustedChain) {
-            const nHops = Math.max(2, Math.ceil(totalKm / QKD_CHAIN_HOP_KM));
-            qkdChain = qkd.deriveSiftedKeyChain(bits, totalKm, nHops, evesdrop, { isNight: nightMode });
-            recon = { matchRate: qkdChain.avgMatchRate };
-            siftedKeyBits = qkdChain.keyBits;
-            bobKeyBits = qkdChain.bobKeyBits; // EK (Asenkron Havuz): deriveSiftedKeyChain zaten hop-0/bottleneckLen'e hizalı bobKeyBits döndürüyor artık
-            sentPulsesForBuffer = qkdChain.sentPulses; // EK (Gain): hop-0'ın gönderdiği ham darbe sayısı
-            qber = qkdChain.avgQber;
-            eavesdropDetected = qkdChain.eavesdropDetected;
-            lostCount = qkdChain.totalLost;
-            darkClickCount = 0; // zincir-seviyesinde toplanmıyor — ayrıntı isteyenler qkdChain.hops'tan okuyabilir
-            addLog(`🔗 GÜVENİLİR-DÜĞÜM RÖLE ZİNCİRİ: ${totalKm}km rota tek-atış QKD için çok uzun (no-cloning teoremi tek fotonun amplifikasyonunu yasaklar) — ${qkdChain.nHops} hop × ${qkdChain.hopKm.toFixed(1)}km'e bölündü`, "SYS");
-            addLog(`BB84 ZİNCİR: ort. baz uzlaşma ${(qkdChain.avgMatchRate * 100).toFixed(1)}% → nihai (darboğaz) anahtar ${siftedKeyBits.length}bit — en zayıf hop #${qkdChain.worstHop.hop} (${qkdChain.worstHop.km.toFixed(0)}km)`, "SYS");
-            addLog(`BB84 ZİNCİR: ort. QBER=${(qber * 100).toFixed(1)}% · en-kötü-hop QBER=${(qkdChain.worstHop.qber * 100).toFixed(1)}% ${eavesdropDetected ? "— DİNLEME İSTATİSTİKSEL OLARAK TESPİT EDİLDİ (en az bir hop eşiği aştı)" : "(tüm hoplar güvenli aralıkta)"}`, eavesdropDetected ? "ERR" : "OK");
-            addLog(`⚠ ${qkdChain.trustedNodeCaveat}`, "WARN");
+            addLog(`🔗 GÜVENİLİR-DÜĞÜM RÖLE ZİNCİRİ: ${totalKm}km → ${nHopsQkd} hop × ${(totalKm / nHopsQkd).toFixed(1)}km — her hop kendi BB84 anahtarını üretir (no-cloning tek fotonun yükseltilmesini yasaklar)`, "SYS");
+            addLog(`⚠ Bu zincirin güvenliği TÜM ara düğümlerin güvenilir olmasına dayanır — ara düğümler prensipte iki komşu hop anahtarını görebilir`, "WARN");
         }
-        else {
-            ({ recon, siftedKeyBits, bobKeyBits, qber, eavesdropDetected, lostCount, darkClickCount } =
-                qkd.deriveSiftedKey(bits, totalKm, evesdrop, undefined, { isNight: nightMode }));
-            sentPulsesForBuffer = bits.length; // EK (Gain): tek-atış yolda gönderilen ham darbe sayısı zaten `bits` — yalnızca taşınıyor
-            addLog(`BB84: baz uzlaşma ${(recon.matchRate * 100).toFixed(1)}% → sifted key ${siftedKeyBits.length}/${bits.length} bit${lostCount ? ` (${lostCount} foton algılanamadı — anahtar/QBER dışı)` : ""}${darkClickCount ? ` (${darkClickCount} hayalet click — karanlık sayım/arka plan)` : ""}`, "SYS");
-            addLog(`BB84: QBER=${(qber * 100).toFixed(1)}% ${eavesdropDetected ? "— DİNLEME İSTATİSTİKSEL OLARAK TESPİT EDİLDİ" : "(güvenli aralıkta)"}`, eavesdropDetected ? "ERR" : "OK");
+        setPhase("ANAHTAR ÜRETİMİ");
+        let sres;
+        for (;;) {
+            sres = session.step();
+            if (sres.done)
+                break;
+            setPhase(`ANAHTAR ÜRETİMİ · ${sres.pulses.toLocaleString("tr-TR")} darbe/link`);
+            await delay(0); // turlar arasında olay döngüsüne dön — arayüz kilitlenmez
         }
-        // RAW KEY RATE: gerçek kuantum iletişim literatüründeki standart
-        // performans ölçütü (bit/saniye) — statik bir bit sayısı DEĞİL.
-        // Micius uydusunun gerçek yayınlanmış performans verisine (80MHz
-        // kaynak hızı, en-iyi-durum ~1.7Mbit/s tavanı) göre ölçeklenir.
-        const rawKeyRate = QuantumKeyDistribution.computeRawKeyRate(siftedKeyBits.length, recon.matchRate);
+        const recon = { matchRate: sres.matchRate };
+        const qber = sres.qTest != null ? sres.qTest : (sres.lastCheck ? sres.lastCheck.qTest : null);
+        const eavesdropDetected = sres.code === "QBER_LIMIT" || sres.code === "HOP_QBER";
+        const lostCount = sres.lost, darkClickCount = sres.darkClicks;
+        const qkdChain = usingTrustedChain ? { nHops: nHopsQkd, hopKm: totalKm / nHopsQkd, worstHopQber: sres.worstHopQber } : null;
+        addLog(`BB84: ${sres.rounds} tur · link başına ${sres.pulses.toLocaleString("tr-TR")} darbe (QRNG) → ${sres.siftedTotal} elenmiş bit, ${sres.testedTotal} test biti açıklanıp atıldı${darkClickCount ? ` (${darkClickCount} karanlık sayım click'i)` : ""}`, "SYS");
+        if (qber != null)
+            addLog(`BB84: QBER_test=${(qber * 100).toFixed(2)}% ${eavesdropDetected ? "— EŞİK (%11) AŞILDI" : "(eşik %11 altında)"}`, eavesdropDetected ? "ERR" : "OK");
+        if (sres.status === "ABORTED")
+            addLog(`⛔ İLETİM İPTAL (${sres.code}): ${sres.reason}`, "ERR");
+        const rawKeyRate = QuantumKeyDistribution.computeRawKeyRate(sres.siftedTotal, recon.matchRate || 0);
         addLog(`QKD RATE: ${rawKeyRate.label} (Micius-ölçekli, kaynak=${(rawKeyRate.sourceRateHz / 1e6).toFixed(0)}MHz, verimlilik=%${(rawKeyRate.efficiency * 100).toFixed(1)})`, "SYS");
-        const otp = OneTimePad.runFullCycle(msg, siftedKeyBits, entanglementSeed);
-        const otpKeyBits = otp.keyBits, otpCipherBits = otp.cipherBits;
-        const otpDecoded = otp.decoded, otpIntegrityOk = otp.integrityOk;
-        addLog(`OTP: mesaj sifted key ile şifrelendi (${otpKeyBits.length}bit anahtar) → deşifre bütünlüğü ${otpIntegrityOk ? "✓" : "✗"}`, otpIntegrityOk ? "OK" : "ERR");
+        const delivered = sres.status === "DELIVERED";
+        const otpKeyBits = delivered ? sres.otpKeyBits : [], otpCipherBits = delivered ? sres.cipherBits : [];
+        const otpDecoded = delivered ? sres.decoded : "";
+        const otpIntegrityOk = delivered && otpDecoded === msg;
+        addLog(delivered
+            ? `OTP: mesaj ${otpKeyBits.length} bitlik KANITLANMIŞ anahtarla (ℓ=${sres.proof.ell}, Cascade sızıntısı ${sres.leakEC} bit) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ${otpIntegrityOk ? "✓" : "✗"}`
+            : "OTP: kanıtlanmış anahtar yok — mesaj şifrelenmedi ve GÖNDERİLMEDİ (bozuk metin teslim edilmez)", otpIntegrityOk ? "OK" : "ERR");
         // ══════════════════════════════════════════════════════════
         // MADDE 3: BİÇİMSEL SONLU-ANAHTAR GÜVENLİK KANITI — TAMAMEN EK
         // (ADDITIVE) BİR KATMAN. OTP şifreleme yukarıda TAMAMEN sifted
@@ -28010,7 +28238,10 @@ function PhotonNet() {
         // GERÇEK bir güvenlik kanıtı çerçevesinde ne kadarı 'kanıtlanabilir
         // güvenli' anahtar üretir" sorusunu AYRICA, paralel olarak cevaplıyor
         // ve sonucu res.securityProof üzerinden UI'ya taşıyor.
-        const secProof = QKDSecurityProof.run(siftedKeyBits, qber, entanglementSeed);
+        // Sonlu-anahtar kanıtı artık oturumun KENDİ kanıtıdır (gerçek n/k ayrımı + ölçülmüş Cascade sızıntısı).
+        const secProof = delivered
+            ? { proof: { ...sres.proof, n: sres.n }, finalKeyBits: sres.spareKeyBits }
+            : { proof: { n: sres.lastCheck ? sres.lastCheck.n : 0, secure: false, ell: 0, qPhUpper: null, compressionRatio: 0, reason: sres.reason }, finalKeyBits: [] };
         if (secProof.proof.secure) {
             addLog(`🔐 SONLU-ANAHTAR KANITI: n=${secProof.proof.n}bit sifted key, Q_ph≤${(secProof.proof.qPhUpper * 100).toFixed(2)}% (Serfling) → gizlilik yükseltme sonrası ℓ=${secProof.proof.ell}bit KANITLANMIŞ GÜVENLİ anahtar (sıkıştırma oranı ×${secProof.proof.compressionRatio.toFixed(3)})`, "OK");
         }
@@ -28020,7 +28251,7 @@ function PhotonNet() {
         // Klasik kanal kimlik doğrulaması: bu round'un parametre-kestirim/
         // baz-uzlaşma duyurusunu (QBER + n) Wegman-Carter MAC ile kimliklendirir,
         // ardından havuzu bu round'un privacy-amplified anahtarından besler.
-        const announcementBits = t2b(JSON.stringify({ qber: qber != null ? Math.round(qber * 1000) : null, n: siftedKeyBits.length }));
+        const announcementBits = t2b(JSON.stringify({ qber: qber != null ? Math.round(qber * 1000) : null, n: sres.siftedTotal }));
         const authResult = classicalAuthChannel.authenticateRound(announcementBits, secProof.finalKeyBits);
         if (authResult.ok) {
             addLog(`🔏 KLASİK KANAL KİMLİK DOĞRULAMA: parametre-kestirim duyurusu Wegman-Carter MAC ile imzalandı (etiket=0x${authResult.tag.toString(16).padStart(8, "0")}) — havuz: ${authResult.poolRemaining}bit${secProof.finalKeyBits.length ? ` (+${secProof.finalKeyBits.length}bit geri beslendi)` : ""}`, "OK");
@@ -28035,7 +28266,17 @@ function PhotonNet() {
         // yalnızca zaten hesaplanmış siftedKeyBits/bobKeyBits'i PARAMETRE
         // olarak alır. Timeline/Replay/Mirror/Fork determinizmi bu yüzden
         // etkilenmez — bkz. KeyPoolBuffer sınıfının başındaki tasarım notu.
-        const keyPoolResult = keyPoolBuffer.feed(src, dst, siftedKeyBits, bobKeyBits, entanglementSeed, sentPulsesForBuffer);
+        // Anahtar havuzu: mesaj oturumunun bitleri TÜKETİLDİ (tekrar kullanılmaz). Havuz, bağımsız tek bir ek
+        // turdan beslenir — yalnız iletim iptal edilmediyse.
+        let keyPoolResult = null;
+        if (delivered) {
+            const poolQkd = new QuantumKeyDistribution((entanglementSeed ^ 0x504f4f4c) >>> 0); // "POOL"
+            const POOL_PULSES = 16384;
+            const pr = usingTrustedChain
+                ? poolQkd.deriveSiftedKeyChain(entropyBits(POOL_PULSES), totalKm, nHopsQkd, evesdrop, qkdCtx)
+                : poolQkd.deriveSiftedKey(entropyBits(POOL_PULSES), totalKm, evesdrop, undefined, qkdCtx);
+            keyPoolResult = keyPoolBuffer.feed(src, dst, usingTrustedChain ? pr.keyBits : pr.siftedKeyBits, pr.bobKeyBits, entanglementSeed, POOL_PULSES);
+        }
         if (keyPoolResult) {
             if (keyPoolResult.finalized) {
                 const f = keyPoolResult.finalized;
@@ -28157,10 +28398,11 @@ function PhotonNet() {
             addLog(`QSTATE: ${quantumStateLog.length} kuantum durum imzası kaydedildi`, "SYS");
         }
         const eccExplain = explainEcc(corrected); // EK: tooltip metni
-        const decoded = b2t(recv);
+        const channelDecoded = b2t(recv); // didaktik foton kanalı — mesaj artık bu yoldan TAŞINMIYOR
+        const decoded = otpDecoded; // Bob'un OTP ile çözdüğü mesaj (iptalde boş)
         const berResult = clampBer(totalLost, totalFlip, bits.length);
-        const er = berResult.er;
-        const success = decoded === msg;
+        const er = berResult.er; // foton kanalı kayıp+hata oranı (mesaj bütünlüğünü belirlemez)
+        const success = otpIntegrityOk;
         // DÜZELTME 4 (devam): okCount/lostCount ile net isimlendirme
         // GÜVENLİK TABANI: matematiksel olarak totalLost+totalFlip asla
         // bits.length'i aşmamalı (karşılıklı dışlayan sayaçlar), ama ani
@@ -28171,7 +28413,9 @@ function PhotonNet() {
         if (berResult.multiHopOverflow) {
             addLog(`⚠ ÇOK-HOP TAŞMASI: ham hata birikimi %${berResult.rawErrorAccumulation} (rota ${segs.length} hop içeriyor, gösterilen BER %100'de tavanlandı)`, "ERR");
         }
-        addLog(`━━ ${success ? "BAŞARILI" : "BOZUK"}: "${msg}"→"${decoded}" BER=${er}%`, success ? "OK" : "ERR");
+        addLog(success
+            ? `━━ BAŞARILI: "${msg}" kanıtlanmış OTP anahtarıyla iletildi · foton kanalı kayıp/hata %${er}`
+            : `━━ İPTAL: ${sres.reason || "mesaj bütünlüğü doğrulanamadı"}`, success ? "OK" : "ERR");
         if (evesdrop && ec.EAVES)
             addLog("BB84: DİNLEME TESPİT EDİLDİ!", "ERR");
         // EK 24: Ses efekti — kullanıcı ayarı açıksa gerçek Web Audio tonu çalınır
@@ -28201,7 +28445,10 @@ function PhotonNet() {
             }
         }
         const res = {
-            original: msg, decoded,
+            original: msg, decoded, channelDecoded,
+            session: { status: sres.status, code: sres.code, reason: sres.reason, pulses: sres.pulses, rounds: sres.rounds,
+                siftedTotal: sres.siftedTotal, testedTotal: sres.testedTotal, qTest: qber, ell: delivered ? sres.proof.ell : 0,
+                n: delivered ? sres.n : null, k: delivered ? sres.k : null, nHops: nHopsQkd },
             bits, recv,
             lostCount: totalLost, // DÜZELTME: 'lost' değil 'lostCount'
             flipCount: totalFlip,
@@ -28211,7 +28458,7 @@ function PhotonNet() {
             sat: sat.name, satEl: sat.elev.toFixed(1),
             geoKm: geoKm.toFixed(0), // EK
             bb84MatchRate: recon.matchRate, // EK
-            qber, eavesdropDetected, siftedKeyLen: siftedKeyBits.length, // EK: gerçek BB84 anahtar katmanı sonuçları
+            qber, eavesdropDetected, siftedKeyLen: sres.siftedTotal, // EK: gerçek BB84 anahtar katmanı sonuçları
             qkdChain, // DÜZELTME 9: güvenilir-düğüm röle zinciri kullanıldıysa hop-hop ayrıntı (null = tek-atış QKD)
             rawKeyRate, // QKD Rate: gerçek bit/saniye ölçütü (Micius-ölçekli) — statik bit sayısı değil
             similarity: charSimilarity(msg, decoded), // EK 17: bilgilendirici, success'i etkilemez
@@ -29457,7 +29704,7 @@ function PhotonNet() {
                 { l: "UYDU KAL.", v: `${curSatQ}%`, c: +curSatQ > 70 ? "#10b981" : +curSatQ > 40 ? "#f59e0b" : "#f43f5e" },
                 { l: "AĞ YÜKÜ", v: `${(totalLoad * 100).toFixed(0)}%`, c: "#7c3aed" },
                 { l: "ROTA", v: path ? `${pathKm}km/${path.length - 1}hop` : "—", c: "#f59e0b" },
-                { l: "SON BER", v: berHistory.length ? `${berHistory[berHistory.length - 1].toFixed(2)}%` : "—", c: "#00d4ff" },
+                { l: "FOTON KAYBI", v: berHistory.length ? `${berHistory[berHistory.length - 1].toFixed(2)}%` : "—", c: "#00d4ff" },
                 { l: "İLETİM", v: String(traffic.length), c: "#10b981" },
                 { l: "ECC", v: ecc ? "ON" : "OFF", c: ecc ? "#10b981" : "#334155" },
                 { l: "SENKRON BEKLEYEN", v: String(pendingSync), c: pendingSync > 0 ? "#f59e0b" : "#334155" },
@@ -30743,10 +30990,11 @@ function PhotonNet() {
                                 fontFamily: "monospace", wordBreak: "break-all" } }, v))))),
                     React.createElement("div", { style: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 5, marginBottom: 7 } }, [
                         // DÜZELTME 4: okCount/lostCount kullan
-                        { l: "FOTON", v: result.bits.length, c: "#475569" },
-                        { l: "BAŞARILI", v: result.okCount, c: "#10b981" },
-                        { l: "KAYIP", v: result.lostCount, c: "#f43f5e" },
-                        { l: "BER", v: result.er + "%", c: +result.er > 10 ? "#f43f5e" : "#10b981" },
+                        // ÇEKİRDEK v2: mesaj OTP ile klasik kanaldan gider; foton sayıları yalnız kuantum kanalın görselleştirmesidir
+                        { l: "QBER (test)", v: result.session && result.session.qTest != null ? (result.session.qTest * 100).toFixed(2) + "%" : "—", c: result.session && result.session.qTest != null && result.session.qTest < 0.11 ? "#10b981" : "#f43f5e" },
+                        { l: "KANITLI ANAHTAR ℓ", v: result.session ? result.session.ell + " bit" : "—", c: result.session && result.session.ell > 0 ? "#10b981" : "#f43f5e" },
+                        { l: "DARBE / LİNK", v: result.session ? result.session.pulses.toLocaleString("tr-TR") : "—", c: "#475569" },
+                        { l: "FOTON KANALI KAYIP", v: result.er + "%", c: "#475569" },
                     ].map(s => (React.createElement("div", { key: s.l, style: { background: "#020409", border: "1px solid #0a1628",
                             borderRadius: 3, padding: "5px 7px" } },
                         React.createElement("div", { style: { fontSize: 7, color: "#1e3a5f", marginBottom: 1 } }, s.l),
@@ -30778,7 +31026,7 @@ function PhotonNet() {
                         React.createElement("div", { style: { width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
                                 background: result.success ? "#10b981" : "#f59e0b",
                                 boxShadow: `0 0 6px ${result.success ? "#10b981" : "#f59e0b"}` } }),
-                        result.success ? "İLETİM BAŞARILI" : "VERİ BÜTÜNLÜĞÜ BOZUK"),
+                        result.success ? "İLETİM BAŞARILI — KANITLANMIŞ ANAHTAR" : (result.session && result.session.status === "ABORTED" ? `İLETİM İPTAL (${result.session.code}) — mesaj gönderilmedi` : "VERİ BÜTÜNLÜĞÜ BOZUK")),
                     React.createElement("div", { style: { fontSize: 7, color: "#1e3a5f", marginTop: 3, fontFamily: "monospace" } },
                         "\uD83D\uDEF0 ",
                         result.sat,

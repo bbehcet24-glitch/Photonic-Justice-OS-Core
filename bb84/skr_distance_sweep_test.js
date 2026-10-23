@@ -10,8 +10,8 @@
  *   S3 SKR ≤ bağımsız hesaplanan asimptotik decoy (GLLP, sonsuz decoy) sınırı; N büyüdükçe ona yaklaşıyor
  *   S4 En uzun mesafeler: N = 10⁸ / 10¹⁰ / 10¹² → ~81 / ~112 / ~119 km; Y0 = 10⁻⁶ → ~151 km
  *   S5 Fiziksel QBER (E_μ) 0–80 km'de düz (%2–2,6), anahtar sıfırlandıktan sonra hızla artıyor
- *   Rapor: tam tablo + literatür referansları + BİLİNEN TUTARSIZLIK (çekirdek mesaj yolu QBER modeli)
- *   + photonnet_core.js değişmedi
+ *   Rapor: tam tablo + literatür referansları + çözülen tutarsızlık notu (çekirdek v2, bkz. docs/CORE_CHANGELOG.md)
+ *   + photonnet_core.js sabitlenmiş hash'le aynı
  * Varsayımlar: 1 GHz, dedektör verimi %10, 0,2 dB/km + 3 dB ekleme kaybı, e_d = %2, e0 = 0,5.
  */
 const fs = require("fs");
@@ -20,7 +20,7 @@ const crypto = require("crypto");
 const A = require("./adaptive_shielding_mitigation.js");
 const NET = require("./multinode_shielding_network.js");
 
-const CORE_SHA = "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05";
+const CORE_SHA = "157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b";
 const coreSha = () => crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
 const RATE = 1e9, ED = 0.02, E0 = 0.5, F_EC = 1.16;
 const h2 = (p) => (p <= 0 || p >= 1 ? 0 : -p * Math.log2(p) - (1 - p) * Math.log2(1 - p));
@@ -49,7 +49,7 @@ function main() {
   const sha0 = coreSha();
 
   for (let km = 0; km <= 200; km += 5) {
-    const eta = NET.linkEta(km), row = { km, eta, plobBps: plobBps(km), asymptoticBps: asymptoticDecoyBps(eta, 1e-5), coreMessageQber: 0.012 + km / 4000 };
+    const eta = NET.linkEta(km), row = { km, eta, plobBps: plobBps(km), asymptoticBps: asymptoticDecoyBps(eta, 1e-5), legacyV1CoreMessageQber: 0.012 + km / 4000 };
     for (const [lab, N, Y0] of CASES) { const o = A.optimizeDecoyParameters({ N, Y0, eta }); row[lab] = { bps: o.R * RATE, qber: o.E, mu: o.mu, nu: o.nu, ps: o.ps, codeRate: o.r }; }
     out.table.push(row);
   }
@@ -81,10 +81,10 @@ function main() {
   chk("S5 Fiziksel QBER (E_μ, adaptif katmanın decoy modeli) 0–80 km'de %1,9–2,6 bandında düz; karanlık sayım baskın hale gelince hızla artıyor (150 km'de > %30, anahtar 0)",
     flat && rises, `0 km %${(100 * at(0).N1e10.qber).toFixed(2)} · 80 km %${(100 * at(80).N1e10.qber).toFixed(2)} · 110 km %${(100 * at(110).N1e10.qber).toFixed(2)} · 150 km %${(100 * at(150).N1e10.qber).toFixed(2)}`);
 
-  out.knownInconsistency = {
-    what: "Çekirdeğin mesaj yolu (photonnet_core.js propPhoton) QBER'i 0,012 + km/4000 doğrusal formülüyle üretir; fiziksel decoy modeli 112 km'den sonra anahtar = 0 der. Çekirdek değiştirilemediği için tutarsızlık BELGELENİR; anahtar tüketen yollar qber_abort_policy.js'ten geçmelidir.",
-    at150km: { coreMessageQber: at(150).coreMessageQber, physicalQber: at(150).N1e10.qber, physicalSkrBps: at(150).N1e10.bps },
-    at200km: { coreMessageQber: at(200).coreMessageQber, physicalQber: at(200).N1e10.qber, physicalSkrBps: at(200).N1e10.bps },
+  out.resolvedInconsistency = {
+    what: "Çekirdek v1'de mesaj yolu (propPhoton) QBER'i 0,012 + km/4000 doğrusal formülüyle üretiyordu ve %11'i aşsa bile anahtar kullanılıyordu. Çekirdek v2'de (docs/CORE_CHANGELOG.md) anahtar kanalı sabit hizalama hatası e_d = %1,5 + karanlık sayım kullanır ve SecureMessageSession QBER_test ≥ %11'de iptal eder. Aşağıdaki v1 değerleri yalnız tarihsel karşılaştırma içindir.",
+    at150km: { legacyV1CoreMessageQber: at(150).legacyV1CoreMessageQber, physicalQber: at(150).N1e10.qber, physicalSkrBps: at(150).N1e10.bps },
+    at200km: { legacyV1CoreMessageQber: at(200).legacyV1CoreMessageQber, physicalQber: at(200).N1e10.qber, physicalSkrBps: at(200).N1e10.bps },
   };
   out.literatureReference = [
     { ref: "Grünenfelder ve ark. 2023 (arXiv:2210.16126)", result: "64 Mbps @10,0 km; 3,0 Mbps @102,4 km", hardware: "2,5 GHz time-bin, SNSPD %64–85 verim, ~22–55 ps jitter" },
@@ -92,7 +92,7 @@ function main() {
     { note: "Bu karşılaştırma donanım farkı nedeniyle yalnız büyüklük mertebesi içindir; PhotonNet varsayılanları InGaAs sınıfı (%10 verim, Y0 = 10⁻⁵)." },
   ];
 
-  chk("Çekirdek değişmedi (photonnet_core.js SHA-256)", sha0 === CORE_SHA && coreSha() === CORE_SHA, coreSha().slice(0, 16) + "…");
+  chk("Çekirdek sabitlenmiş sürümle aynı (photonnet_core.js SHA-256)", sha0 === CORE_SHA && coreSha() === CORE_SHA, coreSha().slice(0, 16) + "…");
 
   out.passed = out.checks.filter((x) => x.ok).length; out.total = out.checks.length;
   fs.mkdirSync(path.join(__dirname, "reports"), { recursive: true });

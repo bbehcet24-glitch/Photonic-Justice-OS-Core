@@ -245,7 +245,7 @@ function testSigmaUncertaintyGenerallyDecreases() {
 function testFilesUntouched() {
   console.log("\n── Test 9: çekirdek, quantum_phase_buffer.js VE correction_log_recorder.js bu çalışma boyunca DEĞİŞMEDİ ──");
   const coreHash = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
-  check("bb84/photonnet_core.js SHA-256 beklenen değerle eşleşiyor", coreHash === "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05", `hash=${coreHash}`);
+  check("bb84/photonnet_core.js SHA-256 beklenen değerle eşleşiyor", coreHash === "157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b", `hash=${coreHash}`);
 
   const bufferHashAfter = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "quantum_phase_buffer.js"))).digest("hex");
   check("bb84/quantum_phase_buffer.js SHA-256, modül-yükleme ANINDAKİYLE AYNI", bufferHashAfter === HASH_BEFORE.bufferJs);

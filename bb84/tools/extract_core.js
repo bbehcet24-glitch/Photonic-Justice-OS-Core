@@ -126,7 +126,7 @@ const EXPORT_MANIFEST = [
   "propPhoton", "propPhotonRelayChain", "mulberry32", "combineSeed", "WL", "fiberT", "lega",
   "poissonSample",
   // ── Katman 1: BB84 çekirdek protokolü (baz uzlaşması + sifted key + QBER) ──
-  "QuantumKeyDistribution", "bb84Reconcile",
+  "QuantumKeyDistribution", "SecureMessageSession", "QKD_MISALIGNMENT_E_D", "MAX_LINK_KM", "MAX_REPEATERS", "MAX_RECONCILE_BITS", "bb84Reconcile",
   // ── Basit OTP gösterim katmanı (QKDSecurityProof/Toeplitz üretim yolundan
   //    AYRI, daha eski/didaktik bir "sifted key'i doğrudan OTP anahtarı
   //    olarak kullan" yolu — hâlâ gerçek ve kendi başına faydalı) ──

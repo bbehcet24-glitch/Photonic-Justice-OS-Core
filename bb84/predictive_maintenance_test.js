@@ -305,7 +305,7 @@ function main() {
   const srcs = ["environmental_aging_model.js", "predictive_maintenance.js"].map((f) => fs.readFileSync(path.join(__dirname, f), "utf8"));
   const noCore = srcs.every((s) => !/require\(["']\.\/photonnet_core\.js["']\)/.test(s));
   chk("P12 Belirlenimcilik ve bütünlük: aynı birim aynı olayları üretiyor; çekirdek + yeniden kullanılan modüllerin SHA-256'sı değişmedi; yeni modüller çekirdeği import etmiyor",
-    same && unchanged && noCore && after["photonnet_core.js"] === "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05",
+    same && unchanged && noCore && after["photonnet_core.js"] === "157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b",
     `olaylar ${same ? "birebir" : "FARKLI"} · ${GUARDED.length} dosya SHA-256 ${unchanged ? "değişmedi" : "DEĞİŞTİ"} · core import ${noCore ? "yok" : "VAR"} · süre ${((Date.now() - t0) / 1000).toFixed(1)} s`);
 
   out.allChecksPassed = out.checks.every((c) => c.ok);
