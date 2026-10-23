@@ -32,8 +32,8 @@ echo "[OCSP] Yanıtlayıcı başlatılıyor: http://0.0.0.0:${PORT} (CA veritaba
 echo "[OCSP] İKAZ (dürüstlük notu): bu referans yanıtlayıcı CA'nın KENDİ anahtarını (ca-key.pem) doğrudan OCSP yanıtı imzalamak için kullanıyor — gerçek üretim dağıtımlarında genelde CA'dan AYRI, kısa ömürlü, delege edilmiş bir 'OCSP signing' sertifikası kullanılır (ki CA anahtarı OCSP yanıtlayıcı sürecine hiç maruz kalmasın). Bu basitleştirme, CA anahtarının hava-boşluklu/HSM saklanması gerekliliğiyle GERİLİM içindedir — gerçek dağıtımda OCSP yanıtlayıcısını CA'dan ayırın."
 echo "[OCSP] TESPİT EDİLEN GERÇEK DÜNYA SORUNU #1 (bu ortamda ölçüldü): openssl'in 'ocsp' komutu -index dosyasını YALNIZCA BAŞLANGIÇTA okur ve süreç çalışmaya devam ettikçe İPTALLERİ (revoke_cert.sh sonrası) ASLA YENİDEN OKUMAZ."
 echo "[OCSP] TESPİT EDİLEN GERÇEK DÜNYA SORUNU #2 (İLK DÜZELTME YETERSİZ ÇIKTI — bu ortamda ölçülerek bulundu): yalnızca '-nrequest 1' ile döngüde yeniden başlatmak TEK BAŞINA YETERLİ DEĞİL — yeniden başlayan süreç index.txt'yi KENDİ BAŞLANGICINDA bir kez okur, sonra YENİ BİR İSTEK GELENE KADAR (bu, isteksiz kalırsa saniyeler-dakikalar sürebilir) BOŞTA BEKLER. Bu bekleme SIRASINDA bir iptal olursa, süreç bunu ASLA öğrenmez ve isteğe ESKİ (iptal-öncesi) yanıtı verir — canlı olarak ölçüldü: revoke_cert.sh çalıştıktan 31+ saniye sonra bile 'good' yanıtı verilmeye devam ettiği görüldü."
-echo "[OCSP] GERÇEK ÇÖZÜM: '-nrequest 1' döngüsüne EK OLARAK, ayrı bir arka-plan izleyici index.txt'nin değişim zamanını (mtime) HER SANİYE kontrol eder; bir değişiklik görürse O AN İSTEK BEKLEYEN (henüz istek almamış, dolayısıyla ESKİ veriyle boşta duran) openssl ocsp sürecini ÖLDÜRÜR — ana döngü bunu algılayıp HEMEN index.txt'yi YENİDEN OKUYAN taze bir süreçle yeniden başlar. Bu, en kötü durumda ~1 saniyelik (izleme aralığı) bayatlık penceresi bırakır — 'sonraki isteğe kadar sınırsız bekleme' sorununu ortadan kaldırır."
-echo "[OCSP] İKAZ (kalan küçük yarış durumu, dürüstlük notu): index.txt tam olarak bir openssl ocsp süreci başlatılıp PID dosyasına henüz yazmadığı ÇOK KISA an içinde değişirse, izleyici bir SONRAKI 1 saniyelik taramada bunu yakalar (yani en kötü durum ~1-2 saniye, sıfır DEĞİL) — bu referans/demo kullanımı için kabul edilebilir görülmüştür; üretimde OpenSSL'in kendi ocsp yanıtlayıcı CLI'ı yerine index.txt/veritabanı değişikliklerini olay-tabanlı (event-driven) izleyen adanmış bir OCSP yanıtlayıcı (ör. Dogtag OCSP, EJBCA, cfssl ocsprest) kullanılmalıdır."
+echo "[OCSP] GERÇEK ÇÖZÜM: '-nrequest 1' döngüsüne EK OLARAK, ayrı bir arka-plan izleyici index.txt'nin güncel parmak izini (inode + boyut + nanosaniye mtime) her ${OCSP_INDEX_POLL_S:-0.2} s'de bir, ÇALIŞAN SÜRECİN YÜKLEDİĞİ parmak iziyle karşılaştırır; farklıysa süreci ÖLDÜRÜR — ana döngü HEMEN index.txt'yi YENİDEN OKUYAN taze bir süreçle yeniden başlar. Kalan bayatlık penceresi ~tarama aralığı + yeniden başlama (ölçüm: bkz. bb84/docs/OCSP_NEGATIVE_CACHE_ANALYSIS.md). Eski izleyici (saniye çözünürlüğü, 1 s tarama, ilk taramada taban) üç biçimde bayat kalabiliyordu."
+echo "[OCSP] İKAZ (kalan küçük yarış durumu, dürüstlük notu): index.txt tam olarak bir openssl ocsp süreci başlatılıp PID dosyasına henüz yazmadığı ÇOK KISA an içinde değişirse, izleyici bir SONRAKI taramada bunu yakalar (yani en kötü durum ~2 tarama aralığı, sıfır DEĞİL; KME bu yüzden belirsiz/unknown sonucu yalnız 2 s önbelleğe alır) — bu referans/demo kullanımı için kabul edilebilir görülmüştür; üretimde OpenSSL'in kendi ocsp yanıtlayıcı CLI'ı yerine index.txt/veritabanı değişikliklerini olay-tabanlı (event-driven) izleyen adanmış bir OCSP yanıtlayıcı (ör. Dogtag OCSP, EJBCA, cfssl ocsprest) kullanılmalıdır."
 
 INDEX_FILE="$(pwd)/ca-db/index.txt"
 PIDFILE=$(mktemp)
@@ -42,28 +42,45 @@ cleanup() {
   rm -f "$PIDFILE"
   [ -n "$WATCHER_PID" ] && kill "$WATCHER_PID" 2>/dev/null || true
   [ -f "$PIDFILE.child" ] && kill "$(cat "$PIDFILE.child" 2>/dev/null)" 2>/dev/null || true
-  rm -f "$PIDFILE.child"
+  rm -f "$PIDFILE.child" "$PIDFILE.fp"
 }
 trap 'cleanup; echo "[OCSP] durduruluyor."; exit 0' INT TERM
 
 # ── index.txt izleyici (arka plan alt-kabuk) ────────────────────────
-# HER SANİYE mtime kontrol eder; değişiklik görürse o an BEKLEMEDE olan
-# (PIDFILE'daki) openssl ocsp sürecini öldürür — ana döngü bunu HEMEN
-# fark edip index.txt'yi YENİDEN OKUYAN taze bir süreçle yeniden başlar.
+# DEĞİŞMEZ: çalışan openssl ocsp süreci, index.txt'nin ŞU ANKİ hâlini
+# yüklemiş olmalı. Ana döngü her süreci başlatmadan HEMEN ÖNCE index'in
+# parmak izini (inode + boyut + NANOSANİYE mtime) "$PIDFILE.fp"ye yazar;
+# izleyici her OCSP_INDEX_POLL_S'de (vars. 0,2 s) güncel parmak izini
+# bununla karşılaştırır, farklıysa süreci öldürür — ana döngü HEMEN
+# index'i YENİDEN OKUYAN taze bir süreç başlatır.
+#
+# ÖLÇÜLEREK DÜZELTİLDİ (bb84/docs/OCSP_NEGATIVE_CACHE_ANALYSIS.md). Eski
+# izleyici "önceki taramada gördüğüm mtime"a (SANİYE çözünürlüğü, 1 s'de
+# bir) bakıyordu; üç ayrı biçimde bayat kalabiliyordu:
+#   R1 1 s'lik tarama → yeni imzalanan sertifikaya ~1 s "unknown"
+#      (imzadan 0 ms sonra 10/10, 500 ms sonra 4/10)
+#   R2 aynı saniyedeki ikinci değişiklik görülmüyordu (20 denemede 11)
+#   R3 ilk tarama (başlangıçtan ~1 s sonra) yalnız TABAN kaydediyordu:
+#      yanıtlayıcı (yeniden) başladıktan sonraki ilk saniyedeki değişiklik
+#      tabana karışıp HİÇ fark edilmiyordu → bir sonraki isteğe kadar bayat.
+#      Senaryo S5'teki tutarlı ~60 s'nin kaynağı buydu (S4 yanıtlayıcıyı
+#      yeniden başlatıyor, S5'in iptali o ilk saniyeye düşüyordu).
+# "Sürecin yüklediği parmak izi"ne karşı karşılaştırma üçünü birden kapatır.
+INDEX_POLL_S="${OCSP_INDEX_POLL_S:-0.2}"
+index_fp() { stat -c '%i %s %.9Y' "$INDEX_FILE" 2>/dev/null || echo "yok"; }
 (
-  last_mtime=""
   while true; do
-    sleep 1
-    mtime=$(stat -c %Y "$INDEX_FILE" 2>/dev/null || echo "")
-    if [ -n "$last_mtime" ] && [ "$mtime" != "$last_mtime" ] && [ -f "$PIDFILE.child" ]; then
+    sleep "$INDEX_POLL_S"
+    [ -f "$PIDFILE.child" ] && [ -f "$PIDFILE.fp" ] || continue
+    if [ "$(index_fp)" != "$(cat "$PIDFILE.fp" 2>/dev/null)" ]; then
       kill "$(cat "$PIDFILE.child" 2>/dev/null)" 2>/dev/null || true
     fi
-    last_mtime="$mtime"
   done
 ) &
 WATCHER_PID=$!
 
 while true; do
+  index_fp > "$PIDFILE.fp"   # süreç index'i bu andan SONRA okur; arada değişirse izleyici gereksiz bir yeniden başlatma yapar (zararsız)
   openssl ocsp -port "$PORT" -index ca-db/index.txt -CA ca-cert.pem -rkey ca-key.pem -rsigner ca-cert.pem -nrequest 1 -text >/dev/null 2>&1 &
   CHILD_PID=$!
   echo "$CHILD_PID" > "$PIDFILE.child"

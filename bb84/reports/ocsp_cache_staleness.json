@@ -1,0 +1,65 @@
+{
+  "generatedAt": "2026-10-23T17:40:46.724Z",
+  "checks": [
+    {
+      "name": "O1 (R3) Yanıtlayıcı (yeniden) başladıktan hemen sonraki iptal görülüyor: sorgu good → iptal → 1 s boşta → sorgu REVOKED (eski izleyicide bu durumda iptal edilmiş sertifikaya 'good' veriliyordu — S5'in ~60 s'si)",
+      "ok": true,
+      "detail": "good→revoked, good→revoked, good→revoked, good→revoked, good→revoked, good→revoked"
+    },
+    {
+      "name": "O2 (R2) Aynı saniye içindeki iki index değişikliğinden İKİNCİSİ görülüyor: 2,5 s sonra ikinci sertifika GOOD (eski izleyicide 20 denemede 11 kez 'unknown')",
+      "ok": true,
+      "detail": "aynı saniyeye düşen 8/8 deneme: good, good, good, good, good, good, good, good"
+    },
+    {
+      "name": "O3 (R1) Yeni imzalanan sertifika imzadan 300 ms sonra GOOD (eski izleyicide 500 ms'de 4/10 'unknown')",
+      "ok": true,
+      "detail": "10/10 good"
+    },
+    {
+      "name": "O4 (K1) Bayat yanıtlayıcı yeni sertifikaya 'unknown' dediğinde KME fail-CLOSED reddediyor (401); yanıtlayıcı tazelenince sertifika ~2 s içinde KABUL ediliyor. Eski davranışla (--ocsp-indeterminate-ttl-ms=30000) 6 s sonra hâlâ RED",
+      "ok": true,
+      "detail": "ilk istek 401: OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; ye · tazelendikten 1526 ms sonra kabul · 30 s TTL ile: 6 s sonra hâlâ 401"
+    },
+    {
+      "name": "O5 Güvenlik gevşemedi: iptal edilen sertifika 401 'İPTAL' ve 2,5 s sonra da RED (revoked 30 s önbellekte); yanıtlayıcı çökükken GEÇERLİ sertifika RED (fail-closed) ve 2,5 s sonraki yeniden sorguda da RED",
+      "ok": true,
+      "detail": "iptal: 401/401 · çökük: 401 (OCSP yanıtlayıcıya ulaşılamadı/anlaşılam…)/401"
+    },
+    {
+      "name": "O6 Geçersiz --ocsp-indeterminate-ttl-ms (metin) → KME açılmıyor, çıkış kodu 2 (sessiz varsayılan yok)",
+      "ok": true,
+      "detail": "çıkış 2: [KME] --ocsp-indeterminate-ttl-ms 0–3600000 aralığında tam sayı olmalı (alınan: abc)"
+    }
+  ],
+  "o4": {
+    "yeni": {
+      "first": {
+        "status": 401,
+        "msg": "OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; yeni imzalanmışsa yanıtlayıcı CA veritabanını henüz okumamış olabilir, 2000 ms sonra yeniden sorulur",
+        "ms": 35
+      },
+      "acceptedAfterFixMs": 1526,
+      "last": {
+        "status": 200,
+        "msg": "",
+        "ms": 28
+      }
+    },
+    "eskiDavranis": {
+      "first": {
+        "status": 401,
+        "msg": "OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; yeni imzalanmışsa yanıtlayıcı CA veritabanını henüz okumamış olabilir, 30000 ms sonra yeniden sorulur",
+        "ms": 33
+      },
+      "acceptedAfterFixMs": null,
+      "last": {
+        "status": 401,
+        "msg": "OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; yeni imzalanmışsa yanıtlayıcı CA veritabanını henüz okumamış olabilir, 30000 ms sonra yeniden sorulur",
+        "ms": 10
+      }
+    }
+  },
+  "passed": 6,
+  "total": 6
+}

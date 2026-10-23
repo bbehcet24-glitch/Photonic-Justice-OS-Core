@@ -245,6 +245,7 @@ async function waitUntil(fn, { intervalMs = 300, timeoutMs = 20000 } = {}) {
   }
 }
 
+const DOC_OCSP = "bb84/docs/OCSP_NEGATIVE_CACHE_ANALYSIS.md";
 const results = [];
 function record(r) { results.push(r); log(`  → ${r.id}: ${r.verdict} — ${r.summary}`); }
 
@@ -343,12 +344,13 @@ async function scenarioS1() {
     id: "S1", title: "Planlı rotasyon, İPTAL OLMADAN (kesintisiz geçiş penceresi)",
     verdict: ok ? "PASS" : "FAIL",
     summary: ok
-      ? `rotate_cert.sh (--revoke-old OLMADAN) çalıştırıldıktan SONRA hem ESKİ hem YENİ sertifika kabul edildi — sıfır kesintili geçiş mümkün${newAfterRotatePoll.totalElapsedMs > 3000 ? ` (YENİ sertifikanın kabul edilmesi ${newAfterRotatePoll.totalElapsedMs}ms sürdü — bkz. '30sn negatif önbellek yarışı' notu)` : ""}.`
+      ? `rotate_cert.sh (--revoke-old OLMADAN) çalıştırıldıktan SONRA hem ESKİ hem YENİ sertifika kabul edildi — sıfır kesintili geçiş mümkün${newAfterRotatePoll.totalElapsedMs > 3000 ? ` (YENİ sertifikanın kabul edilmesi ${newAfterRotatePoll.totalElapsedMs}ms sürdü — beklenen üst sınır ~3 s; bkz. ${DOC_OCSP})` : ` (YENİ sertifika ${newAfterRotatePoll.totalElapsedMs}ms içinde kabul edildi)`}.`
       : "beklenmedik davranış: rotasyon sonrası eski/yeni sertifikalardan biri reddedildi (bkz. detaylar).",
     detail: {
       baseline_eski_sertifika: describe(baseline),
       rotasyon_sonrasi_eski_sertifika_kopyasi: describe(oldAfterRotate),
       rotasyon_sonrasi_yeni_sertifika: describe(newAfterRotate),
+      yeni_sertifika_kabul_suresi_ms: newAfterRotatePoll.totalElapsedMs,
     },
   });
 }
@@ -377,28 +379,25 @@ async function scenarioS2() {
     return { done: !r.ok, ...r };
   }, { timeoutMs: 20000 });
 
-  // İKAZ (bu script'i geliştirirken CANLI olarak tespit edildi): YENİ
-  // sertifikanın İLK OCSP sorgusu, OCSP yanıtlayıcısının index.txt'yi
-  // henüz yeniden okumadığı ÇOK KISA bir pencereye denk gelirse "unknown"
-  // yanıtı alabilir — checkOcsp() bunu (doğru şekilde, güvenlik açısından
-  // temkinli olarak) fail-CLOSED sayar VE bu olumsuz sonucu 30 saniye
-  // önbelleğe alır (bkz. S4'teki AYNI mekanizma). Yani rotasyondan hemen
-  // sonra YENİ sertifikanın kabul edilmesi NADİREN ~30 saniyeye kadar
-  // gecikebilir — bu GERÇEK (ve tekrarlanabilir) bir davranıştır, test
-  // hatası DEĞİLDİR; bu yüzden zaman aşımını bu olası pencereyi
-  // KAPSAYACAK şekilde ayarlıyoruz ve GERÇEKTE ÖLÇÜLEN süreyi raporluyoruz.
+  // YENİ sertifikanın İLK OCSP sorgusu, yanıtlayıcının index.txt'yi henüz
+  // yeniden okumadığı kısa pencereye (ölçüm: imzadan 0 ms sonra 6/10, 200 ms+
+  // sonra 0/10) denk gelirse "unknown" alır; checkOcsp() bunu fail-CLOSED
+  // sayar. Eskiden bu belirsiz sonuç 30 s önbelleğe alındığından yeni
+  // sertifika ~30 s kilitleniyordu (4 koşuda 2); artık belirsiz sonuç 2 s
+  // tutulur (bkz. bb84/docs/OCSP_NEGATIVE_CACHE_ANALYSIS.md). Zaman aşımı
+  // eski davranışı da kapsayacak kadar geniş bırakıldı; ölçülen süre raporlanır.
   const newCertPoll = await waitUntil(async () => {
     const r = await attempt(curCert, curKey, caCert);
     return { done: r.ok, ...r };
   }, { timeoutMs: 45000 });
 
   const ok = !rejectPoll.timedOut && !rejectPoll.ok && !newCertPoll.timedOut && newCertPoll.ok;
-  const newCertRace = newCertPoll.totalElapsedMs > 3000; // birkaç saniyeden fazla sürdüyse muhtemelen yukarıdaki OCSP "unknown" yarışına yakalanmıştır
+  const newCertRace = newCertPoll.totalElapsedMs > 3000; // ~3 s'den uzun sürdüyse belirsiz sonuç beklenenden uzun tutulmuş demektir (bkz. DOC_OCSP)
   record({
     id: "S2", title: "Planlı rotasyon, --revoke-old İLE (sızdırılmış anahtar senaryosu)",
     verdict: ok ? "PASS" : "FAIL",
     summary: ok
-      ? `eski sertifika rotate_cert.sh --revoke-old komutundan itibaren ${rejectPoll.totalElapsedMs}ms içinde reddedilmeye başladı (katman: ${rejectPoll.layer === "connection" ? "TLS/CRL (bağlantı seviyesi)" : "HTTP 401 (OCSP)"}); yeni sertifika ${newCertPoll.totalElapsedMs}ms içinde kabul edilir hale geldi${newCertRace ? " (bu çalıştırmada YENİ sertifikanın ilk OCSP sorgusu, yanıtlayıcının henüz güncellenmemiş bir anlık görüntüsüne denk geldi — bkz. rapordaki '30sn negatif önbellek yarışı' notu)" : ""}.`
+      ? `eski sertifika rotate_cert.sh --revoke-old komutundan itibaren ${rejectPoll.totalElapsedMs}ms içinde reddedilmeye başladı (katman: ${rejectPoll.layer === "connection" ? "TLS/CRL (bağlantı seviyesi)" : "HTTP 401 (OCSP)"}); yeni sertifika ${newCertPoll.totalElapsedMs}ms içinde kabul edilir hale geldi${newCertRace ? ` (beklenen üst sınır ~3 s AŞILDI — belirsiz OCSP sonucu beklenenden uzun önbellekte kaldı; bkz. ${DOC_OCSP})` : ""}.`
       : "beklenmedik davranış: eski sertifika süresi içinde reddedilmedi veya yeni sertifika süresi içinde kabul edilmedi.",
     detail: {
       baseline_eski_sertifika: describe(baseline),
@@ -407,7 +406,8 @@ async function scenarioS2() {
       eski_sertifika_reddinin_katmani: rejectPoll.layer === "connection" ? "TLS/CRL (bağlantı seviyesi — HTTP yanıtı hiç alınamadı)" : "HTTP 401 (uygulama seviyesi — OCSP kontrolü)",
       eski_sertifika_son_hata_mesaji: rejectPoll.message,
       yeni_sertifikanin_kabul_edilene_kadar_gecen_sure_ms: newCertPoll.totalElapsedMs,
-      yeni_sertifika_30sn_negatif_onbellek_yarisina_yakalandi_mi: newCertRace,
+      yeni_sertifika_kabul_suresi_ms: newCertPoll.totalElapsedMs,
+      yeni_sertifika_3sn_ust_sinirini_asti_mi: newCertRace,
     },
   });
 }
@@ -465,29 +465,37 @@ async function scenarioS4() {
   await sleep(700); // portun tamamen kapanması için
 
   const duringOutageB = await attempt(certB, keyB, caCert); // HİÇ sorgulanmamış (önbellekte YOK) bir sertifika — GERÇEK canlı sorgu denemesi yapılacak
+  const tOutageReject = Date.now();
 
   log(`  OCSP yanıtlayıcısı YENİDEN başlatılıyor (port ${OCSP_PORT})...`);
   spawnBg("ocsp", path.join(PKI_TOOLS, "run_ocsp_responder.sh"), [PKI_DIR, String(OCSP_PORT)], "ocsp_responder.log");
   const recoveryMs = await waitForOcspResponder(caCert, path.join(REQS_DIR, "localhost-cert.pem"), `http://localhost:${OCSP_PORT}`, 15000);
 
   const afterRecoveryC = await attempt(certC, keyC, caCert); // TAZE kimlik — hiç negatif önbellek YOK, temiz kurtarma kanıtı
-  const afterRecoveryB = await attempt(certB, keyB, caCert); // AYNI kimlik — 30sn'lik NEGATİF önbellek hâlâ etkili OLABİLİR
+  const afterRecoveryB = await attempt(certB, keyB, caCert); // AYNI kimlik — belirsiz (ulaşılamadı) sonuç yalnız 2 s önbellekte kalır (eskiden 30 s)
+  const sinceOutageRejectMs = Date.now() - tOutageReject;
+  // Belirsiz sonuç 2 s önbellekte kalır: B o süre dolduktan sonra yeniden sorgulanıp kabul edilmeli
+  let afterTtlB = afterRecoveryB, sinceOutageRejectMs2 = sinceOutageRejectMs;
+  if (!afterRecoveryB.ok) { await sleep(Math.max(0, 2300 - sinceOutageRejectMs)); afterTtlB = await attempt(certB, keyB, caCert); sinceOutageRejectMs2 = Date.now() - tOutageReject; }
 
   const failClosedOk = baselineA.ok && !duringOutageB.ok && duringOutageB.layer === "http" && /ulaşılamadı|fail-CLOSED/i.test(duringOutageB.message);
-  const recoveryOk = afterRecoveryC.ok;
+  const recoveryOk = afterRecoveryC.ok && afterTtlB.ok; // B, belirsiz-sonuç TTL'i (2 s) dolunca kabul edilmeli
   const ok = failClosedOk && recoveryOk;
   record({
     id: "S4", title: "OCSP yanıtlayıcısı ÇÖKER (fail-closed doğrulaması + kurtarma davranışı)",
     verdict: ok ? "PASS" : "FAIL",
     summary: ok
-      ? `OCSP yanıtlayıcısı ERİŞİLEMEZ olduğunda GEÇERLİ bir sertifika bile ${duringOutageB.elapsedMs}ms içinde HTTP 401 ile fail-CLOSED reddedildi (güvenlik açısından DOĞRU); yanıtlayıcı ${recoveryMs}ms'de toparlandı ve TAZE bir kimlik hemen kabul edildi. ÖNEMLİ: kesinti sırasında reddedilen AYNI kimlik (B), yanıtlayıcı toparlandıktan HEMEN sonra bile ${afterRecoveryB.ok ? "kabul edildi" : "HÂLÂ reddedildi"} — negatif sonuç da 30sn önbelleğe alınıyor.`
+      ? `OCSP yanıtlayıcısı ERİŞİLEMEZ olduğunda GEÇERLİ bir sertifika bile ${duringOutageB.elapsedMs}ms içinde HTTP 401 ile fail-CLOSED reddedildi (güvenlik açısından DOĞRU); yanıtlayıcı ${recoveryMs}ms'de toparlandı ve TAZE bir kimlik hemen kabul edildi. Kesinti sırasında reddedilen AYNI kimlik (B), reddinden ${sinceOutageRejectMs}ms sonra ${afterRecoveryB.ok ? "kabul edildi" : `henüz reddediliyordu, ${sinceOutageRejectMs2}ms sonra ${afterTtlB.ok ? "KABUL edildi" : "HÂLÂ reddedildi"}`} — KME belirsiz (ulaşılamadı/unknown) sonucu yalnız 2 s önbelleğe alıyor (good/revoked 30 s; bkz. ${DOC_OCSP}).`
       : "beklenmedik davranış: fail-closed veya kurtarma davranışı beklenenden farklı (bkz. detaylar).",
     detail: {
       baseline_A_ocsp_ayaktayken: describe(baselineA),
       kesinti_sirasinda_B_hic_sorgulanmamis_kimlik: describe(duringOutageB),
       ocsp_yanitlayici_toparlanma_suresi_ms: recoveryMs,
       toparlanma_sonrasi_TAZE_kimlik_C: describe(afterRecoveryC),
-      toparlanma_sonrasi_AYNI_kimlik_B_negatif_onbellek_notu: describe(afterRecoveryB),
+      toparlanma_sonrasi_AYNI_kimlik_B: describe(afterRecoveryB),
+      B_reddinden_sonra_gecen_ms: sinceOutageRejectMs,
+      B_belirsiz_ttl_sonrasi: describe(afterTtlB),
+      B_belirsiz_ttl_sonrasi_gecen_ms: sinceOutageRejectMs2,
     },
   });
 }
@@ -507,21 +515,14 @@ async function scenarioS5() {
 
   runTool("revoke_cert.sh", [PKI_DIR, certPath]);
 
-  // İKAZ (bu script'i geliştirirken CANLI olarak teşhis edildi, EN ÖNEMLİ
-  // bulgu): teorik beklenti, OCSP'nin 30sn'lik önbelleği doldukça TEK bir
-  // döngüde (~30sn) taze bir sonuç vermesidir. Ama referans OCSP
-  // yanıtlayıcısının "-nrequest 1, her istekte yeniden başla" tasarımı
-  // İLE uygulama-katmanı önbelleğinin ETKİLEŞİMİ yüzünden, GERÇEKTE
-  // ölçülen davranış şu: önbellek dolduğunda yapılan İLK yeniden sorgu,
-  // o an BOŞTA BEKLEYEN (revizyondan ÖNCE başlamış, index.txt'yi henüz
-  // yeniden okumamış) bir openssl sürecine denk gelebilir — bu süreç
-  // İSTEĞİ (bayat "good" ile) YANITLAR, SONRA (isteği aldığı için)
-  // kendini yeniler; ama yanıt ZATEN GİTMİŞ ve BİR SONRAKİ 30sn için
-  // TEKRAR önbelleğe alınmıştır. Yalnızca İKİNCİ önbellek döngüsündeki
-  // sorgu (yaklaşık +60sn) bu artık-taze süreci bulur. Bu script'i
-  // GELİŞTİRİRKEN CANLI olarak üç kez tekrarlanabilir şekilde gözlemlendi
-  // (bkz. rapordaki "en ciddi bulgu"). Bu yüzden zaman aşımını BİRDEN
-  // FAZLA önbellek döngüsünü KAPSAYACAK şekilde geniş tutuyoruz.
+  // Beklenen: OCSP'nin 30 s'lik "good" önbelleği dolunca TEK döngüde (~30 s)
+  // taze "revoked". Eskiden bu senaryo TUTARLI olarak ~60 s sürüyordu (4/4):
+  // S4 yanıtlayıcıyı yeniden başlatıyor, S5'in iptali yanıtlayıcının ilk
+  // saniyesine düşüyordu ve eski index izleyicisi ilk taramada yalnız TABAN
+  // kaydettiği için bu değişikliği HİÇ görmüyordu (R3) → 30 s sonraki sorgu
+  // bayat "good" alıp bir 30 s daha önbelleğe alıyordu. İzleyici düzeltildi
+  // (bkz. bb84/docs/OCSP_NEGATIVE_CACHE_ANALYSIS.md); zaman aşımı yine de
+  // birden fazla döngüyü kapsayacak kadar geniş bırakıldı.
   const poll = await waitUntil(async () => {
     const r = await attempt(certPath, keyPath, caCert, { agent });
     return { done: !r.ok, ...r };
@@ -530,12 +531,12 @@ async function scenarioS5() {
   agent.destroy();
 
   const ok = first.ok && !poll.timedOut && !poll.ok && poll.layer === "http";
-  const tookExtraCycle = poll.totalElapsedMs > 35000; // ~30sn'lik TEK döngüden belirgin şekilde fazla sürdüyse muhtemelen 2. döngüye kaldı
+  const tookExtraCycle = poll.totalElapsedMs > 35000; // ~30 s'lik TEK döngüden belirgin şekilde fazla → yanıtlayıcı bayat "good" vermiş (R3 benzeri)
   record({
     id: "S5", title: "KALICI (keep-alive) mTLS bağlantısı AÇIKKEN sertifika iptal edilirse",
     verdict: ok ? "PASS" : "FAIL",
     summary: ok
-      ? `mevcut, ZATEN KURULMUŞ TLS bağlantısı KOPARILMADI — iptal, aynı bağlantı üzerindeki BİR SONRAKİ istekte, revoke_cert.sh'ten itibaren ${poll.totalElapsedMs}ms içinde, uygulama katmanında (HTTP 401, OCSP) devreye girdi. Sonuç: TLS oturum yeniden kullanımı iptali ATLATMIYOR, ama soketin kendisi de anında kesilmiyor.${tookExtraCycle ? " EN ÖNEMLİ BULGU: bu, TEK bir 30sn önbellek döngüsünden BELİRGİN ŞEKİLDE UZUN sürdü — referans OCSP yanıtlayıcısının kendi yeniden-başlatma mekanizmasıyla uygulama önbelleğinin ETKİLEŞİMİ yüzünden GERÇEK dünya kilitlenme süresi teorik ~30sn DEĞİL, ~60sn'ye kadar çıkabiliyor (bkz. rapordaki ayrıntılı analiz)." : ""}`
+      ? `mevcut, ZATEN KURULMUŞ TLS bağlantısı KOPARILMADI — iptal, aynı bağlantı üzerindeki BİR SONRAKİ istekte, revoke_cert.sh'ten itibaren ${poll.totalElapsedMs}ms içinde, uygulama katmanında (HTTP 401, OCSP) devreye girdi. Sonuç: TLS oturum yeniden kullanımı iptali ATLATMIYOR, ama soketin kendisi de anında kesilmiyor.${tookExtraCycle ? ` ⚠ UYARI: bu, TEK bir 30 s önbellek döngüsünden BELİRGİN ŞEKİLDE UZUN sürdü — yanıtlayıcı iptalden sonra bayat "good" vermiş olmalı (bkz. ${DOC_OCSP}, R3).` : " Süre tek bir 30 s önbellek döngüsüyle uyumlu."}`
       : "beklenmedik davranış: ya ilk istek başarısız oldu ya da iptal sonrası davranış beklenenden farklı (bkz. detaylar).",
     detail: {
       ilk_istek_ok_mu: first.ok, ilk_istek_yerel_port: portBefore,
@@ -592,6 +593,7 @@ function writeReports() {
   const s3 = results.find((r) => r.id === "S3");
   const s4 = results.find((r) => r.id === "S4");
   const s5 = results.find((r) => r.id === "S5");
+  const s5Ms = s5 && s5.detail ? s5.detail.iptal_sonrasi_reddedilene_kadar_gecen_sure_ms : null;
 
   const md = `# PhotonNet KME — Sertifika Yenileme / İptal (CRL+OCSP) Senaryo Analizi
 
@@ -603,7 +605,7 @@ IBM'in kendi sertifika rotasyon protokollerini bu KME'ye karşı entegre
 etmeden önce, rotasyon/iptal sırasındaki GERÇEK davranışı ve zamanlama
 karakteristiklerini belgelemektir.
 
-**Sonuç özeti: ${passCount}/${results.length} senaryo beklenen davranışı gösterdi${failCount > 0 ? `, ${failCount} senaryo İNCELEME GEREKTİRİYOR` : ""}.** ⚠ En önemli bulgu: kalıcı (keep-alive) bağlantılarda GERÇEK iptal-kilitlenme süresi, teorik ~30 saniye DEĞİL, ~60 saniyeye kadar çıkabiliyor — ayrıntı için aşağıdaki "EN KRİTİK bulgu" bölümüne bakınız.
+**Sonuç özeti: ${passCount}/${results.length} senaryo beklenen davranışı gösterdi${failCount > 0 ? `, ${failCount} senaryo İNCELEME GEREKTİRİYOR` : ""}.** ${s5Ms != null ? (s5Ms > 35000 ? `⚠ Bu koşuda kalıcı (keep-alive) bağlantıda iptal ${s5Ms} ms sürdü — tek 30 s önbellek döngüsünden UZUN (bkz. "OCSP zamanlaması" bölümü).` : `Kalıcı (keep-alive) bağlantıda iptal bu koşuda ${s5Ms} ms sürdü — tek 30 s önbellek döngüsüyle uyumlu.`) : ""}
 
 ## Senaryo Özeti
 
@@ -630,7 +632,8 @@ BAĞIMSIZ katmanda** kontrol eder:
 3. **OCSP (canlı iptal sorgusu)** — TLS handshake BAŞARILI olduktan
    SONRA, uygulama katmanında (\`authenticate()\` içinde) çalışır; her
    isteğin sertifika seri numarası için CA veritabanına CANLI sorgu
-   yapar, sonucu **30 saniyelik** bir bellek-içi önbellekte tutar.
+   yapar; "good"/"revoked" sonucunu **30 saniye**, belirsiz sonucu
+   ("unknown" / yanıtlayıcıya ulaşılamadı) **2 saniye** önbellekte tutar.
    Yanıtlayıcıya ulaşılamazsa **fail-CLOSED** davranır (istek reddedilir
    — bkz. S4).
 
@@ -644,47 +647,35 @@ varsayılan olarak \`keepAlive: true\`'dur, yani \`agent:\` AÇIKÇA
 belirtilmezse "ayrı" görünen istekler sessizce AYNI bağlantıyı yeniden
 kullanabilir (bkz. 6. madde).
 
-## ⚠ Bu analizin EN KRİTİK bulgusu: kalıcı bağlantılarda GERÇEK kilitlenme süresi ~30sn DEĞİL, ~60sn'ye kadar çıkabiliyor
+## OCSP zamanlaması — ölçülen ve düzeltilen bayatlık kaynakları
 
-S5'i geliştirirken, sonuçlar başlangıçta "sertifika HİÇ reddedilmiyor"
-gibi göründü (test 55 saniye sonra zaman aşımına uğradı). Kök nedeni
-CANLI olarak (KME sunucusuna geçici teşhis günlüğü ekleyerek) izledik ve
-şunu doğruladık: bu bir test hatası DEĞİL, referans OCSP altyapısının
-GERÇEK bir sınır durumu.
+Bu raporun önceki sürümleri iki "yarış" bildiriyordu: rotasyondan sonra
+yeni sertifikanın NADİREN ~30 s kilitlenmesi (S1/S2) ve kalıcı bağlantıda
+iptalin TUTARLI olarak ~60 s sürmesi (S5). İkisinin kök nedeni ölçülerek
+bulundu ve düzeltildi (\`bb84/docs/OCSP_NEGATIVE_CACHE_ANALYSIS.md\`):
 
-**Mekanizma:** \`checkOcsp()\`'nin 30 saniyelik önbelleği dolduğunda
-yapılan İLK yeniden sorgu, o sırada BOŞTA BEKLEYEN (revizyondan ÖNCE
-başlamış, \`index.txt\`'yi henüz yeniden okumamış) bir openssl
-\`ocsp\` sürecine denk gelebilir. Bu süreç isteği ESKİ ("good") veriyle
-YANITLAR — ve ancak YANITLADIKTAN SONRA (bkz. \`run_ocsp_responder.sh\`,
-\`-nrequest 1\`) kendini tazeler. Ama bu ESKİ yanıt ZATEN gönderilmiş ve
-KME'nin uygulama-katmanı önbelleğinde BİR SONRAKİ 30 saniye için TEKRAR
-saklanmıştır. Yalnızca İKİNCİ önbellek döngüsündeki sorgu (yaklaşık
-+60 saniye) bu artık-tazelenmiş süreci bulur ve doğru "revoked"
-yanıtını alır. Bu, üç ayrı tam-boru-hattı çalıştırmasında
-TEKRARLANABİLİR şekilde gözlemlendi (ölçülen değerler: 30270ms — bu
-sefer tek döngüde yakalandı —, ve İKİ ayrı çalıştırmada 60278ms/60000ms
-civarı — iki döngü gerekti).
+- **Yanıtlayıcı (run_ocsp_responder.sh):** index.txt izleyicisi saniye
+  çözünürlüklü mtime'a 1 s'de bir bakıyordu ve ilk taramada yalnız taban
+  kaydediyordu. Sonuçları: yeni sertifikaya ~1 s "unknown" (R1), aynı
+  saniyedeki ikinci değişikliğin kaçması (R2), yanıtlayıcı başladıktan
+  sonraki ilk saniyedeki değişikliğin HİÇ görülmemesi (R3 — S5'in ~60 s'si;
+  iptal edilmiş sertifikaya "good"). Artık izleyici güncel parmak izini
+  (inode + boyut + ns mtime) çalışan sürecin YÜKLEDİĞİ parmak iziyle
+  0,2 s'de bir karşılaştırıyor.
+- **KME (checkOcsp):** belirsiz sonuç ("unknown"/ulaşılamadı) "good" ile aynı
+  30 s önbelleğe alınıyordu; tek bir geçici "unknown" geçerli sertifikayı
+  30 s kilitliyordu. Artık belirsiz sonuç 2 s tutuluyor (istek yine
+  fail-CLOSED reddediliyor). good/revoked için 30 s TTL değişmedi.
 
-**Neden önemli:** \`run_ocsp_responder.sh\`'in kendi dosya-üstü notu
-zaten "1-2 saniyelik kalan bir yarış durumu" kabul ediyordu — ama bu
-analiz, GERÇEKTE bu yarışın kaybedilme sonucunun 1-2 saniye DEĞİL, TAM
-BİR EK 30 SANİYELİK önbellek döngüsü (yani toplamda ~60sn) olabildiğini
-somut olarak ölçtü. Bu fark, IBM'in "bir sertifika iptalinden sonra
-azami ne kadar sürede TÜM erişim kesilir" sorusuna verilecek cevabı
-DOĞRUDAN etkiler.
+**Bu koşunun ölçümleri:** S1 yeni sertifika ${(results.find((r) => r.id === "S1") || { detail: {} }).detail.yeni_sertifika_kabul_suresi_ms ?? "?"} ms,
+S2 yeni sertifika ${s2 && s2.detail ? s2.detail.yeni_sertifika_kabul_suresi_ms : "?"} ms, S5 kalıcı bağlantıda iptal ${s5Ms ?? "?"} ms.
 
-**Öneri (üretim için ZORUNLU, referans yanıtlayıcı için DEĞİL):**
-Gerçek bir IBM entegrasyonunda, \`run_ocsp_responder.sh\` (openssl CLI
-tabanlı, tek-istek-başına-yeniden-başlatma modeli) yerine olay-tabanlı
-(event-driven, index.txt/veritabanı değişikliğinde ANINDA yanıt
-güncelleyen) adanmış bir OCSP yanıtlayıcı kullanılmalıdır — bu zaten
-\`run_ocsp_responder.sh\`'in kendi notunda önerilmişti, bu rapor bunu
-SOMUT, ÖLÇÜLMÜŞ bir gerekçeyle (30sn yerine ~60sn azami kilitlenme
-süresi riski) güçlendirmektedir. Alternatif/ek önlem: KME'nin
-\`OCSP_CACHE_TTL_MS\`'ini düşürmek (ör. 30sn yerine 5-10sn) bu riskin
-azami etkisini orantılı olarak küçültür (30sn yerine ~10-20sn üst
-sınır), ama sorunu KÖKTEN çözmez — asıl çözüm yanıtlayıcı tarafındadır.
+**Üretim önerisi (değişmedi):** openssl CLI tabanlı bu referans yanıtlayıcı
+yerine CA veritabanı değişikliğini olay-tabanlı izleyen adanmış bir OCSP
+yanıtlayıcı (Dogtag OCSP, EJBCA, cfssl ocsprest) kullanılmalıdır. Kalıcı
+bağlantıda iptal gecikmesinin üst sınırı artık KME'nin good TTL'idir
+(\`--ocsp-cache-ttl-ms\`, vars. 30 s); daha kısa bir üst sınır gerekiyorsa
+bu değer düşürülebilir (bedeli: daha sık OCSP sorgusu).
 
 ## Öne çıkan bulgular ve IBM entegrasyonu için öneriler
 
@@ -713,15 +704,12 @@ sınır), ama sorunu KÖKTEN çözmez — asıl çözüm yanıtlayıcı tarafın
    kontrolü) bir servis olarak çalıştırın; \`run_ocsp_responder.sh\`
    dosya-üstü notunda da belirtildiği gibi, üretimde OpenSSL CLI
    tabanlı bu referans yanıtlayıcı yerine adanmış bir OCSP yanıtlayıcı
-   (Dogtag OCSP, EJBCA, cfssl ocsprest) kullanılması ÖNERİLİR. AYRICA:
-   negatif (hata) sonuçlar da 30 saniye önbelleğe alınıyor — bu,
-   yanıtlayıcı toparlandıktan SONRA bile, kesinti sırasında reddedilmiş
-   istemcilerin en fazla 30 saniye daha beklemesi gerekebileceği
-   anlamına gelir; kritik entegrasyonlarda hata sonuçları için daha
-   kısa/ayrı bir önbellek TTL'i değerlendirilebilir.
+   (Dogtag OCSP, EJBCA, cfssl ocsprest) kullanılması ÖNERİLİR. Belirsiz
+   (hata) sonuçlar yalnız 2 s önbelleğe alınır: yanıtlayıcı toparlanınca
+   kesinti sırasında reddedilmiş istemciler en geç ~2 s sonra yeniden
+   değerlendirilir (eskiden 30 s; \`--ocsp-indeterminate-ttl-ms\`).
 5. **Kalıcı bağlantılar iptali atlatamıyor, ama anında da kesilmiyor —
-   ve GERÇEK kilitlenme süresi yukarıdaki kritik bulguda açıklandığı
-   gibi ~60sn'ye kadar çıkabiliyor (S5).** ${s5 ? s5.summary : "(veri yok)"}
+   üst sınır KME'nin good önbellek TTL'i (vars. 30 s) (S5).** ${s5 ? s5.summary : "(veri yok)"}
    IBM tarafının HTTP keep-alive/connection-pooling kullanması BEKLENEN
    bir davranıştır (performans için) — bu test, bu kullanımın güvenlik
    açığı YARATMADIĞINI (her istek yine de denetleniyor, yalnızca daha
@@ -730,7 +718,7 @@ sınır), ama sorunu KÖKTEN çözmez — asıl çözüm yanıtlayıcı tarafın
    HTTP kütüphaneleri 401'de bile soketi keep-alive için AÇIK tutar) —
    aksi bir davranış fonksiyonel bir sorun yaratmaz ama gereksiz tekrar
    denemelere yol açabilir. Asıl kök neden ve önerilen düzeltme için
-   yukarıdaki "EN KRİTİK bulgu" bölümüne bakınız.
+   yukarıdaki "OCSP zamanlaması" bölümüne bakınız.
 6. **GERÇEK BULGU (bu script'in İLK taslağını yazarken canlı olarak
    keşfedildi) — Node.js istemcilerinde \`https.globalAgent\`
    VARSAYILAN olarak \`keepAlive: true\`'dur (bu ortamda, Node.js v22
@@ -740,7 +728,7 @@ sınır), ama sorunu KÖKTEN çözmez — asıl çözüm yanıtlayıcı tarafın
    kullanabilir — bu, istemci geliştiricisinin FARKINDA OLMADAN madde
    5'teki "kalıcı bağlantı" durumuna düşmesi anlamına gelir. Sonuç:
    CRL/TLS-seviyesi iptal kontrolü bu bağlantı ÜZERİNDE bir daha HİÇ
-   çalışmaz (yalnızca OCSP'nin 30sn'lik uygulama-katmanı kontrolü
+   çalışmaz (yalnızca OCSP'nin 30 s'lik uygulama-katmanı kontrolü
    iptali fark eder). **Öneri:** IBM'in istemci kütüphanesi hangi dilde/
    çatıda yazılırsa yazılsın (Node.js, Java, Python, Go...), KME'ye
    bağlanırken kullandığı HTTP istemcisinin/agent'ının varsayılan
@@ -770,18 +758,10 @@ sınır), ama sorunu KÖKTEN çözmez — asıl çözüm yanıtlayıcı tarafın
    (madde 2) ile birleştirildiğinde, IBM tarafının PLANLI rotasyonları
    ("--revoke-old" OLMADAN, madde 1) DÜZENLİ bir takvimde, iptali ise
    YALNIZCA gerçek bir sızıntı şüphesinde (madde 3) kullanması önerilir.
-9. **Küçük bir kod tabanı iyileştirme fırsatı (S2 sırasında keşfedildi):**
-   YENİ imzalanan bir sertifikanın İLK OCSP sorgusu, yanıtlayıcının
-   index.txt'yi henüz yeniden okumadığı çok kısa bir pencereye denk
-   gelirse "unknown" yanıtı alabilir; \`checkOcsp()\` bunu (madde 4'teki
-   AYNI mekanizmayla) fail-CLOSED sayıp 30 saniye önbelleğe alır — yani
-   rotasyon SONRASI yeni sertifikanın kullanılabilir hale gelmesi
-   NADİREN ~30 saniyeye kadar sürebilir. **Öneri:** \`checkOcsp()\`'te
-   "unknown" yanıtını "revoked"/"unreachable" ile AYNI TTL'de değil,
-   daha KISA bir TTL'de (ör. 2-3 saniye — tam da OCSP izleyicisinin
-   kendi tazelenme penceresi kadar) önbelleğe almak bu nadir gecikmeyi
-   ortadan kaldırır; bu bu raporun kapsamı DIŞINDA, ayrı bir değişiklik
-   olarak değerlendirilebilir.
+9. **Önceki sürümde önerilen iyileştirme uygulandı (S2 sırasında keşfedilmişti):**
+   \`checkOcsp()\` artık "unknown" ve "ulaşılamadı" sonuçlarını good/revoked ile
+   aynı 30 s değil, 2 s önbelleğe alıyor; rotasyon sonrası yeni sertifika en geç
+   ~2-3 s içinde kabul ediliyor (bkz. "OCSP zamanlaması").
 
 ## Ayrıntılı senaryo sonuçları
 

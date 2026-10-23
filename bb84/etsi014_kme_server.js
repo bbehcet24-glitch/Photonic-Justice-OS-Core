@@ -97,6 +97,9 @@
  *                                    değişikliği izlenir (fs.watchFile) —
  *                                    revoke_cert.sh çalıştırıldığında sunucuyu
  *                                    YENİDEN BAŞLATMAYA GEREK YOKTUR.
+ *   --ocsp-cache-ttl-ms=<ms>      → good/revoked sonucunun önbellek süresi (vars. 30000)
+ *   --ocsp-indeterminate-ttl-ms=<ms> → unknown/ulaşılamadı sonucunun önbellek süresi (vars. 2000;
+ *                                    istek YİNE reddedilir, yalnız daha erken yeniden sorulur)
  *   --ocsp-responder=<url>        → her mTLS isteğinde (kısa TTL'li önbellekle)
  *                                    openssl `ocsp` istemcisiyle CANLI durum
  *                                    sorgusu yapar — CRL'nin dağıtılmasını
@@ -532,14 +535,34 @@ function readBody(req) {
 // dengesi — İKAZ: bu, iptal edilen bir sertifikanın önbellek TTL'i kadar
 // bir süre daha kabul edilebileceği anlamına gelir; TTL'i düşürerek bu
 // pencereyi daraltabilirsiniz).
-const OCSP_CACHE = new Map(); // "issuerHash:serial" -> { status, expiresAt }
-const OCSP_CACHE_TTL_MS = 30_000;
+//
+// ÖNBELLEK POLİTİKASI (OCSP_NEGATIVE_CACHE_ANALYSIS.md — ölçülerek değiştirildi): eskiden HER sonuç
+// (good / revoked / unknown / yanıtlayıcıya ulaşılamadı) aynı 30 s önbelleğe alınıyordu. Yeni imzalanmış
+// bir sertifikanın İLK sorgusu, yanıtlayıcının index.txt'yi henüz yeniden okumadığı ~1 s'lik pencereye
+// denk gelince "unknown" dönüyor ve bu GEÇİCİ olumsuz sonuç GEÇERLİ sertifikayı 30 s boyunca kilitliyordu
+// (CI'da S1/S2'de ölçülen ~30 189 / 30 304 ms). Artık:
+//   • good    → OCSP_CACHE_TTL_MS (30 s; tazelik/performans ödünleşimi DEĞİŞMEDİ)
+//   • revoked → OCSP_CACHE_TTL_MS (iptal kalıcıdır; daha uzun tutmak da güvenli olurdu)
+//   • belirsiz (unknown / ulaşılamadı / anlaşılamadı) → istek YİNE fail-CLOSED reddedilir, ama sonuç
+//     yalnız OCSP_INDETERMINATE_TTL_MS (2 s) tutulur: geçici durum kalkınca hızla yeniden sorulur.
+//     Kısa da olsa önbelleğe almak, yanıtlayıcı çökükken her isteğin yeni bir openssl süreci başlatmasını
+//     sınırlar (sertifika başına en çok 2 s'de bir sorgu).
+// Güvenlik etkisi: hiçbir sertifika daha ÖNCE kabul edilmiyor; yalnız belirsiz bir red daha erken yeniden
+// değerlendiriliyor. Önbellek anahtarı artık sertifikanın SHA-256 parmak izi (yalnız seri değil).
+const OCSP_CACHE = new Map(); // sertifika SHA-256 parmak izi -> { result, expiresAt }
+const _ttlArg = (name, def, min, max) => {
+  const v = args[name] === undefined ? def : Number(args[name]);
+  if (!Number.isInteger(v) || v < min || v > max) { console.error(`[KME] --${name} ${min}–${max} aralığında tam sayı olmalı (alınan: ${args[name]})`); process.exit(2); }
+  return v;
+};
+const OCSP_CACHE_TTL_MS = _ttlArg("ocsp-cache-ttl-ms", 30_000, 0, 3_600_000);
+const OCSP_INDETERMINATE_TTL_MS = _ttlArg("ocsp-indeterminate-ttl-ms", 2_000, 0, 3_600_000);
 
 function checkOcsp(cert, caCertPath) {
   return new Promise((resolve) => {
     if (!args["ocsp-responder"]) { resolve({ ok: true, skipped: true }); return; }
     const serial = cert.serialNumber;
-    const cacheKey = serial;
+    const cacheKey = cert.fingerprint256 || `serial:${serial}`;
     const cached = OCSP_CACHE.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) { resolve(cached.result); return; }
 
@@ -566,11 +589,13 @@ function checkOcsp(cert, caCertPath) {
     ], { timeout: 4000 }, (err, stdout, stderr) => {
       fs.rm(tmpDir, { recursive: true, force: true }, () => {});
       const out = `${stdout}\n${stderr}`;
-      let result;
-      if (/: revoked/i.test(out)) result = { ok: false, reason: "OCSP: sertifika İPTAL EDİLMİŞ" };
-      else if (/: good/i.test(out)) result = { ok: true };
-      else result = { ok: false, reason: `OCSP yanıtlayıcıya ulaşılamadı/anlaşılamadı (fail-CLOSED — İKAZ: yanıtlayıcı çökerse istekler REDDEDİLİR): ${err ? err.message : out.slice(0, 200)}` };
-      OCSP_CACHE.set(cacheKey, { result, expiresAt: Date.now() + OCSP_CACHE_TTL_MS });
+      let result, ttl;
+      if (/: revoked/i.test(out)) { result = { ok: false, status: "revoked", reason: "OCSP: sertifika İPTAL EDİLMİŞ" }; ttl = OCSP_CACHE_TTL_MS; }
+      else if (/: good/i.test(out)) { result = { ok: true, status: "good" }; ttl = OCSP_CACHE_TTL_MS; }
+      else if (/: unknown/i.test(out)) { result = { ok: false, status: "unknown", reason: `OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; yeni imzalanmışsa yanıtlayıcı CA veritabanını henüz okumamış olabilir, ${OCSP_INDETERMINATE_TTL_MS} ms sonra yeniden sorulur` }; ttl = OCSP_INDETERMINATE_TTL_MS; }
+      else { result = { ok: false, status: "unreachable", reason: `OCSP yanıtlayıcıya ulaşılamadı/anlaşılamadı (fail-CLOSED — İKAZ: yanıtlayıcı çökerse istekler REDDEDİLİR; ${OCSP_INDETERMINATE_TTL_MS} ms sonra yeniden sorulur): ${err ? err.message : out.slice(0, 200)}` }; ttl = OCSP_INDETERMINATE_TTL_MS; }
+      if (ttl > 0) OCSP_CACHE.set(cacheKey, { result, expiresAt: Date.now() + ttl });
+      else OCSP_CACHE.delete(cacheKey);
       resolve(result);
     });
   });

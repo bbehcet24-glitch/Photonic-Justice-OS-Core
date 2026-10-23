@@ -195,13 +195,15 @@ jobs:
       - name: pki_tools/ script'lerinin çalıştırılabilir olduğunu garanti et
         run: chmod +x bb84/pki_tools/*.sh bb84/pki_tools/*.js
 
-      # Bu senaryo hem CRL/OCSP çift-katman iptalini hem de bilinen KRİTİK
-      # bulguyu (kalıcı/keep-alive bağlantılarda ~60sn'ye kadar sürebilen
-      # OCSP tazeleme gecikmesi, bkz. üretilen rapordaki "EN KRİTİK bulgu"
-      # bölümü) yeniden ölçer — bu YENİDEN-ÖLÇÜM olduğu için S5 tek başına
-      # ~60-100sn sürebilir, dolayısıyla timeout-minutes: 10.
+      # Bu senaryo CRL/OCSP çift-katman iptalini ve OCSP zamanlamasını
+      # (yeni sertifika kabulü, keep-alive bağlantıda iptal ~30 s) yeniden
+      # ölçer. Eski ~60 s'lik S5 ve ~30 s'lik yeni-sertifika gecikmesinin kök
+      # nedenleri bb84/docs/OCSP_NEGATIVE_CACHE_ANALYSIS.md'de; S5 ~30 s sürer.
       - name: mTLS sertifika rotasyon/iptal senaryolarını çalıştır (S1-S6)
         run: node bb84/pki_tools/cert_rotation_revocation_scenarios.js --out-dir=${{ github.workspace }}/ci-reports/mtls-scenarios
+
+      - name: OCSP bayatlık kaynakları (R1–R3 yanıtlayıcı, K1 KME önbelleği) kesin testi
+        run: node bb84/ocsp_cache_staleness_test.js
 
       - name: Senaryo raporunu artifact olarak yükle
         if: always()
