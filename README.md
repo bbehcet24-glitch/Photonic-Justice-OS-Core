@@ -98,7 +98,7 @@ Bu deseni denetleyen somut mekanizmalar:
   dosyalarının) SHA-256 özetini karşılaştırıp raporlar — "çekirdeğe
   dokunulmadı" iddiası her çalıştırmada YENİDEN kanıtlanır, sadece bir
   kere varsayılmaz. Çekirdek bilinçli olarak yeni sürüme geçtiğinde
-  (şu an **v2**, SHA-256 `157d81da…81cf3b`) eski/yeni hash ve değişen her
+  (şu an **v3**, SHA-256 `421513f7…2bb3d4`) eski/yeni hash ve değişen her
   fonksiyon [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md)'de
   belgelenir ve tüm sabitlenmiş testler yeni hash'e güncellenip yeniden koşturulur.
 - **`extract_core.js --check`**: CI kapısı — `photonnet_core.js`'in
@@ -636,6 +636,20 @@ bash bb84/ci/run_integration_tests.sh
 python3 hal/bridge_server.py
 ```
 
+**Dedektör profili (çekirdek v3):** SNSPD / InGaAs gibi dedektör parametreleri yalnızca depo kökündeki
+[`config.json`](config.json) dosyasındadır; çekirdek, ağ katmanları, Python HAL ve tarayıcı aynı dosyayı
+okur. Ayrıntılar: [`bb84/docs/DETECTOR_PROFILE_DESIGN.md`](bb84/docs/DETECTOR_PROFILE_DESIGN.md).
+
+```bash
+# Varsayılan profil config.json → detector.active ("snspd")
+PHOTONNET_DETECTOR=ingaas node -e 'console.log(require("./bb84/photonnet_core.js").activeDetectorProfile())'  # Node
+PHOTONNET_DETECTOR=ingaas python3 -m hal.detector_profile     # Python: aynı kural
+#   tarayıcı: PhotonNet.html?detector=ingaas  ya da metrik çubuğundaki DEDEKTÖR seçicisi
+node bb84/detector_profile_config_test.js                     # şema + tek kaynak + JS↔Python kabul testi
+# config.json değişince HTML'i yeniden derle (yapılandırma HTML'e gömülür):
+node bb84/tools/build_photonnet_html.js
+```
+
 **Bilinen ortam bağımlılıkları:** bazı testler (`etsi014_client_lib_test.js`,
 `etsi014_interop_test.js`, `qkd_secure_channel_test.js`,
 `qukaydee_realistic_test.js`, `buffer_starvation_test.js`) çalışmadan önce
@@ -650,7 +664,8 @@ regresyon değil, çalıştırma-öncesi kurulum adımıdır.
 ```
 photonnet/
 ├── PhotonNet2.jsx                    # Uygulamanın TAM kaynağı (React+algoritma)
-├── PhotonNet.html / _offline.html    # Derlenmiş tek-dosya uygulama
+├── PhotonNet.html / _offline.html    # Derlenmiş tek-dosya uygulama (config.json gömülü)
+├── config.json                       # Dedektör profilleri — TEK kaynak (çekirdek v3)
 ├── package.json                      # extract-core script kısayolları
 ├── bundler/                          # React'i tek dosyaya gömen özel bundler
 ├── hal/                              # Python donanım soyutlama katmanı (§4.6)

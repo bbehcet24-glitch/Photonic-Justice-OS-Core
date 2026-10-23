@@ -166,6 +166,9 @@ jobs:
       - name: PhotonNet.html ve PhotonNet_offline.html kaynakla senkron mu doğrula
         run: node bb84/tools/build_photonnet_html.js --check
 
+      - name: Dedektör profili (config.json) şema + tek kaynak + JS↔Python kabul testi
+        run: node bb84/detector_profile_config_test.js
+
       - name: Kayma tespit edilirse rehberlik ekle
         if: failure()
         run: |
