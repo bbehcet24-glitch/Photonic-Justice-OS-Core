@@ -6,7 +6,7 @@ uca test etmeyi sağlayan sahte bir HardwareInterface implementasyonu.
 FİZİK KÖKENİ: kayıp/gürültü modeli PhotonNet2.jsx'teki propPhoton()'dan
 BİLEREK PORTLANDI (fiberT loss formülü, QKD anahtar kanalının sabit hizalama hatası
 e_d = QKD_MISALIGNMENT_E_D = 0,015 — çekirdek v2, bkz. bb84/docs/CORE_CHANGELOG.md —,
-DETECTOR_DARK_RATE_HZ karanlık sayım oranı) — böylece bu simüle donanımın
+ve dedektör profili — verim + karanlık sayım, config.json, bkz. hal/detector_profile.py) — böylece bu simüle donanımın
 ürettiği QBER, tarayıcı simülasyonuyla VE önceki QBER-doğrulama raporundaki
 Qiskit-eşdeğeri sonuçlarla tutarlı bir referans noktasında kalır. AMA burada
 iş tamamen FARKLI bir katmanda yapılıyor: propPhoton "bu bit hayatta kaldı
@@ -21,6 +21,7 @@ import math
 import random
 import time
 
+from .detector_profile import DetectorProfile, active_detector_profile
 from .hardware_interface import HardwareInterface, HardwareError
 from .types import (
     AcquisitionConfig,
@@ -94,7 +95,12 @@ class SimulatedHardware(HardwareInterface):
         eavesdrop: bool = False,
         detector_jitter_ps: float = 80.0,
         seed: int | None = None,
+        detector_profile: DetectorProfile | str | None = None,
     ):
+        # Çekirdek v3: dedektör verimi (ve AcquisitionConfig'in karanlık sayım varsayılanı) config.json'daki
+        # profilden gelir. None → etkin profil; metin → o kimlikli profil (bilinmeyen → DetectorConfigError).
+        self.detector = (detector_profile if isinstance(detector_profile, DetectorProfile)
+                         else active_detector_profile(detector_profile))
         self.distance_km = distance_km
         self.eavesdrop = eavesdrop
         self.detector_jitter_ps = detector_jitter_ps
@@ -156,7 +162,8 @@ class SimulatedHardware(HardwareInterface):
         events = self._source.generate(timeout_s)
         self._last_transmit_log = events
 
-        transmittance = _fiber_transmittance(self.distance_km)
+        # fiber geçirgenliği × dedektör verimi (profil): algılanmayan foton click üretmez
+        transmittance = _fiber_transmittance(self.distance_km) * self.detector.efficiency
         p_flip = _phase_flip_probability(self.distance_km)
         clicks: list[TimestampedClick] = []
 

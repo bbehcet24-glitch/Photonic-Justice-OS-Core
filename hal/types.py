@@ -20,6 +20,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional
 
+from .detector_profile import active_detector_profile as _active_detector_profile
+
 
 class Basis(str, Enum):
     """PhotonNet2.jsx'teki mevcut "REC"/"DIAG" adlandırmasıyla BİREBİR
@@ -83,7 +85,8 @@ class AcquisitionConfig:
     integration_time_s: float = 1.0     # bu edinimin toplam süresi
     source_rate_hz: float = 80e6        # kaynak darbe hızı (Micius referansıyla TUTARLI, bkz. computeRawKeyRate)
     coincidence_window_ps: int = 500    # Alice/Bob zaman damgası eşleştirme penceresi (ps)
-    dark_count_rate_hz: float = 50.0    # DETECTOR_DARK_RATE_HZ ile TUTARLI (PhotonNet2.jsx)
+    # varsayılan: etkin dedektör profili (config.json, çekirdek v3 ile AYNI kaynak — bkz. hal/detector_profile.py)
+    dark_count_rate_hz: float = field(default_factory=lambda: _active_detector_profile().dark_count_rate_hz)
 
 
 @dataclass
