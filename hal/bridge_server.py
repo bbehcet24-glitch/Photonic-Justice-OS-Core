@@ -121,6 +121,41 @@ def _qrng_min_entropy_bits() -> float:
     return float(os.environ.get("PHOTONNET_QRNG_MIN_ENTROPY_BITS", "1.0"))
 
 
+# ── Aralıklı (intermittent) ve kalıcı (persistent) sağlık testi hatası ──
+# α = 2⁻²⁰ örnek başına yanlış-alarm sınırıdır; 2048 baytlık (16.384 bit) BİR partide sağlam bir kaynağın
+# RCT'ye takılma olasılığı ≈ N·2⁻²¹ ≈ %0,78'dir (ölçüldü: 40.000 os.urandom partisinde %0,79). Eskiden tek
+# başarısız parti isteği 503 ile düşürüyordu; `npm test` koşu başına ~20 parti çektiği için bu, analitik olarak
+# ≈ %13 olasılıkla rastgele kırmızı demekti (CI Kapı 5'in ilk GitHub koşusu böyle düştü:
+# chaos_mtls_handshake_qrng_sync_test, "RCT/APT"). Ölçüm, iki QRNG testinin 40 tekrarı: eski davranış
+# 3 başarısız test, yeni davranış 0 (806 partiden 6'sı atıldı, kalıcı hata 0).
+# Yeni davranış (SP 800-90B'nin aralıklı/kalıcı hata ayrımına uygun):
+#   • Başarısız parti ASLA servis edilmez — atılır, sayaçlara yazılır, kaynaktan TAZE bir parti çekilir.
+#   • Aynı istekte art arda PHOTONNET_QRNG_MAX_ATTEMPTS (varsayılan 3) parti başarısızsa → KALICI hata, 503.
+#   • α ve dolayısıyla parti başına tespit gücü DEĞİŞMEDİ (α'yı 2⁻⁴⁰'a çekmek p=0,6 yanlılığın parti başına
+#     tespitini %100'den %8'e düşürüyordu — ölçüldü; o yol bilerek seçilmedi).
+#   • Bedel: atılan partiler (%0,8) uzun koşu içerenlerdir; servis edilen parti dağılımının min-entropisi
+#     parti başına −log2(1−0,0078) ≈ 0,011 bit azalır (16.384 bitin yanında ihmal edilebilir, ama sıfır değil).
+#   • Sabit bir yanlılık/sıkışma her partide tekrarlandığı için 3 denemede de yakalanır (fail-closed korunur).
+_QRNG_ATTEMPTS_DEFAULT = 3
+_qrng_health_stats = {"batchesServed": 0, "batchesDiscarded": 0, "persistentFailures": 0, "lastDiscardReason": None}
+_qrng_stats_lock = threading.Lock()
+
+
+def _qrng_max_attempts() -> int:
+    raw = os.environ.get("PHOTONNET_QRNG_MAX_ATTEMPTS", str(_QRNG_ATTEMPTS_DEFAULT))
+    try:
+        v = int(raw)
+    except ValueError:
+        v = -1
+    if not 1 <= v <= 10:
+        raise QRNGError(f"PHOTONNET_QRNG_MAX_ATTEMPTS 1..10 arasında bir tam sayı olmalı (alınan: {raw!r})")
+    return v
+
+
+def _health_fail_reason(health: dict) -> str:
+    return "; ".join(f"{k.upper()}: {health[k]['detail']}" for k in ("rct", "apt") if not health[k]["passed"])
+
+
 def _broadcast_status(status) -> None:
     payload = json.dumps({"type": "status", "data": dataclasses.asdict(status)})
     with _subscribers_lock:
@@ -310,8 +345,11 @@ def api_qrng_status():
     try:
         src = _get_qrng_source()
         st = src.status()
+        with _qrng_stats_lock:
+            stats = dict(_qrng_health_stats)
         return jsonify({"ok": True, "connected": st.connected, "isCertifiedHardware": st.is_certified_hardware,
-                         "vendor": st.vendor, "driverName": st.driver_name, "lastError": st.last_error})
+                         "vendor": st.vendor, "driverName": st.driver_name, "lastError": st.last_error,
+                         "healthStats": stats})
     except QRNGError as e:
         return jsonify({"ok": False, "error": str(e)}), 503
 
@@ -325,21 +363,44 @@ def api_qrng_bytes():
     — bu baytlar HTTP gövdesine dahi YERLEŞTİRİLMEZ (fail-closed: çağıran
     tarafın "belki kullanılabilir" bir şeyle karşılaşma riski YOK).
     `?n=` bayt sayısı (varsayılan 256, üst sınır 65536 — tek istekte
-    sınırsız büyümeyi önlemek için)."""
+    sınırsız büyümeyi önlemek için).
+
+    Aralıklı hata: başarısız parti atılır ve taze parti çekilir; art arda PHOTONNET_QRNG_MAX_ATTEMPTS parti
+    başarısızsa kalıcı hata (503). Ayrıntı ve ölçümler: yukarıdaki "Aralıklı ... hatası" bloğu."""
     n = min(int(request.args.get("n", 256)), 65536)
+    timeout_s = float(request.args.get("timeout_s", 5.0))
     try:
+        attempts = _qrng_max_attempts()
         src = _get_qrng_source()
-        data = src.read_bytes(n, timeout_s=float(request.args.get("timeout_s", 5.0)))
     except QRNGError as e:
         return jsonify({"ok": False, "error": str(e)}), 503
 
-    health = run_health_tests(bytes_to_bits(data), min_entropy_bits=_qrng_min_entropy_bits())
-    if not health["overall_pass"]:
-        logger.error("QRNG sağlık testi BAŞARISIZ — bayt SERVİS EDİLMİYOR: %s", health)
-        return jsonify({"ok": False, "error": "QRNG sağlık testi başarısız (RCT/APT) — bkz. detail",
-                         "health": health}), 503
+    discarded = []
+    for _ in range(attempts):
+        try:
+            data = src.read_bytes(n, timeout_s=timeout_s)
+        except QRNGError as e:
+            return jsonify({"ok": False, "error": str(e), "discardedBeforeError": len(discarded)}), 503
+        health = run_health_tests(bytes_to_bits(data), min_entropy_bits=_qrng_min_entropy_bits())
+        if health["overall_pass"]:
+            with _qrng_stats_lock:
+                _qrng_health_stats["batchesServed"] += 1
+            return jsonify({"ok": True, "n": n, "bytesBase64": base64.b64encode(data).decode("ascii"),
+                             "health": health, "discardedBeforeServe": len(discarded)})
+        reason = _health_fail_reason(health)
+        discarded.append(reason)
+        del data  # başarısız parti hiçbir yanıta, loga ya da tampona girmez
+        with _qrng_stats_lock:
+            _qrng_health_stats["batchesDiscarded"] += 1
+            _qrng_health_stats["lastDiscardReason"] = reason
+        logger.warning("QRNG sağlık testi başarısız — parti ATILDI (%d/%d): %s", len(discarded), attempts, reason)
 
-    return jsonify({"ok": True, "n": n, "bytesBase64": base64.b64encode(data).decode("ascii"), "health": health})
+    with _qrng_stats_lock:
+        _qrng_health_stats["persistentFailures"] += 1
+    logger.error("QRNG KALICI sağlık testi hatası — art arda %d parti başarısız, bayt SERVİS EDİLMİYOR", attempts)
+    return jsonify({"ok": False, "persistent": True,
+                     "error": f"QRNG sağlık testi art arda {attempts} partide başarısız (RCT/APT) — kalıcı hata, bkz. detail",
+                     "detail": discarded, "health": health}), 503
 
 
 @app.route("/api/health", methods=["GET"])
