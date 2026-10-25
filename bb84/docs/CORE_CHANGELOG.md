@@ -10,6 +10,51 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v1 | `8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05` | `8f879fde…dc7b05` |
 | v2 | `157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b` | `157d81da…81cf3b` |
 | v3 | `421513f72bad1fb32b24c78453f9f6fdcbdbab83bd10f044d58ffc71b42bb3d4` | `421513f7…2bb3d4` |
+| v4 | `af1f56a1adbe6e7d7566d361aedc60c4149ecf49557f4e8f2c535937f01a12c3` | `af1f56a1…1a12c3` |
+
+## v4 (2026-10) — mesaj oturumunda bağımsız kanal turları ve atlama başına sonlu-anahtar kanıtı
+
+Gerekçe: katman puanlaması sırasında bulunan iki kusur. İkisi de v2'de eklenen `SecureMessageSession`'daydı.
+Kabul testi: `bb84/core_v4_session_test.js`.
+
+**K1. Turlar aynı kanal gerçekleşmesini tekrar ediyordu.**
+
+- **Neden:** Oturum her turda aynı `QuantumKeyDistribution` örneğini kanal RNG'si vermeden çağırıyordu.
+  `deriveSiftedKey` bu durumda kayıp ve hata olaylarını elenmiş bitin sırasına bağlı sabit bir tohumdan üretir.
+- **Etki:** Hata konumları her turda birebir aynı çıkıyordu (ölçüldü: 3 turda aynı 8 konum). Zincir modunda
+  elenmiş uzunluk da her turda aynıydı. Parametre kestiriminin varsaydığı bağımsız örnekleme bozuluyordu.
+- **Düzeltme:** Her atlamanın kendi kanal RNG akışı var. Akış, entropi kaynağından tohumlanıyor ve turlar boyunca
+  ilerliyor (`deriveSiftedKey`'e `historicalRng` olarak veriliyor).
+
+**K2. Zincirde "kanıtlı ℓ" yalnız 0. atlamaya dayanıyordu.**
+
+- **Neden:** 31 atlamalı demo rotasında uçtan uca anahtar 0. atlamanın anahtarıydı ve sonlu-anahtar hesabı yalnız
+  ona yapılıyordu. Diğer atlamalar yalnızca tüm bitlerin karşılaştırılmasıyla (kâhin) bulunan QBER < %11 kontrolünden
+  geçiyordu.
+- **Düzeltme:** Her atlama kendi elenmiş havuzunu tutuyor ve kendi parametre kestirimini (test alt kümesi), Cascade
+  uzlaşmasını, ℓ hesabını ve Toeplitz gizlilik yükseltmesini yapıyor.
+- **Teslim koşulu:** Mesaj ancak her atlamada ℓ ≥ mesaj biti olunca gönderiliyor.
+- **Röle:** Uçtan uca anahtar, düğümlerin açık kanaldan yayınladığı R_i = K_{i−1} ⊕ K_i değerleriyle gerçekten
+  taşınıyor. Bob'un ulaştığı anahtarın Alice'inkiyle aynı olduğu denetleniyor.
+- **Arayüz ve iptal mesajları:** Arayüzdeki ℓ artık en zayıf atlamanın ℓ'si ("EN ZAYIF ATLAMA"). HOP_QBER iptali
+  kâhin QBER yerine o atlamanın test QBER'iyle ve doğru atlama numarasıyla raporlanıyor.
+
+**Ek değişiklik — Cascade doğrulaması başarısız olursa:** Blok atılıp yeniden toplanıyor; bu bir güvenlik olayı
+değil. Üç ardışık başarısızlıkta oturum EC_FAIL ile iptal ediliyor. Önceden ilk başarısızlıkta iptal ediliyordu ve
+31 atlamada bu ~%10 oturum kaybına yol açıyordu.
+
+**Ölçülen etki (varsayılan demo, 1842 km / 31 atlama):**
+
+| Profil | v3 | v4 |
+|---|---|---|
+| SNSPD | teslim | 40/40 teslim |
+| InGaAs | 12 denemede 5 KEY_BUDGET | 12/12 teslim |
+
+Darbe ihtiyacı arttı: SNSPD'de ~0,2–0,4 M/link, InGaAs'ta ~1,5–3,1 M/link (bütçe 4,19 M). Bu, 30 atlamanın da
+kanıtlanmasının dürüst bedeli.
+
+**Diğer:** Uçtan uca artan kanıtlı anahtar (`spareKeyBits`) zincirde de röle ile taşınıyor.
+`PHOTONNET_VERSION` / `PHOTONNET_CORE_VERSION` tek kaynak oldu; sayfa başlığı derleme sırasında eşitleniyor.
 
 ## v3 (2026-10) — dedektör profili tek `config.json`'dan, dinamik seçim
 

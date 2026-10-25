@@ -153,6 +153,13 @@ try {
 
   let newHtml = html.slice(0, contentStart) + newScriptContent + html.slice(scriptCloseIdx);
 
+  // ── Sürüm: <title> PhotonNet2.jsx'teki PHOTONNET_VERSION'dan eşitlenir (tek kaynak) ──
+  const verM = sourceText.match(/^const PHOTONNET_VERSION = "([^"]+)";/m);
+  if (!verM) throw new Error("[build_photonnet_html] PhotonNet2.jsx'te PHOTONNET_VERSION bulunamadı");
+  const titleRe = /<title>PhotonNet — Quantum Optical Network v[^<]*<\/title>/;
+  if (!titleRe.test(newHtml)) throw new Error("[build_photonnet_html] beklenen <title> bulunamadı — PhotonNet.html elle değiştirilmiş olabilir");
+  newHtml = newHtml.replace(titleRe, `<title>PhotonNet — Quantum Optical Network v${verM[1]}</title>`);
+
   // ── config.json gömme: uygulama script'inin HEMEN önüne (varsa eski blok değiştirilir) ──
   const { norm: cfgNorm, block: cfgBlock } = configScriptBlock();
   const existing = newHtml.indexOf(CONFIG_OPEN);

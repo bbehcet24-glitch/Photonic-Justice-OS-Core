@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T15:07:18.222Z",
+  "generatedAt": "2026-10-25T14:05:44.103Z",
   "checks": [
     {
       "name": "P1 Şema fail-closed: 14 bozuk yapılandırmanın hepsi JS çekirdeğinde (TypeError/RangeError) VE Python HAL'de (DetectorConfigError) reddediliyor; depodaki config.json kabul ediliyor",
@@ -24,7 +24,7 @@
     {
       "name": "P5 Fizik yönü: 10 km'de algılama sayısı oranı verim oranına (%80/%10 = 8) %10 içinde yakın; decoy modelinde (N = 10¹⁰) SNSPD menzili InGaAs'tan uzun; 50 km'de iki profil de mesajı kanıtlı anahtarla teslim ediyor, InGaAs daha çok darbe harcıyor",
       "ok": true,
-      "detail": "algılanan SNSPD 40092 / InGaAs 4961 = 8.08 (beklenen 8) · menzil SNSPD 202 km / InGaAs 112 km · 50 km: SNSPD DELIVERED 131072 darbe, InGaAs DELIVERED 917504 darbe"
+      "detail": "algılanan SNSPD 40092 / InGaAs 4961 = 8.08 (beklenen 8) · menzil SNSPD 202 km / InGaAs 112 km · 50 km: SNSPD DELIVERED 131072 darbe, InGaAs DELIVERED 966656 darbe"
     },
     {
       "name": "P6 JS çekirdeği ile Python HAL aynı config.json'dan aynı türetilmiş değerleri veriyor (verim, pencere, karanlık sayım Hz ve Y0, teknoloji, köken)",
@@ -44,7 +44,7 @@
     {
       "name": "Çekirdek sabitlenmiş sürümle aynı ve hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
       "ok": true,
-      "detail": "421513f72bad1fb3…"
+      "detail": "af1f56a1adbe6e7d…"
     }
   ],
   "physics": {
@@ -63,7 +63,7 @@
       },
       "ingaas": {
         "status": "DELIVERED",
-        "pulses": 917504
+        "pulses": 966656
       }
     }
   },

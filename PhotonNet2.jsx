@@ -89,6 +89,10 @@ const WL = {
 // HATA VERMEDEN NaN/Infinity döndürüyordu; bu değerler rota ağırlıklarına, BER'e ve güvenlik
 // kararlarına sessizce sızabiliyordu. Artık geçersiz girdi AÇIK bir TypeError/RangeError fırlatır
 // (kontrollü hata) — "bozuk veri ile devam etme" yerine "dur ve söyle".
+// ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
+// önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
+const PHOTONNET_VERSION = "8.0";
+const PHOTONNET_CORE_VERSION = "v4";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -1424,7 +1428,17 @@ class SecureMessageSession {
     theoreticalQberLimit: 0.11, epsPE: 1e-10, epsCor: 1e-15, epsPA: 1e-10, fEC: 1.16,
   });
   /**
-   * @param p.msg mesaj metni · p.totalKm · p.nHops (>1 → güvenilir-düğüm zinciri) · p.evesdrop
+   * ÇEKİRDEK v4 (docs/CORE_CHANGELOG.md):
+   *  • Kanal rastgeleliği her TUR ve her ATLAMA için bağımsızdır. v2/v3'te oturum her turda aynı
+   *    QuantumKeyDistribution örneğini tohumsuz (deterministik, elenmiş-bit sırasına bağlı) kanal RNG'siyle
+   *    çağırıyordu: hata ve kayıp konumları her turda BİREBİR tekrar ediyordu (ölçüldü: 3 turda aynı 8 hata
+   *    konumu). Artık her atlamanın kendi kanal RNG akışı var (entropi kaynağından tohumlanır, turlar boyunca ilerler).
+   *  • Güvenilir-düğüm zincirinde HER ATLAMA kendi parametre kestirimini (test alt kümesi), Cascade
+   *    uzlaşmasını, sonlu-anahtar ℓ hesabını ve Toeplitz gizlilik yükseltmesini yapar. v2/v3'te yalnız
+   *    0. atlamanın anahtarı ℓ'ye giriyor, diğer atlamalar yalnız (kâhin) QBER < %11 kontrolünden geçiyordu.
+   *    Uçtan uca anahtar, düğümlerin açık kanaldan yayınladığı röle değerleriyle (K_i ⊕ K_{i+1}) gerçekten
+   *    taşınır ve Bob'un ulaştığı anahtarın Alice'inkiyle aynı olduğu denetlenir.
+   * @param p.msg mesaj metni · p.totalKm · p.nHops (>1 → güvenilir-düğüm zinciri) · p.evesdrop (tüm atlamalarda)
    * @param p.detectorCtx deriveSiftedKey bağlamı · p.entropyBits(n) → 0/1 dizisi (QRNG) · p.publicSeed (kamuya açık ayraç tohumu)
    */
   constructor(p) {
@@ -1432,14 +1446,21 @@ class SecureMessageSession {
     this.msg = p.msg; this.msgBits = t2b(p.msg); this.needBits = this.msgBits.length;
     this.totalKm = _requireFiniteNumber("SecureMessageSession", "totalKm", p.totalKm, 0, MAX_LINK_KM);
     this.nHops = Math.max(1, Math.round(p.nHops || 1));
+    this.hopKm = this.totalKm / this.nHops;
     this.evesdrop = !!p.evesdrop; this.detectorCtx = p.detectorCtx;
     if (typeof p.entropyBits !== "function") throw new TypeError("SecureMessageSession: entropyBits(n) zorunlu (bağımsız entropi kaynağı)");
     this.entropyBits = p.entropyBits;
-    this.publicRng = mulberry32(((p.publicSeed >>> 0) ^ 0x534d5353) >>> 0); // "SMSS"
-    this.qkd = new QuantumKeyDistribution((p.publicSeed >>> 0) ^ 0x51d0c0de);
-    this.A = []; this.B = []; this.pulses = 0; this.rounds = 0; this.lost = 0; this.dark = 0;
+    this.publicRng = mulberry32(((p.publicSeed >>> 0) ^ 0x534d5353) >>> 0); // "SMSS" — test alt kümesi / PA tohumu (kamuya açık)
+    const seedFromEntropy = () => _requireBits("SecureMessageSession.entropyBits", this.entropyBits(32)).reduce((s, b) => ((s << 1) | b) >>> 0, 0);
+    this.hops = Array.from({ length: this.nHops }, (_, h) => ({
+      hop: h,
+      qkd: new QuantumKeyDistribution(((p.publicSeed >>> 0) ^ Math.imul(h + 1, 0x9e3779b1) ^ 0x51d0c0de) >>> 0),
+      chanRng: mulberry32(seedFromEntropy()), // kanal (doğa) rastgeleliği: tur ve atlama başına bağımsız akış
+      A: [], B: [], target: this.o.firstCheckSifted, sifted: 0, tested: 0, lastCheck: null, result: null,
+    }));
+    this.pulses = 0; this.rounds = 0; this.lost = 0; this.dark = 0;
     this.siftedTotal = 0; this.testedTotal = 0; this.matchSum = 0; this.worstHopQber = 0;
-    this.target = this.o.firstCheckSifted; this.lastCheck = null; this.done = null;
+    this.lastCheck = null; this.done = null; this.ecDiscards = 0;
   }
   _abort(code, reason, extra = {}) {
     this.done = { done: true, status: "ABORTED", code, reason, ...this._stats(), ...extra };
@@ -1447,67 +1468,101 @@ class SecureMessageSession {
   }
   _stats() {
     return { pulses: this.pulses, totalPulsesAllHops: this.pulses * this.nHops, nHops: this.nHops, rounds: this.rounds, siftedTotal: this.siftedTotal, testedTotal: this.testedTotal,
-      matchRate: this.rounds ? this.matchSum / this.rounds : 0, lost: this.lost, darkClicks: this.dark,
-      worstHopQber: this.worstHopQber, lastCheck: this.lastCheck, needBits: this.needBits };
+      matchRate: this.rounds ? this.matchSum / (this.rounds * this.nHops) : 0, lost: this.lost, darkClicks: this.dark,
+      worstHopQber: this.worstHopQber, lastCheck: this.lastCheck, needBits: this.needBits, ecDiscardedBlocks: this.ecDiscards,
+      hopChecks: this.hops.map((h) => ({ hop: h.hop, sifted: h.sifted, tested: h.tested, ...(h.lastCheck || {}), done: !!h.result })) };
   }
-  /** Bir tur. Bitmediyse {done:false, ...}, bittiyse DELIVERED/ABORTED sonucu döner. */
+  /** Bir tur: anahtarı henüz yetmeyen her atlama 1 tur darbe gönderir. Bitmediyse {done:false, ...}. */
   step() {
     if (this.done) return this.done;
     const o = this.o;
-    const raw = _requireBits("SecureMessageSession.entropyBits", this.entropyBits(o.roundPulses));
-    this.pulses += raw.length; this.rounds++; // darbe bütçesi LİNK başınadır: zincirdeki hop'lar paralel, kendi kaynaklarıyla çalışır
-    let a, b;
-    if (this.nHops > 1) {
-      const ch = this.qkd.deriveSiftedKeyChain(raw, this.totalKm, this.nHops, this.evesdrop, this.detectorCtx);
-      a = ch.keyBits; b = ch.bobKeyBits; this.matchSum += ch.avgMatchRate; this.lost += ch.totalLost;
-      this.worstHopQber = Math.max(this.worstHopQber, ch.worstHop.qber);
-      // Her hop KENDİ parametre kestirimini yapar (güvenilir düğüm); burada en kötü hop'un QBER'i sınanır.
-      if (ch.worstHop.siftedLen >= 200 && ch.worstHop.qber >= o.theoreticalQberLimit)
-        return this._abort("HOP_QBER", `hop #${ch.worstHop.hop} QBER %${(ch.worstHop.qber * 100).toFixed(1)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`);
-    } else {
-      const r = this.qkd.deriveSiftedKey(raw, this.totalKm, this.evesdrop, undefined, this.detectorCtx);
-      a = r.siftedKeyBits; b = r.bobKeyBits; this.matchSum += r.recon.matchRate; this.lost += r.lostCount; this.dark += r.darkClickCount || 0;
+    this.rounds++; this.pulses += o.roundPulses; // darbe bütçesi LİNK başınadır: atlamalar paralel, kendi kaynaklarıyla çalışır
+    for (const h of this.hops) {
+      if (h.result) continue;
+      const raw = _requireBits("SecureMessageSession.entropyBits", this.entropyBits(o.roundPulses));
+      const r = h.qkd.deriveSiftedKey(raw, this.hopKm, this.evesdrop, h.chanRng, this.detectorCtx);
+      this.matchSum += r.recon.matchRate; this.lost += r.lostCount; this.dark += r.darkClickCount || 0;
+      const a = r.siftedKeyBits, b = r.bobKeyBits;
+      for (let i = 0; i < a.length; i++) { h.A.push(a[i]); h.B.push(b[i]); }
+      h.sifted += a.length; this.siftedTotal += a.length;
+      if (h.A.length >= h.target) {
+        const res = this._evaluateHop(h);
+        if (res) return res;
+      }
     }
-    for (let i = 0; i < a.length; i++) { this.A.push(a[i]); this.B.push(b[i]); }
-    this.siftedTotal += a.length;
-    if (this.A.length >= this.target) {
-      const r = this._evaluate();
-      if (r) return r;
+    if (this.hops.every((h) => h.result)) return this._deliver();
+    if (this.pulses >= o.maxPulses) {
+      const slow = this.hops.filter((h) => !h.result).map((h) => h.hop);
+      return this._abort("KEY_BUDGET", `link başına ${this.pulses.toLocaleString("tr-TR")} darbede ${this.nHops > 1 ? `${slow.length}/${this.nHops} atlamada (ör. #${slow.slice(0, 3).join(", #")}) ` : ""}yeterli kanıtlanmış anahtar birikmedi (gereken ${this.needBits} bit) — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; daha kısa hop, ek güvenilir düğüm ya da yakın bir hedef seçin`);
     }
-    if (this.pulses >= o.maxPulses)
-      return this._abort("KEY_BUDGET", `link başına ${this.pulses.toLocaleString("tr-TR")} darbede yeterli kanıtlanmış anahtar birikmedi (gereken ${this.needBits} bit) — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; daha kısa hop, ek güvenilir düğüm ya da yakın bir hedef seçin`);
     return { done: false, ...this._stats() };
   }
-  _evaluate() {
-    const o = this.o, N = this.A.length;
+  /** Tek atlamanın parametre kestirimi + EC + sonlu-anahtar + PA. İptalde sonuç döner, aksi hâlde null. */
+  _evaluateHop(h) {
+    const o = this.o, N = h.A.length, chain = this.nHops > 1;
     const k = Math.min(N - 1, Math.max(o.minTestBits, Math.round(o.testFraction * N)));
     const idx = Array.from({ length: N }, (_, i) => i);
     for (let i = N - 1; i > 0; i--) { const j = Math.floor(this.publicRng() * (i + 1)); const t = idx[i]; idx[i] = idx[j]; idx[j] = t; }
-    let e = 0; for (let i = 0; i < k; i++) if (this.A[idx[i]] !== this.B[idx[i]]) e++;
-    const q = e / k; this.testedTotal += k;
+    let e = 0; for (let i = 0; i < k; i++) if (h.A[idx[i]] !== h.B[idx[i]]) e++;
+    const q = e / k; h.tested += k; this.testedTotal += k;
     const keep = idx.slice(k).sort((x, y) => x - y);
-    const A = keep.map((i) => this.A[i]), B = keep.map((i) => this.B[i]); // test bitleri AÇIKLANDI → atıldı
-    this.A = A; this.B = B;
+    const A = keep.map((i) => h.A[i]), B = keep.map((i) => h.B[i]); // test bitleri AÇIKLANDI → atıldı
+    h.A = A; h.B = B;
     const n = A.length, mu = QKDSecurityProof.statisticalFluctuation2(n, k, o.epsPE);
     const pre = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: o.epsCor, epsPA: o.epsPA, fEC: o.fEC });
-    this.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell };
-    if (q >= o.theoreticalQberLimit)
-      return this._abort("QBER_LIMIT", `QBER_test %${(q * 100).toFixed(2)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} (k=${k} test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`, { qTest: q });
-    if (pre.ell < this.needBits) { this.target = Math.max(this.target * 2, n + 1); return null; }
+    h.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell };
+    this.worstHopQber = Math.max(this.worstHopQber, q);
+    this.lastCheck = chain ? { hop: h.hop, ...h.lastCheck } : h.lastCheck;
+    if (q >= o.theoreticalQberLimit) {
+      return chain
+        ? this._abort("HOP_QBER", `hop #${h.hop} QBER_test %${(q * 100).toFixed(1)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} (k=${k} test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`, { qTest: q })
+        : this._abort("QBER_LIMIT", `QBER_test %${(q * 100).toFixed(2)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} (k=${k} test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`, { qTest: q });
+    }
+    if (pre.ell < this.needBits) { h.target = Math.max(h.target * 2, n + 1); return null; }
     const casc = CascadeReconciliation.reconcile(A, B, Math.max(q, 0.005), mulberry32((this.publicRng() * 4294967296) >>> 0));
-    if (!casc.converged)
-      return this._abort("EC_FAIL", `Cascade uzlaşması yakınsamadı (${casc.residualErrors} kalıntı hata) — anahtar kullanılmadı`, { qTest: q });
+    if (!casc.converged) {
+      // Uzlaşma doğrulaması başarısız: bu blok (bir kısmı açık kanalda sızdırıldı) ATILIR ve atlama yeniden
+      // toplar — bir güvenlik olayı değildir (QBER zaten sınandı). Üç ardışık başarısızlıkta oturum iptal edilir.
+      h.ecFailures = (h.ecFailures || 0) + 1; this.ecDiscards++;
+      if (h.ecFailures >= 3)
+        return this._abort("EC_FAIL", `${chain ? `hop #${h.hop}: ` : ""}Cascade uzlaşması ${h.ecFailures} kez yakınsamadı (son: ${casc.residualErrors} kalıntı hata) — anahtar kullanılmadı`, { qTest: q });
+      h.A = []; h.B = []; h.target = o.firstCheckSifted;
+      h.lastCheck = { ...h.lastCheck, ecDiscarded: h.ecFailures };
+      return null;
+    }
     const proof = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: o.epsCor, epsPA: o.epsPA, fEC: o.fEC, realLeakEC: casc.leakedBits });
-    this.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell, ell: proof.ell, leakEC: casc.leakedBits };
-    if (proof.ell < this.needBits) { this.target = Math.max(this.target * 2, n + 1); return null; }
+    h.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell, ell: proof.ell, leakEC: casc.leakedBits };
+    this.lastCheck = chain ? { hop: h.hop, ...h.lastCheck } : h.lastCheck;
+    if (proof.ell < this.needBits) { h.target = Math.max(h.target * 2, n + 1); return null; }
     const paSeed = (this.publicRng() * 4294967296) >>> 0;
     const keyA = QKDSecurityProof.toeplitzHash(A, proof.ell, mulberry32(paSeed));
     const keyB = QKDSecurityProof.toeplitzHash(casc.correctedBobBits, proof.ell, mulberry32(paSeed));
-    const otpA = keyA.slice(0, this.needBits), otpB = keyB.slice(0, this.needBits);
-    const cipherBits = this.msgBits.map((m, i) => m ^ otpA[i]);         // klasik kanaldan giden tek şey
-    const decoded = b2t(cipherBits.map((c, i) => c ^ otpB[i]));        // Bob kendi anahtarıyla çözer
-    this.done = { done: true, status: "DELIVERED", code: "OK", reason: null, decoded, cipherBits, otpKeyBits: otpA,
-      spareKeyBits: keyA.slice(this.needBits), qTest: q, proof, leakEC: casc.leakedBits, n, k, ...this._stats() };
+    h.result = { keyA, keyB, proof, q, n, k, leakEC: casc.leakedBits };
+    return null;
+  }
+  /** Tüm atlamaların ℓ ≥ mesaj biti olduğunda: röle (güvenilir düğümler) + OTP. */
+  _deliver() {
+    const L = this.needBits, H = this.hops;
+    const Lend = Math.min(...H.map((h) => h.result.keyA.length)); // uçtan uca taşınabilen anahtar = en kısa atlama anahtarı (≥ L)
+    const K = H.map((h) => ({ a: h.result.keyA.slice(0, Lend), b: h.result.keyB.slice(0, Lend) })); // a: atlamanın sol düğümü, b: sağ düğümü
+    // Düğüm i (1..n-1) sol atlamanın b'sini ve sağ atlamanın a'sını bilir; AÇIK kanaldan R_i = b_{i-1} ⊕ a_i yayınlar.
+    const relays = [];
+    for (let i = 1; i < H.length; i++) relays.push(K[i - 1].b.map((x, j) => x ^ K[i].a[j]));
+    // Bob (son düğüm): K_A = b_{n-1} ⊕ R_{n-1} ⊕ … ⊕ R_1  (a_i ⊕ b_i = 0 her atlamada EC + PA sonrası)
+    let bobKey = K[H.length - 1].b.slice();
+    for (let r = relays.length - 1; r >= 0; r--) bobKey = bobKey.map((x, j) => x ^ relays[r][j]);
+    const aliceKey = K[0].a;
+    const relayOk = bobKey.every((x, j) => x === aliceKey[j]);
+    if (!relayOk) return this._abort("EC_FAIL", "röle sonrası Bob'un anahtarı Alice'inkiyle uyuşmuyor (bir atlamada kalıntı hata) — mesaj gönderilmedi");
+    const cipherBits = this.msgBits.map((m, i) => m ^ aliceKey[i]);       // klasik kanaldan giden tek şey
+    const decoded = b2t(cipherBits.map((c, i) => c ^ bobKey[i]));        // Bob (röle ile ulaştığı) anahtarıyla çözer
+    const worst = H.reduce((w, h) => (h.result.proof.ell < w.result.proof.ell ? h : w), H[0]);
+    const q = Math.max(...H.map((h) => h.result.q));
+    this.done = { done: true, status: "DELIVERED", code: "OK", reason: null, decoded, cipherBits, otpKeyBits: aliceKey.slice(0, L),
+      spareKeyBits: aliceKey.slice(L), // uçtan uca (Alice↔Bob) artan kanıtlı anahtar — zincirde de röle ile taşındı
+      qTest: q, proof: worst.result.proof, leakEC: worst.result.leakEC, n: worst.result.n, k: worst.result.k,
+      hopProofs: H.map((h) => ({ hop: h.hop, ell: h.result.proof.ell, qTest: h.result.q, n: h.result.n, k: h.result.k, leakEC: h.result.leakEC })),
+      endToEndKeyBits: Lend, relayPublicBits: relays.length * Lend, ...this._stats() };
     return this.done;
   }
   /** Senkron koşum (testler ve Node). Tarayıcı step()'i turlar arasında olay döngüsüne dönerek çağırır. */
@@ -11275,7 +11330,7 @@ function PhotonNet() {
     const otpDecoded = delivered ? sres.decoded : "";
     const otpIntegrityOk = delivered && otpDecoded === msg;
     addLog(delivered
-      ? `OTP: mesaj ${otpKeyBits.length} bitlik KANITLANMIŞ anahtarla (ℓ=${sres.proof.ell}, Cascade sızıntısı ${sres.leakEC} bit) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ${otpIntegrityOk?"✓":"✗"}`
+      ? `OTP: mesaj ${otpKeyBits.length} bitlik KANITLANMIŞ anahtarla (${sres.nHops > 1 ? `${sres.nHops} atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=${sres.proof.ell}; uçtan uca anahtar ${sres.relayPublicBits} bitlik açık röle yayınıyla taşındı` : `ℓ=${sres.proof.ell}, Cascade sızıntısı ${sres.leakEC} bit`}) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ${otpIntegrityOk?"✓":"✗"}`
       : "OTP: kanıtlanmış anahtar yok — mesaj şifrelenmedi ve GÖNDERİLMEDİ (bozuk metin teslim edilmez)",
       otpIntegrityOk?"OK":"ERR");
 
@@ -12632,7 +12687,7 @@ function PhotonNet() {
       <div style={{fontSize:12,fontWeight:700,letterSpacing:".14em",
         color:"#00d4ff",textShadow:"0 0 10px #00d4ff55"}}>PHOTONNET</div>
       <div style={{fontSize:8,color:"#1e3a5f",letterSpacing:".16em",marginTop:-1}}>
-        QUANTUM OPTICAL NETWORK v2.5
+        QUANTUM OPTICAL NETWORK v{PHOTONNET_VERSION} · ÇEKİRDEK {PHOTONNET_CORE_VERSION}
       </div>
     </div>
     {[
@@ -14872,7 +14927,7 @@ function PhotonNet() {
               // DÜZELTME 4: okCount/lostCount kullan
               // ÇEKİRDEK v2: mesaj OTP ile klasik kanaldan gider; foton sayıları yalnız kuantum kanalın görselleştirmesidir
               {l:"QBER (test)", v:result.session&&result.session.qTest!=null?(result.session.qTest*100).toFixed(2)+"%":"—", c:result.session&&result.session.qTest!=null&&result.session.qTest<0.11?"#10b981":"#f43f5e"},
-              {l:"KANITLI ANAHTAR ℓ", v:result.session?result.session.ell+" bit":"—", c:result.session&&result.session.ell>0?"#10b981":"#f43f5e"},
+              {l:result.session&&result.session.nHops>1?"KANITLI ANAHTAR ℓ (EN ZAYIF ATLAMA)":"KANITLI ANAHTAR ℓ", v:result.session?result.session.ell+" bit":"—", c:result.session&&result.session.ell>0?"#10b981":"#f43f5e"},
               {l:"DARBE / LİNK", v:result.session?result.session.pulses.toLocaleString("tr-TR"):"—", c:"#475569"},
               {l:"FOTON KANALI KAYIP", v:result.er+"%", c:"#475569"},
             ].map(s=>(

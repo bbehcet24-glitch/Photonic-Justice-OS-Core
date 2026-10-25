@@ -1,0 +1,54 @@
+{
+  "generatedAt": "2026-10-25T14:05:41.374Z",
+  "checks": [
+    {
+      "name": "T1 (K1) Turlar bağımsız: 3 turun hata konumları en çok %25 örtüşüyor (v3 yolu aynı koşulda birebir tekrar ediyor)",
+      "ok": true,
+      "detail": "v4 tur başı hata sayıları 12/14/10, en büyük örtüşme %0 · v3 yolu: 3 turda AYNI konumlar"
+    },
+    {
+      "name": "T2 (K2) Zincirde her atlamanın KENDİ kanıtı: 31 atlamanın hepsinde test alt kümesi, ℓ ≥ mesaj biti; uçtan uca anahtar 30 açık röle yayınıyla taşındı ve Bob mesajı çözdü",
+      "ok": true,
+      "detail": "DELIVERED · atlama ℓ min/maks 261/455 · qTest maks %2.52 · uçtan uca 261 bit, röle 7830 bit · 393.216 darbe/link"
+    },
+    {
+      "name": "T3 (K2) %11'in ALTINDAKİ gürültülü tek atlama (#3, +%6,5 hata) kendi sonlu-anahtar hesabına giriyor: qTest'i yüksek, ℓ'si en küçük ve zincirin ℓ'sini o belirliyor (ya da bütçe o atlamada bitiyor)",
+      "ok": true,
+      "detail": "KEY_BUDGET: link başına 4.194.304 darbede 1/5 atlamada (ör. #3) yeterli kanıtlanmış anahtar birikmedi "
+    },
+    {
+      "name": "T4 Tek atlamada dinleme imzası (%25) → HOP_QBER, iptal mesajı atlama #2'yi gösteriyor; mesaj ve anahtar dönmüyor",
+      "ok": true,
+      "detail": "HOP_QBER: hop #2 QBER_test %27.1 ≥ %11 (k=483 test biti) — dinleme ya da aşırı gürültü; an"
+    },
+    {
+      "name": "T5 Tek bir Cascade doğrulama başarısızlığında blok atılıp yeniden toplanıyor ve mesaj teslim ediliyor; sürekli başarısızlıkta 3. denemede EC_FAIL (anahtar yok)",
+      "ok": true,
+      "detail": "tek hata: DELIVERED, atılan blok 1 · sürekli hata: EC_FAIL — Cascade uzlaşması 3 kez yakınsamadı (son: 3 kalıntı hata) — "
+    },
+    {
+      "name": "T6 Varsayılan demo rotası (1842 km, 31 güvenilir atlama): SNSPD 10/10, InGaAs 6/6 teslim (v3'te InGaAs 12'de 5 KEY_BUDGET), en çok darbe bütçenin altında",
+      "ok": true,
+      "detail": "SNSPD 10/10 (en çok 393216 darbe/link) · InGaAs 6/6 (en çok 3227648; bütçe 4194304)"
+    },
+    {
+      "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
+      "ok": true,
+      "detail": "af1f56a1adbe6e7d…"
+    }
+  ],
+  "demo": {
+    "snspd": {
+      "ok": 10,
+      "N": 10,
+      "maxPulses": 393216
+    },
+    "ingaas": {
+      "ok": 6,
+      "N": 6,
+      "maxPulses": 3227648
+    }
+  },
+  "passed": 7,
+  "total": 7
+}

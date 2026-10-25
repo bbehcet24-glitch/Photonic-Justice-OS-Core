@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-23T15:07:11.005Z",
-  "coreSha256": "421513f72bad1fb32b24c78453f9f6fdcbdbab83bd10f044d58ffc71b42bb3d4",
+  "generatedAt": "2026-10-25T14:05:38.958Z",
+  "coreSha256": "af1f56a1adbe6e7d7566d361aedc60c4149ecf49557f4e8f2c535937f01a12c3",
   "checks": [
     {
       "name": "V1 (Hata 3) Girdi doğrulaması: fuzz testindeki 9 fonksiyonun 15 geçersiz-girdi durumunun hepsi kontrollü TypeError/RangeError; geçerli girdilerin sonuçları aynı (fiberT(1550, 50 km) = 0,1; 1e308° yükselti 90°'ye kısıtlanıyor)",
@@ -15,17 +15,17 @@
     {
       "name": "V3 (Hata 1+2) Güvenli mesaj oturumu: 10, 50, 85 km ve 452 km (8 hop güvenilir düğüm) rotalarında mesaj ℓ ≥ mesaj uzunluğu olan KANITLANMIŞ anahtarla iletiliyor; anahtar mesajdan bağımsız (aynı entropiyle farklı mesaj → aynı anahtar), hiçbir zaman sahte rastgelelikle uzatılmıyor",
       "ok": true,
-      "detail": "10 km/1 hop: DELIVERED, QBER_test %1.72, ℓ=294, link başına 16.384 darbe · 50 km/1 hop: DELIVERED, QBER_test %1.14, ℓ=574, link başına 131.072 darbe · 85 km/1 hop: DELIVERED, QBER_test %2.76, ℓ=1024, link başına 1.212.416 darbe · 452 km/8 hop: DELIVERED, QBER_test %0.95, ℓ=470, link başına 180.224 darbe · anahtar mesajdan bağımsız: true"
+      "detail": "10 km/1 hop: DELIVERED, QBER_test %1.71, ℓ=228, link başına 16.384 darbe · 50 km/1 hop: DELIVERED, QBER_test %1.32, ℓ=551, link başına 131.072 darbe · 85 km/1 hop: DELIVERED, QBER_test %1.71, ℓ=290, link başına 622.592 darbe · 452 km/8 hop: DELIVERED, QBER_test %1.67, ℓ=170, link başına 180.224 darbe · anahtar mesajdan bağımsız: true"
     },
     {
       "name": "V4 (Hata 2) İptal: casus (tek hop) → QBER_LIMIT, casus (5 hop zincir) → HOP_QBER, darbe bütçesi biten 400 km tek hop → KEY_BUDGET; üçünde de ne mesaj ne anahtar dönüyor; entropi kaynağı verilmezse oturum hiç başlamıyor",
       "ok": true,
-      "detail": "casus: QBER_LIMIT (QBER_test %25.1) · zincir casus: HOP_QBER (en kötü hop %29.3) · bütçe: KEY_BUDGET · entropisiz: reddedildi"
+      "detail": "casus: QBER_LIMIT (QBER_test %26.7) · zincir casus: HOP_QBER (en kötü hop %28.8) · bütçe: KEY_BUDGET · entropisiz: reddedildi"
     },
     {
       "name": "V5 (Hata 4) Anahtar havuzu: 46 kbit blok kapanışı (önce ortalama 7,4 s / en çok 12,8 s) artık 2 s'nin altında, LDPC karşılaştırması 'atlandı' olarak kayıtlı (güvenlik kararına girmez); 4 kbit blokta LDPC eskisi gibi senkron çalışıyor",
       "ok": true,
-      "detail": "46 kbit: 242 ms, LDPC skipped · 4 kbit: 5668 ms, LDPC done (719 bit sızıntı)"
+      "detail": "46 kbit: 141 ms, LDPC skipped · 4 kbit: 1571 ms, LDPC done (719 bit sızıntı)"
     },
     {
       "name": "V6 (Hata 5) PhotonNet.html ve PhotonNet_offline.html kaynakla (PhotonNet2.jsx) birebir güncel ve birbirinin aynısı",
@@ -35,7 +35,7 @@
     {
       "name": "Yeni çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı (değişiklik izlenebilir)",
       "ok": true,
-      "detail": "photonnet_core.js SHA-256 421513f72bad1fb3…"
+      "detail": "photonnet_core.js SHA-256 af1f56a1adbe6e7d…"
     }
   ],
   "passed": 7,
