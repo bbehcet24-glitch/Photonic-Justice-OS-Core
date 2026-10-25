@@ -98,7 +98,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v4";
+const PHOTONNET_CORE_VERSION = "v4.1";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -9578,10 +9578,10 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                             "QKD ",
                             result.rawKeyRate.label)),
                         result.securityProof && (React.createElement("span", { style: { color: result.securityProof.secure ? "#10b981" : "#f43f5e" }, title: result.securityProof.secure
-                                ? `Sonlu-anahtar (finite-key) GLLP/Serfling kanıtı: ${result.securityProof.n}bit sifted key, Q_ph≤%${(result.securityProof.qPhUpper * 100).toFixed(2)} → gizlilik yükseltme sonrası ${result.finalSecureKeyLen}bit KANITLANMIŞ güvenli anahtar`
+                                ? `Sonlu-anahtar (finite-key) GLLP/Serfling kanıtı: ${result.securityProof.n}bit sifted key, Q_ph≤%${(result.securityProof.qPhUpper * 100).toFixed(2)} → gizlilik yükseltme sonrası ${result.finalSecureKeyLen}bit KANITLANMIŞ güvenli anahtar${result.spareKeyLen != null ? ` (${result.finalSecureKeyLen - result.spareKeyLen} bit OTP'de harcandı, ${result.spareKeyLen} bit artan)` : ""}`
                                 : `Sonlu-anahtar kanıtı BAŞARISIZ: ${result.securityProof.reason}` },
                             "\uD83D\uDD10 ",
-                            result.securityProof.secure ? `ℓ=${result.finalSecureKeyLen}bit kanıtlı` : "kanıt YOK"))),
+                            result.securityProof.secure ? `ℓ=${result.finalSecureKeyLen}bit kanıtlı${result.spareKeyLen != null ? ` · ${result.spareKeyLen} bit artan` : ""}` : "kanıt YOK"))),
                     React.createElement("button", { onClick: onOpenTimeline, style: {
                             marginLeft: "auto", padding: "7px 14px", borderRadius: 8,
                             border: "1px solid #7c3aed55", cursor: "pointer",
@@ -11448,7 +11448,8 @@ function PhotonNet() {
             eccExplain, // EK
             faultSegment, // FAZ 6: HAT BAZLI SUÇLAMA — bu iletimin en sorunlu tek segmenti (başarısızsa), Watchdog'un log-örüntü tespiti için
             securityProof: secProof.proof, // MADDE 3: sonlu-anahtar (finite-key) GLLP/Serfling kanıtı — ℓ, Q_ph_upper, secure vb.
-            finalSecureKeyLen: secProof.finalKeyBits.length, // gizlilik yükseltme (Toeplitz/leftover-hash) sonrası FİİLEN üretilen kanıtlanmış-güvenli anahtar uzunluğu
+            finalSecureKeyLen: delivered ? sres.proof.ell : 0, // gizlilik yükseltme (Toeplitz/leftover-hash) sonrası üretilen kanıtlanmış anahtar ℓ (zincirde en zayıf atlama) — OTP öncesi
+            spareKeyLen: secProof.finalKeyBits.length, // OTP mesajı şifreledikten SONRA artan kanıtlı anahtar (ℓ − mesaj bitleri)
             classicalAuth: { ok: authResult.ok, tag: authResult.tag, poolRemaining: (_c = authResult.poolRemaining) !== null && _c !== void 0 ? _c : classicalAuthChannel.pool.length, reason: (_d = authResult.reason) !== null && _d !== void 0 ? _d : null }, // Wegman-Carter kimlik doğrulama sonucu
             keyPoolStatus: keyPoolResult, // ASENKRON HAVUZ: bu rotanın biriken sifted-key havuzu durumu — blok tamamlandıysa gerçek n/k ayrımlı kanıt (keyPoolResult.finalized), tamamlanmadıysa yalnızca ilerleme (poolProgress/poolThreshold)
         };

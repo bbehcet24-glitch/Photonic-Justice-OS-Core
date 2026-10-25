@@ -9,7 +9,7 @@ const path = require("path");
 const crypto = require("crypto");
 
 const CORE_PATH = path.join(__dirname, "photonnet_core.js");
-const CORE_SHA_EXPECTED = "af1f56a1adbe6e7d7566d361aedc60c4149ecf49557f4e8f2c535937f01a12c3";
+const CORE_SHA_EXPECTED = "5c12cde3a6c1d4acfb935dfb9aade5e5b79a42a65d7e6e04e92d88586b676313";
 
 function verifyCoreHash() {
   const hash = crypto.createHash("sha256").update(fs.readFileSync(CORE_PATH)).digest("hex");

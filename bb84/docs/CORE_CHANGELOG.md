@@ -11,6 +11,19 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v2 | `157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b` | `157d81da…81cf3b` |
 | v3 | `421513f72bad1fb32b24c78453f9f6fdcbdbab83bd10f044d58ffc71b42bb3d4` | `421513f7…2bb3d4` |
 | v4 | `af1f56a1adbe6e7d7566d361aedc60c4149ecf49557f4e8f2c535937f01a12c3` | `af1f56a1…1a12c3` |
+| v4.1 | `5c12cde3a6c1d4acfb935dfb9aade5e5b79a42a65d7e6e04e92d88586b676313` | `5c12cde3…676313` |
+
+## v4.1 (2026-10) — sonuç kartında ℓ etiketi (yalnız arayüz)
+
+Algoritma değişmedi; oturum, kanıt ve anahtar bitleri v4 ile aynı. Hash değiştiği için yeni satır açıldı.
+
+- **Kusur:** Sonuç kartındaki "ℓ=…bit kanıtlı" rozeti `finalSecureKeyLen` alanını gösteriyordu. Bu alan v2'den beri
+  OTP'nin mesajı şifreledikten SONRA artan anahtarın uzunluğuydu (ℓ − mesaj biti). Aynı ekranda sağ paneldeki
+  "KANITLI ANAHTAR ℓ" ile sonlu-anahtar satırı gerçek ℓ'yi gösterdiği için iki farklı sayı görünüyordu
+  (ölçüldü: varsayılan iletimde 140 ve 244; 244 − 104 mesaj biti = 140). Vitrin ekran görüntüsü çekilirken bulundu.
+- **Düzeltme:** `finalSecureKeyLen` artık gizlilik yükseltmesinden çıkan ℓ (zincirde en zayıf atlama); artan anahtar
+  ayrı bir `spareKeyLen` alanında ve rozette "· N bit artan" olarak gösteriliyor.
+- `PHOTONNET_CORE_VERSION` "v4.1" oldu (başlıkta görünür).
 
 ## v4 (2026-10) — mesaj oturumunda bağımsız kanal turları ve atlama başına sonlu-anahtar kanıtı
 

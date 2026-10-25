@@ -99,7 +99,7 @@ Bu deseni denetleyen somut mekanizmalar:
   dosyalarının) SHA-256 özetini karşılaştırıp raporlar — "çekirdeğe
   dokunulmadı" iddiası her çalıştırmada YENİDEN kanıtlanır, sadece bir
   kere varsayılmaz. Çekirdek bilinçli olarak yeni sürüme geçtiğinde
-  (şu an **v4**, SHA-256 `af1f56a1…1a12c3`) eski/yeni hash ve değişen her
+  (şu an **v4.1**, SHA-256 `5c12cde3…676313`) eski/yeni hash ve değişen her
   fonksiyon [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md)'de
   belgelenir ve tüm sabitlenmiş testler yeni hash'e güncellenip yeniden koşturulur.
 - **`extract_core.js --check`**: CI kapısı — `photonnet_core.js`'in
