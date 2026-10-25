@@ -14,6 +14,22 @@ zaman "DÜRÜSTLÜK NOTU" / "KAPSAM NOTU" başlığıyla) belirtir. Bu README de
 aynı disiplinle yazılmıştır — hiçbir modül "her şeyi çözüyor" gibi
 sunulmamıştır.
 
+### Ekran görüntüleri
+
+Tüm görüntüler güncel `PhotonNet.html`'den `node bb84/tools/capture_screenshots.js` ile üretilir
+(elle çekilmiş görüntü tutulmaz; varsayılan iletim başarılı bitmezse betik dosya yazmaz).
+
+![Ağ haritası ve uçtan uca iletim sonucu](docs/screenshots/01_network_transmit.png)
+*Varsayılan IST → BAG iletimi: güvenilir-düğüm zincirinde her atlama kendi sonlu-anahtar kanıtını üretir;
+kartta en zayıf atlamanın ℓ'si ve OTP sonrası artan anahtar görünür.*
+
+| | |
+|---|---|
+| ![Düğüm bekçisi](docs/screenshots/02_watchdog.png) | ![Tahmin paneli](docs/screenshots/03_prediction.png) |
+| Düğüm bekçisi (watchdog) ızgarası | Proaktif darboğaz tahmini |
+| ![Gürültü kalibrasyonu](docs/screenshots/04_noise_matrix.png) | ![Uydu görünümü](docs/screenshots/05_satellite.png) |
+| Dedektör gürültü kalibrasyonu (config.json profili) | LEO uydu takımyıldızı |
+
 ---
 
 ## İçindekiler
@@ -326,7 +342,8 @@ doğrulanmıştır (dosya-üstü "DÜZELTME 15" yorumu).
 | `bb84/tools/extract_core.js` | `PhotonNet2.jsx`'ten `bb84/photonnet_core.js`'i otomatik/tekrarlanabilir şekilde üretir (§2'de ayrıntılı). `--check` modu CI kapısıdır. |
 | `bb84/tools/build_photonnet_html.js` | `PhotonNet.html` içindeki gömülü `<script>` uygulama bloğunu güncel `PhotonNet2.jsx`'ten otomatik olarak yeniden derler (aynı TS transpileModule mantığı). Marker yorumu tam olarak bir kez görünmüyorsa dosyayı değiştirmeden İPTAL EDER. |
 | `bb84/tools/extract_qkdnetsim_profile.js` | `qkdnetsim_traffic_profile.json`'ı gerçek bir QKDNetSim ns-3.46 çalıştırmasının çıktı dosyalarından yeniden üretir. Şekil (zaman-yoğunluk deseni) ile olay-sayısı (gerçek log satırları) BİLEREK ve AÇIKÇA farklı iki metrikten birleştirilir — `methodologyNote` alanında belirtilir. |
-| `bb84/tools/verify_photonnet_html.js` | Yeniden derlenen `PhotonNet.html`'i gerçek Chromium'da (Playwright) açıp konsol/sayfa hatası olmadan monte olduğunu doğrulayan bir E2E kontrolü. |
+| `bb84/tools/verify_photonnet_html.js` | Yeniden derlenen `PhotonNet.html`'i gerçek Chromium'da (Playwright) açıp konsol/sayfa hatası olmadan monte olduğunu doğrulayan bir E2E kontrolü (görüntüsü `ci-reports/`'a, depoya girmez). |
+| `bb84/tools/capture_screenshots.js` | README vitrin görüntülerini (`docs/screenshots/`) güncel `PhotonNet.html`'den yeniden üretir; iletim başarısız ya da sayfa hatası varsa dosya yazmadan 1 ile çıkar. |
 | `bb84/tools/QKDNETSIM_BUILD.md` | QKDNetSim'in (üçüncü-taraf, akademik yayınlanmış bir ns-3 modülü) bu sandbox'ta apt-get/PyPI/gitlab.com engelliyken kaynaktan nasıl derlendiğini belgeler — 3 spesifik isim-uyuşmazlığı çözümü ve iki bağımsız build oturumunda elde edilen kesin deterministik çıktı değerlerini (28.140 teslim edilen anahtar) kaydeder. |
 | `bb84/ci/run_integration_tests.sh` | GitHub Actions VE GitLab CI YAML'larının her ikisinin de çağırdığı merkezi CI entegrasyon-test orkestrasyonu. `KME_MODE` ile iki mod: "ephemeral" (varsayılan — geçici CA/sertifika, tam temizlik) ve "external" (gerçek staging KME uç noktasına karşı, CI-secret sertifikalarıyla). |
 | `.github/workflows/production-pipeline.yml`, `.gitlab-ci.yml` | CI/CD boru hatları — extract-core-check, production-build-strip, software-hsm-pkcs11, external-real-certs işlerini içerir. |
@@ -428,7 +445,7 @@ ortak SVG/CSS "ev stili" ile) üretir. Örnek eşleşmeler:
 | `gen_world_network.py` / `world_network.js` | Neredeyse her ülkenin başkentini (+büyük ülkeler için ikinci bir metropolü) içeren küresel bir QKD ağ topolojisi üretir — koordinatlar AÇIKÇA yaklaşık/stilize (navigasyon için değil), en yakın 2 komşuya + kıtalar-arası "omurga" bağlantılarına göre bağlanır. |
 | `hal/` | §4.6'da ayrıntılı — Python donanım soyutlama katmanı. |
 | `delivery/photonnet_pki_hardening.zip` | PKI sertleştirme çalışmasının paketlenmiş teslimat arşivi. |
-| `*.png` (ekran görüntüleri) | Çeşitli UI panellerinin (dünya haritası, TRF/WDG/NGM sekmeleri, kriz kurtarma, üretim denetimi vb.) doğrulama ekran görüntüleri. |
+| `docs/screenshots/*.png` | README vitrin görüntüleri — yalnızca `capture_screenshots.js` ile üretilir. Kök dizinde `.png`/`.zip` tutulmaz (`.gitignore`). |
 
 ---
 
@@ -676,6 +693,7 @@ photonnet/
 ├── bundler/                          # React'i tek dosyaya gömen özel bundler
 ├── hal/                              # Python donanım soyutlama katmanı (§4.6)
 ├── delivery/                         # Paketlenmiş teslimat arşivleri
+├── docs/screenshots/                 # README görüntüleri (capture_screenshots.js üretir)
 ├── gen_world_network.py, world_network.js   # Küresel ağ topolojisi üretici/verisi
 └── bb84/                             # Ana simülasyon + katman kod tabanı
     ├── photonnet_core.js             # ÇEKİRDEK — asla elle değiştirilmez (§3)

@@ -44,8 +44,11 @@ const path = require("path");
   console.log(`  Sayfa (uncaught) hataları: ${pageErrors.length}`);
   pageErrors.slice(0, 10).forEach((e) => console.log(`    [pageerror] ${e.slice(0, 300)}`));
 
-  await page.screenshot({ path: path.join(__dirname, "..", "..", "photonnet_html_rebuild_verify.png") });
-  console.log("  Ekran görüntüsü: photonnet_html_rebuild_verify.png");
+  // Doğrulama görüntüsü depoya girmez (ci-reports/ .gitignore'da); vitrin görüntüleri: tools/capture_screenshots.js
+  const shotDir = path.join(__dirname, "..", "..", "ci-reports");
+  require("fs").mkdirSync(shotDir, { recursive: true });
+  await page.screenshot({ path: path.join(shotDir, "photonnet_html_rebuild_verify.png") });
+  console.log("  Ekran görüntüsü: ci-reports/photonnet_html_rebuild_verify.png");
 
   await browser.close();
 
