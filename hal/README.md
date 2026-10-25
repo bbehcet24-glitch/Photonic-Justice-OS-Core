@@ -1,318 +1,297 @@
 # PhotonNet HAL — Hardware Abstraction Layer
 
-`hal/`, PhotonNet'in tarayıcı-içi BB84 simülasyonunu (`PhotonNet2.jsx` içindeki
-`propPhoton()` / `deriveSiftedKey()`) gerçek kuantum anahtar dağıtım donanımına
-bağlamak için tasarlanmış, saf Python tabanlı bir soyutlama katmanıdır.
+`hal/` is a pure-Python abstraction layer designed to connect PhotonNet's in-browser BB84 simulation
+(`propPhoton()` / `deriveSiftedKey()` in `PhotonNet2.jsx`) to real quantum key distribution hardware.
 
-Bugün elde gerçek donanım yok — bu paket, donanım geldiğinde **yalnızca bir
-sınıf eklenerek** (mevcut hiçbir kod değiştirilmeden) devreye alınabilecek
-şekilde inşa edildi. Aşağıda mimari, veri akışı, çalıştırma talimatları ve
-gerçek bir cihaz eklerken izlenecek adımlar var.
+There is no real hardware today — this package is built so that, when hardware arrives, it can be brought
+into service **by adding a single class** (without changing any existing code). Below are the
+architecture, the data flow, how to run it and the steps to follow when adding a real device.
 
-## Neden bu ayrım gerekli?
+## Why is this separation necessary?
 
-`PhotonNet2.jsx`'teki `propPhoton()` bir **olasılık modelidir** — "bu foton
-hayatta kaldı mı, hangi bit üretildi" sorusunu bir RNG ile üretir. Gerçek
-donanımda bu soru zaten CEVAPLANMIŞTIR: dedektör ya bir click üretir ya
-üretmez, olay fiziksel olarak gerçekleşmiştir. Yazılımın işi artık bit
-*üretmek* değil, Bob'un gerçek zaman-damgalı click'lerini Alice'in gönderim
-zaman damgalarıyla **eşleştirmek** (time-tag correlation) ve QBER'i bu
-eşleşmeden türetmektir. Bu, iki farklı matematik — bu yüzden HAL, `propPhoton`
-ile HİÇ ilişkili olmayan, bağımsız bir katman olarak yazıldı.
+`propPhoton()` in `PhotonNet2.jsx` is a **probability model** — it answers "did this photon survive, which
+bit was produced" with an RNG. With real hardware that question has ALREADY BEEN ANSWERED: the detector
+either produces a click or it does not; the event has physically happened. The software's job is then no
+longer to *produce* bits but to **match** Bob's real time-stamped clicks with Alice's transmission time
+stamps (time-tag correlation) and derive QBER from that matching. These are two different kinds of
+mathematics — which is why the HAL is written as an independent layer with NO relation to `propPhoton`.
 
-## Mimari (aşağıdan yukarıya)
+## Architecture (bottom to top)
 
 ```
                          ┌─────────────────────────┐
-                         │   PhotonNet.html (UI)    │  ← 🔧 DONANIM sekmesi
+                         │   PhotonNet.html (UI)    │  ← 🔧 DONANIM (hardware) tab
                          │   fetch() + EventSource  │
                          └────────────┬─────────────┘
                                       │ HTTP + SSE (localhost:8765)
                          ┌────────────▼─────────────┐
-                         │    bridge_server.py       │  Flask — REST + SSE köprü
+                         │    bridge_server.py       │  Flask — REST + SSE bridge
                          └────────────┬─────────────┘
                                       │
                          ┌────────────▼─────────────┐
-                         │      link_manager.py      │  bağlan/yeniden-dene/arka-plan-oku
+                         │      link_manager.py      │  connect / retry / background read
                          └────────────┬─────────────┘
-                                      │ HardwareInterface sözleşmesi
+                                      │ HardwareInterface contract
               ┌───────────────────────┼───────────────────────┐
               │                       │                       │
    ┌──────────▼─────────┐  ┌───────────▼──────────┐  ┌──────────▼───────────┐
    │ simulated_hardware.py│  │  serial_hardware.py   │  │   tcp_hardware.py     │
-   │  (BUGÜN ÇALIŞIYOR)   │  │ (BUGÜN YAZILDI —      │  │ (BUGÜN YAZILDI VE     │
-   │                       │  │  pyserial olmadan     │  │  MOCK CİHAZA KARŞI    │
-   │                       │  │  CANLI test edilemedi)│  │  TEST EDİLDİ)         │
+   │  (WORKS TODAY)       │  │ (WRITTEN — could not  │  │ (WRITTEN AND TESTED   │
+   │                       │  │  be tested LIVE       │  │  AGAINST A MOCK       │
+   │                       │  │  without pyserial)    │  │  DEVICE)              │
    └───────────────────────┘  └───────────┬───────────┘  └──────────┬────────────┘
                                            │                         │
                                            └────────────┬────────────┘
-                                                         │ (protokol/çerçeveleme
-                                                         │  mantığı PAYLAŞILIR)
+                                                         │ (protocol/framing
+                                                         │  logic is SHARED)
                                           ┌──────────────▼──────────────┐
-                                          │  binary_click_hardware.py    │  referans wire-protokol
+                                          │  binary_click_hardware.py    │  reference wire protocol
                                           │  BinaryClickHardware         │  (ARM/STATUS/STREAM_* +
-                                          └──────────────┬──────────────┘  13-bayt ikili kayıt)
+                                          └──────────────┬──────────────┘  13-byte binary record)
                                                          │
                                           ┌──────────────▼──────────────┐
                                           │  transport.py                 │
-                                          │  SerialTransport / TCPTransport│  ham bayt seviyesi
+                                          │  SerialTransport / TCPTransport│  raw byte level
                                           └────────────────────────────────┘
 
                          ┌────────────────────────────┐
-                         │   time_tag_correlator.py     │  RNG'siz — yalnızca
-                         │   (bridge_server tarafından   │  zaman-damgası
-                         │    her katmanda kullanılır)   │  eşleştirme + QBER
+                         │   time_tag_correlator.py     │  RNG-free — only
+                         │   (used by bridge_server      │  time-stamp matching
+                         │    on every path)             │  + QBER
                          └────────────────────────────┘
 ```
 
-## Dosyalar ve sorumlulukları
+## Files and responsibilities
 
-| Dosya | Sorumluluk |
+| File | Responsibility |
 |---|---|
-| `types.py` | Ortak veri tipleri: `Basis`, `DetectorChannel`, `TransmitEvent`, `TimestampedClick`, `AcquisitionConfig`, `HardwareStatus`, `SiftingResult`. Hiçbir donanıma özgü kod içermez. |
-| `hardware_interface.py` | `HardwareInterface` soyut sınıfı — `connect() / disconnect() / arm() / read_clicks() / status()`. TÜM sürücülerin uyduğu sözleşme. |
-| `transport.py` | Ham bayt taşıma soyutlaması: `TCPTransport` (stdlib `socket`, bugün çalışır), `SerialTransport` (`pyserial` gerektirir, opsiyonel bağımlılık). |
-| `simulated_hardware.py` | `SimulatedHardware` — bugün çalışan, gerçekçi sahte donanım. Kayıp/faz-kayması fiziği `PhotonNet2.jsx`'teki `propPhoton()`'dan bilerek portlandı (aynı `fiberT` ve `phaseProb` formülleri) — böylece ürettiği QBER, tarayıcı simülasyonu ve Qiskit-eşdeğeri doğrulama raporuyla tutarlı kalır. |
-| `binary_click_hardware.py` | `BinaryClickHardware` — `serial_hardware.py`/`tcp_hardware.py` arasında PAYLAŞILAN referans wire-protokol/çerçeveleme mantığı (ARM/STATUS/STREAM_START/STREAM_STOP metin komutları + 13-baytlık ikili click kaydı akışı). **GERÇEK bir vendor spesifikasyonu DEĞİLDİR** — makul bir varsayımdır, gerçek cihazınıza göre 6 encode/parse metodu değiştirilmelidir (bkz. dosya başlığı). |
-| `serial_hardware.py` | `SerialHardware(BinaryClickHardware)` — gerçek bir seri port (USB-UART) sürücüsü. `pyserial` gerektirir, bu sandbox'ta kurulu değil, bu yüzden CANLI test edilemedi (yalnızca sözdizimi + import doğrulandı, ayrıca `pyserial` yokken `connect()`'in net bir `HardwareError` ile başarısız olduğu doğrulandı). |
-| `tcp_hardware.py` | `TCPHardware(BinaryClickHardware)` — ağ üzerinden erişilebilen bir cihaz sürücüsü. Yalnızca stdlib `socket` kullanır, bu sandbox'ta BUGÜN çalışır — `test_binary_click_hardware.py`'deki sahte-cihaz (mock) sunucusuna karşı uçtan uca doğrulandı. |
-| `link_manager.py` | `LinkManager` — bağlan/kopunca-yeniden-dene (backoff), arka plan thread'inde sürekli `read_clicks()` çağırma, durum yayını, sınırlı click kuyruğu (`maxsize=200_000`, dolarsa en-eskiyi düşürür). |
-| `time_tag_correlator.py` | `TimeTagCorrelator` — Alice/Bob zaman damgalarını bir eşleştirme penceresi (`coincidence_window_ps`) içinde O(n+m) eşleştirir, sifting + QBER üretir. **RNG kullanmaz** — girdisi tamamen gerçek/gerçekçi olaylardır. |
-| `bridge_server.py` | Flask tabanlı REST + Server-Sent-Events köprüsü — `PhotonNet.html`'in tarayıcıdan bu pakete erişmesini sağlar (bkz. [API uçları](#api-uçları)). |
-| `test_pipeline.py` | `pytest` gerektirmeyen, düz `assert` tabanlı uçtan uca fizik doğrulama scripti (`SimulatedHardware` → `TimeTagCorrelator`). |
-| `test_binary_click_hardware.py` | `pytest` gerektirmeyen, düz `assert` tabanlı uçtan uca protokol doğrulama scripti — gerçek bir soket üzerinden sahte bir cihaza (`_MockDeviceServer`) karşı `TCPHardware`'i test eder. |
-| `test_serial_hardware_mock.py` | `pyserial` kurulu OLMADIĞI için, `serial.Serial`'ı taklit eden sahte bir sınıfı `sys.modules["serial"]`'a enjekte edip `SerialHardware`'i (özellikle `TCPTransport`'ta OLMAYAN, `SerialTransport`'a özgü `read()` toplama döngüsünü) doğrudan egzersiz eden bir doğrulama scripti. Gerçek pyserial/gerçek donanımın YERİNE GEÇMEZ — bkz. [Gerçek donanım olmadan ne test edildi, ne edilemedi](#gerçek-donanım-olmadan-ne-test-edildi-ne-edilemedi). |
-| `__init__.py` | Paket dışına açılan public API. |
+| `types.py` | Shared data types: `Basis`, `DetectorChannel`, `TransmitEvent`, `TimestampedClick`, `AcquisitionConfig`, `HardwareStatus`, `SiftingResult`. Contains no hardware-specific code. |
+| `hardware_interface.py` | The abstract `HardwareInterface` class — `connect() / disconnect() / arm() / read_clicks() / status()`. The contract ALL drivers follow. |
+| `transport.py` | Raw byte transport abstraction: `TCPTransport` (stdlib `socket`, works today), `SerialTransport` (requires `pyserial`, optional dependency). |
+| `simulated_hardware.py` | `SimulatedHardware` — realistic fake hardware that works today. Its loss/phase-drift physics is deliberately ported from `propPhoton()` in `PhotonNet2.jsx` (the same `fiberT` and `phaseProb` formulas) — so the QBER it produces stays consistent with the browser simulation and the Qiskit-equivalent verification report. |
+| `binary_click_hardware.py` | `BinaryClickHardware` — the reference wire-protocol/framing logic SHARED by `serial_hardware.py`/`tcp_hardware.py` (ARM/STATUS/STREAM_START/STREAM_STOP text commands + a stream of 13-byte binary click records). **It is NOT a REAL vendor specification** — it is a reasonable assumption; 6 encode/parse methods must be adapted to your real device (see the file header). |
+| `serial_hardware.py` | `SerialHardware(BinaryClickHardware)` — a driver for a real serial port (USB-UART). Requires `pyserial`, which is not installed in the development sandbox, so it could not be tested LIVE (only syntax + import were verified, plus that `connect()` fails with a clear `HardwareError` when `pyserial` is missing). |
+| `tcp_hardware.py` | `TCPHardware(BinaryClickHardware)` — a driver for a network-reachable device. Uses only the stdlib `socket` and works in the sandbox TODAY — verified end to end against the mock device server in `test_binary_click_hardware.py`. |
+| `link_manager.py` | `LinkManager` — connect / retry on disconnect (back-off), continuous `read_clicks()` calls in a background thread, status broadcasting, a bounded click queue (`maxsize=200_000`, drops the oldest when full). |
+| `time_tag_correlator.py` | `TimeTagCorrelator` — matches Alice/Bob time stamps within a coincidence window (`coincidence_window_ps`) in O(n+m) and produces sifting + QBER. **Uses no RNG** — its input consists entirely of real/realistic events. `estimate_timing()` recovers an unknown clock offset and drift between the two time bases; `correlate_auto()` uses that estimate and refuses to lock on unrelated data (fail-closed). |
+| `qrng_interface.py` | `QRNGInterface` — the contract every quantum random number generator driver follows (`connect / disconnect / read_bytes / status`). Explains why feeding `mulberry32` a "better seed" is not a fix. |
+| `qrng_simulated.py` | `SimulatedQRNG` — `os.urandom`, an operating-system CSPRNG. Passes the production gate's "not a 32-bit PRNG" check but is explicitly **not** a hardware QRNG. |
+| `qrng_raw_stream.py`, `qrng_tcp_hardware.py`, `qrng_serial_hardware.py` | `RawStreamQRNG` and its TCP/serial drivers. Most USB/serial QRNGs stream raw entropy continuously from the moment the link opens, so there is no command layer. `SerialQRNG` is untested on a live port (no `pyserial`); the shared logic is tested over TCP (`test_qrng_raw_stream.py`). |
+| `qrng_health_tests.py` | Online health tests inspired by NIST SP 800-90B §4.4 — Repetition Count Test (RCT) and Adaptive Proportion Test (APT) on bit samples — plus a von Neumann debiaser. The declared min-entropy H must come from the device's characterisation report. This is not a full SP 800-90B certification. |
+| `detector_profile.py` | Loads the detector profiles from the repository's `config.json` with the same validation rules and derived values as the JS core (`validateDetectorConfig`); fail-closed on any error. |
+| `bridge_server.py` | Flask-based REST + Server-Sent-Events bridge — lets `PhotonNet.html` reach this package from the browser (see [API endpoints](#api-endpoints)). |
+| `noise_matrix_sweep.py` | Drives a running bridge through a distance sweep and writes `noise_matrix.json`. |
+| `test_pipeline.py` | An end-to-end physics verification script based on plain `assert` (no `pytest` needed) (`SimulatedHardware` → `TimeTagCorrelator`). |
+| `test_binary_click_hardware.py` | An end-to-end protocol verification script based on plain `assert` (no `pytest` needed) — tests `TCPHardware` against a fake device (`_MockDeviceServer`) over a real socket. |
+| `test_serial_hardware_mock.py` | Because `pyserial` is NOT installed, injects a fake class imitating `serial.Serial` into `sys.modules["serial"]` and exercises `SerialHardware` directly (in particular the `read()` accumulation loop specific to `SerialTransport`, which `TCPTransport` does NOT have). It does NOT REPLACE real pyserial/real hardware — see [What was and was not tested without real hardware](#what-was-and-was-not-tested-without-real-hardware). |
+| `test_time_tag_offset.py` | Applies a known clock offset and drift to simulated clicks and checks that `estimate_timing()`/`correlate_auto()` recover them, still reveal an eavesdropper, and do not lock on unrelated data. |
+| `test_qrng_health_tests.py`, `test_qrng_raw_stream.py`, `test_qrng_intermittent_failure.py` | RCT/APT cut-offs and boundary behaviour; the raw-stream QRNG drivers against a mock device; the bridge's handling of intermittent vs persistent health-test failures. |
+| `__init__.py` | The public API exposed outside the package. |
 
-## Hızlı başlangıç
+All `test_*.py` files are also run by `npm test` at the repository root.
+
+## Quick start
 
 ```bash
-# 1) Uçtan uca fizik doğrulaması (sunucu gerekmez)
+# 1) End-to-end physics verification (no server needed)
 python3 -m hal.test_pipeline
 
-# 1b) Gerçek donanım sürücülerinin (Serial/TCP) wire-protokol/çerçeveleme
-#     mantığını, sahte ama protokolü doğru konuşan bir "cihaza" karşı
-#     uçtan uca doğrula (sunucu gerekmez)
+# 1b) Verify end to end the wire-protocol/framing logic of the real hardware drivers (Serial/TCP)
+#     against a fake "device" that speaks the protocol correctly (no server needed)
 python3 -m hal.test_binary_click_hardware
 
-# 1c) SerialHardware'e özgü SerialTransport.read() toplama döngüsünü,
-#     sahte (mock) bir pyserial ile doğrudan egzersiz et (pyserial kurulu
-#     olmasa BİLE çalışır — bkz. "Gerçek donanım olmadan ne test edildi,
-#     ne edilemedi")
+# 1c) Exercise the SerialTransport.read() accumulation loop specific to SerialHardware directly,
+#     with a fake (mock) pyserial (works EVEN WITHOUT pyserial installed — see
+#     "What was and was not tested without real hardware")
 python3 -m hal.test_serial_hardware_mock
 
-# 2) Köprü sunucusunu başlat
+# 2) Start the bridge server
 python3 -m hal.bridge_server
-# → http://127.0.0.1:8765'te dinler
+# → listens on http://127.0.0.1:8765
 
-# 3) Tek seferlik bir BB84 edinimi (sunucu ayrı bir terminalde çalışırken)
+# 3) A one-off BB84 acquisition (while the server runs in a separate terminal)
 curl -X POST localhost:8765/api/acquire -H 'Content-Type: application/json' \
      -d '{"distance_km": 25, "eavesdrop": false, "duration_s": 0.0005}'
 
-# 4) PhotonNet.html'i aç → 🔧 DONANIM sekmesi → "SUNUCUYU DENE" → BAĞLAN
-#    (varsayılan köprü adresi http://localhost:8765, panelden değiştirilebilir)
+# 4) Open PhotonNet.html → 🔧 DONANIM (hardware) tab → "SUNUCUYU DENE" (try server) → BAĞLAN (connect)
+#    (default bridge address http://localhost:8765, can be changed in the panel)
 ```
 
-## API uçları
+## API endpoints
 
-| Uç | Metod | Açıklama |
+| Endpoint | Method | Description |
 |---|---|---|
-| `/api/health` | GET | Sunucu ayakta mı — panel bunu "SUNUCUYU DENE" ile çağırır. |
-| `/api/connect` | POST | `{distance_km, eavesdrop, seed?}` — `LinkManager`'ı arka-plan sürekli-akış modunda başlatır. |
-| `/api/disconnect` | POST | `LinkManager`'ı durdurur, donanımı bağlantısını keser. |
-| `/api/status` | GET | Anlık `HardwareStatus` (connected/armed/driver_name/sıcaklık/vb.). |
-| `/api/acquire` | POST | `{distance_km, eavesdrop, duration_s, coincidence_window_ps?, include_bits?}` — bağımsız, senkron tek-seferlik BB84 oturumu. Varsayılan olarak yalnızca özet istatistikler döner (ham anahtar bitleri `include_bits:true` istenmedikçe taşınmaz). |
-| `/api/clicks` | GET | `?max=&timeout_s=` — `LinkManager`'ın arka planda biriktirdiği click kuyruğunu boşaltıp döndürür (canlı sayım hızı telemetrisi için). |
-| `/api/stream` | GET (SSE) | `EventSource` ile tüketilir — durum değişikliklerini gerçek zamanlı iter. |
+| `/api/health` | GET | Is the server up — the panel calls this with "SUNUCUYU DENE" (try server). |
+| `/api/connect` | POST | `{distance_km, eavesdrop, seed?}` — starts the `LinkManager` in background continuous-stream mode. |
+| `/api/disconnect` | POST | Stops the `LinkManager` and disconnects the hardware. |
+| `/api/status` | GET | Current `HardwareStatus` (connected/armed/driver_name/temperature/etc.). |
+| `/api/acquire` | POST | `{distance_km, eavesdrop, duration_s, coincidence_window_ps?, include_bits?}` — an independent, synchronous one-off BB84 session. By default only summary statistics are returned (raw key bits are not carried unless `include_bits:true` is requested). |
+| `/api/clicks` | GET | `?max=&timeout_s=` — drains and returns the click queue the `LinkManager` has accumulated in the background (for live count-rate telemetry). |
+| `/api/stream` | GET (SSE) | Consumed with `EventSource` — pushes status changes in real time. |
+| `/api/qrng/status` | GET | QRNG source status (connected, certified hardware or not, vendor, driver) and health counters (`batchesServed`, `batchesDiscarded`, `persistentFailures`). |
+| `/api/qrng/bytes` | GET | `?n=` (default 256, max 65536) — a batch of raw entropy bytes. RCT + APT run on every batch; a failing batch is never served but discarded and replaced with a fresh one; if `PHOTONNET_QRNG_MAX_ATTEMPTS` (default 3) consecutive batches fail, the answer is 503 with `persistent: true`. |
 
-Tüm uçlar `Access-Control-Allow-Origin: *` ile CORS'a açıktır çünkü
-`PhotonNet.html` genelde `file://` (Origin: `null`) üzerinden açılır — bu,
-`localhost:8765`'ten farklı bir origin sayılır. Bu yalnızca yerel bir
-geliştirme köprüsü olduğu için kabul edilebilir; üretimde belirli bir origin'e
-daraltılmalıdır.
+The QRNG back end is selected with `PHOTONNET_QRNG_BACKEND` (`simulated` default, `tcp:<host>:<port>`,
+`serial:<port>[:<baud>]`); the declared min-entropy per bit with `PHOTONNET_QRNG_MIN_ENTROPY_BITS`
+(default 1.0 — for real hardware this value must come from the device's characterisation report).
 
-## Sandbox kısıtları — neden Flask+SSE, WebSocket değil
+All endpoints are open to CORS with `Access-Control-Allow-Origin: *`, because `PhotonNet.html` is usually
+opened via `file://` (Origin: `null`) — which counts as a different origin from `localhost:8765`. This is
+acceptable only because this is a local development bridge; in production it must be narrowed to a
+specific origin.
 
-Bu geliştirme ortamında `pip` yeni paket **kuramıyor** (`websockets`,
-`fastapi`, `pyserial`, `qiskit` dahil hiçbiri kurulamadı — birden fazla kez
-doğrulandı). Bu yüzden köprü, yalnızca stdlib + kurulu olan Flask kullanan bir
-REST + Server-Sent-Events tasarımıyla yazıldı — tarayıcıda `new
-EventSource(...)` ekstra kütüphane gerektirmeden çalışır.
+## Sandbox restrictions — why Flask + SSE and not WebSocket
 
-Gerçek donanıma bağlanacağınız üretim makinesinde `pip install websockets`
-(veya `fastapi`) çalıştırılabiliyorsa, `bridge_server.py` bir WebSocket
-sürümüne geçirilebilir — `LinkManager`/`TimeTagCorrelator`/`HardwareInterface`
-katmanları bundan TAMAMEN BAĞIMSIZDIR, hiçbir şeyi bilmezler.
+In the development environment `pip` **could not install** new packages (none of `websockets`, `fastapi`,
+`pyserial`, `qiskit` could be installed — verified more than once). So the bridge was written as a REST +
+Server-Sent-Events design using only the stdlib + the already-installed Flask — in the browser,
+`new EventSource(...)` works without any extra library.
 
-Aynı şekilde `SerialTransport`, `pyserial` kurulu olmadığından burada test
-edilemedi ama doğru arayüzle tanımlı — kurulumdan sonra tek satır başka kod
-değişmeden çalışır (`transport.py`'deki lazy-import + net hata mesajına
-bakın).
+If `pip install websockets` (or `fastapi`) can be run on the production machine that connects to real
+hardware, `bridge_server.py` can be moved to a WebSocket version — the `LinkManager`/`TimeTagCorrelator`/
+`HardwareInterface` layers are COMPLETELY INDEPENDENT of this and know nothing about it.
 
-## Gerçek donanım olmadan ne test edildi, ne edilemedi
+Likewise, `SerialTransport` could not be tested here because `pyserial` is not installed, but it is defined
+with the correct interface — after installation it works without a single other line of code changing
+(see the lazy import + clear error message in `transport.py`).
 
-Bu sorulmaya değer bir soru, dürüst cevabı şu:
+## What was and was not tested without real hardware
 
-**Gerçek donanıma karşı test — MÜMKÜN DEĞİL, iki bağımsız engelden.** (1) Bu
-oturum izole bir bulut konteynerinde çalışıyor — kullanıcının kendi
-bilgisayarına fiziksel USB/seri port erişimi YOKTUR, kullanıcının gerçek
-donanımı olsa bile. (2) `pyserial` bu sandbox'ta kurulamıyor (`pip install
-pyserial` "No matching distribution found" ile başarısız oluyor — birden
-fazla kez doğrulandı), bu yüzden `SerialTransport`'un GERÇEK pyserial
-üzerinden çalıştığı bile bu ortamda kanıtlanamaz.
+This is a question worth asking; the honest answer is:
 
-**Yapılabilecek en iyisi yapıldı — iki katmanlı doğrulama:**
-1. **Protokol/çerçeveleme mantığının kendisi** (`BinaryClickHardware` —
-   `SerialHardware` ve `TCPHardware`'in İKİSİ TARAFINDAN PAYLAŞILAN kod)
-   gerçek bir TCP soketi üzerinden, protokolü doğru konuşan sahte bir
-   "cihaz" sunucusuna karşı uçtan uca doğrulandı (`test_binary_click_
-   hardware.py`) — el sıkışma, arm, kasıtlı olarak kayıt sınırlarını kesen
-   parçalara bölünmüş ikili akışın doğru tamponlanması, status önbellekleme,
-   temiz disconnect, ve ulaşılamayan bir adrese bağlanmaya çalışınca net bir
-   `HardwareError` fırlatılması dahil.
-2. **`SerialTransport`'a ÖZGÜ kod** (`TCPTransport`'ta karşılığı olmayan,
-   yalnızca seri porta özgü `read()` toplama döngüsü) ayrıca, `pyserial`'ı
-   taklit eden sahte bir sınıfı `sys.modules["serial"]`'a enjekte ederek
-   doğrudan egzersiz edildi (`test_serial_hardware_mock.py`) — AYNI
-   senaryolar (el sıkışma, arm, bölünmüş akış, status, disconnect) bu kez
-   `SerialHardware`/`SerialTransport` üzerinden de geçti. Bu test ayrıca
-   ilginç bir davranış farkı ortaya çıkardı: `SerialTransport.read(n,
-   timeout_s)`, `TCPTransport.read()`'in aksine `n` bayt birikene KADAR
-   veya zaman aşımına kadar bekler (erken çıkış yoktur) — bu, `read_clicks
-   (timeout_s=X)`'in Serial üzerinde neredeyse HER ZAMAN `X` saniyeye yakın
-   sürmesi anlamına gelir. Bu bir hata değil, aslında `LinkManager`'ın
-   istediği "gerçekten `timeout_s` kadar blokla" davranışını DOĞAL olarak
-   sağlıyor (`SimulatedHardware`'e bu yüzden eklenen yapay `time.sleep()`
-   hack'i, gerçek bir Serial sürücüde GEREKMEYECEKTİR).
+**Testing against real hardware — NOT POSSIBLE, because of two independent obstacles.** (1) The development
+session runs in an isolated cloud container — there is NO physical USB/serial port access to the user's
+own computer, even if the user has real hardware. (2) `pyserial` cannot be installed in that sandbox
+(`pip install pyserial` fails with "No matching distribution found" — verified more than once), so even
+the fact that `SerialTransport` works over REAL pyserial cannot be proven in this environment.
 
-**Doğrulanamayan TEK şey:** gerçek pyserial'ın kendi iç davranışı (USB
-sürücü katmanı, gerçek donanım gecikmesi/jitter'ı, işletim sistemine özgü
-seri port tuhaflıkları). Bunun için gerçek donanım makinesinde `pip install
-pyserial` çalıştırıp gerçek bir cihaza karşı test etmek gerekir — bu paket
-o noktada TEK SATIR değişmeden kullanılabilir olacak şekilde tasarlandı.
+**The best possible was done — two-layer verification:**
 
-## Gerçek donanım ekleme (adım adım)
+1. **The protocol/framing logic itself** (`BinaryClickHardware` — code SHARED BY BOTH `SerialHardware` and
+   `TCPHardware`) was verified end to end over a real TCP socket against a fake "device" server that speaks
+   the protocol correctly (`test_binary_click_hardware.py`) — including the handshake, arm, correct
+   buffering of a binary stream deliberately split into chunks that cut across record boundaries, status
+   caching, clean disconnect, and a clear `HardwareError` when connecting to an unreachable address.
+2. **The code SPECIFIC to `SerialTransport`** (the `read()` accumulation loop that exists only for the
+   serial port and has no counterpart in `TCPTransport`) was additionally exercised directly by injecting a
+   fake class imitating `pyserial` into `sys.modules["serial"]` (`test_serial_hardware_mock.py`) — the SAME
+   scenarios (handshake, arm, split stream, status, disconnect) also passed through
+   `SerialHardware`/`SerialTransport`. This test also revealed an interesting behavioural difference:
+   unlike `TCPTransport.read()`, `SerialTransport.read(n, timeout_s)` waits UNTIL `n` bytes have
+   accumulated or the time-out expires (there is no early return) — which means `read_clicks(timeout_s=X)`
+   on Serial almost ALWAYS takes close to `X` seconds. This is not a bug; it actually NATURALLY provides
+   the "really block for `timeout_s`" behaviour that `LinkManager` wants (the artificial `time.sleep()`
+   hack added to `SimulatedHardware` for this reason will NOT BE NEEDED in a real serial driver).
 
-`serial_hardware.py` (`SerialHardware`) ve `tcp_hardware.py` (`TCPHardware`)
-zaten yazıldı — ikisi de `HardwareInterface`'i implemente eder ve wire-
-protokol mantığını `binary_click_hardware.py`'deki `BinaryClickHardware`
-taban sınıfından PAYLAŞIR. Oradaki protokol (ARM/STATUS/STREAM_START/
-STREAM_STOP metin komutları + 13-baytlık `<timestamp_ps:uint64><channel:
-uint8><amplitude:float32>` ikili kaydı) **gerçek bir vendor spesifikasyonu
-DEĞİL**, makul bir referans varsayımıdır — gerçek cihazınızın protokolü
-büyük olasılıkla farklı olacaktır. İki yol var:
+**The ONLY thing that could not be verified:** real pyserial's own internal behaviour (USB driver layer,
+real hardware latency/jitter, operating-system-specific serial port quirks). That requires running
+`pip install pyserial` on the real hardware machine and testing against a real device — this package was
+designed to be usable at that point without changing A SINGLE LINE.
 
-**A) Cihazınız benzer bir ham ikili akış protokolü konuşuyorsa** (çoğu
-FPGA-tabanlı TDC/SPAD kontrolcüsü buna yakındır): yalnızca
-`binary_click_hardware.py`'deki 6 encode/parse metodunu vendor'ınızın gerçek
-komut/kayıt formatına göre düzenleyin:
-   - `_encode_arm_command()` / `_parse_arm_response()` — ARM komutunun
-     gerçek sözdizimi ve başarı/hata yanıtı.
-   - `_encode_status_query()` / `_parse_status_response()` — STATUS
-     sorgusu ve yanıtının gerçek formatı (JSON olmak zorunda değil).
-   - `_encode_stream_start()` / `_encode_stream_stop()` — akışı başlatma/
-     durdurma komutları.
-   - `RECORD_STRUCT` / `_parse_click_record()` — click kaydının gerçek
-     bayt düzeni (`struct.Struct` format string'ini değiştirin; alan sayısı/
-     sırası farklıysa `_parse_click_record()`'u buna göre güncelleyin).
-   `SerialHardware`, `TCPHardware`, `LinkManager`, `TimeTagCorrelator`,
-   `bridge_server.py` ve `PhotonNet.html`'deki 🔧 DONANIM paneli **TEK
-   SATIR DEĞİŞMEDEN** çalışmaya devam eder.
+## Adding real hardware (step by step)
 
-**B) Cihazınız tamamen farklı bir model kullanıyorsa** (örn. bir vendor
-SDK/DLL çağrısı, USB-HID, ya da satır-tabanlı olmayan özel bir el sıkışma):
-`hardware_interface.HardwareInterface`'ten DOĞRUDAN türeyen yeni bir sınıf
-yazın (`BinaryClickHardware`'i kullanmak ZORUNLU DEĞİL — o yalnızca ortak
-bir örnek/yardımcı taban sınıftır). 4 soyut metodu doldurun:
-   - `connect()` — fiziksel bağlantıyı kurun (vendor SDK init, `transport.py`
-     üzerinden port açma, vb.). Başarısızsa `HardwareError` fırlatın.
-   - `arm(config)` — donanımı `AcquisitionConfig` parametreleriyle
-     (kapı genişliği, eşleştirme penceresi vb.) hazırlayın.
-   - `read_clicks(timeout_s)` — vendor'ın ham çıktısını
-     `TimestampedClick(timestamp_ps, channel, amplitude=None)` listesine
-     çevirin. **Gerçekten `timeout_s` kadar bloklamalı** (ya da erken veri
-     gelince dönmeli) — `LinkManager`'ın arka plan döngüsü bu blocking
-     semantiğine güvenir (bkz. `simulated_hardware.py`'deki
-     `time.sleep(_remaining_s)` notu — gerçek TDC donanımının doğal
-     blocking I/O davranışını simüle etmek için eklendi; gerçek donanımda
-     bu zaten doğaldır, ekstra `sleep` gerekmez).
-   - `status()` — anlık sağlık/telemetri bilgisini `HardwareStatus` olarak
-     döndürün.
+`serial_hardware.py` (`SerialHardware`) and `tcp_hardware.py` (`TCPHardware`) are already written — both
+implement `HardwareInterface` and SHARE the wire-protocol logic from the `BinaryClickHardware` base class in
+`binary_click_hardware.py`. The protocol there (ARM/STATUS/STREAM_START/STREAM_STOP text commands + a
+13-byte `<timestamp_ps:uint64><channel:uint8><amplitude:float32>` binary record) is **NOT a real vendor
+specification** but a reasonable reference assumption — your real device's protocol will most likely
+differ. There are two paths:
 
-Her iki yolda da son adım aynı: `bridge_server.py`'de `SimulatedHardware(...)`
-yaratılan iki yeri (`api_connect()` ve `api_acquire()`) yeni sürücünüzle
-değiştirin (veya bir ortam değişkeni/config ile hangi sürücünün
-kullanılacağını seçilebilir hale getirin). **`LinkManager`,
-`TimeTagCorrelator`, `bridge_server.py`'nin geri kalanı ve `PhotonNet.html`'
-deki 🔧 DONANIM paneli TEK SATIR DEĞİŞMEDEN çalışmaya devam eder** — hepsi
-`HardwareInterface` sözleşmesine karşı yazıldı, `SimulatedHardware`'e özgü
-hiçbir varsayım içermiyorlar.
+**A) If your device speaks a similar raw binary stream protocol** (most FPGA-based TDC/SPAD controllers are
+close to this): only adapt the 6 encode/parse methods in `binary_click_hardware.py` to your vendor's real
+command/record format:
 
-### Alice tarafı için not
+- `_encode_arm_command()` / `_parse_arm_response()` — the real syntax of the ARM command and its
+  success/error response.
+- `_encode_status_query()` / `_parse_status_response()` — the real format of the STATUS query and its
+  response (it does not have to be JSON).
+- `_encode_stream_start()` / `_encode_stream_stop()` — the commands that start/stop the stream.
+- `RECORD_STRUCT` / `_parse_click_record()` — the real byte layout of the click record (change the
+  `struct.Struct` format string; if the number/order of fields differs, update `_parse_click_record()`
+  accordingly).
 
-`SimulatedAliceSource`, test/geliştirme kolaylığı için Bob'un simülasyonuyla
-aynı süreçte tutuluyor. Gerçek bir dağıtımda Alice'in gönderim logu
-(`TransmitEvent` listesi) ayrı bir fiziksel sistemden, bir dosya veya klasik
-kanal mesajlaşma protokolü üzerinden içeri aktarılmalıdır —
-`TimeTagCorrelator.correlate(alice_events, bob_clicks, ...)` bu iki listeyi
-NASIL elde ettiğinizi bilmez, yalnızca ikisini de zaman damgasına göre
-sıralanmış olarak bekler.
+`SerialHardware`, `TCPHardware`, `LinkManager`, `TimeTagCorrelator`, `bridge_server.py` and the 🔧 DONANIM
+panel in `PhotonNet.html` keep working **WITHOUT A SINGLE LINE CHANGING**.
 
-## Veri sözleşmesi — neden `SiftingResult` alanları JS tarafıyla paralel
+**B) If your device uses a completely different model** (e.g. a vendor SDK/DLL call, USB-HID, or a custom
+non-line-based handshake): write a new class deriving DIRECTLY from `hardware_interface.HardwareInterface`
+(using `BinaryClickHardware` is NOT REQUIRED — it is only a shared example/helper base class). Fill in the
+4 abstract methods:
 
-`SiftingResult` (`qber`, `sifted_key_bits`, `lost_count`, `eavesdrop_detected`,
-`match_rate`, `detected_count`, `dark_click_count`) alan isimleri,
-`PhotonNet2.jsx`'teki `deriveSiftedKey()`'in döndürdüğü şekille **bilerek
-paralel** tutuldu. `bridge_server.py` bunu JSON'a çevirip gönderdiğinde,
-PhotonNet UI'daki BB84 log satırları/QBER rozeti gibi tüketiciler ek dönüşüm
-olmadan anlayabilir — bu, `hal/` paketinin PhotonNet'in geri kalanına
-"yabancı" hissettirmemesi için kasıtlı bir tasarım kararı.
+- `connect()` — establish the physical connection (vendor SDK init, opening a port via `transport.py`,
+  etc.). Raise `HardwareError` on failure.
+- `arm(config)` — prepare the hardware with the `AcquisitionConfig` parameters (gate width, coincidence
+  window, etc.).
+- `read_clicks(timeout_s)` — convert the vendor's raw output into a list of
+  `TimestampedClick(timestamp_ps, channel, amplitude=None)`. **It must really block for `timeout_s`** (or
+  return early when data arrives) — the background loop of `LinkManager` relies on these blocking
+  semantics (see the `time.sleep(_remaining_s)` note in `simulated_hardware.py` — added to simulate the
+  natural blocking I/O behaviour of real TDC hardware; with real hardware this is natural and no extra
+  `sleep` is needed).
+- `status()` — return the current health/telemetry information as `HardwareStatus`.
 
-## Bilinen sınırlamalar
+On both paths the last step is the same: replace the two places in `bridge_server.py` where
+`SimulatedHardware(...)` is created (`api_connect()` and `api_acquire()`) with your new driver (or make the
+driver selectable with an environment variable/config). **`LinkManager`, `TimeTagCorrelator`, the rest of
+`bridge_server.py` and the 🔧 DONANIM panel in `PhotonNet.html` keep working WITHOUT A SINGLE LINE
+CHANGING** — they are all written against the `HardwareInterface` contract and contain no assumptions
+specific to `SimulatedHardware`.
 
-- `LinkManager`'ın sürekli akış yolu (`/api/connect` → `/api/stream`), demo
-  amaçlı düşük bir kaynak hızı (`DEMO_SOURCE_RATE_HZ = 4000 Hz`) kullanır —
-  gerçek kaynak hızını (80 MHz) saf Python'da sürekli üretmeye çalışmak
-  pratik olarak donar (gerçek donanımda bu iş FPGA/özel silikonda yapılır,
-  Python yalnızca sonuçları okur). Yüksek-doğruluklu tek-seferlik sonuç
-  isteyen bir UI için `/api/acquire` kullanılmalıdır — o, varsayılan 80 MHz
-  `AcquisitionConfig`'i kısa/sınırlı pencerelerde kullanır.
-- `click_queue`, `/api/clicks` düzenli olarak drenaj edilmezse büyür — bir üst
-  sınırla (`maxsize=200_000`) ve en-eskiyi-düşürme davranışıyla korumaya
-  alındı, ama uzun süreli bağlantılarda `/api/clicks`'i periyodik çağırmak
-  önerilir.
-- `SerialTransport`/`SerialHardware`, GERÇEK pyserial veya gerçek bir seri
-  port üzerinden test EDİLEMEDİ (bu sandbox'ta ne `pyserial` kurulabiliyor
-  ne fiziksel bir port var). Ama kodun kendisi iki ayrı yoldan doğrulandı:
-  paylaştığı protokol mantığı (`BinaryClickHardware`) `TCPHardware`
-  üzerinden gerçek bir soket bağlantısıyla (`test_binary_click_
-  hardware.py`), `SerialTransport`'a ÖZGÜ `read()` toplama döngüsü ise
-  sahte bir `pyserial` enjeksiyonuyla (`test_serial_hardware_mock.py`)
-  uçtan uca test edildi — bkz. [Gerçek donanım olmadan ne test edildi, ne
-  edilemedi](#gerçek-donanım-olmadan-ne-test-edildi-ne-edilemedi). Gerçek
-  donanım makinesinde `pip install pyserial` sonrası, gerçek bir cihaza
-  karşı ayrıca doğrulanmalıdır.
-- `SerialTransport.read(n, timeout_s)`, `TCPTransport.read()`'in aksine `n`
-  bayt birikene KADAR veya zaman aşımına kadar bekler — tek bir okuma
-  çağrısıyla erken dönmez. Sonuç olarak Serial tabanlı bir sürücüde
-  `read_clicks(timeout_s=X)` neredeyse HER ZAMAN `X` saniyeye yakın sürer
-  (veri erken tükense bile), TCP tabanlı bir sürücüde ise veri tükenince
-  erken dönebilir. Bu bir hata değil — `LinkManager`'ın istediği "gerçekten
-  `timeout_s` kadar blokla" davranışını Serial için DOĞAL olarak sağlıyor
-  (bkz. `test_serial_hardware_mock.py` başlığındaki "İLGİNÇ BULGU" notu).
-- `binary_click_hardware.py`'deki referans protokol, kontrol komutlarını
-  (ARM/STATUS) ve ikili click akışını AYNI bağlantı üzerinde karıştırır —
-  bu yüzden `status()`, akış başladıktan (`arm()`'dan) SONRA artık canlı
-  bir sorgu göndermez, yalnızca `arm()` sırasında (akış başlamadan hemen
-  önce) alınan son bilinen durumu döndürür. Gerçek vendor protokolünüz
-  kontrol/veri kanallarını düzgün ayırıyorsa (örn. ayrı bir port/soket ile)
-  bu kısıtlamayı kaldırabilirsiniz — bkz. `binary_click_hardware.py`
-  başlığındaki "BİLİNEN BASİTLEŞTİRME" notu.
+### Note on the Alice side
 
-## Kabin kilidi HAL'i (Node tarafı)
+`SimulatedAliceSource` is kept in the same process as Bob's simulation for test/development convenience.
+In a real deployment, Alice's transmission log (a list of `TransmitEvent`) must be imported from a separate
+physical system, via a file or a classical-channel messaging protocol —
+`TimeTagCorrelator.correlate(alice_events, bob_clicks, ...)` does not know HOW you obtained these two lists;
+it only expects both to be sorted by time stamp. If the two time bases have an unknown offset or drift, use
+`correlate_auto()` (see `test_time_tag_offset.py`).
 
-Bu dizindeki Python HAL, foton-sayım donanımı içindir. Faraday kafesi kabin kilidi için AYNI ilkeyle
-(küçük, vendor'dan bağımsız sözleşme; yeni cihaz = tek sınıf) yazılmış Node tarafı HAL
-`bb84/cabinet_lock_hal.js` dosyasındadır: `CabinetLockHAL` sözleşmesi, Ed25519 imzalı tek kullanımlık
-açma yetkisi, simüle akıllı kilit ve gerçek HTTP API. Ayrıntı: `bb84/docs/CABINET_LOCK_HAL_DESIGN.md`.
-Kilit donanımı simüledir.
+## Data contract — why the `SiftingResult` fields mirror the JS side
+
+The field names of `SiftingResult` (`qber`, `sifted_key_bits`, `lost_count`, `eavesdrop_detected`,
+`match_rate`, `detected_count`, `dark_click_count`) are **deliberately kept parallel** to the shape returned
+by `deriveSiftedKey()` in `PhotonNet2.jsx`. When `bridge_server.py` converts it to JSON and sends it,
+consumers such as the BB84 log lines/QBER badge in the PhotonNet UI can understand it without extra
+conversion — a deliberate design decision so that the `hal/` package does not feel "foreign" to the rest of
+PhotonNet.
+
+## Known limitations
+
+- The continuous-stream path of `LinkManager` (`/api/connect` → `/api/stream`) uses a low demo source rate
+  (`DEMO_SOURCE_RATE_HZ = 4000 Hz`) — trying to generate the real source rate (80 MHz) continuously in pure
+  Python practically freezes (on real hardware this work is done in an FPGA/custom silicon; Python only
+  reads the results). A UI that wants a high-fidelity one-off result should use `/api/acquire` — it uses the
+  default 80 MHz `AcquisitionConfig` in short/bounded windows.
+- `click_queue` grows if `/api/clicks` is not drained regularly — it is protected by an upper bound
+  (`maxsize=200_000`) and drop-oldest behaviour, but calling `/api/clicks` periodically is recommended on
+  long-lived connections.
+- `SerialTransport`/`SerialHardware` could NOT be tested over REAL pyserial or a real serial port (neither
+  `pyserial` can be installed nor a physical port exists in the sandbox). But the code itself was verified
+  in two separate ways: the shared protocol logic (`BinaryClickHardware`) end to end through `TCPHardware`
+  over a real socket connection (`test_binary_click_hardware.py`), and the `read()` accumulation loop
+  SPECIFIC to `SerialTransport` with an injected fake `pyserial` (`test_serial_hardware_mock.py`) — see
+  [What was and was not tested without real hardware](#what-was-and-was-not-tested-without-real-hardware).
+  After `pip install pyserial` on the real hardware machine it must additionally be verified against a
+  real device.
+- Unlike `TCPTransport.read()`, `SerialTransport.read(n, timeout_s)` waits UNTIL `n` bytes have accumulated
+  or the time-out expires — it does not return early on a single read call. As a result, on a serial-based
+  driver `read_clicks(timeout_s=X)` almost ALWAYS takes close to `X` seconds (even if data runs out early),
+  whereas a TCP-based driver can return early when data runs out. This is not a bug — it NATURALLY provides
+  the "really block for `timeout_s`" behaviour `LinkManager` wants for Serial (see the "interesting
+  finding" note in the header of `test_serial_hardware_mock.py`).
+- The reference protocol in `binary_click_hardware.py` mixes control commands (ARM/STATUS) and the binary
+  click stream on the SAME connection — so after the stream has started (after `arm()`), `status()` no
+  longer sends a live query; it only returns the last known status obtained during `arm()` (just before the
+  stream starts). If your real vendor protocol separates control/data channels properly (e.g. with a
+  separate port/socket), you can remove this restriction — see the "known simplification" note in the
+  header of `binary_click_hardware.py`.
+
+## Cabinet lock HAL (Node side)
+
+The Python HAL in this directory is for photon-counting hardware. The Node-side HAL for the Faraday-cage
+cabinet lock, written on the SAME principle (a small, vendor-independent contract; new device = one
+class), is in `bb84/cabinet_lock_hal.js`: the `CabinetLockHAL` contract, an Ed25519-signed single-use
+unlock grant, a simulated smart lock and a real HTTP API. Details (Turkish):
+`bb84/docs/CABINET_LOCK_HAL_DESIGN.md`. The lock hardware is simulated.
+
+Most code comments and test output in this directory are in Turkish.

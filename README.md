@@ -1,416 +1,442 @@
-# PhotonNet — BB84 Kuantum Anahtar Dağıtımı (QKD) Simülatörü ve Üretim Katmanları
+# PhotonNet — BB84 Quantum Key Distribution (QKD) Simulator and Production Layers
 
-Bu depo, BB84 (ve destekleyici E91/BBM92) protokolünü uçtan uca simüle eden bir
-React tabanlı çekirdek fizik/kriptografi motoru (`PhotonNet2.jsx` →
-`bb84/photonnet_core.js`) ile bu çekirdeğin etrafına **çekirdeğe hiç
-dokunmadan** inşa edilmiş onlarca "köprü/katman" (bridge/layer) modülünden
-oluşur: gerçekçi donanım gürültü modelleri, ağ yönlendirme/dolanıklık
-mantığı, ETSI GS QKD 014 uyumlu bir KME sunucusu, mTLS/PKI altyapısı,
-saldırı/stres tatbikatları ve bir Python donanım-soyutlama katmanı (HAL).
+**photonicquantumcore** · core engine v4.1 · `npm test`: 100 self-tests (JavaScript + Python HAL) in CI
 
-Projenin en belirgin özelliği **titiz teknik dürüstlük** kültürüdür: hemen
-hemen her dosya, ne yaptığını olduğu gibi, ne YAPMADIĞINI da açıkça (çoğu
-zaman "DÜRÜSTLÜK NOTU" / "KAPSAM NOTU" başlığıyla) belirtir. Bu README de
-aynı disiplinle yazılmıştır — hiçbir modül "her şeyi çözüyor" gibi
-sunulmamıştır.
+PhotonNet simulates an end-to-end QKD network on a classical computer and wraps the simulation in the
+software a real deployment needs. It consists of:
 
-### Ekran görüntüleri
+- a React-based physics/cryptography core (`PhotonNet2.jsx` → `bb84/photonnet_core.js`) that runs BB84
+  (with supporting E91/BBM92) over a ~270-node world topology with trusted-node relays;
+- dozens of bridge/layer modules built **without modifying the core**: realistic hardware noise models,
+  routing and entanglement logic, attack and stress drills;
+- an ETSI GS QKD 014 key management entity (KME) server with mTLS, a PKI with OCSP/CRL revocation and an
+  optional SoftHSM2/PKCS#11 back end;
+- a Python hardware abstraction layer (HAL) with time-tag correlation, detector profiles and an online
+  QRNG health gate (NIST SP 800-90B–style RCT/APT).
 
-Tüm görüntüler güncel `PhotonNet.html`'den `node bb84/tools/capture_screenshots.js` ile üretilir
-(elle çekilmiş görüntü tutulmaz; varsayılan iletim başarılı bitmezse betik dosya yazmaz).
+## Overview
 
-![Ağ haritası ve uçtan uca iletim sonucu](docs/screenshots/01_network_transmit.png)
-*Varsayılan IST → BAG iletimi: güvenilir-düğüm zincirinde her atlama kendi sonlu-anahtar kanıtını üretir;
-kartta en zayıf atlamanın ℓ'si ve OTP sonrası artan anahtar görünür.*
+**What the key pipeline actually does.** Since core v2 the quantum channel carries only key material:
+Alice's raw bits come from an independent entropy source, rounds of pulses accumulate a sifted key, a
+random test subset is disclosed for parameter estimation (abort at QBER_test ≥ 11 %), Cascade
+reconciliation measures the real leakage, a two-parameter Serfling/GLLP finite-key bound gives the secure
+length ℓ, and Toeplitz hashing performs privacy amplification. The message is then one-time-pad encrypted
+and sent over the authenticated classical channel. On a trusted-node chain **every hop** runs its own
+parameter estimation, reconciliation, ℓ and privacy amplification, and the end-to-end key is genuinely
+relayed with public XOR announcements (core v4).
+
+**Engineering discipline.** The core is extracted from the application source by a script and pinned by
+SHA-256 in the tests; every core version is recorded in
+[`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md). Components fail closed: a missing entropy
+source, an unhealthy QRNG batch, a revoked certificate or an unknown detector profile stops the
+operation instead of falling back silently. Almost every file states what it does **not** do
+("honesty note" / "scope note"); this README follows the same rule.
+
+**What it is not.** It is a simulation and an integration stack, not a QKD device. There is no photonic
+hardware and no certified QRNG; entropy comes from the platform CSPRNG, so security is computational, not
+information-theoretic. Physical parameters are literature values or assumptions, not measurements of a
+specific device, and the model has not yet been validated against a published experiment. See
+[§1](#1-what-this-project-is--and-what-it-is-not).
+
+**How it compares** with NetSquid, SeQUeNCe, QuNetSim and QKDNetSim:
+[`docs/COMPARISON.md`](docs/COMPARISON.md).
+
+**Quick start**
+
+```bash
+npm install && pip install -r hal/requirements.txt
+npm test                     # all self-tests (~18 min); npm run test:fast skips the long ones
+open PhotonNet.html          # the full application, single file, no server needed
+```
+
+### Screenshots
+
+All images are generated from the current `PhotonNet.html` by `node bb84/tools/capture_screenshots.js`
+(no hand-made screenshots are kept; the script writes nothing if the default transmission does not succeed).
+The user interface itself is in Turkish.
+
+![Network map and end-to-end transmission result](docs/screenshots/01_network_transmit.png)
+*Default IST → BAG transmission: on the trusted-node chain every hop produces its own finite-key proof;
+the card shows ℓ of the weakest hop and the key left over after the one-time pad.*
 
 | | |
 |---|---|
-| ![Düğüm bekçisi](docs/screenshots/02_watchdog.png) | ![Tahmin paneli](docs/screenshots/03_prediction.png) |
-| Düğüm bekçisi (watchdog) ızgarası | Proaktif darboğaz tahmini |
-| ![Gürültü kalibrasyonu](docs/screenshots/04_noise_matrix.png) | ![Uydu görünümü](docs/screenshots/05_satellite.png) |
-| Dedektör gürültü kalibrasyonu (config.json profili) | LEO uydu takımyıldızı |
+| ![Node watchdog](docs/screenshots/02_watchdog.png) | ![Prediction panel](docs/screenshots/03_prediction.png) |
+| Node watchdog grid | Proactive bottleneck prediction |
+| ![Noise calibration](docs/screenshots/04_noise_matrix.png) | ![Satellite view](docs/screenshots/05_satellite.png) |
+| Detector noise calibration (config.json profile) | LEO satellite constellation |
 
 ---
 
-## İçindekiler
+## Contents
 
-1. [Bu proje gerçekte nedir — ve NE DEĞİLDİR](#1-bu-proje-gerçekte-nedir--ve-ne-değildir)
-2. [Mimari: çekirdek + dokunulmaz katman deseni](#2-mimari-çekirdek--dokunulmaz-katman-deseni)
-3. [Çekirdek motor (`photonnet_core.js`) içeriği](#3-çekirdek-motor-photonnet_corejs-içeriği)
-4. [Modül envanteri — kategori bazlı, TÜM dosyalar](#4-modül-envanteri--kategori-bazlı-tüm-dosyalar)
-   - 4.1 [Fiziksel katman / zamanlama / donanım gerçekçiliği](#41-fiziksel-katman--zamanlama--donanım-gerçekçiliği)
-   - 4.2 [Ağ / yönlendirme / dolanıklık (entanglement) katmanı](#42-ağ--yönlendirme--dolanıklık-entanglement-katmanı)
-   - 4.3 [Güvenlik / protokol / ETSI-014 / PKI katmanı](#43-güvenlik--protokol--etsi-014--pki-katmanı)
-   - 4.4 [Saldırı / stres / adversarial test katmanı](#44-saldırı--stres--adversarial-test-katmanı)
-   - 4.5 [Araçlar, build, CI/CD](#45-araçlar-build-cicd)
-   - 4.6 [HAL — Python donanım soyutlama katmanı](#46-hal--python-donanım-soyutlama-katmanı)
-   - 4.7 [Grafik üreticileri (`gen_*.js`)](#47-grafik-üreticileri-gen_js)
-   - 4.8 [Kök seviyesi uygulama dosyaları](#48-kök-seviyesi-uygulama-dosyaları)
-5. [Mühendislik/test kültürü — tekrar eden desenler](#5-mühendisliktest-kültürü--tekrar-eden-desenler)
-6. [IBM ETSI-014 sertifikasyon denetimi — özet yargı](#6-ibm-etsi-014-sertifikasyon-denetimi--özet-yargı)
-7. [Üretime hazırlık durumu (PKI/mTLS/HSM)](#7-üretime-hazırlık-durumu-pkimtlshsm)
-8. [Bu README'den sonraki oturum — girdi doğrulama + Kaos Mühendisliği turu #3-#9](#8-bu-readmeden-sonraki-oturum--girdi-doğrulama--kaos-mühendisliği-turu-3-9)
-9. [Nasıl çalıştırılır](#9-nasıl-çalıştırılır)
-10. [Dizin haritası](#10-dizin-haritası)
-11. [Lisans](#11-lisans)
+1. [What this project is — and what it is not](#1-what-this-project-is--and-what-it-is-not)
+2. [Architecture: core + read-only layer pattern](#2-architecture-core--read-only-layer-pattern)
+3. [Core engine (`photonnet_core.js`) contents](#3-core-engine-photonnet_corejs-contents)
+4. [Module inventory — by category, all files](#4-module-inventory--by-category-all-files)
+   - 4.1 [Physical layer / timing / hardware realism](#41-physical-layer--timing--hardware-realism)
+   - 4.2 [Network / routing / entanglement layer](#42-network--routing--entanglement-layer)
+   - 4.3 [Security / protocol / ETSI-014 / PKI layer](#43-security--protocol--etsi-014--pki-layer)
+   - 4.4 [Attack / stress / adversarial test layer](#44-attack--stress--adversarial-test-layer)
+   - 4.5 [Tools, build, CI/CD](#45-tools-build-cicd)
+   - 4.6 [HAL — Python hardware abstraction layer](#46-hal--python-hardware-abstraction-layer)
+   - 4.7 [Chart generators (`gen_*.js`)](#47-chart-generators-gen_js)
+   - 4.8 [Root-level application files](#48-root-level-application-files)
+5. [Engineering and test culture — recurring patterns](#5-engineering-and-test-culture--recurring-patterns)
+6. [IBM ETSI-014 certification audit — summary verdict](#6-ibm-etsi-014-certification-audit--summary-verdict)
+7. [Production readiness (PKI/mTLS/HSM)](#7-production-readiness-pkimtlshsm)
+8. [Follow-up work — input validation and chaos engineering rounds 3 to 9](#8-follow-up-work--input-validation-and-chaos-engineering-rounds-3-to-9)
+9. [How to run](#9-how-to-run)
+10. [Directory map](#10-directory-map)
+11. [License](#11-license)
 
----
-
-## 1. Bu proje gerçekte nedir — ve NE DEĞİLDİR
-
-**Ne yapar:** PhotonNet, gerçek fiziksel sabitlerle (fiber kayıp katsayıları,
-dedektör karanlık-sayım oranları, zamanlama jitter'ı, EM kalkanlama teorisi
-vb.) kalibre edilmiş, tek-fotonlu BB84/E91/BBM92 protokollerinin
-**klasik-bilgisayar simülasyonunu** yapar. Gerçek fiber uzunluğu/kayıp
-sweep'leri, gerçekçi Cascade/LDPC hata düzeltmesi, Toeplitz evrensel-hash
-gizlilik yükseltme, Serfling/GLLP tabanlı sonlu-anahtar (finite-key)
-güvenlik ispatı, ve **gerçek** bir ETSI GS QKD 014 REST sunucusu (mTLS ile)
-içerir — bu sunucu üzerinden üretilen anahtarlar başka sistemlere
-(örn. bir VPN/TLS tüneline) gerçekten teslim edilebilir.
-
-**Ne DEĞİLDİR — kritik dürüstlük notu:** `bb84/IBM_ONAY_MATEMATIKSEL_DENETIM.md`
-belgesinde ayrıntılı olarak kanıtlandığı gibi, sistemin "kuantum" bit üretimi
-aslında **tek bir 32-bit `mulberry32` PRNG tohumundan** (`entanglementSeed`)
-türeyen tamamen deterministik/tekrarlanabilir bir akıştır — gerçek fotonik
-donanım veya kuantum rastgele sayı üreteci (QRNG) YOKTUR. Bu, kod
-kalitesiyle ilgili bir eksiklik değil, **mimari bir gerçektir**: 2³²'lik
-tohum uzayı modern donanımla saatler mertebesinde kaba-kuvvetle taranabilir,
-bu da GLLP/Serfling güvenlik ispatının dayandığı "Eve'in ölçüm sonuçları
-hakkında ön-bilgisi yok" aksiyomunu ihlal eder. Yani: **mühendislik
-kalitesi** (Serfling/GLLP formülleri, Cascade/LDPC, Toeplitz evrensel-hash,
-n/k ayrımı) literatürle tutarlı ve doğru uygulanmıştır, ama bunun üzerine
-kurulu "bilgi-teorik güvenlik" iddiası, girdi kaynağı gerçek kuantum
-rastgeleliği olmadığı sürece **temelinden geçersizdir**. Ayrıntılar için
-bkz. [§6](#6-ibm-etsi-014-sertifikasyon-denetimi--özet-yargı).
+Most source comments, test output and supporting documents under `bb84/docs/` are written in Turkish.
 
 ---
 
-## 2. Mimari: çekirdek + dokunulmaz katman deseni
+## 1. What this project is — and what it is not
+
+**What it does:** PhotonNet is a **classical-computer simulation** of single-photon BB84/E91/BBM92
+protocols, calibrated with real physical constants (fibre attenuation coefficients, detector dark-count
+rates, timing jitter, electromagnetic shielding theory, etc.). It includes real fibre length/loss sweeps,
+realistic Cascade/LDPC error correction, Toeplitz universal-hash privacy amplification, a Serfling/GLLP
+finite-key security proof, and a **real** ETSI GS QKD 014 REST server (with mTLS) — keys produced through
+this server can actually be delivered to other systems (for example a VPN/TLS tunnel).
+
+**What it is NOT — critical honesty note:** there is no photonic hardware and no quantum random number
+generator (QRNG). The audit in `bb84/IBM_ONAY_MATEMATIKSEL_DENETIM.md` showed that, before core v2, the
+"quantum" bit stream was fully deterministic, derived from a single 32-bit `mulberry32` PRNG seed
+(`entanglementSeed`). A 2³² seed space can be brute-forced in hours on modern hardware, which violates the
+"Eve has no prior knowledge of the measurement outcomes" assumption on which the GLLP/Serfling proof rests.
+Since core v2 ([`CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md)) Alice's raw bits come from an
+independent entropy source (`crypto.getRandomValues` in the browser, `crypto.randomBytes` in Node) and the
+key is never stretched with a PRNG; `mulberry32` is still used, seeded from that entropy, for simulated
+channel noise. This removes the 2³² brute-force attack, but the entropy is a CSPRNG, not quantum
+randomness: the **engineering** (Serfling/GLLP formulas, Cascade/LDPC, Toeplitz hashing, the n/k split) is
+implemented consistently with the literature, but an **information-theoretic** security claim requires a
+certified hardware QRNG and real optics. The HAL defines the QRNG interface for that hardware
+([§4.6](#46-hal--python-hardware-abstraction-layer)); see also
+[§6](#6-ibm-etsi-014-certification-audit--summary-verdict).
+
+---
+
+## 2. Architecture: core + read-only layer pattern
 
 ```
-PhotonNet2.jsx  (849KB, ~14.700 satır — React uygulamasının TAM kaynağı,
-                 UI + algoritma iç içe)
+PhotonNet2.jsx  (~15,000 lines — the COMPLETE source of the React application,
+                 UI and algorithms interleaved)
        │
-       │  bb84/tools/extract_core.js  (TypeScript transpileModule ile
-       │  JSX'i React.createElement'e çevirir, React'i sahte/shim bir
-       │  nesneyle değiştirir — UI ağacı hiç render edilmez, sadece
-       │  algoritma sınıfları/fonksiyonları require()-edilebilir hale gelir)
+       │  bb84/tools/extract_core.js  (TypeScript transpileModule turns JSX into
+       │  React.createElement and replaces React with a shim object — the UI tree
+       │  is never rendered; only algorithm classes/functions become require()-able)
        ▼
-bb84/photonnet_core.js  (13.570+ satır, 85 export edilen sembol —
-                          "ÇEKİRDEK", asla elle değiştirilmez;
-                          sürümleri: bb84/docs/CORE_CHANGELOG.md)
+bb84/photonnet_core.js  (~14,000 lines, 85 exported symbols — the "CORE",
+                          never edited by hand; versions: bb84/docs/CORE_CHANGELOG.md)
        │
-       │  bu depodaki HER "bridge/layer" dosyası çekirdeği YALNIZCA
-       │  import edip salt-okunur çağırır — asla üzerine yazmaz/patch'lemez
+       │  EVERY bridge/layer file in this repository only imports the core and
+       │  calls it read-only — it never overwrites or patches it
        ▼
-onlarca köprü modülü (bkz. §4) — fiziksel gerçekçilik, ağ/yönlendirme,
-güvenlik/protokol, saldırı tatbikatı, araçlar
+dozens of bridge modules (see §4) — physical realism, network/routing,
+security/protocol, attack drills, tools
 ```
 
-Bu deseni denetleyen somut mekanizmalar:
+Concrete mechanisms that enforce this pattern:
 
-- **SHA-256 bütünlük kontrolü**: hemen hemen her `_test.js`/drill dosyası,
-  çalıştırmadan önce ve sonra `photonnet_core.js`'in (ve ilgiliyse
-  `timetag_acquisition_bridge.js` gibi diğer "dokunulmaz" bridge
-  dosyalarının) SHA-256 özetini karşılaştırıp raporlar — "çekirdeğe
-  dokunulmadı" iddiası her çalıştırmada YENİDEN kanıtlanır, sadece bir
-  kere varsayılmaz. Çekirdek bilinçli olarak yeni sürüme geçtiğinde
-  (şu an **v4.1**, SHA-256 `5c12cde3…676313`) eski/yeni hash ve değişen her
-  fonksiyon [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md)'de
-  belgelenir ve tüm sabitlenmiş testler yeni hash'e güncellenip yeniden koşturulur.
-- **`extract_core.js --check`**: CI kapısı — `photonnet_core.js`'in
-  `PhotonNet2.jsx` ile senkron olup olmadığını (kaynak değişmiş ama
-  çıkarım yeniden üretilip commit edilmemişse) otomatik doğrular, exit
-  code 1 ile başarısız olur.
-- **`EXPORT_MANIFEST`**: `extract_core.js` içinde tanımlı, çekirdekten dışa
-  aktarılması beklenen 85 sembolün kesin listesi — kaynakta yeni bir
-  üst-düzey sembol bulunursa (henüz manifestoda yoksa) script bunu
-  BİLGİLENDİRME olarak raporlar ama sessizce dahil etmez.
+- **SHA-256 integrity check**: almost every `_test.js`/drill file compares and reports the SHA-256 digest
+  of `photonnet_core.js` (and, where relevant, of other read-only bridge files such as
+  `timetag_acquisition_bridge.js`) before and after running — the claim "the core was not touched" is
+  re-proven on every run, not assumed once. When the core deliberately moves to a new version (currently
+  **v4.1**, SHA-256 `5c12cde3…676313`), the old/new hash and every changed function are documented in
+  [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md), and all pinned tests are updated to the new
+  hash and re-run.
+- **`extract_core.js --check`**: a CI gate — automatically verifies that `photonnet_core.js` is in sync
+  with `PhotonNet2.jsx` (i.e. the source changed but the extraction was not regenerated and committed) and
+  fails with exit code 1.
+- **`EXPORT_MANIFEST`**: the exact list, defined in `extract_core.js`, of the 85 symbols expected to be
+  exported from the core — if a new top-level symbol appears in the source (not yet in the manifest), the
+  script reports it as INFORMATION but does not silently include it.
 
 ---
 
-## 3. Çekirdek motor (`photonnet_core.js`) içeriği
+## 3. Core engine (`photonnet_core.js`) contents
 
-Çekirdek, aşağıdaki gerçek sınıfları içerir (tam liste, `grep` ile
-doğrulandı):
+The core contains the following real classes (full list, verified with `grep`):
 
-**Fizik / kanal simülasyonu:** `AtmosphericWindowModel`, `ScintillationEngine`,
+**Physics / channel simulation:** `AtmosphericWindowModel`, `ScintillationEngine`,
 `ScintillationModel`, `PointingBudget`, `DetectorNoiseModel`,
 `OpticalPhaseLockedLoop`, `ChiralAcousticEngine`, `MemristorCell`
 
-**BB84 protokolü / güvenlik ispatı:** `QuantumKeyDistribution`,
+**BB84 protocol / security proof:** `QuantumKeyDistribution`,
 `QKDSecurityProof`, `ParameterEstimationFilter`, `CascadeReconciliation`,
 `LDPCReconciliation`, `ToeplitzAsyncEngine`, `OneTimePad`,
-`ClassicalAuthChannel`, `ProductionSecurityAudit`
+`ClassicalAuthChannel`, `ProductionSecurityAudit`, `SecureMessageSession`
 
-**Ağ / yönlendirme / topoloji:** `NetworkTopology`, `NodeRegisterMatrix`,
+**Network / routing / topology:** `NetworkTopology`, `NodeRegisterMatrix`,
 `EdgeWeightPolicy`, `NodeTransitGate`, `LinkOutageController`,
 `LinkGradedEavesdropThresholdAlgorithm`, `LinkRiskReputationEngine`,
-`LEGADecisionCore`, `MinHeap` (Dijkstra için)
+`LEGADecisionCore`, `MinHeap` (for Dijkstra)
 
-**Operasyon / kapasite yönetimi:** `KeyPoolBuffer`, `KeyDeliveryStore`,
+**Operations / capacity management:** `KeyPoolBuffer`, `KeyDeliveryStore`,
 `CalibrationRateLimiter`, `NodeWatchdog`, `NoiseGateMiddleware`,
 `NoiseMatrixCalibration`, `DualClockScheduler`, `SoftLandingFilter`,
 `ChaosSuppressor`, `PredictiveCorridorEngine`, `PredictiveTelemetryEngine`,
 `MetricTrendInjector`, `CoefficientEvolutionEngine`, `BurstTrafficGenerator`,
 `InMemoryComputeFabric`
 
-**UI bileşenleri (React, katmanlar tarafından kullanılmaz):** `PhotonNet`
-(ana bileşen), `Oscilloscope`, `BerGauge`, `Spark`, `LeoPanel`
+**UI components (React, not used by the layers):** `PhotonNet`
+(main component), `Oscilloscope`, `BerGauge`, `Spark`, `LeoPanel`
 
-**Anahtar yardımcı fonksiyonlar:** `mulberry32` (deterministik PRNG —
-bkz. §1'deki dürüstlük notu), `combineSeed`, `dijkstra`, `routeCalculation` /
+**Key helper functions:** `mulberry32` (deterministic PRNG — used for simulated noise, see the honesty note
+in §1), `combineSeed`, `dijkstra`, `routeCalculation` /
 `routeCalculationResilient`, `bb84Reconcile`, `propPhoton` /
 `propPhotonRelayChain`, `physicalSimulation`, `haversineKm`, `gaussianRandom`,
 `poissonSample`, `shannonEntropy`, `toeplitzPackBits` / `toeplitzParity32`,
 `otpEncryptBits` / `otpDecryptBits`, `deriveOtpKeyBits`, `t2b`/`b2t`
-(bit↔metin — 8-bit, Türkçe karakterlerde kesme yapabilir, bazı katman
-dosyaları kendi UTF-8-güvenli versiyonlarını yazmıştır).
+(bit↔text — 8-bit, may truncate Turkish characters; some layer files implement their own UTF-8-safe
+versions).
 
-633nm gibi özel dalga boylarının fiber kayıp katsayıları OZ Optics/Corning
-SMF-28/FOA-EIA-TIA-568 gibi gerçek endüstri kaynaklarıyla çapraz
-doğrulanmıştır (dosya-üstü "DÜZELTME 15" yorumu).
+Fibre attenuation coefficients for special wavelengths such as 633 nm were cross-checked against real
+industry sources such as OZ Optics, Corning SMF-28 and FOA/EIA-TIA-568 (see the "DÜZELTME 15" comment at
+the top of the file).
 
 ---
 
-## 4. Modül envanteri — kategori bazlı, TÜM dosyalar
+## 4. Module inventory — by category, all files
 
-> Not: Her modülün altında varsa **dürüstlük/kapsam notu** ayrıca
-> belirtilmiştir — bunlar bu projenin en değerli belgeleme biçimidir ve
-> kasıtlı olarak atlanmamıştır.
+> Note: where a module has an **honesty/scope note**, it is stated separately — these notes are the most
+> valuable form of documentation in this project and are deliberately not omitted.
 
-### 4.1 Fiziksel katman / zamanlama / donanım gerçekçiliği
+### 4.1 Physical layer / timing / hardware realism
 
-| Dosya | Ne yapar |
+| File | What it does |
 |---|---|
-| `timetag_acquisition_bridge.js` | **Faz 1** — ham pikosaniye zaman-damgalı dedektör tıklama akışını (gerçek bir zaman-etiketleyici donanımının üreteceği format) klasik eleme (sifting) katmanının beklediği formata çevirir. `TimeTagEmulator` Bob'un 4 dedektör kanalını (H/V/D/A) dedektör verimliliği, karanlık-sayım olasılığı, Gauss zamanlama jitter'ı (Box-Muller), ölü zaman, optik hizasızlık ile modeller. QBER_ABORT=0.11. Baz/bit seçimi `crypto.randomBytes` üzerinden enjekte edilebilir bir `qrng` arayüzünden gelir — `mulberry32` SADECE fiziksel gürültü için kullanılır, anahtar materyali için DEĞİL. |
-| `timetag_acquisition_test.js` | 7/7 öz-test: temiz hat QBER'i optik-hizasızlık tabanında kalıyor; karanlık-sayım artışıyla QBER öngörülebilir şekilde yükseliyor; eşleşme penceresi genişledikçe verim↑/QBER↑ ödünleşimi; gözcü (Eve) yakalanıyor (QBER~%25→abort); 3 farklı rastgelelik kaynağı QBER'de <%0.6 fark yaratıyor (QBER fizikten geliyor, RNG seçiminden değil); eleme sonrası bitler ETSI-014 formatına doğru paketleniyor. |
-| `timing_coincidence_engine.js` | **Faz 2** — Alice/Bob arasındaki saat kaymasını (asimetrik senkronizasyon sorunu) modeller. `siftFixed()` (naif, sabit-pencere) sürüklenme altında bozulur; `siftRecovered()` bir Kalman filtresi (`JitterPredictor`) ile ileri-besleme düzeltmesi yapar; `bridgeClockJump()` ani saat sıçramalarında ODLS (optik gecikme hattı) ile geçiş penceresini köprüler. **Dürüstlük notu:** düzeltilmemiş saat kayması bir gözcü gibi görünür (QBER sıçrar) ama bu bir SENKRONİZASYON sorunudur — Kalman kurtarma gerçek bir gözcüyü ASLA maskelemez (Eve'in rastgele-baz hatasının öngörülebilir yapısı yoktur). |
-| `timing_coincidence_test.js` | 6/6 öz-test: mükemmel saat → taban QBER/verim; düzeltilmemiş sürüklenme → QBER sıçraması ("tanısal tuzak"); Kalman kurtarma → QBER/verim fizik tabanına döner; ODLS geçiş köprüsü → zaman-aşımı düşüşü sıfır; kurtarma AÇIKKEN gerçek bir gözcü hâlâ yakalanıyor (QBER >%20). |
-| `detector_recalibration.js` | **Faz 3 (B4)** — gerçek tek-foton dedektör kusurlarını (afterpulsing, dedektör-verimlilik uyumsuzluğu) ekler ve sonlu-anahtar güvenlik ispatını buna göre yeniden kalibre eder. `qberByImperfection()` QBER'i bileşenlerine ayırır. Verimlilik uyumsuzluğu QBER'e ~sıfır katkı yapar ama eleme sonrası anahtarı yanlılaştırır ve standart sonlu-anahtar sınırının GÖREMEDİĞİ bir yan-kanal açar. `qberCliff()` ikili aramayla ℓ→0 güvenlik uçurumunu bulur. **Dürüstlük notu:** idealize kalibrasyon iyimserdi. |
-| `detector_recalibration_test.js` | 6/6 öz-test: gerçek kusurlar QBER'i idealize tahminin ×1.6+ üzerine çıkarıyor; afterpulsing dominant bileşen; gerçek QBER'in sonlu-anahtar ispatına beslenmesi ℓ/n'i n=1e6'da >5 puan düşürüyor (yine de güvenli); verimlilik uyumsuzluğu ölçülebilir bir yan-kanal yaratıyor (ayrı izlenmeli); güvenlik marjı gerçek QBER altında idealize olana göre daha dar. |
-| `shielded_detector_physics.js` | Faraday-kafes kalkanlamasının temiz ortamını dedektör-gürültü modeline yansıtır — karanlık-sayımı TERMAL + EM bileşenlerine ayırır, QBER tabanını yeniden hesaplar, temizlenmiş kanalda Gizli Anahtar Oranı (SKR) kazancını doğrular. **Kritik dürüstlük notu:** çekirdeğin `DetectorNoiseModel`'i UYDU (Micius) senaryosu için kalibredir (80MHz kapı); bu projenin kendi yer-tabanlı fiber BB84'ü (1GHz kapı) AYRI, farklı kalibre edilmiş bir senaryodur — ikisi birbirinin yerine KULLANILAMAZ (~2000× fark), modül ikisini de raporlar ama operasyonel taban olarak her zaman kendi yer-termal referansını kullanır. |
-| `shielded_detector_physics_test.js` | 5/5 öz-test: yer-tabanlı vs uydu-kalibreli termal referanslar ~2000× farklı (değiştirilemez olarak raporlanıyor); kirli→temiz kafes geçişinde QBER tabana tam olarak dönüyor; temiz kanalda SKR ölçülebilir şekilde artıyor; her pencere çarpanında temiz kanal kirliden daha düşük QBER veriyor. |
-| `optical_delay_line.js` | **ODLS — L5.6** — Kalman filtresi yakınsarken (~9 adımlık geçiş penceresi) fotonları düşürmek yerine devridaim eden bir fiber döngü + 2×2 anahtarda tutar. İki BAĞIMSIZ, YARIŞAN bütçe: (1) ekleme kaybı (µs zaman ölçeğinde bağlayıcı) ve (2) faz eşevresizliği/T2 (ms zaman ölçeğinde, gerçek kuantum bellek için bağlayıcı). `MEDIA` tablosu ortamları dB/**zaman** (α·v) ile karşılaştırır — çip dalga kılavuzları dB/m'de düşük görünse de GRUP HIZLARI çok daha düşük olduğundan depolama için DAHA KÖTÜdür. **Dürüstlük notu:** "ODLS bedava bir dondurucu DEĞİLDİR" — yalnızca her iki bütçe içinde kalındığı sürece işe yarar; Kalman'ın HIZLI (µs) kurtarması, tutma sürelerini 3dB fiber-kayıp bütçesi içinde tutan fiziksel ÖN-KOŞULDUR. |
-| `optical_delay_line_test.js` | 6/6 öz-test: ODLS'siz 9-adımlık pencere paketlerin %100'ünü düşürüyor; ODLS ile sıfır zaman-aşımı düşüşü; µs fiber döngü kayıp-bağlı iken ms gerçek kuantum bellek faz-bağlı (iki farklı fiziksel rejim); hızlı (µs) kurtarma bütçeye sığarken yavaş (ms) reaktif yeniden-senkron imkansız bir dB bütçesi gerektirirdi; pencereye göre ayarlanmış döngü (n=1 geçiş) anahtar yükünü en aza indiriyor. |
-| `odls_optimization_drill.js` | ODLS fiber tabanını azaltmanın iki yolu: Track 1 (PJA'yı agresifleştirmek, 9→5-6 adıma indirmek neredeyse bedava — kaybı yarıya indirir); Track 2 (ortam değiştirmek). **Önemli bulgu:** kullanıcı sezgisinin ("çip dalga kılavuzları <0.1dB/m daha iyidir") TERSİ doğru — SMF fiber (0.0002 dB/m) zaten bilinen en düşük kayıplı ortam; "iyi" bir Si₃N₄ çip (0.1dB/m=100dB/km) depolama için >100× DAHA KÖTÜ. Kriyojenik soğutma silikanın fiber kaybını AZALTMAZ (α'nın ~%96'sı donmuş Rayleigh saçılmasıdır, sıcaklıktan bağımsız) — kriyonun gerçek değeri T2'yi uzatmaktır. |
-| `odls_provision_test.js` | 6/6 öz-test — optimizasyon tatbikatının bulgularından türetilen operatör-yüzü yardımcıları (`provisionOdls`, `calibrateQForSteps`) için regresyon kilidi: SMF/9-adım senaryosu tam eşleşiyor; 5-adım×içi-boş-çekirdek-fiber her iki kaldıracı birleştiriyor; Si₃N₄ çip 5 adımda açıkça UYGULANAMAZ olarak işaretleniyor; `calibrateQForSteps` model tabanının altını doğru tespit edip uyarıyor. |
-| `predictive_jitter_alignment.js` | **L5.5** — sürekli asimetrik saat kayması altında "canlı-kilitlenme" (resync fırtınaları) hata modunu önler. `JitterPredictor`, sabit-hız Kalman filtresidir (PTP/GPS alıcılarının onlarca yıldır kullandığı teknikle aynı). **Dürüstlük notu ("YAPAY ZEKA NE DEMEK BURADA"):** kara-kutu bir sinir ağı DEĞİL, yorumlanabilir/uyarlanabilir bir kestirici. Açık sınır: kestirici yalnızca ÖNGÖRÜLEBİLİR yapıyı (ofset, sürüklenme, yavaş trend) kaldırabilir; saf beyaz gürültü jitter'ın öngörülebilir bileşeni yoktur — modül kendi sınırını kanıtlar. |
-| `predictive_jitter_test.js` | 7/7 öz-test: saf sürüklenmede ileri-besleme kalıntısı jitter tabanına yakınsıyor; canlı-kilitlenme uçurumu kaldırılıyor (düşüş oranı <%5 vs naif %40+); yavaş termal+sürüklenme izlenebiliyor; **dürüst sınır**: saf beyaz jitter'da hizalanmış kalıntı ≈ naif kalıntı (kestirici olmayan yapıyı halüsinasyon GÖRMÜYOR); ani ofset sıçramasından <60 adımda kurtarma; "son değeri tekrarla" referansını MAE'de geçiyor. |
-| `hardware_aging_model.js` | "Sahaya İniş / Yaşlanma Faktörü" — Faraday kafesinin kalkanlama etkinliğinin sahada SABİT OLMADIĞINI modeller (contalar gevşer, lehim oksitlenir, termal döngü mikro-boşluklar açar). Model **güç/sızıntı alanında** çalışır (dB'de değil) — her "saha döngüsü" sızıntı oranını rastgele %1-5 artırır (bileşik), leak=1'de (SE=0dB, fiziksel taban) sınırlanır. `applyFieldAging(enabled=false)` saf bypass. |
-| `hardware_aging_model_test.js` | 8/8 öz-test (A-E + H,I): bypass sıfır etki; tek-döngü bozulma istatistiksel olarak [%1,%5] içinde; çok-döngü kümülatif bozulma monoton (asla iyileşmiyor); marjinal etki cebirsel özdeşlik olarak türetildi; **kafes tamamen çökse bile (SE→0dB) QBER yalnızca ~%1.2'den ~%5'e çıkıyor** — %11 acil-durdurma eşiğinin çok altında — SE-tabanlı fail-closed kapı (döngü 335'te tetikleniyor) QBER-tabanlı gözcü-durdurma mekanizmasından ÇOK DAHA muhafazakâr/erken (beklenen, doğrulanmış savunma-derinliği); yaşam-sonu fail-closed doğrulaması. **(H) ve (I) kullanıcı geri bildirimine yanıt olarak eklendi:** (H) kullanıcının "döngü 250-300 arası kör nokta" iddiasını her döngüyü (1-450) tek tek ölçerek çürüttü — kör nokta bulunamadı; (I) buna rağmen savunma-derinliği için `EMERGENCY_SE_FLOOR_DB=30` mutlak tabanı eklendi (network_shielding_bridge.js'e). |
-| `environmental_aging_model.js` | Kafes yaşlanmasını zamana değil ÇEVRESEL MARUZİYETE bağlar: sıcaklık+nem (Peck/Arrhenius), termal döngü (Coffin–Manson, akış hâlinde yarım-döngü sayımı), titreşim (Basquin), kapı/panel olayları (Miner); `hardware_aging_model.js` ile aynı sızıntı-alanı temsili. `SiteClimate`: HVAC'lı veri merkezi / sokak dolabı / ray yanı profilleri (klimatoloji + tohumlu gerçekleşme). **Dürüstlük:** biçimler yerleşik, katsayılar EMI contaları için kalibre EDİLMEMİŞ (Peck n≈2,7, Ea≈0,79 eV IC nem verisinden). |
-| `predictive_maintenance.js` | Kestirimci bakım: doğrusal Kalman (SE seviyesi + gizli birim ölçeği, çevre sensörlerinden beklenen kayıp), saha klimatolojisiyle kalan ömür dağılımı (p10/p50/p90), ADVISORY/WARNING/CRITICAL + STEP_CHANGE (ani arıza algılama), öğrenme kapısı, modelden bağımsız marj son savunması, düşürme histerezisi; kritik eşik = kalkan karar katmanının HOLD eşiği. `MaintenanceScheduler` uyarıları iş emrine çevirir. Bkz. `docs/PREDICTIVE_MAINTENANCE_DESIGN.md`. |
-| `predictive_maintenance_test.js` | 13/13 öz-test: fizik birimleri; referans ortamda zaman modeline indirgenme; saha farkı; 40 kafeslik filoda 2 yıl — 19 eşik geçişinin hepsinde WARNING önceden, RUL-tabanlı erken alarm 0, ölçek medyan %2,2 hatayla öğreniliyor; RUL hatası çevre-duyarlıda 90 gün kala 3,4 g (zaman-tabanlı 7,9 g); kış→yaz sokak dolabı senaryosunda zaman-tabanlı +22,6 g iyimser, çevre-duyarlı +7,1 g; kapalı döngüde HOLD saati 0 (reaktif 1533), bedeli medyan 42 gün erken bakım; ani −9 dB düşüş 2 saatte algılanıyor (önceden öngörülemez); yanlış üslerde de WARNING kaçmıyor. **Bilinen sınır:** p10–p90 aralıkları dar (kapsama %26–68). |
-| `maintenance_traffic_coordinator.js` | Kestirimci bakım uyarılarını çok-düğümlü ağa bağlar: ADVISORY→PLANNED (ağ değişmez), WARNING/CRITICAL/ani düşüş ve planlı her pencereden 24 saat önce → DRAIN (düğüme dokunan linklere +2000 km ceza; transit trafik kayar, alternatif yoksa KESİLMEZ), pencere → MAINTENANCE (relay/uç/mTLS dışı, KME kapısı `level=MAINTENANCE`), `doorMayOpen()`: kafes kapısı ancak ağ planı düğümü bıraktıktan sonra. Planlı kesinti bildirimi üretir. Bkz. `docs/MAINTENANCE_TRAFFIC_SHIFT_DESIGN.md`. |
-| `maintenance_traffic_shift_test.js` | 9/9 öz-test: durum makinesi; DRAIN'de BKR↔ATS transit trafiği KDK'yı atlayan yola geçiyor, KDK uç talepleri pencereye kadar sürüyor; alternatifsiz hatta DRAIN trafiği kesmiyor; **önce kur sonra kes**: habersiz kafes açılışında teslimat-yolu maruziyeti tam bir örnekleme aralığı (8000 bit), koordineli bakımda 0, mTLS kapıdan ÖNCE bildirimle kapanıyor; uçtan uca zincir (prognostik → iş emri → 24 saat ön-boşaltma → bakım) gerçek eşik geçişinden ~29 gün önce. Bu iş sırasında ağ teslimindeki nedensellik hatası bulunup düzeltildi. |
-| `cabinet_lock_hal.js` | Kabin kilidi HAL'i: `CabinetLockHAL` sözleşmesi (requestUnlock/lock/status/pollEvents), `UnlockGrantAuthority` (Ed25519 imzalı, kısa ömürlü, tek kullanımlık açma yetkisi + "boşaltıldı" beyanı; kilit yalnız açık anahtarı tutar), `SimulatedSmartLock` (bağımsız yeniden doğrulama, fail-secure, 30 s otomatik yeniden kilit, reed kapı sensörü → TAMPER/OVERRIDE, arıza enjeksiyonu), `SimulatedLockApiServer` (gerçek HTTP API) + `HttpLockAdapter` / `InProcessLockAdapter`. Koordinatörde `authorizeDoor` / `onLockEvent` (yetkisiz açılış → INCIDENT, olay-tetikli yeniden planlama). **Dürüstlük:** simüle donanım, belirli bir üreticinin API'si değil; taşıma düz HTTP (gerçekte mTLS). Bkz. `docs/CABINET_LOCK_HAL_DESIGN.md`. |
-| `mesh_isolation.js` | Ağ düzeyinde mesh izolasyonu: marj-kademeli transit cezası (`1500·(1−m/10)²` km; uç talepleri etkilenmez), kanıt atfıyla karantina (self / komşu / bağımsız prob / kilit; alıcı-verici-belirsiz atıf; serbest bırakma yalnız bağımsız kanıtla, PROBATION'da transit yok; havuz iptali + `quarantine` bölmesi), optik bypass planlayıcı (kesim düğümü analizi, sanal A–B linki, X anahtarı görmez, 20 s anahtarlama). **Dürüstlük:** optik anahtar / prob donanımı simüle; tek alıcı linkli düğümde kaynak ayırt edilemez → iki uç karantina. Bkz. `docs/MESH_ISOLATION_DESIGN.md`, sistem resmi `docs/photonnet_system_overview.svg`. |
-| `mesh_topology_transit_test.js` · `mesh_quarantine_test.js` · `mesh_optical_bypass_test.js` | 7/7 · 9/9 · 8/8: kesim düğümleri ve ceza eğrisi; KDK marjı 6 dB'de BKR↔ATS transiti KDK'yı terk ediyor, uç talepleri %100; karantinada KDK'dan geçen bit 0, masum komşular karantinaya alınmıyor, kendi-raporu serbest bırakmaya yetmiyor; optik bypass BKR↔ATS'nin güvenilir ara düğümünü 3 → 0'a indiriyor, kesim düğümünde %0 → %100. Testler iki hata buldu ve düzeltildi (kanıt atfı, tasarrufsuz bypass). |
-| `shield_sensor_hal.js` | Kalkan sensör HAL'i ve veri besleme mock'ları: `ShieldSensorHAL` sözleşmesi, `PhysicalShieldModel` (kapı, conta yaşlanması, RF verici, dedektöre giriş, fibere enjeksiyon, termal döngü), `MockShieldSensorDriver` (sayaç-tabanlı tekrarlanabilir gürültü/nicemleme/doyma + 10 arıza türü), `SensorFrameValidator` (kapalı-başarısız: bayat/gelecek/tekrar/aralık dışı/takılı → NaN, SE doyması alt sınır, çift sensörde küçüğü, Y0 doğrulanamadı → `y0Invalid` → blok lekesi), `ShieldSensorFeed`, JSONL/CSV `FrameRecorder` + `ReplayShieldSensorDriver`, `SimulatedSensorDeviceServer` (gerçek HTTP, arıza modları) + `HttpShieldSensorDriver`. **Dürüstlük:** model tüketicinin modeliyle aynı (döngüsel); tek sensörde kayma algılanamaz. Bkz. `docs/SHIELD_SENSOR_HAL_DESIGN.md`. |
-| `shield_sensor_physics_test.js` · `shield_sensor_faults_test.js` · `shield_sensor_transport_test.js` | 8/8 · 9/9 · 8/8: sensör istatistiği (σ, Poisson Y0) ve senaryolar; besleme → ağ + mesh uçtan uca (kapı → BLOCK ama karantina yok, enjeksiyon → yalnız KDK karantina); her arıza türünde kapalı-başarısız; takılı tek sensör kapıyı ~1,45 s gizliyor, ikinci sensör kapatıyor; JSONL/CSV/HTTP yolları birebir. İki açık bulundu ve kapatıldı: Y0 telemetrisi kesikken model Y0 ile 14,5 Mbit serbest bırakılıyordu; mesh NaN oranı temiz kanıt sayıyordu. |
-| `qber_abort_policy.js` | QBER iptal politikası (çekirdeğe dokunmayan katman): çekirdeğin kendi sonlu-anahtar formülünden ℓ = 0 uçurumu (`qberCliff`; n = 10⁶'da %9,3–9,6, mesaj boyunda ≈ 0), kâhinsiz parametre kestirimi (test bitleri kurban edilir), ℓ ≤ 0 ya da QBER_test ≥ uçurum → ABORT; `gateEvidence()` → `production_gate.js` kriter 5 artık beyan değil KANIT istiyor (%11 eşiği ve `eavesdropAborts: true` beyanı bloklanır). **Dürüstlük:** çekirdek/UI mesaj yolu hâlâ eski %11 bayrağını gösterir; mesaj başına oturum güvenli anahtar üretemez, anahtar havuzlanmış bloktan gelmelidir. |
-| `qber_abort_policy_test.js` · `skr_distance_sweep_test.js` · `quantum_phase_buffer_hold_test.js` | 8/8 · 6/6 · 8/8: uçurum çekirdeğin formülüyle tutarlı; 50 km mesaj oturumu çekirdekte "temiz" ama politika ABORT, 200 oturumluk havuz PROCEED (ℓ > 0); SKR 0–200 km tekdüze, her noktada ≤ PLOB ve ≤ asimptotik GLLP; en uzun mesafe N = 10⁸/10¹⁰/10¹² → 81/112/119 km, Y0 = 10⁻⁶ → 151 km (grafik `docs/skr_qber_distance.png`); faz tamponu artık darbeleri tutuyor (hedefi aşan gönderilmiş darbe %14,1 → %2,1, 4σ payla 0). Ayrıca decoy sonlu-anahtar ε bütçesi 1,4·ε → tam ε (`chaos_decoy_state_finite_key_test.js`). |
-| `cabinet_lock_hal_test.js` | 7/7: 10 geçersiz belge türünün hepsi reddediliyor; koordinatör pencere/boşaltma öncesi yetki vermiyor; sıkışık eyleyici, açılmayan kapı ve yanıtsız API'de kilit KİLİTLİ; gerçek HTTP API üzerinden uçtan uca akış, tekrar ve sahte imza 403; zorla açmada maruziyet yalnız-SE ort. 4365 bit → kapı sensörüyle ort. 787 bit (sıfır değil, sensör gecikmesi kadar); koordineli bakımda 0; mekanik acil anahtar → INCIDENT → aynı adımda plan dışı. |
-| `noise_calibration_hardening_test.js` | 15/15 öz-test — `attack_simulation_qber_escalation.js`'in bulgularına (mağdur bulaşması, kaynak-kimlik-doğrulaması yok) karşı 3 sertleştirme: HMAC-SHA256 kaynak kimlik doğrulama (fail-closed), bağlantı-özgü risk (bulaşma yok), makul-değer/mantık sınırları (imkansız değerler — negatif mesafe, QBER>1 — reddediliyor). |
-| `noise_calibration_wiring_test.js` | 10/10 öz-test — "Çekirdeğe Dönüş" doğrulaması: `NoiseMatrixCalibration.riskForDistance()`'ın gerçekten `EdgeWeightPolicy.computeWeight()`'ın yönlendirme maliyetini değiştirdiğini ve TUTARLI şekilde (daha uzak/kayıplı=daha yüksek maliyet) değiştirdiğini doğrular. |
-| `noise_matrix_validate.js` | Çekirdeğin analitik/sezgisel modellerinin (statik WL zayıflama tablosu, LEGA risk skoru) `hal/noise_matrix.json`'daki (HAL köprüsü üzerinden gerçek HTTP çağrılarıyla toplanan) ölçüm matrisiyle ne kadar örtüştüğünü ölçer. **Kritik dürüstlük notu:** `hal/noise_matrix.json` şu an `SimulatedHardware`'den geliyor (GERÇEK fiber DEĞİL — aynı kapalı-form formülünün Python'a RNG-örneklenmiş bir portu), bu yüzden zayıflama karşılaştırması "neredeyse totolojik"; LEGA karşılaştırması daha anlamlı ama LEGA'nın `histBer` girdisi doğrudan aynı ölçülen QBER'den besleniyor, yani yüksek R²'nin bir kısmı bu doğrudan bağlantıdan geliyor. |
-| `noise_calibration.json` | İmzalı kalibrasyon veri zarfı (payload+HMAC). `sourceIsRealHardware: false` — açıkça `hal/noise_matrix.json`'dan (yani `SimulatedHardware`'den) üretildiğini belirtir; "gerçek donanım bağlandığında yeniden üretilmeli" notuyla. |
-| `rf_noise_bridge.js` | Faraday-kafes EM-sızıntı bulgularını, kalkanlama marjını (dB) gerçek eleme/QBER simülasyonuna beslenen bir RF-kaynaklı "karanlık-sayım benzeri" tıklama olasılığına çevirerek köprüler. `rfInducedDarkProb(marginDb)`: margin=0dB'de referans karanlık-sayım oranına eşit, her +10dB margin ×10 azaltır. **En kritik dürüstlük notu:** marginDb→karanlık-olasılık kalibrasyonu AÇIKÇA BİR VARSAYIMDIR — bu ilişki gerçek analog ön-uç elektroniğinin TIA/karşılaştırıcı tasarımına bağlıdır ve yalnızca gerçek donanımla ölçülebilir; "üretim kararları için donanım doğrulaması olmadan kullanılmamalı" denir. |
-| `rf_noise_bridge_test.js` | 6/6 öz-test: kalibrasyon sağlaması; eski kafes (5mm çıplak açıklık) 0.3m'de RF sızıntısı QBER'i ~×2.3 artırıyor ama %11 eşiğinin altında kalıyor ("sessiz" performans kaybı); yeni kafes (3mm+9mm petek) 0.3m'de RF katkısı ihmal edilebilir; eski kafes 0.1m'de (yakın-alan) QBER %11'i AŞIYOR — kanal İPTAL EDİLİYOR (kullanılabilirlik/DoS riski, sadece gizlilik değil); sonlu-anahtar etkisi ölçülüyor. |
-| `faraday_cage_shielding.js` | Standart EMC/Schelkunoff teorisiyle Faraday-kafes kalkanlama etkinliğini (SE = Soğurma+Yansıma+Çoklu-yansıma düzeltmesi) modeller — çünkü EM yan-kanal saldırısı QBER'de İZ BIRAKMAZ (detector_recalibration.js'in yakaladığı gözlemlenebilir yan-kanallardan farklı olarak). Açıklık sızıntısı kesim-altı dalga kılavuzu olarak modellenir (SE≈20log10(λ/2L), L=en büyük doğrusal boyut). Bağımsız sızıntı yolları GÜÇ alanında birleştirilir (en zayıf yol baskındır). **Dürüstlük notu:** malzeme sabitleri (σr, μr) ders kitabı/el kitabı değerleridir, GERÇEK datasheet ölçümü DEĞİL. |
-| `faraday_cage_shielding_test.js` | 10/10 öz-test (A-I): katı duvar baskın; açıklık baskın (EMC kuralı: en zayıf halka açıklıktır, alan değil); frekans taraması en kötü durumu doğru seçiyor; bağımsız yol güç birleşimi; çoklu-yansıma düzeltmesi dejenere durumda sonlu değer veriyor; bilinmeyen malzeme açıkça reddediliyor; **(H) gerçekçi saat harmonikleri**: projenin kendi 1GHz darbe-tekrarı tek frekansta değerlendirmenin GERÇEK tehdidi hafife aldığını gösteriyor — 19. harmonikte aynı tasarım daha da kötüleşiyor; **(I) düzeltilmiş tasarım**: 3mm açıklık + 9mm petek derinliği (gerçek EMC petek panellerine tipik 3:1 oran) 1-19GHz'in tamamında 60dB hedefini rahatça karşılıyor. |
-| `resonance_drill.js` | Üretim-geri-basınç kontrol döngüsünün doğal rezonans frekansını bulup talebi tam o frekansta periyodik süren bir saldırganın sistemi dengesizleştirip dengesizleştiremeyeceğini test eder. Bang-bang/histerezis-bantlı denetleyici sonlu bir depo tarafından KELEPÇELENDİĞİ için (doğrusal 2. dereceden rezonatör değil) genlik sınırsız BÜYÜYEMEZ — ama mod-değiştirme oranını MAKSİMİZE eder; histerezis bandı tam olarak bunu sınırlayan mekanizmadır. "Bu dosya tartışmaz, ölçer." |
-| `landauer_choke_drill.js` | Derin-uzay uydu QKD senaryosunda THz-hızlı foton varışının soğuk kuantum bellekte Landauer-limitli ısı dağıtımını bunaltıp bunaltamayacağını ("kuantum bilgi boğulması") araştırır. **İki dürüst bulgu:** (A) Landauer limitinin KENDİSİ bağlayıcı kısıt DEĞİL — gerçek işlem başına dağıtım Landauer'den ~10 kat büyüklük mertebesinde fazla; asıl duvar soğutucu kaldırma kapasitesidir. (B) mimarinin cevabı 2. yasayı yenmek değil, entropiyi soğuk bellekten UZAKLAŞTIRMAKtır: baz-uyuşmazlığı bitleri SICAK dedektör aşamasında atılır (soğuk belleğe hiç yazılmaz), tutulan anahtar bitleri ışık olarak bağlantı üzerinden ihraç edilir (entropi ısı olarak değil ışık olarak ayrılır). |
-| `memory_technology_threshold_test.js` | 5/5 öz-test — farklı kuantum-bellek eşevrelik sürelerinde (T2=1ms...10s) dolanıklık-takas veriminin sıfıra çökmediği kritik mesafe eşiğini belirler. T2 arttıkça eşik monoton artıyor; T2=10ms 40km'de gerçekten başarısız, T2=1s gerçekten başarılı. Yüksek T2'de platonun bellek-sınırlı mı yoksa foton-deneme-bütçesi-sınırlı mı olduğu test ediliyor — bütçeyi 10× artırmak eşiği daha da yükseltiyor (gözlemlenen doygunluk bütçe-sınırlı, temelde bellek-sınırlı değil). **Dürüstlük notu:** T2 katman değerleri platform sınıfları için BÜYÜKLÜK-MERTEBESİ temsili değerlerdir, herhangi bir spesifik cihazın ÖLÇÜLMÜŞ spesifikasyonu DEĞİL. |
-| `phi_high_tuning_test.js` | 7/7 öz-test — önerilen `φ_high=0.80` üretim-geri-basınç eşiğini TEK bir çalışma noktası yerine 9 noktalık bir IZGARA ile doğrular (bu oturumda tekrar eden "tek-nokta sabiti çöküyor" deseninin bir örneği). İLK aday ölçüt ("her noktada reddi tabanın 1 puan içinde tutan en tasarruflu φ") REDDEDİLDİ ve kanıt olarak raporda tutuldu — diz noktası 0.60-0.95 arasında dolaştı. KABUL EDİLEN ölçüt: ızgara-ortalaması marjinal değişim-oranı çöküşü (φ_high=0.80'de tasarruf/ret ödünleşimi hâlâ anlamlı, 0.85'te 0.011'e çöküyor). |
-| `exact_slot_time.js` | `timetag_acquisition_bridge.js`'in `run()`'undaki `i×periodPs` çarpım satırının BigInt/keyfi-hassasiyetli yeniden tasarımı (bu oturumda eklendi). `precisionRiskForConfig()` döngü hiç çalıştırılmadan Number hassasiyet tavanının aşılıp aşılmayacağını önceden söyler. **Dürüstlük notu:** `timetag_acquisition_bridge.js`'in `run()`'unu DEĞİŞTİRMEZ; BigInt sonucu Number'a geri çevrilirse (mevcut aşağı-akış borusunun ihtiyacı budur) aynı hassasiyet kaybı miras alınır — bu modül şu an bağımsız denetim + önceden-risk-tespiti sağlar, tam boru hattı geçişi değil. |
-| `exact_slot_time_test.js` | 6/6 öz-test. **Önemli metodolojik bulgu:** "tavanın ötesi ne kadar bozuk" sorusuna sabit bir çarpan varsayarak cevap arayan İLK yaklaşım YANLIŞ çıktı — periodPs=1000'in 2'nin kuvvetlerini içermesi bazı i değerlerinin tavanın çok ötesinde bile SADECE ikili-hizalanma şansıyla kesin kalmasına yol açıyor; bu, ikili aramayla GERÇEK bir kesin/kesin-değil geçişi bulunarak düzeltildi (floating_point_accumulation_test.js'teki benzer bir öz-düzeltmeyle aynı desen). |
-| `epoch_reset_controller.js` | "Dönemsel Sıfırlama" — sayaçların floating_point_accumulation_test.js'in bulduğu devasa sınırlara (10 yıllık tahmin MAX_SAFE_INTEGER'ı 5.3× aşıyor) asla yaklaşmamasını sağlayan işletim disiplini (bu oturumda eklendi). İki tamamlayıcı mekanizma: (1) 30 günde bir sıfırlanan epoch-yerel Number sayacı + `onEpochRollover` kancası (gerçek mTLS oturum-tazeleme mantığı BURAYA bağlanır — bu dosya gerçek bir TLS soketini yeniden müzakere ETMEZ), (2) asla sıfırlanmayan BigInt ömür-boyu arşiv. |
-| `epoch_reset_controller_test.js` | 7/7 öz-test: temel sıfırlama; kanca sıralı çağrılıyor; **10 yıllık maraton, sıfır bit kaybı** — lifetimeCount bağımsız hesaplanan toplamla BİREBİR eşleşiyor (Number-only 5.3× taşma bulgusunun tam tersi); 30 günlük sıfırlamayla ~23× güvenlik payı vs sıfırlamasız <1× (taşma); 100 epoch'luk tek zaman sıçraması hiçbirini atlamadan zincirleniyor. |
-| `floating_point_accumulation_test.js` | IEEE-754 çift-hassasiyetli yuvarlama hatasının günler/yıllar boyunca birikip birikmediğini test eder. (A) **tamsayı-temsil tavanı**: 2^53 üzerinde ardışık tamsayılar ayırt edilemiyor — 10 yıllık kümülatif eleme-sonrası bit tahmini tavanı ~5.3× AŞIYOR (bu, epoch_reset_controller.js'i doğrudan motive etti); (B) naif toplama hatası N ile büyüyor, Kahan-telafili toplama sabit kalıyor; (C) naif birikimin TAM duraklama eşiği ikili aramayla bulundu: tam olarak 2^24 saniye (~194 gün); (D) gerçek mimari (çarpım, biriktirici değil) bu duraklama sınıfı hataya YAPISAL OLARAK bağışık; (E) çekirdeğin gerçek EMA'sı 200M döngü (~3.17 yıl) boyunca sürüklenme göstermiyor; (G) nihai Toeplitz anahtar BİTLERİ tamsayı XOR/AND işlemleriyle üretiliyor — kayan-nokta yuvarlama kanalı anahtar DEĞERLERİNE hiç dokunmuyor. |
-| `hysteresis_band_test.js` | 18/18 öz-test — üretim-geri-basınç histerezis bant genişliğinin (h=0.08 varsayılan) gerekçesini kurar (bu oturumda 3. kez tekrar eden "tek-nokta sabiti" desenidir). h=0 mod-değiştirmenin "patladığını" doğruluyor. REDDEDİLEN ilk ölçüt ("mod-değiştirmeyi tabana indiren en dar bant" — dejenere, monoton azalan bir metrik her zaman en geniş bandı seçiyor) kanıt olarak tutuldu. Bandın gerçek bedeli depo-salınımı DEĞİL (ilk hipotez, veriyle çürütüldü) TASARRUFTUR: h ≥ 1−φ_high olursa kısma HİÇ tetiklenmiyor. |
-| `mtls_failsafe_debounce.js` | Çekirdeğin durumsuz `mtlsHandshakePrecondition()`'ını isteğe bağlı, durumlu bir zaman-histerezisi katmanına sarar — "Erken Ölüm" yanlış-pozitifini düzeltmek için (tek bir gürültülü SE okuması anlık mTLS kilidini tetiklememeli). İki katmanlı, kasıtlı asimetrik Schmitt-tetikleyici tasarımı: debounce (kötü→BLOCKED onayı için sürdürülmüş kötü okuma gerekir) + kurtarma histerezisi (BLOCKED'dan çıkmak daha zor — kesintisiz iyi okuma gerekir, "neredeyse kurtuldu" kredisi yok). **Soğuk-başlangıç istisnası:** debounce SADECE zaten-doğrulanmış OK durumunu korur — İLK okuma kötüyse anında BLOCKED (zaten arızalı bir sistemde bedava mTLS penceresi yok). Varsayılan parametreler artık GERÇEK EMC standartlarından türetiliyor: `DEFAULT_DEBOUNCE_MS=630ms` (IEC 61000-4-4 EFT/Burst), `DEFAULT_RECOVERY_MARGIN_DB=5dB` (IEEE Std 299). `RECOVERY_ASYMMETRY_FACTOR=10` açıkça POLİTİKA olarak işaretli (standart-türevi değil). |
-| `mtls_failsafe_debounce_test.js` | 10/10 öz-test (A-I): geçici bağışıklık; sürdürülmüş gerçek arıza gecikmeli ama yakalanıyor; tek iyi okuma kilidi AÇMIYOR; kesintili kurtarma sayacı sıfırlanıyor; soğuk-başlangıç istisnası; gerçek ölçülmüş yaşlanma yörüngesi (aynı AGING_SEED=7, firstFailCycle=335) + enjekte edilmiş sentetik geçici darbelerin tamamen filtrelendiği, gerçek bozulmanın hâlâ yakalandığı; EMC-standart-türevi varsayılanların formülleriyle birebir eşleştiği doğrulanıyor. |
-| `adaptive_shielding_mitigation.js` | "Anında kesinti yerine akıllı daraltma": SE düşüşünü dört seviyeye ayırır — NORMAL; ADAPT (SE_gerekli ≤ SE < hedef: μ, ν, sinyal/decoy/vakum oranları ve LDPC kod oranı sonlu-anahtar optimizasyonuyla, tepe-tutmalı ve histerezisli olarak blok sınırında yeniden seçilir); HOLD (dışa sızıntı tespit edilebilir, taban altı geçici düşüş veya R=0: mTLS açık, o pencereye değen bloklar karantinada, teslimat temiz havuzdan üstel daraltmayla); BLOCK (30 dB tabanının sürdürülmüş ihlali — mevcut debounce, DEĞİŞMEDİ). **Dürüstlük:** parametre optimizasyonu yalnız görünür içeri-giriş gürültüsünü telafi eder, QBER'de görünmeyen dışa EM sızıntısını AZALTMAZ; daraltma güvenlik değil süreklilik sağlar; içeri-giriş modeli kalibre edilmemiştir; KME'ye/production_gate'e bağlı değildir. Bkz. `docs/ADAPTIVE_SHIELDING_MITIGATION_DESIGN.md`. |
-| `adaptive_shielding_mitigation_test.js` | 17/17 öz-test (A-P): SE_gerekli ↔ emissionDetectabilityCheck 12/12; sessiz varsayılan yok; tam uyarlama ≥ yalnız-kod-oranı ≥ sabit (Y0=2e-4'te 0 → 3,26e-4); blok boyutu etkisi; eski önkoşulun reddettiği SE=45 dB'de ADAPT; 200 ms 25 dB düşüşünde mTLS hiç kopmuyor, 6 blok karantinada, aç kalma 0; marjlı kurtarma; τ sonunda havuz=e^−1 (naif 5930 ms aç kalır); SE titreşiminde 1 geçiş (korumasız kontrol 201); sürdürülmüş ihlalde BLOCK; belirlenimcilik; 8 dosyanın SHA-256'sı değişmedi. |
-| `multinode_shielding_network.js` | 4 seviyeli karar matrisinin çok-düğümlü güvenilir-düğüm ağına entegrasyonu: düğüm düzeyinde `ShieldLevelTracker` (mTLS, relay ve SAE teslim uygunluğu; izole olmayan sızan düğüm relay olamaz), link düzeyinde `AdaptiveShieldingMitigation` (iki ucun küçük SE'si, alıcıda ölçülen Y0), `qkd_network_scale` ile max-min tahsis + artık-kapasite turları (çok-yollu), HOLD linklerine ceza ağırlığı. Karşılaştırma için `legacy-strict` / `legacy-debounce` politikaları. Bkz. `docs/MULTINODE_SHIELDING_TESTBED.md`. |
-| `multinode_shielding_testbed.js` | 21/21 öz-test, iki aşama. **Aşama 1 (60 dk simüle saha):** 6 düğüm/8 link, EFT artefaktı, sensör kopması, bakım kapısı, kısa gerçek sızıntı, conta yaşlanması, yakın verici; yer-gerçeği köken defteri. Uyarlamalı: %99,19 teslim, 1 mTLS kesintisi, 0 sızıntılı bit; eski politikalar: %64 teslim, 1054/2 kesinti ve 405 063 sızıntılı-kökenli bit (kanalı kapatıyor, kökeni izlemiyor). Koruma bandı Monte Carlo: bant 0'da %2 olayda sızıntı, ±1 dB'de 0. **Aşama 2 (gerçek süreçler):** gerçek PKI, 6 KME süreci, gerçek mTLS ETSI-014 akışları; BLOCK'ta TLS oturumları gerçekten kesiliyor, bayat kapıda fail-closed, yeniden yönlendirme, 404/404 anahtar bayt-bayt ve temiz köken. **Dürüstlük:** fiziksel katman simüle; olay oranları varsayım. |
+| `timetag_acquisition_bridge.js` | **Phase 1** — converts a raw picosecond time-tagged detector click stream (the format a real time-tagger would produce) into the format expected by the classical sifting layer. `TimeTagEmulator` models Bob's 4 detector channels (H/V/D/A) with detector efficiency, dark-count probability, Gaussian timing jitter (Box–Muller), dead time and optical misalignment. QBER_ABORT = 0.11. Basis/bit choices come from an injectable `qrng` interface backed by `crypto.randomBytes` — `mulberry32` is used ONLY for physical noise, NOT for key material. |
+| `timetag_acquisition_test.js` | 7/7 self-tests: clean-line QBER stays at the optical-misalignment floor; QBER rises predictably with dark counts; widening the coincidence window trades yield↑ against QBER↑; an eavesdropper (Eve) is caught (QBER ~25 % → abort); 3 different randomness sources change QBER by < 0.6 % (QBER comes from physics, not from the RNG choice); sifted bits are packed correctly into the ETSI-014 format. |
+| `timing_coincidence_engine.js` | **Phase 2** — models clock drift between Alice and Bob (the asymmetric synchronisation problem). `siftFixed()` (naive, fixed window) degrades under drift; `siftRecovered()` applies feed-forward correction with a Kalman filter (`JitterPredictor`); `bridgeClockJump()` bridges the transition window during sudden clock jumps with an ODLS (optical delay line). **Honesty note:** uncorrected clock drift looks like an eavesdropper (QBER jumps), but it is a SYNCHRONISATION problem — Kalman recovery NEVER masks a real eavesdropper (Eve's random-basis errors have no predictable structure). |
+| `timing_coincidence_test.js` | 6/6 self-tests: perfect clock → baseline QBER/yield; uncorrected drift → QBER jump (the "diagnostic trap"); Kalman recovery → QBER/yield return to the physical floor; ODLS transition bridge → zero time-out drops; with recovery ON, a real eavesdropper is still caught (QBER > 20 %). |
+| `detector_recalibration.js` | **Phase 3 (B4)** — adds real single-photon detector imperfections (afterpulsing, detector efficiency mismatch) and recalibrates the finite-key security proof accordingly. `qberByImperfection()` decomposes QBER into its components. Efficiency mismatch adds ~zero QBER but biases the sifted key and opens a side channel that the standard finite-key bound CANNOT SEE. `qberCliff()` finds the ℓ→0 security cliff by binary search. **Honesty note:** the idealised calibration was optimistic. |
+| `detector_recalibration_test.js` | 6/6 self-tests: real imperfections raise QBER ×1.6+ above the idealised estimate; afterpulsing is the dominant component; feeding the real QBER into the finite-key proof lowers ℓ/n by > 5 points at n = 1e6 (still secure); efficiency mismatch creates a measurable side channel (must be monitored separately); the security margin under real QBER is narrower than the idealised one. |
+| `shielded_detector_physics.js` | Propagates the clean environment of Faraday-cage shielding into the detector noise model — splits dark counts into THERMAL + EM components, recomputes the QBER floor and verifies the secret key rate (SKR) gain on the cleaned channel. **Critical honesty note:** the core's `DetectorNoiseModel` is calibrated for the SATELLITE (Micius) scenario (80 MHz gate); this project's own ground-based fibre BB84 (1 GHz gate) is a SEPARATE, differently calibrated scenario — the two CANNOT be used interchangeably (~2000× difference); the module reports both but always uses its own ground thermal reference as the operational baseline. |
+| `shielded_detector_physics_test.js` | 5/5 self-tests: ground-based vs satellite-calibrated thermal references differ by ~2000× (reported as non-interchangeable); going from a dirty to a clean cage returns QBER exactly to the floor; SKR rises measurably on the clean channel; for every window multiplier the clean channel gives lower QBER than the dirty one. |
+| `optical_delay_line.js` | **ODLS — L5.6** — while the Kalman filter converges (~9-step transition window), photons are held in a recirculating fibre loop + 2×2 switch instead of being dropped. Two INDEPENDENT, COMPETING budgets: (1) insertion loss (binding on the µs time scale) and (2) phase decoherence/T2 (binding on the ms time scale, for a real quantum memory). The `MEDIA` table compares media in dB per **time** (α·v) — chip waveguides look low in dB/m but are WORSE for storage because their GROUP VELOCITIES are much lower. **Honesty note:** "ODLS is NOT a free freezer" — it only works while both budgets are respected; the Kalman filter's FAST (µs) recovery is the physical PRE-CONDITION that keeps hold times within the 3 dB fibre-loss budget. |
+| `optical_delay_line_test.js` | 6/6 self-tests: without ODLS the 9-step window drops 100 % of packets; with ODLS zero time-out drops; the µs fibre loop is loss-bound while a ms real quantum memory is phase-bound (two different physical regimes); fast (µs) recovery fits the budget, whereas slow (ms) reactive resynchronisation would need an impossible dB budget; a loop tuned to the window (n = 1 pass) minimises the key load. |
+| `odls_optimization_drill.js` | Two ways to lower the ODLS fibre floor: Track 1 (make the PJA more aggressive, 9 → 5–6 steps, almost free — halves the loss); Track 2 (change the medium). **Important finding:** the OPPOSITE of the intuition "chip waveguides < 0.1 dB/m are better" is true — SMF fibre (0.0002 dB/m) is already the lowest-loss medium known; a "good" Si₃N₄ chip (0.1 dB/m = 100 dB/km) is > 100× WORSE for storage. Cryogenic cooling does NOT reduce silica fibre loss (~96 % of α is frozen-in Rayleigh scattering, independent of temperature) — the real value of cryogenics is extending T2. |
+| `odls_provision_test.js` | 6/6 self-tests — regression lock for the operator-facing helpers derived from the optimisation drill (`provisionOdls`, `calibrateQForSteps`): the SMF/9-step scenario matches exactly; 5 steps × hollow-core fibre combines both levers; the Si₃N₄ chip at 5 steps is clearly marked INFEASIBLE; `calibrateQForSteps` correctly detects and warns below the model floor. |
+| `predictive_jitter_alignment.js` | **L5.5** — prevents the "live-lock" failure mode (resync storms) under persistent asymmetric clock drift. `JitterPredictor` is a constant-velocity Kalman filter (the same technique PTP/GPS receivers have used for decades). **Honesty note ("what AI means here"):** NOT a black-box neural network but an interpretable, adaptive estimator. Explicit limit: the estimator can only remove PREDICTABLE structure (offset, drift, slow trend); pure white-noise jitter has no predictable component — the module proves its own limit. |
+| `predictive_jitter_test.js` | 7/7 self-tests: under pure drift the feed-forward residual converges to the jitter floor; the live-lock cliff is removed (drop rate < 5 % vs naive 40 %+); slow thermal + drift can be tracked; **honest limit**: on pure white jitter the aligned residual ≈ the naive residual (the estimator does NOT hallucinate structure that is not there); recovery from a sudden offset jump in < 60 steps; beats the "repeat last value" baseline in MAE. |
+| `hardware_aging_model.js` | "Field deployment / ageing factor" — models the fact that a Faraday cage's shielding effectiveness is NOT CONSTANT in the field (gaskets loosen, solder oxidises, thermal cycling opens micro-gaps). The model works in the **power/leakage domain** (not in dB) — every "field cycle" increases the leakage ratio by a random 1–5 % (compounded), capped at leak = 1 (SE = 0 dB, the physical floor). `applyFieldAging(enabled=false)` is a pure bypass. |
+| `hardware_aging_model_test.js` | 8/8 self-tests (A–E + H, I): bypass has zero effect; single-cycle degradation is statistically within [1 %, 5 %]; multi-cycle cumulative degradation is monotonic (never improves); the marginal effect is derived as an algebraic identity; **even if the cage collapses completely (SE → 0 dB), QBER only rises from ~1.2 % to ~5 %** — far below the 11 % emergency-stop threshold — so the SE-based fail-closed gate (fires at cycle 335) is MUCH more conservative/earlier than the QBER-based eavesdropper stop (expected, verified defence in depth); end-of-life fail-closed verification. **(H) and (I) were added in response to user feedback:** (H) refuted the claimed "blind spot between cycles 250–300" by measuring every cycle (1–450) individually — no blind spot was found; (I) nevertheless added an absolute floor `EMERGENCY_SE_FLOOR_DB=30` (in `network_shielding_bridge.js`) for defence in depth. |
+| `environmental_aging_model.js` | Ties cage ageing to ENVIRONMENTAL EXPOSURE rather than time: temperature + humidity (Peck/Arrhenius), thermal cycling (Coffin–Manson, streaming half-cycle counting), vibration (Basquin), door/panel events (Miner); same leakage-domain representation as `hardware_aging_model.js`. `SiteClimate`: HVAC data centre / street cabinet / trackside profiles (climatology + seeded realisation). **Honesty:** the functional forms are established, but the coefficients are NOT calibrated for EMI gaskets (Peck n ≈ 2.7, Ea ≈ 0.79 eV come from IC humidity data). |
+| `predictive_maintenance.js` | Predictive maintenance: linear Kalman filter (SE level + hidden unit scale, expected loss from environmental sensors), remaining-useful-life distribution from site climatology (p10/p50/p90), ADVISORY/WARNING/CRITICAL + STEP_CHANGE (sudden-failure detection), a learning gate, a model-independent last-line margin defence, and de-escalation hysteresis; the critical threshold equals the HOLD threshold of the shielding decision layer. `MaintenanceScheduler` turns alerts into work orders. See `docs/PREDICTIVE_MAINTENANCE_DESIGN.md`. |
+| `predictive_maintenance_test.js` | 13/13 self-tests: physical units; reduction to the time model in the reference environment; site differences; a 40-cage fleet over 2 years — WARNING precedes all 19 threshold crossings, 0 premature RUL-based alarms, the scale is learned with a median error of 2.2 %; RUL error 90 days before crossing is 3.4 days environment-aware (7.9 days time-based); in a winter → summer street-cabinet scenario the time-based model is +22.6 days optimistic, the environment-aware one +7.1 days; in closed loop, HOLD hours drop to 0 (reactive: 1533) at the cost of maintenance a median 42 days early; a sudden −9 dB drop is detected within 2 hours (not predictable in advance); WARNING is not missed even with wrong exponents. **Known limit:** the p10–p90 intervals are narrow (coverage 26–68 %). |
+| `maintenance_traffic_coordinator.js` | Connects predictive-maintenance alerts to the multi-node network: ADVISORY → PLANNED (network unchanged); WARNING/CRITICAL/sudden drop, and 24 hours before every planned window → DRAIN (+2000 km penalty on links touching the node; transit traffic shifts, and is NOT cut if there is no alternative); window → MAINTENANCE (out of relay/endpoint/mTLS service, KME gate `level=MAINTENANCE`); `doorMayOpen()`: the cage door may open only after the network plan has released the node. Produces planned-outage notices. See `docs/MAINTENANCE_TRAFFIC_SHIFT_DESIGN.md`. |
+| `maintenance_traffic_shift_test.js` | 9/9 self-tests: state machine; during DRAIN, BKR↔ATS transit traffic moves to a path that bypasses KDK, while KDK endpoint requests continue until the window; on a line without alternatives DRAIN does not cut traffic; **make before break**: with an unannounced cage opening the delivery-path exposure is one full sampling interval (8000 bits), with coordinated maintenance 0, and mTLS closes on notice BEFORE the gate; the end-to-end chain (prognostic → work order → 24-hour pre-drain → maintenance) runs ~29 days before the real threshold crossing. A causality bug in network delivery was found and fixed during this work. |
+| `cabinet_lock_hal.js` | Cabinet lock HAL: `CabinetLockHAL` contract (requestUnlock/lock/status/pollEvents), `UnlockGrantAuthority` (Ed25519-signed, short-lived, single-use unlock grant + "drained" attestation; the lock holds only the public key), `SimulatedSmartLock` (independent re-verification, fail-secure, 30 s automatic re-lock, reed door sensor → TAMPER/OVERRIDE, fault injection), `SimulatedLockApiServer` (real HTTP API) + `HttpLockAdapter` / `InProcessLockAdapter`. In the coordinator: `authorizeDoor` / `onLockEvent` (unauthorised opening → INCIDENT, event-triggered re-planning). **Honesty:** simulated hardware, not a specific vendor's API; transport is plain HTTP (mTLS in reality). See `docs/CABINET_LOCK_HAL_DESIGN.md`. |
+| `mesh_isolation.js` | Network-level mesh isolation: margin-graded transit penalty (`1500·(1−m/10)²` km; endpoint requests unaffected), quarantine with evidence attribution (self / neighbour / independent probe / lock; transmitter-receiver-ambiguous attribution; release only on independent evidence, no transit during PROBATION; pool cancellation + `quarantine` partition), optical bypass planner (cut-vertex analysis, virtual A–B link, X does not see the key, 20 s switching). **Honesty:** the optical switch / probe hardware is simulated; on a node with a single receiving link the source cannot be distinguished → both ends are quarantined. See `docs/MESH_ISOLATION_DESIGN.md`, system diagram `docs/photonnet_system_overview.svg`. |
+| `mesh_topology_transit_test.js` · `mesh_quarantine_test.js` · `mesh_optical_bypass_test.js` | 7/7 · 9/9 · 8/8: cut vertices and the penalty curve; at a KDK margin of 6 dB, BKR↔ATS transit leaves KDK while endpoint requests stay at 100 %; in quarantine 0 bits pass through KDK, innocent neighbours are not quarantined, self-reporting is not enough for release; the optical bypass reduces BKR↔ATS trusted intermediate nodes from 3 → 0, and on a cut vertex from 0 % → 100 %. The tests found two bugs, both fixed (evidence attribution, bypass without savings). |
+| `shield_sensor_hal.js` | Shield sensor HAL and data-feed mocks: `ShieldSensorHAL` contract, `PhysicalShieldModel` (door, gasket ageing, RF transmitter, detector ingress, fibre injection, thermal cycling), `MockShieldSensorDriver` (counter-based reproducible noise/quantisation/saturation + 10 fault types), `SensorFrameValidator` (fail-closed: stale/future/replayed/out-of-range/stuck → NaN, SE saturation as a lower bound, the smaller of a dual sensor, Y0 not verifiable → `y0Invalid` → block taint), `ShieldSensorFeed`, JSONL/CSV `FrameRecorder` + `ReplayShieldSensorDriver`, `SimulatedSensorDeviceServer` (real HTTP, fault modes) + `HttpShieldSensorDriver`. **Honesty:** the model is the same as the consumer's model (circular); drift cannot be detected with a single sensor. See `docs/SHIELD_SENSOR_HAL_DESIGN.md`. |
+| `shield_sensor_physics_test.js` · `shield_sensor_faults_test.js` · `shield_sensor_transport_test.js` | 8/8 · 9/9 · 8/8: sensor statistics (σ, Poisson Y0) and scenarios; feed → network + mesh end to end (door → BLOCK but no quarantine, injection → only KDK quarantined); fail-closed for every fault type; a single stuck sensor hides the door for ~1.45 s, a second sensor closes the gap; JSONL/CSV/HTTP paths are byte-identical. Two holes were found and closed: with Y0 telemetry interrupted, 14.5 Mbit were released using the model Y0; the mesh counted a NaN ratio as clean evidence. |
+| `qber_abort_policy.js` | QBER abort policy (a layer that does not touch the core): the ℓ = 0 cliff from the core's own finite-key formula (`qberCliff`; 9.3–9.6 % at n = 10⁶, ≈ 0 at message size), oracle-free parameter estimation (test bits are sacrificed), ℓ ≤ 0 or QBER_test ≥ cliff → ABORT; `gateEvidence()` → criterion 5 of `production_gate.js` now requires EVIDENCE rather than a declaration (the 11 % threshold and an `eavesdropAborts: true` declaration are blocked). **Honesty:** at the time of writing, the core/UI message path still showed the old 11 % flag and a per-message session could not produce a secure key, so keys had to come from a pooled block. Since core v2 the message session runs its own parameter estimation and finite-key bound (see `CORE_CHANGELOG.md`). |
+| `qber_abort_policy_test.js` · `skr_distance_sweep_test.js` · `quantum_phase_buffer_hold_test.js` | 8/8 · 6/6 · 8/8: the cliff is consistent with the core's formula; a 50 km message session is "clean" in the core but the policy says ABORT, a pool of 200 sessions says PROCEED (ℓ > 0); SKR over 0–200 km is monotonic and at every point ≤ PLOB and ≤ asymptotic GLLP; maximum distance for N = 10⁸/10¹⁰/10¹² → 81/112/119 km, Y0 = 10⁻⁶ → 151 km (chart `docs/skr_qber_distance.png`); the phase buffer now holds pulses (pulses sent beyond the target 14.1 % → 2.1 %, 0 with a 4σ margin). Also the decoy finite-key ε budget 1.4·ε → exactly ε (`chaos_decoy_state_finite_key_test.js`). |
+| `cabinet_lock_hal_test.js` | 7/7: all 10 invalid document types are rejected; the coordinator grants no authority before the window/drain; with a jammed actuator, a door that will not open and an unresponsive API the lock stays LOCKED; end-to-end flow over the real HTTP API, replay and forged signature → 403; on forced opening the exposure is on average 4365 bits with SE only → 787 bits with the door sensor (not zero — equal to the sensor latency); 0 with coordinated maintenance; mechanical emergency key → INCIDENT → unplanned within the same step. |
+| `noise_calibration_hardening_test.js` | 15/15 self-tests — 3 hardenings against the findings of `attack_simulation_qber_escalation.js` (victim contamination, no source authentication): HMAC-SHA256 source authentication (fail-closed), link-specific risk (no contamination), plausibility/logic bounds (impossible values — negative distance, QBER > 1 — are rejected). |
+| `noise_calibration_wiring_test.js` | 10/10 self-tests — "back into the core" verification: confirms that `NoiseMatrixCalibration.riskForDistance()` really changes the routing cost of `EdgeWeightPolicy.computeWeight()` and changes it CONSISTENTLY (farther/lossier = higher cost). |
+| `noise_matrix_validate.js` | Measures how well the core's analytic/heuristic models (static wavelength attenuation table, LEGA risk score) match the measurement matrix in `hal/noise_matrix.json` (collected through the HAL bridge with real HTTP calls). **Critical honesty note:** `hal/noise_matrix.json` currently comes from `SimulatedHardware` (NOT real fibre — an RNG-sampled Python port of the same closed-form formula), so the attenuation comparison is "almost tautological"; the LEGA comparison is more meaningful, but LEGA's `histBer` input is fed directly from the same measured QBER, so part of the high R² comes from that direct link. |
+| `noise_calibration.json` | Signed calibration data envelope (payload + HMAC). `sourceIsRealHardware: false` — states explicitly that it was produced from `hal/noise_matrix.json` (i.e. from `SimulatedHardware`), with the note "must be regenerated when real hardware is connected". |
+| `rf_noise_bridge.js` | Bridges the Faraday-cage EM-leakage findings by converting the shielding margin (dB) into an RF-induced, "dark-count-like" click probability that is fed into the real sifting/QBER simulation. `rfInducedDarkProb(marginDb)`: equal to the reference dark-count rate at margin = 0 dB, reduced ×10 for every +10 dB of margin. **Most critical honesty note:** the marginDb → dark-probability calibration is EXPLICITLY AN ASSUMPTION — the relation depends on the TIA/comparator design of the real analogue front end and can only be measured with real hardware; the module states it "must not be used for production decisions without hardware validation". |
+| `rf_noise_bridge_test.js` | 6/6 self-tests: calibration sanity check; with the old cage (5 mm bare aperture) at 0.3 m, RF leakage raises QBER ~×2.3 but stays below the 11 % threshold (a "silent" performance loss); with the new cage (3 mm + 9 mm honeycomb) at 0.3 m the RF contribution is negligible; the old cage at 0.1 m (near field) EXCEEDS 11 % QBER — the channel is ABORTED (an availability/DoS risk, not only a confidentiality one); the finite-key impact is measured. |
+| `faraday_cage_shielding.js` | Models Faraday-cage shielding effectiveness with standard EMC/Schelkunoff theory (SE = absorption + reflection + multiple-reflection correction) — because an EM side-channel attack LEAVES NO TRACE in QBER (unlike the observable side channels caught by `detector_recalibration.js`). Aperture leakage is modelled as a waveguide below cut-off (SE ≈ 20·log10(λ/2L), L = largest linear dimension). Independent leakage paths are combined in the POWER domain (the weakest path dominates). **Honesty note:** material constants (σr, μr) are textbook/handbook values, NOT real datasheet measurements. |
+| `faraday_cage_shielding_test.js` | 10/10 self-tests (A–I): solid wall dominates; aperture dominates (EMC rule: the weakest link is the aperture, not the area); the frequency sweep picks the worst case correctly; power combination of independent paths; the multiple-reflection correction gives a finite value in the degenerate case; unknown materials are rejected explicitly; **(H) realistic clock harmonics**: the project's own 1 GHz pulse repetition shows that evaluating a single frequency UNDERESTIMATES the REAL threat — at the 19th harmonic the same design is even worse; **(I) corrected design**: 3 mm aperture + 9 mm honeycomb depth (the typical 3:1 ratio of real EMC honeycomb panels) comfortably meets the 60 dB target over the entire 1–19 GHz range. |
+| `resonance_drill.js` | Finds the natural resonance frequency of the production back-pressure control loop and tests whether an attacker driving demand periodically at exactly that frequency can destabilise the system. Because the bang-bang/hysteresis-band controller is CLAMPED by a finite reservoir (it is not a linear second-order resonator), the amplitude CANNOT grow without bound — but the attacker MAXIMISES the mode-switching rate; the hysteresis band is exactly the mechanism that limits this. "This file does not argue, it measures." |
+| `landauer_choke_drill.js` | Investigates, for a deep-space satellite QKD scenario, whether THz-rate photon arrival can overwhelm Landauer-limited heat dissipation in a cold quantum memory ("quantum information choking"). **Two honest findings:** (A) the Landauer limit ITSELF is NOT the binding constraint — the real dissipation per operation is ~10 orders of magnitude above Landauer; the real wall is the cooler's heat-removal capacity. (B) the architecture's answer is not to beat the second law but to move entropy AWAY from the cold memory: basis-mismatch bits are discarded at the WARM detector stage (never written to the cold memory), and the kept key bits are exported over the link as light (the entropy leaves as light, not as heat). |
+| `memory_technology_threshold_test.js` | 5/5 self-tests — determines, for different quantum-memory coherence times (T2 = 1 ms … 10 s), the critical distance threshold at which entanglement-swapping yield does not collapse to zero. The threshold rises monotonically with T2; T2 = 10 ms really fails at 40 km, T2 = 1 s really succeeds. At high T2 it tests whether the plateau is memory-limited or photon-attempt-budget-limited — raising the budget 10× raises the threshold further (the observed saturation is budget-limited, not fundamentally memory-limited). **Honesty note:** the T2 tier values are ORDER-OF-MAGNITUDE representatives of platform classes, NOT MEASURED specifications of any specific device. |
+| `phi_high_tuning_test.js` | 7/7 self-tests — validates the proposed `φ_high = 0.80` production back-pressure threshold on a 9-point GRID instead of a SINGLE operating point (an instance of the recurring "single-point constant collapses" pattern). The FIRST candidate criterion ("the most economical φ that keeps rejection within 1 point of the baseline at every point") was REJECTED and kept in the report as evidence — the knee point wandered between 0.60 and 0.95. ACCEPTED criterion: collapse of the grid-averaged marginal rate of change (at φ_high = 0.80 the savings/rejection trade-off is still meaningful; at 0.85 it collapses to 0.011). |
+| `exact_slot_time.js` | A BigInt/arbitrary-precision redesign of the `i×periodPs` multiplication line in `run()` of `timetag_acquisition_bridge.js`. `precisionRiskForConfig()` tells in advance, without running the loop, whether the Number precision ceiling will be exceeded. **Honesty note:** it does NOT modify `run()` in `timetag_acquisition_bridge.js`; if the BigInt result is converted back to Number (which the existing downstream pipeline needs), the same precision loss is inherited — the module currently provides an independent audit + up-front risk detection, not a full pipeline migration. |
+| `exact_slot_time_test.js` | 6/6 self-tests. **Important methodological finding:** the FIRST approach, which tried to answer "how broken is it beyond the ceiling" by assuming a constant factor, turned out WRONG — because periodPs = 1000 contains powers of 2, some values of i remain exact far beyond the ceiling PURELY by binary-alignment luck; this was fixed by finding the REAL exact/inexact transition with a binary search (the same pattern as a similar self-correction in `floating_point_accumulation_test.js`). |
+| `epoch_reset_controller.js` | "Periodic reset" — the operating discipline that keeps counters from ever approaching the huge limits found by `floating_point_accumulation_test.js` (a 10-year projection exceeds MAX_SAFE_INTEGER 5.3×). Two complementary mechanisms: (1) an epoch-local Number counter reset every 30 days + an `onEpochRollover` hook (the real mTLS session-refresh logic attaches HERE — this file does NOT renegotiate a real TLS socket), (2) a BigInt lifetime archive that is never reset. |
+| `epoch_reset_controller_test.js` | 7/7 self-tests: basic reset; the hook is called in order; **10-year marathon, zero bits lost** — lifetimeCount matches an independently computed total EXACTLY (the exact opposite of the Number-only 5.3× overflow finding); ~23× safety margin with 30-day resets vs < 1× (overflow) without; a single 100-epoch time jump is chained without skipping any. |
+| `floating_point_accumulation_test.js` | Tests whether IEEE-754 double-precision rounding error accumulates over days/years. (A) **integer-representation ceiling**: above 2^53 consecutive integers cannot be distinguished — the 10-year cumulative post-sifting bit projection EXCEEDS the ceiling ~5.3× (this directly motivated `epoch_reset_controller.js`); (B) naive summation error grows with N, Kahan-compensated summation stays constant; (C) the EXACT stall threshold of naive accumulation was found by binary search: exactly 2^24 seconds (~194 days); (D) the real architecture (multiplication, not an accumulator) is STRUCTURALLY immune to this class of stall error; (E) the core's real EMA shows no drift over 200M cycles (~3.17 years); (G) the final Toeplitz key BITS are produced with integer XOR/AND operations — the floating-point rounding channel never touches key VALUES. |
+| `hysteresis_band_test.js` | 18/18 self-tests — establishes the rationale for the production back-pressure hysteresis band width (h = 0.08 default) (the third occurrence of the "single-point constant" pattern). Confirms that at h = 0 mode switching "explodes". The REJECTED first criterion ("the narrowest band that brings mode switching down to the floor" — a degenerate, monotonically decreasing metric always picks the widest band) is kept as evidence. The real cost of the band is NOT reservoir oscillation (the first hypothesis, refuted by data) but SAVINGS: if h ≥ 1 − φ_high, throttling NEVER triggers. |
+| `mtls_failsafe_debounce.js` | Wraps the core's stateless `mtlsHandshakePrecondition()` in an optional, stateful time-hysteresis layer — to fix the "early death" false positive (a single noisy SE reading should not trigger an instant mTLS lock). A two-stage, deliberately asymmetric Schmitt-trigger design: debounce (confirming bad → BLOCKED requires sustained bad readings) + recovery hysteresis (leaving BLOCKED is harder — it requires uninterrupted good readings, with no "almost recovered" credit). **Cold-start exception:** debounce ONLY protects an already-verified OK state — if the FIRST reading is bad, the state is BLOCKED immediately (no free mTLS window on a system that is already faulty). The default parameters are now derived from REAL EMC standards: `DEFAULT_DEBOUNCE_MS=630ms` (IEC 61000-4-4 EFT/burst), `DEFAULT_RECOVERY_MARGIN_DB=5dB` (IEEE Std 299). `RECOVERY_ASYMMETRY_FACTOR=10` is explicitly marked as POLICY (not derived from a standard). |
+| `mtls_failsafe_debounce_test.js` | 10/10 self-tests (A–I): transient immunity; a sustained real fault is caught, with delay; a single good reading does NOT unlock; an interrupted recovery resets the counter; the cold-start exception; a real measured ageing trajectory (same AGING_SEED = 7, firstFailCycle = 335) with injected synthetic transients that are fully filtered while the real degradation is still caught; the EMC-standard-derived defaults are verified to match their formulas exactly. |
+| `adaptive_shielding_mitigation.js` | "Smart throttling instead of an instant cut-off": splits an SE drop into four levels — NORMAL; ADAPT (SE_required ≤ SE < target: μ, ν, signal/decoy/vacuum ratios and the LDPC code rate are re-selected at block boundaries by finite-key optimisation, with peak-hold and hysteresis); HOLD (outward leakage detectable, transient drop below the floor, or R = 0: mTLS stays open, blocks touching that window are quarantined, delivery continues from the clean pool with exponential throttling); BLOCK (sustained violation of the 30 dB floor — the existing debounce, UNCHANGED). **Honesty:** parameter optimisation only compensates for visible inbound noise; it does NOT reduce outward EM leakage that is invisible in QBER; throttling provides continuity, not security; the inbound model is not calibrated; it is not connected to the KME or production_gate. See `docs/ADAPTIVE_SHIELDING_MITIGATION_DESIGN.md`. |
+| `adaptive_shielding_mitigation_test.js` | 17/17 self-tests (A–P): SE_required ↔ emissionDetectabilityCheck 12/12; no silent default; full adaptation ≥ code-rate-only ≥ fixed (at Y0 = 2e-4: 0 → 3.26e-4); block-size effect; ADAPT at SE = 45 dB where the old precondition refused; with a 200 ms 25 dB drop mTLS never drops, 6 blocks are quarantined, starvation 0; recovery with margin; at the end of τ the pool = e^−1 (naive: 5930 ms of starvation); 1 transition under SE flicker (unprotected control: 201); BLOCK under sustained violation; determinism; the SHA-256 of 8 files unchanged. |
+| `multinode_shielding_network.js` | Integration of the 4-level decision matrix into the multi-node trusted-node network: node-level `ShieldLevelTracker` (mTLS, relay and SAE delivery eligibility; a leaking node that is not isolated cannot relay), link-level `AdaptiveShieldingMitigation` (the smaller SE of both ends, Y0 measured at the receiver), max-min allocation + residual-capacity rounds with `qkd_network_scale` (multipath), penalty weight on HOLD links. `legacy-strict` / `legacy-debounce` policies for comparison. See `docs/MULTINODE_SHIELDING_TESTBED.md`. |
+| `multinode_shielding_testbed.js` | 21/21 self-tests, two stages. **Stage 1 (60 min simulated field):** 6 nodes/8 links, EFT artefact, sensor dropout, maintenance door, a short real leak, gasket ageing, nearby transmitter; a ground-truth provenance ledger. Adaptive: 99.19 % delivered, 1 mTLS interruption, 0 leaked bits; legacy policies: 64 % delivered, 1054/2 interruptions and 405,063 bits of leaked provenance (they close the channel but do not track provenance). Guard-band Monte Carlo: leakage in 2 % of events at band 0, 0 at ±1 dB. **Stage 2 (real processes):** real PKI, 6 KME processes, real mTLS ETSI-014 flows; on BLOCK the TLS sessions are really cut, fail-closed on a stale gate, re-routing, 404/404 keys byte-for-byte with clean provenance. **Honesty:** the physical layer is simulated; event rates are assumptions. |
 
-### 4.2 Ağ / yönlendirme / dolanıklık (entanglement) katmanı
+### 4.2 Network / routing / entanglement layer
 
-> Mimari not: PhotonNet2.jsx'in GERÇEK motoru BB84 hazırla-ölç + güvenilir-düğüm
-> aktarımıdır, GERÇEK dolanıklık-takası DEĞİL. Bu kategorideki dolanıklık
-> modülleri, çekirdeğin gerçek fiber-kayıp/karanlık-sayım sabitlerini
-> yeniden kullanan ama çekirdek motoruna hiç dokunmayan, dürüstçe
-> etiketlenmiş AYRI bir ek katmandır.
+> Architecture note: the REAL engine of PhotonNet2.jsx is BB84 prepare-and-measure + trusted-node relay,
+> NOT REAL entanglement swapping. The entanglement modules in this category are an honestly labelled,
+> SEPARATE add-on layer that reuses the core's real fibre-loss/dark-count constants but never touches the
+> core engine.
 
-| Dosya | Ne yapar |
+| File | What it does |
 |---|---|
-| `entanglement_hom_fidelity_sim.js` | HOM (Hong-Ou-Mandel) girişimi + Bell-durumu sadakati üzerinden dolanıklık DAĞITIMINI simüle eder. g²(0)=0.045 çok-foton kirliliği, ayırt edilemezlik %92.5, SNSPD verimliliği %82, karanlık sayım 50Hz (çekirdekle tutarlı). Werner-durumu Bell sadakati F=(1+3p)/4, takas sadakati p_swap≈p1×p2. |
-| `entanglement_hom_fidelity_test.js` | Mesafe taramasıyla F>0.5 dolanıklık geçiş noktası; eşleşme-penceresi taramasıyla sadakat/başarı-oranı ödünleşimi (pencere seçimi niteliksel olarak entangled/değil'i çevirebilir); 3-düğümlü takas zinciri — tepe sadakat çarpımsal olarak düşerken (p1×p2) erişim mesafesi kabaca ikiye katlanıyor. |
-| `entanglement_multihop_router.js` | N elemanter bağlantı üzerinden takas zamanlamasını genelleştirir. Saf faz gürültüsü için takas SIRASININ nihai sadakate cebirsel olarak İLGİSİZ olduğunu kanıtlar (Pauli-hata evrişimi birleşmeli+değişmeli) — yönlendirme politikasından gelen kazanç yalnızca BEKLEME SÜRESİ azalmasıdır, fizik değil. **Açıkça uyarır:** "sıralamanın sadakati artırdığı" yanlış izlenimine karşı. |
-| `entanglement_swap_scheduler.js` | v2 motor — v1'in üç ölçülmüş darboğazını düzeltir: naif bellek reddi (yerine geri-basınç/erteleme), BBPSSW'nin bilgi-atan saflaştırması (yerine DEJMPS — Bell-köşegen durumu tam korur), soyut round/kapasite modeli (yerine gerçek fiber fiziği, η=10^(−αL/10), α=0.2dB/km SMF-28). **Dürüstlük notu:** v1 dosyası KASITLI OLARAK silinmedi/değiştirilmedi — "iyileştirme" iddialarının doğrulanabilir bir tabanı olarak tutuldu. α=0 idealizasyon/üst-sınır referansıdır, GERÇEK bir uydu bağlantısı DEĞİLDİR. |
-| `entanglement_swap_scheduler_test.js` | v2'nin üç iyileştirmesini v1 tabanına karşı ayrı ayrı ölçer (bellek zamanlama, BBPSSW vs DEJMPS verimi, gerçek fiber-fiziği mesafe/T2 taramaları, v1'e karşı toplu iyileştirme faktörü). |
-| `entanglement_swap_concurrency_test.js` | (v1 taban) 1000 istek, %35 kanal kaybı, %12 dephazing, sınırlı kuantum bellek (300 yuva/düğüm), BBPSSW saflaştırma, eşevrelik zaman-aşımları — kullanıcının orijinal test spesifikasyonu. **Dürüstlük notu:** kasıtlı olarak (daha doğru DEJMPS yerine) BBPSSW kullanır, metodolojik tutarlılık için; "Werner durumu" etiketi bir yaklaşıklıktır (gerçekte Φ+/Φ− karışımı). |
-| `multihop_qkd_flow_test.js` | (A) A-R1-R2-B üzerinde dinamik yönlendirme, (B) elde edilen yüksek-sadakatli çiftleri tüketerek gerçek BBM92 QKD veri akışı (şifrele/çöz). **Dürüst bulgu** (başlıkta açıkça yazılı): "yönlendirme politikası ÖLÇÜLEBİLİR FARK YARATMIYOR" (bekleme/T2 oranı ~0.01 bu rejimde). QBER doğrudan Bell durumundan türetilir (uydurulmamış): QBER_Z=X+Y, QBER_X=Z+Y. |
-| `multipath_routing_test.js` | Gerçek çekirdek fonksiyonlarına (routeCalculationResilient/NetworkTopology.disjointPaths) karşı dayanıklı çoklu-yol yönlendirmeyi doğrular: risk verisi yoksa en ucuz yol; doğrulanmış yüksek risk gerçek ayrık bir yedek koridora yönlendiriyor; ayrık yedek YOKSA sistem dürüstçe birincil yolda kalıyor (sahte yol uydurmuyor). |
-| `network_matrix_routing_test.js` | Kasıtlı paylaşılan bağlantılı (R1-R3) küçük sentetik topoloji üzerinde ağ-matrisi inşası + çoklu-yol paralel yönlendirme. Bitişiklik simetrisi, derece-toplamı el sıkışma lemması, matris-kuvveti yol sayımı DFS ile çapraz kontrol edildi. **Dürüstlük notu:** verim FORMÜLLE TAHMİN EDİLMİYOR, GERÇEK simülatör çalıştırılarak ölçülüyor. |
-| `quantum_network_matrix.js` | Ağ için bitişiklik/mesafe/kapasite/elemanter-sadakat matrislerini kurar, paralel yönlendirmeyi bir akış-tahsis (LP) problemi olarak formüle eder — açgözlü su-doldurma + kaba-kuvvet ızgara araması ile optimallik açığı ÖLÇÜLÜR (açgözlünün optimal olduğu VARSAYILMAZ). |
-| `link_reputation_engine_test.js` | `LinkRiskReputationEngine`+`CalibrationRateLimiter`'ın (3./4. sertleştirme turu) karantina, EMA, kalıcı-olmayan askıya alma davranışlarını doğrular. **Dürüstlük notu:** test tasarımı sırasında gerçek bir hata bulunup düzeltildi — gerçek duvar-saati zamanı kullanmak hız-sınırlayıcıyı yanlışlıkla tetikliyordu, sentetik saatle düzeltildi. |
-| `parallel_routing_qkd_rate_test.js` | Paralel yönlendirmenin ×2.48'lik çift-sayısı kazancının GERÇEK QKD anahtar ÜRETİM ORANINA nasıl çevrildiğini inceler — üç ayrı etki: sonlu-anahtar amortismanı, QBER seyrelmesi (yolların eşit olmayan sadakati, havuzlama h2'nin dış-bükeyliği yüzünden zarar verir), makespan uyumsuzluğu (yollar farklı zamanlarda bitiyor). |
-| `qkd_network_scale.js` | **"A6"** — QKDNetSim tarzı trafik köprüsünü tam ağ ölçeğine (çok-atlamalı yönlendirme + güvenilir-düğüm anahtar aktarımı, EuroQCI tarzı, ara düğümlerde XOR aktarım) ölçekler. Dijkstra + ilerlemeli-doldurma max-min adil tahsis; NS-3 QKDNetSim-v2 uyumlu senaryo dosyası ihraç eder. |
-| `qkd_network_scale_test.js` | 8 düğüm/11 bağlantılı Türkiye-benzeri topolojide 6 karma talep üzerinde doğrulanır: bağlantı hızı mesafeyle düşüyor (>3× fark 70km-120km arası); çok-atlamalı aktarım darboğaz bağlantıyla sınırlı; kapasite hiç aşılmıyor; adil paylaşım (%5 içinde). |
-| `qkd_at_limit_test.js` | BBM92 ve E91'i deneysel olarak bulunan "52 km limiti"nde test eder — kayıpsız kanalda bile (α=0) faz gürültüsü+bellek eşevresizliği kritik verim eşiğine çarpar. Ölçülen S değeri analitik CHSH beklentisiyle istatistiksel 3σ içinde karşılaştırılır. **Dürüst bulgu:** 52km'de hiçbir yapılandırma güvenli anahtar vermiyor; E91 BBM92'den "daha iyi" DEĞİL — bir ödünleşim (cihaz-bağımsızlık vs daha düşük anahtar verimi). |
-| `qkd_over_entanglement.js` | Dolanıklık motorundan yüksek-sadakatli Bell çiftlerini tüketerek gerçek güvenli-anahtar üretimi ve OTP veri akışı çalıştıran üst-katman QKD (BBM92). QBER doğrudan Bell durumu Pauli-hata bileşenlerinden türetilir. Kendi UTF-8-güvenli bit dönüşümünü yazar çünkü çekirdeğin t2b/b2t'si 8-bit'tir ve Türkçe karakterleri BOZAR (bulunan gerçek bir hata olarak belgelenmiş). |
-| `qkd_backpressure.js` | Depo doluluk seviyesine dayalı üretim geri-basıncı/kısma — sabit-blok üretimin (talep üretimin yarısıyken ~%49 israf) yerini alır. Üç bölgeli denetleyici (φ_high altı: maksimize et; φ_high üstü: tamamen durdur). **Dürüstlük sınırı:** geri-basınç israfı ORTADAN KALDIRIR ama KAPASİTE YARATMAZ — talep maksimum üretimi aşarsa hiçbir politika kurtaramaz. |
-| `backpressure_test.js` | Sabit-blok tabanı >%20 anahtar israf ediyor; geri-basınç israfı 1/4'ünün altına indiriyor; sıfır-taşma; **dürüstçe belirtilen ödünleşim**: ani talep sıçramasında φ_high'ta kısma daha AZ "yastık" bırakıyor, bu yüzden bazen sabit-blok tabanından DAHA FAZLA reddediyor ("φ_high'ın bedeli", hata değil). |
-| `continuous_stream_test.js` | QKD denetleyicisini durağan, SÜREKLİ bir çift akışı üzerinde uçtan uca çalıştırır. "SLA uçurumu" bulur — belirli bir gecikmenin altında ÜRETİLEN TÜM çiftler sıfır anahtar veriyor (kademeli değil, ani). Sürekli Bell/CHSH izleme %97+ oturum boyunca 3σ-anlamlı ihlali sürdürüyor. **"Tek bir 'en iyi T' YOKTUR."** |
-| `buffer_starvation_test.js` | Gerçek bir ETSI-014 KME sunucusuna karşı canlı mTLS entegrasyon testi — talep arzı aştığında güvenli başarısızlık: çift key_ID yok, temiz HTTP 503, sunucu çökmüyor, /status doğru sıfır raporluyor. **Mimari itiraf:** gerçek keystore SUNUCU BAŞLANGICINDA tek seferlik yüklenir (sıcak-yeniden-yükleme YAPMAZ) — havuz tükenmesi mimari olarak KAÇINILMAZ, asıl soru güvenli başarısızlık mı. |
-| `duty_cycle_test.js` | İddia edilen "×4.5 baz-eşleşme verimliliği" artışının ölçüme-bağımlı olduğunu gösterir — E91'in anahtar-oranına karşı BB84'ün TOPLAM eleme oranını karşılaştırmak elma-armut kıyaslamasıdır; AYNI metrikle oran gerçekte 2.25'tir. Yanlı baz-seçimi p taraması key-round oranının p² ile ölçeklendiğini doğrular (Lo-Chau-Ardehali 2005). |
-| `bb84_e91_duty_cycle.js` | Ölçülen hibrit BB84/E91 duty-cycle şemasını uygular — yanlı baz seçimi + adanmış Bell-test turları. Optimal p, sonlu-anahtar ℓ formülünü maksimize eden ince-taneli sayısal aramayla türetilir (varsayılmaz). |
-| `attenuation_sweep_test.js` | (A) gerçekçi fiber sınıfları arası α taraması — α=0 (kayıpsız) bile mesafe limitini KALDIRMIYOR (bağlayıcı kısıt faz gürültüsü+eşevresizlik, fiber kaybı değil). (B) DEJMPS saflaştırma tur-sayısı patlaması F=0.5 tabanına yaklaşırken. **Dürüstlük notu:** α=0 GERÇEK bir uydu bağlantısını TEMSİL ETMEZ, salt bir üst-sınır referansıdır. |
-| `async_sync_drill.js` | Senkronizasyon PENCERELERİNİ (ham yük değil) hedefleyen saldırı tatbikatı — asimetrik saat kayması/jitter/sürüklenme enjeksiyonuyla replay korumasını kırmaya ve ETSI-014 KME el sıkışmasında kilitlenmeye çalışır. Naif zaman-penceresi tabanlı replay koruması sürekli sürüklenme altında canlı-kilitlenmeye düşerken (verim <%20), durum-tabanlı (key_ID içerik-adresli) koruma bağışıktır. **Gerçek bir hata bulundu ve düzeltildi:** naif (birleştirmeyen) yeniden-senkron uçan-durumdaki el sıkışmaları eziyordu — birleştirme semantiğiyle düzeltildi. |
-| `sla_ceiling_test.js` | SLA (blok gecikmesi) taramasını 10 saniyeye kadar genişletir, sürdürülen anahtar oranının asimptotik tavana (R∞) ne kadar yaklaştığını görmek için analitik bir model kurar ve doğrular (her SLA'da <%6 hata). Karesel-yasa ölçeklendirme doğrulanır: tavana olan açık ∼1/√T. |
+| `entanglement_hom_fidelity_sim.js` | Simulates entanglement DISTRIBUTION via HOM (Hong–Ou–Mandel) interference + Bell-state fidelity. g²(0) = 0.045 multi-photon contamination, 92.5 % indistinguishability, 82 % SNSPD efficiency, 50 Hz dark counts (consistent with the core). Werner-state Bell fidelity F = (1+3p)/4, swap fidelity p_swap ≈ p1×p2. |
+| `entanglement_hom_fidelity_test.js` | F > 0.5 entanglement transition point from a distance sweep; fidelity/success-rate trade-off from a coincidence-window sweep (the window choice can qualitatively flip entangled/not entangled); 3-node swap chain — peak fidelity falls multiplicatively (p1×p2) while reach roughly doubles. |
+| `entanglement_multihop_router.js` | Generalises swap scheduling over N elementary links. Proves that, for pure phase noise, the swap ORDER is algebraically IRRELEVANT to the final fidelity (Pauli-error convolution is associative + commutative) — the gain from a routing policy is only reduced WAITING TIME, not physics. **Explicitly warns** against the false impression that "ordering improves fidelity". |
+| `entanglement_swap_scheduler.js` | v2 engine — fixes three measured bottlenecks of v1: naive memory rejection (replaced by back-pressure/deferral), BBPSSW's information-discarding purification (replaced by DEJMPS — fully preserves the Bell-diagonal state), and the abstract round/capacity model (replaced by real fibre physics, η = 10^(−αL/10), α = 0.2 dB/km SMF-28). **Honesty note:** the v1 file was DELIBERATELY not deleted/changed — it is kept as a verifiable baseline for the "improvement" claims. α = 0 is an idealisation/upper-bound reference, NOT a REAL satellite link. |
+| `entanglement_swap_scheduler_test.js` | Measures each of v2's three improvements separately against the v1 baseline (memory scheduling, BBPSSW vs DEJMPS yield, real fibre-physics distance/T2 sweeps, overall improvement factor vs v1). |
+| `entanglement_swap_concurrency_test.js` | (v1 baseline) 1000 requests, 35 % channel loss, 12 % dephasing, limited quantum memory (300 slots/node), BBPSSW purification, coherence time-outs — the user's original test specification. **Honesty note:** deliberately uses BBPSSW (instead of the more accurate DEJMPS) for methodological consistency; the "Werner state" label is an approximation (in reality a Φ+/Φ− mixture). |
+| `multihop_qkd_flow_test.js` | (A) dynamic routing over A-R1-R2-B, (B) a real BBM92 QKD data flow (encrypt/decrypt) consuming the high-fidelity pairs obtained. **Honest finding** (stated explicitly in the header): "the routing policy makes NO MEASURABLE DIFFERENCE" (waiting/T2 ratio ~0.01 in this regime). QBER is derived directly from the Bell state (not invented): QBER_Z = X + Y, QBER_X = Z + Y. |
+| `multipath_routing_test.js` | Verifies resilient multipath routing against the real core functions (routeCalculationResilient / NetworkTopology.disjointPaths): with no risk data, the cheapest path; verified high risk routes to a real disjoint backup corridor; if NO disjoint backup exists, the system honestly stays on the primary path (it does not invent a fake one). |
+| `network_matrix_routing_test.js` | Network-matrix construction + multipath parallel routing on a small synthetic topology with a deliberately shared link (R1–R3). Adjacency symmetry, the degree-sum handshake lemma and matrix-power path counting were cross-checked with DFS. **Honesty note:** throughput is NOT ESTIMATED BY A FORMULA, it is measured by running the REAL simulator. |
+| `quantum_network_matrix.js` | Builds adjacency/distance/capacity/elementary-fidelity matrices for the network and formulates parallel routing as a flow-allocation (LP) problem — the optimality gap is MEASURED with greedy water-filling + brute-force grid search (greedy is NOT ASSUMED to be optimal). |
+| `link_reputation_engine_test.js` | Verifies the quarantine, EMA and non-permanent suspension behaviour of `LinkRiskReputationEngine` + `CalibrationRateLimiter` (hardening rounds 3 and 4). **Honesty note:** a real bug was found and fixed while designing the test — using real wall-clock time accidentally triggered the rate limiter; fixed with a synthetic clock. |
+| `parallel_routing_qkd_rate_test.js` | Examines how parallel routing's ×2.48 pair-count gain translates into the REAL QKD key PRODUCTION RATE — three separate effects: finite-key amortisation, QBER dilution (paths have unequal fidelity, and pooling hurts because h2 is concave), makespan mismatch (paths finish at different times). |
+| `qkd_network_scale.js` | **"A6"** — scales the QKDNetSim-style traffic bridge to full network scale (multi-hop routing + trusted-node key relay, EuroQCI style, XOR relay at intermediate nodes). Dijkstra + progressive-filling max-min fair allocation; exports an NS-3 QKDNetSim-v2–compatible scenario file. |
+| `qkd_network_scale_test.js` | Verified on 6 mixed demands over a Turkey-like topology with 8 nodes/11 links: link rate falls with distance (> 3× difference between 70 km and 120 km); multi-hop relay is limited by the bottleneck link; capacity is never exceeded; fair sharing (within 5 %). |
+| `qkd_at_limit_test.js` | Tests BBM92 and E91 at the experimentally found "52 km limit" — even on a lossless channel (α = 0), phase noise + memory decoherence hit the critical yield threshold. The measured S value is compared with the analytic CHSH expectation within statistical 3σ. **Honest finding:** at 52 km no configuration yields a secure key; E91 is NOT "better" than BBM92 — it is a trade-off (device independence vs lower key yield). |
+| `qkd_over_entanglement.js` | Upper-layer QKD (BBM92) that consumes high-fidelity Bell pairs from the entanglement engine to run real secure-key generation and an OTP data flow. QBER is derived directly from the Pauli-error components of the Bell state. Implements its own UTF-8-safe bit conversion because the core's t2b/b2t is 8-bit and CORRUPTS Turkish characters (documented as a real bug that was found). |
+| `qkd_backpressure.js` | Production back-pressure/throttling based on reservoir fill level — replaces fixed-block production (~49 % waste when demand is half of production). Three-zone controller (below φ_high: maximise; above φ_high: stop completely). **Honest limit:** back-pressure ELIMINATES waste but does NOT CREATE CAPACITY — if demand exceeds maximum production, no policy can save it. |
+| `backpressure_test.js` | The fixed-block baseline wastes > 20 % of keys; back-pressure brings waste below 1/4 of that; zero overflow; **honestly stated trade-off**: under a sudden demand spike, throttling at φ_high leaves LESS "cushion", so it sometimes rejects MORE than the fixed-block baseline ("the price of φ_high", not a bug). |
+| `continuous_stream_test.js` | Runs the QKD controller end to end on a stationary, CONTINUOUS pair stream. Finds an "SLA cliff" — below a certain latency ALL pairs PRODUCED yield zero key (abruptly, not gradually). Continuous Bell/CHSH monitoring sustains a 3σ-significant violation over 97 %+ of the session. **"There is no single 'best T'."** |
+| `buffer_starvation_test.js` | Live mTLS integration test against a real ETSI-014 KME server — safe failure when demand exceeds supply: no duplicate key_ID, clean HTTP 503, the server does not crash, /status correctly reports zero. **Architectural admission:** the real keystore is loaded once AT SERVER START (no hot reload) — pool exhaustion is architecturally UNAVOIDABLE; the real question is whether it fails safely. |
+| `duty_cycle_test.js` | Shows that the claimed "×4.5 basis-matching efficiency" gain depends on the metric — comparing E91's key rate with BB84's TOTAL sifting rate is apples to oranges; with the SAME metric the ratio is actually 2.25. A sweep of the biased-basis probability p confirms that the key-round rate scales with p² (Lo–Chau–Ardehali 2005). |
+| `bb84_e91_duty_cycle.js` | Implements the measured hybrid BB84/E91 duty-cycle scheme — biased basis choice + dedicated Bell-test rounds. The optimal p is derived by a fine-grained numerical search that maximises the finite-key ℓ formula (not assumed). |
+| `attenuation_sweep_test.js` | (A) α sweep across realistic fibre classes — even α = 0 (lossless) does NOT REMOVE the distance limit (the binding constraint is phase noise + decoherence, not fibre loss). (B) Explosion in the number of DEJMPS purification rounds as F approaches the 0.5 floor. **Honesty note:** α = 0 does NOT REPRESENT a REAL satellite link; it is purely an upper-bound reference. |
+| `async_sync_drill.js` | Attack drill targeting synchronisation WINDOWS (not raw payload) — tries to break replay protection and deadlock the ETSI-014 KME handshake by injecting asymmetric clock offset/jitter/drift. Naive time-window replay protection falls into live-lock under persistent drift (yield < 20 %), while state-based (content-addressed key_ID) protection is immune. **A real bug was found and fixed:** naive (non-merging) resynchronisation overwrote in-flight handshakes — fixed with merge semantics. |
+| `sla_ceiling_test.js` | Extends the SLA (block latency) sweep to 10 seconds, builds and validates an analytic model of how closely the sustained key rate approaches the asymptotic ceiling (R∞) (< 6 % error at every SLA). Square-root-law scaling is confirmed: the gap to the ceiling ∼ 1/√T. |
 
-### 4.3 Güvenlik / protokol / ETSI-014 / PKI katmanı
+### 4.3 Security / protocol / ETSI-014 / PKI layer
 
-| Dosya | Ne yapar |
+| File | What it does |
 |---|---|
-| `authenticated_channel.js` | Çekirdeğin bozuk klasik-kanal MAC'ini gerçek bir Wegman-Carter kimlik doğrulamalı kanalla değiştiren katman-düzeyi düzeltme. `tag_i = H_r(m_i) ⊕ s_i`, GF(2⁶¹−1) üzerinde polinom-değerlendirme evrensel hash. **Dürüstlük notu:** çekirdeğin `ClassicalAuthChannel._computeTag` MAC'i ölçülen ~%41 kurcalama-kaçırma oranıyla BOZUK — bu dosya katman-düzeyi düzeltmedir, çekirdek düzeltmesi değil. |
-| `authenticated_channel_test.js` | 7 öz-test: kurcalama-kaçırma WC ~%0 vs çekirdek ~%41 (20.000 deneme); sahtecilik 0/10.000; replay reddediliyor; 500 mesajlık akışta 1 MITM bit-çevirme → tam olarak 1 yakalanıyor; maske havuzu tükenince fail-closed. |
-| `network_shielding_bridge.js` | Faraday-kafes EM-kalkanlama sonuçlarını ETSI GS QKD 014 mTLS el sıkışması için fail-closed bir ön-koşul kapısına köprüler. `mtlsHandshakePrecondition()` iki bağımsız kontrol uygular: çağıranın kendi `targetSeDb` sonucu VE bağımsız `EMERGENCY_SE_FLOOR_DB=30` mutlak taban (kullanıcı geri bildirimine yanıt olarak eklendi). **Kapsam notu:** `etsi014_kme_server.js`'in GERÇEK TLS mantığını yeniden yazmaz — dağıtımcının sunucuyu başlatmadan ÖNCE çağırabileceği bir ön-uçuş katmanıdır. |
-| `network_shielding_bridge_test.js` | 6 öz-test: iyi kafes → izin veriliyor; kötü kafes → fail-closed reddediliyor; kafes değerlendirmesi yoksa varsayılan olarak reddediliyor (asla sessizce izin verilmiyor); `production_gate.js`'e otomatik entegrasyon (9. kapı kriteri). |
-| `production_gate.js` | Tüm önceki fazların güvenlik değişmezlerini tek bir git/gitme kararında birleştiren Faz-4 üretim kapısı — yazılımın kapatabileceği ile DONANIM gerektiren şeyi açıkça ayırır. 9 kapı kriteri: klasik MAC gücü, yan-kanal izleyici, QRNG donanım entropisi, gerçek QBER'de pozitif sonlu-anahtar güvenliği, gözcü-durdurma davranışı, ETSI-014 uyumu, dedektör kalibrasyonu (her zaman "donanım"), EM sızıntısı/Faraday kafesi, mTLS el sıkışma ön-koşulu. Kalan "donanım" kriterleri asla yeşil boyanmaz. |
-| `production_gate_test.js` | 7 öz-test: çekirdek MAC ~%41 kaçırma vs güçlü MAC <%0.01; yan-kanal izleyici dedektör-asimetrisini ve gözcülüğü ayrı ayrı yakalıyor; `mulberry32` reddediliyor (tekrarlanabilir), `crypto.randomBytes` kabul ediliyor (ama üretim için sertifikalı donanım QRNG hâlâ gerekli olarak işaretli). |
-| `production_security_audit.js` | Bağımsız (dependency-free) bir QBER/Gain/sonlu-anahtar (ε-güvenlik) denetim fonksiyonu — üçüncü bir tarafın (örn. IBM) PhotonNet'in kendi ara hesaplamalarına GÜVENMEDEN, ham veriden iddia edilen güvenlik sayılarını bağımsızca yeniden türetmesini sağlar. Serfling (1974), Scarani ve ark. (2009), Tomamichel & Leverrier (2017), Portmann & Renner (2022) kaynak gösterilir. **Dürüstlük notu (Gain hakkında):** simülatör yalnızca baz-eşleşen darbeleri fiziksel olarak simüle eder — bu yüzden raporlanan Gain, baz-uzlaşma kaybı+kanal/dedektör kaybının BİRLEŞİK bir rakamıdır, gerçek donanım raporlarının genelde ayırdığı ham tıklama oranından farklıdır. |
-| `qkd_secure_channel.js` | **("A2")** ETSI-014 ile teslim edilen gerçek bir QKD anahtarını, klasik ECDHE ile hibritleyerek bir GERÇEK TLS oturumunun PSK kökü olarak kullanır. Node'un `tls` (OpenSSL) PSK desteği, ECDHE-PSK-CHACHA20-POLY1305 gibi şifre paketleri. Hibrit güvenlik: klasik ECDHE VEYA QKD PSK'sinden HERHANGİ BİRİ güvenli kalırsa güvenli. |
-| `qkd_secure_channel_test.js` | 6 öz-test: ETSI-014 teslimi (master/slave aynı anahtarı alıyor); o anahtar gerçek bir TLS PSK'sine dönüşüyor; yanlış anahtarlı istemci reddediliyor; hibrit ECDHE-PSK ileri-gizlilik doğrulanıyor; el sıkışmanın pasif dinlemesi ham QKD anahtarının hatta HİÇ görünmediğini gösteriyor. |
-| `qkd_session_controller.js` | Ölçümle (sabit sabitler yerine) ne zaman bir QKD bloğunun kapanması gerektiğini (oran-maksimize eden marjinal kural) ve yeni bir ağ yolunun ortak anahtar havuzuna kabul edilip edilemeyeceğini türetir. **Gösterilen bulgu:** gözlemlenen R_key(T) tepesi T≈850ms sonlu deneme bütçesinin (20.000/segment) bir ARTİFAKTIDIR, gerçek bir doygunluk noktası DEĞİL — bütçeyi 5× artırmak tepeyi 839ms→3673ms kaydırıyor. Doğru durdurma kuralı d(ℓ/T)/dT=0'dan türetiliyor. |
-| `qkd_session_controller_test.js` | 18 öz-test — 850ms tepesinin bütçe artifaktı olduğunu, marjinal kuralın bütçeden bağımsız gerçek tepeyi bulduğunu, sürekli beslemede hiç tetiklenmediğini (SLA devralıyor), kabul eşiğinin kaba-kuvvet taramasıyla eşleştiğini doğrular. |
-| `qkd_key_supply.js` | Sıkı bir SLA (<350ms) altında blokların sonlu-anahtar güvenlik sınırını temizleyemediği (100/200ms'de üretilen çiftlerin %100'ü israf) ultra-düşük-gecikme sorununu iki stratejiyle çözer: (1) esnek kapanma penceresi ("DÜRÜSTLÜK: bu GERÇEK ultra-düşük gecikme SAĞLAMAZ — sonlu-anahtar sınırı sert bir fiziksel tabandır, 'gecikme garantisini' 'anahtar garantisine' çevirir, ikisi birden asla"); (2) anahtar-envanteri/tahsisatçı katmanı (üretim gecikmesini teslim gecikmesinden ayırır). Çekirdekte bulunan bir bellek-sızıntısı-benzeri sorunu (`KeyDeliveryStore.byRoute` asla budanmıyor) çekirdeğe dokunmadan tahsisatçı katmanında düzeltir. |
-| `key_supply_test.js` | 13 öz-test — sert 200ms SLA'nın kilitlendiğini, S_min≈D·T_b boyutlandırma kuralını, daha büyük rezervuarın güvenlik bedelini (ortalama/maksimum anahtar yaşı) ölçer. "Üçler kuralı" istatistiksel dikkatini uygular: 0/n gözlemlenen ret oranı gerçek oranı yalnızca ≤3/n (%95 güven) ile sınırlar. |
-| `etsi014_client_lib.js` | Herhangi bir ETSI-014 uç noktasını (yerel KME veya gerçek QuKayDee bulutu) hedefleyebilen, satıcı-bağımsız, yeniden kullanılabilir ETSI GS QKD 014 istemci kütüphanesi. mTLS `httpsCall()` (`rejectUnauthorized: true`), ETSI GS QKD 014 V1.1.1 §6 şema doğrulayıcıları. Gerçek dağıtımlarda master/slave SAE'lerin AYRI KME'lere bağlanabileceğini not eder (QuKayDee: kme-1↔sae-1, kme-2↔sae-2). |
-| `etsi014_client_lib_test.js` | 2 öz-test — gerçek QuKayDee'ye yönlendirmeden önce yerel KME'ye karşı loopback doğrulaması. |
-| `etsi014_faz0_client.js` | **("Faz 0")** Sıfır kuantum donanımıyla PhotonNet'in KME'sinin gerçek ETSI GS QKD 014 V1.1.1 konuştuğunun uçtan uca kanıtı. GET status → POST enc_keys (master) → POST dec_keys (slave), mTLS üzerinden. |
-| `etsi014_interop_test.js` | **("A5")** İstemcinin gerçekten satıcı-bağımsız olduğunu kanıtlayan çift yönlü birlikte-çalışabilirlik matrisi: kendi KME'miz ↔ kendi istemcimiz; BAĞIMSIZ, temiz-oda bir referans KME (farklı key_size, farklı rota-anahtarı formatı) ↔ aynı istemci; kenar/hata problamaları her ikisine karşı; tam 2×2 matris. |
-| `etsi014_kme_server.js` | Sıfır-bağımlılıklı, bağımsız çalışan ETSI GS QKD 014 V1.1.1 uyumlu bir KME (Anahtar Yönetim Varlığı) REST sunucusu — PhotonNet'in simülatör-üretimli, Cascade-uzlaştırılmış+Toeplitz-gizlilik-yükseltilmiş anahtarlarını standart REST API üzerinden dışarı sunar. Gerçekten AYRI bir OS sürecidir (tarayıcılar TCP soketi açamaz). Gerçek mTLS: `--cert/--key/--ca` verildiğinde Node'un TLS katmanı (`requestCert:true`+`rejectUnauthorized:true`) TLS el sıkışmasının kendisinde istemci-sertifika kimlik doğrulamasını uygular — SAE kimliği doğrulanmış sertifikanın Subject CN'inden okunur, ASLA bir HTTP header'ından değil. `--crl=` (sıcak-yeniden-yüklemeli) ve `--ocsp-responder=` (canlı sorgu) ile iki bağımsız iptal mekanizması. İsteğe bağlı `--shield-gate=` (düğüm Faraday-kafes kapısı; fail-closed: yok/bozuk/bayat kapı veya BLOCK → açık mTLS oturumları dahil kesilir, teslim izni olmayan SAE düğümüne 503) ve `--keystore-inbox=` (çalışırken atomik anahtar enjeksiyonu, yüklenen dosya silinir); bayraklar yoksa davranış değişmez. |
-| `etsi014_qukaydee_client.js` | **("A1")** Genelleştirilmiş ETSI-014 istemcisini yerel KME yerine gerçek QuKayDee bulut uç noktasına yönlendirir. **Dürüstlük notu:** "sandbox'ın gerçek QuKayDee'ye ağ/kimlik erişimi yok, canlı koşum kullanıcı tarafında yapılmalı" — istemci mantığı yerel KME'ye karşı doğrulanmıştır, geçiş sadece config değişimidir. |
-| `etsi014_reference_kme.js` | İstemci kütüphanesinin gerçekten satıcı-bağımsız olduğunu kanıtlamak için kullanılan bağımsız, temiz-oda, minimal bir "başka satıcı" KME'si. Kasıtlı olarak PhotonNet'in kendi KME'sinden farklı seçimler yapar (128-bit anahtar, farklı rota-anahtarı ayırıcı, harici keystore dosyası yok). |
-| `qukaydee_emulator.js` | Sandbox gerçek QuKayDee bulutuna erişemediği için, gerçek QuKayDee'nin çoklu-KME topolojisinin sadık bir yerel emülasyonu — iki gerçekten ayrı KME sunucusu (kme-1/sae-1 master, kme-2/sae-2 slave) paylaşılan bir KME-arası anahtar-akışı Map'i ile (gerçek QuKayDee'nin KME-arası senkronunu yansıtır), enjekte edilmiş gerçekçi ağ gecikmesi. |
-| `qukaydee_realistic_test.js` | 7 öz-test — QuKayDee-sadık emülatörün gerçekçi çoklu-KME, mTLS, gecikme-enjekte edilmiş koşullarında A2 sistemini test eder: kme-1'de üretilen anahtarın kme-2'den bit-birebir alınabildiğini (çapraz-KME senkron), o anahtarın gerçek bir ECDHE-PSK TLS oturumunu köklendirdiğini, mTLS'in zorlandığını, gecikmenin gerçekten ölçüldüğünü doğrular. |
-| `mock_ibm_client.js` | IBM Quantum Network'ün (veya herhangi bir harici ETSI-014 SAE'sinin) yerini tutan, sertifikaları (openssl ile) VE tam protokol-düzeyi mTLS/ETSI-014 davranışını bağımsızca doğrulayan sıfır-bağımlılıklı bir entegrasyon-test istemcisi. **Dürüstlük notu:** bu script GERÇEK IBM Quantum Network SDK'sını emüle ETMEZ (erişimi yok) — sadece HERHANGİ bir istemcinin (IBM dahil) izlemesi gereken ETSI GS QKD 014 REST sözleşmesini ve mTLS kimlik doğrulamasını test eder. |
-| `build_production_server.js` | `etsi014_kme_server.js`'in tüm demo/geri-düşüş kimlik doğrulama kodunun (Bearer token, X-SAE-ID header modu, mTLS'siz sunucu modları) BUILD ZAMANINDA FİZİKSEL OLARAK SÖKÜLDÜĞÜ bir "üretim derlemesi" üretir. `// PROD-STRIP-BEGIN/END: <id>` işaretçileriyle sarılan bloklar tamamen silinir. 4 build-zamanı güvence: manifesto/kaynak tutarlılığı, çıktıda yasaklı örüntülerin (Bearer/X-SAE-ID/demo-token) HİÇBİRİNİN kalmadığının pozitif grep taraması, çıktının hâlâ geçerli JS olduğu. |
-| `generate_demo_pki.sh` | Yerel mTLS'i hızlıca denemek için tek-komutluk demo PKI üretici (kök CA + KME sunucu sertifikası + SAE başına istemci sertifikaları). **Dürüstlük notu:** SADECE hızlı tek-komutluk demo içindir — gerçek bir openssl CA veritabanı (index.txt/serial/crlnumber) İÇERMEZ, bu yüzden iptal (CRL/OCSP) veya HSM/hava-boşluğu ayrımını DESTEKLEYEMEZ; bunlar için `pki_tools/` kullanılmalı. CA özel anahtarı diskte düz metin olarak durur. |
-| `pki_tools/ca_init.sh` | Hava-boşluklu/HSM-destekli çalışacak şekilde tasarlanmış tek-seferlik kök CA önyüklemesi (anahtar+sertifika+tam openssl CA veritabanı). PKI yaşam döngüsünü 3 fiziksel olarak ayrı adıma böler. `--pkcs11-uri` ile gerçek/yazılımsal HSM desteği — bununla `ca-key.pem` YEREL DOSYA OLARAK HİÇ ÜRETİLMEZ, anahtar çifti doğrudan PKCS#11 token içinde üretilir. **Dürüstlük notu:** `--pkcs11-uri` yolu bu sandbox'ta test EDİLEMEDİ (ağ kısıtı SoftHSM2/OpenSC kurulumunu engelledi) — ilk gerçek doğrulama GitHub Actions'ta olacak. |
-| `pki_tools/cert_rotation_revocation_scenarios.js` | PKI/mTLS çalışmasının nihai doğrulama adımı — GERÇEK bir canlı KME sunucusu + GERÇEK OCSP yanıtlayıcısı + gerçek mTLS bağlantılarına karşı 6 zaman-bağımlı rotasyon/iptal senaryosunun (planlı rotasyon, acil iptal, OCSP çökmesi altında fail-closed, kalıcı bağlantı ortasında iptal, süre-dolumu vb.) NASIL DAVRANDIĞINI (varsayılmadan) ÖLÇER. Her sayının o çalıştırmada canlı ölçüldüğünü, elle yazılmadığını açıkça belirtir. |
-| `pki_tools/hsm_init.sh` | SoftHSM2 tabanlı yazılımsal HSM'i (PKCS#11 token) kurar/başlatır. **Dürüstlük notu:** bu sandbox'ta hiç ÇALIŞTIRILAMADI (ağ kısıtı SoftHSM2/OpenSC kurulumunu engelledi) — ilk gerçek doğrulama "software-hsm-pkcs11" GitHub Actions işinde olacak. |
-| `pki_tools/issue_cert.sh` | SAE/sunucu tarafında çalışır: özel anahtar+CSR üretir; özel anahtar o makineden asla AYRILMAZ. |
-| `pki_tools/pkcs11_bridge.js` | Node.js'in bir PKCS#11 modülüyle (SoftHSM2 veya gerçek donanım HSM) doğrudan konuşmasını sağlar. **Dürüstlük notu (iki kez vurgulanmış):** (1) `pkcs11js` npm bağımlılığı bu sandbox'ta KURULAMADI (npm registry 403 döndü), hiç çalıştırılıp test edilemedi; (2) **KAPSAM DIŞI** — KME sunucusunun canlı TLS dinleme soketini HSM'e BAĞLAMAZ (Node'un tls/https modülünün OpenSSL CLI'nin `-engine` mekanizmasına eşdeğer bir "harici imzalayıcı" kancası yok) — bu ayrı, daha büyük bir mühendislik işi. |
-| `pki_tools/revoke_cert.sh` | CA tarafında anlık sertifika iptali ve CRL yeniden üretimi. KME sunucusunun (`--crl=` ile) bu dosyayı `fs.watchFile` ile sıcak-yeniden-yüklediğini, iptalin saniyeler içinde yeniden başlatma olmadan etkili olduğunu belirtir. |
-| `pki_tools/rotate_cert.sh` | `issue_cert.sh`+`sign_csr.sh`'i zincirleyen kolaylık sarmalayıcısı. **Kapsam notu:** SADECE CA ve SAE/sunucunun AYNI YERDE olduğu durum için bir kolaylık sarmalayıcısıdır — gerçek hava-boşluklu bir dağıtımda bu script CSR-taşıma sürecini SİMÜLE ETMEZ. |
-| `pki_tools/run_ocsp_responder.sh` | CA'nın `index.txt` veritabanından gerçek bir OCSP yanıtlayıcısı çalıştırır. **İki gerçek hata bulunup düzeltildi:** openssl'in `ocsp` komutu `-index`'i sadece başlangıçta okur ve asla yeniden okumaz; sadece istek-başına yeniden başlatmak (`-nrequest 1`) yetersizdir çünkü yeniden başlatılan süreç bir sonraki isteğe kadar bayat veriyle boşta kalır (iptalden 31+ saniye sonra bile "good" yanıtı ölçüldü) — arka plan izleyicisi `index.txt` mtime'ını saniyede bir kontrol edip boştaki openssl sürecini öldürerek düzeltildi (bayatlık ~1-2 saniyeye indi). **Ek dürüstlük notu:** yanıtlayıcı OCSP yanıtlarını doğrudan CA'nın kendi anahtarıyla imzalıyor — gerçek üretim ayrı, kısa-ömürlü delege bir "OCSP imzalama" sertifikası kullanmalı. |
-| `pki_tools/sign_csr.sh` | CA tarafında CSR imzalama (openssl CA veritabanına kaydedilir), kısa-ömürlü sertifikaları zorlar (varsayılan 7 gün geçerlilik). `--engine pkcs11` ile HSM-yerleşik CA anahtarıyla imzalama desteği. |
+| `authenticated_channel.js` | Layer-level fix that replaces the core's broken classical-channel MAC with a real Wegman–Carter authenticated channel. `tag_i = H_r(m_i) ⊕ s_i`, polynomial-evaluation universal hash over GF(2⁶¹−1). **Honesty note:** the core's `ClassicalAuthChannel._computeTag` MAC is BROKEN, with a measured ~41 % tamper-miss rate — this file is a layer-level fix, not a core fix. |
+| `authenticated_channel_test.js` | 7 self-tests: tamper miss WC ~0 % vs core ~41 % (20,000 trials); forgery 0/10,000; replay rejected; in a 500-message stream, 1 MITM bit flip → exactly 1 caught; fail-closed when the mask pool is exhausted. |
+| `network_shielding_bridge.js` | Bridges the Faraday-cage EM shielding results into a fail-closed precondition gate for the ETSI GS QKD 014 mTLS handshake. `mtlsHandshakePrecondition()` applies two independent checks: the caller's own `targetSeDb` result AND an independent absolute floor `EMERGENCY_SE_FLOOR_DB=30` (added in response to user feedback). **Scope note:** it does not rewrite the REAL TLS logic of `etsi014_kme_server.js` — it is a pre-flight layer the deployer can call BEFORE starting the server. |
+| `network_shielding_bridge_test.js` | 6 self-tests: good cage → allowed; bad cage → rejected fail-closed; no cage assessment → rejected by default (never silently allowed); automatic integration into `production_gate.js` (gate criterion 9). |
+| `production_gate.js` | The phase-4 production gate that combines the security invariants of all previous phases into a single go/no-go decision — it explicitly separates what software can close from what requires HARDWARE. 9 gate criteria: classical MAC strength, side-channel monitor, QRNG hardware entropy, positive finite-key security at the real QBER, eavesdropper-stop behaviour, ETSI-014 compliance, detector calibration (always "hardware"), EM leakage/Faraday cage, mTLS handshake precondition. The remaining "hardware" criteria are never painted green. |
+| `production_gate_test.js` | 7 self-tests: core MAC ~41 % miss vs strong MAC < 0.01 %; the side-channel monitor catches detector asymmetry and eavesdropping separately; `mulberry32` is rejected (reproducible), `crypto.randomBytes` is accepted (but a certified hardware QRNG is still marked as required for production). |
+| `production_security_audit.js` | An independent (dependency-free) QBER/gain/finite-key (ε-security) audit function — lets a third party (e.g. IBM) re-derive the claimed security numbers from raw data independently, WITHOUT TRUSTING PhotonNet's own intermediate calculations. Cites Serfling (1974), Scarani et al. (2009), Tomamichel & Leverrier (2017), Portmann & Renner (2022). **Honesty note (on gain):** the simulator only physically simulates basis-matched pulses — so the reported gain is a COMBINED figure of basis-reconciliation loss + channel/detector loss, different from the raw click rate that real hardware reports usually separate. |
+| `qkd_secure_channel.js` | **("A2")** Uses a real QKD key delivered over ETSI-014, hybridised with classical ECDHE, as the PSK root of a REAL TLS session. Node's `tls` (OpenSSL) PSK support, cipher suites such as ECDHE-PSK-CHACHA20-POLY1305. Hybrid security: secure if EITHER the classical ECDHE OR the QKD PSK remains secure. |
+| `qkd_secure_channel_test.js` | 6 self-tests: ETSI-014 delivery (master/slave receive the same key); that key becomes a real TLS PSK; a client with the wrong key is rejected; hybrid ECDHE-PSK forward secrecy is verified; passive eavesdropping on the handshake shows that the raw QKD key NEVER appears on the wire. |
+| `qkd_session_controller.js` | Derives from measurement (instead of fixed constants) when a QKD block should close (a rate-maximising marginal rule) and whether a new network path can be admitted into the shared key pool. **Demonstrated finding:** the observed R_key(T) peak at T ≈ 850 ms is an ARTEFACT of the finite attempt budget (20,000/segment), NOT a real saturation point — raising the budget 5× moves the peak from 839 ms → 3673 ms. The correct stopping rule is derived from d(ℓ/T)/dT = 0. |
+| `qkd_session_controller_test.js` | 18 self-tests — verifies that the 850 ms peak is a budget artefact, that the marginal rule finds the real, budget-independent peak, that it never fires under continuous feed (the SLA takes over), and that the admission threshold matches a brute-force sweep. |
+| `qkd_key_supply.js` | Solves the ultra-low-latency problem, where under a tight SLA (< 350 ms) blocks cannot clear the finite-key security bound (100 % of pairs produced at 100/200 ms are wasted), with two strategies: (1) a flexible close window ("HONESTY: this does NOT PROVIDE REAL ultra-low latency — the finite-key bound is a hard physical floor; it turns a 'latency guarantee' into a 'key guarantee', never both"); (2) a key inventory/allocator layer (decouples production latency from delivery latency). Fixes a memory-leak-like issue found in the core (`KeyDeliveryStore.byRoute` is never pruned) in the allocator layer, without touching the core. |
+| `key_supply_test.js` | 13 self-tests — confirms that the hard 200 ms SLA locks up, the sizing rule S_min ≈ D·T_b, and measures the security cost of a larger reservoir (mean/maximum key age). Applies the statistical caution of the "rule of three": an observed rejection rate of 0/n only bounds the true rate by ≤ 3/n (95 % confidence). |
+| `etsi014_client_lib.js` | A vendor-neutral, reusable ETSI GS QKD 014 client library that can target any ETSI-014 endpoint (the local KME or the real QuKayDee cloud). mTLS `httpsCall()` (`rejectUnauthorized: true`), schema validators for ETSI GS QKD 014 V1.1.1 §6. Notes that in real deployments the master/slave SAEs may connect to SEPARATE KMEs (QuKayDee: kme-1↔sae-1, kme-2↔sae-2). |
+| `etsi014_client_lib_test.js` | 2 self-tests — loopback verification against the local KME before pointing at the real QuKayDee. |
+| `etsi014_faz0_client.js` | **("Phase 0")** End-to-end proof, with zero quantum hardware, that PhotonNet's KME speaks real ETSI GS QKD 014 V1.1.1. GET status → POST enc_keys (master) → POST dec_keys (slave), over mTLS. |
+| `etsi014_interop_test.js` | **("A5")** A bidirectional interoperability matrix proving that the client really is vendor-neutral: our KME ↔ our client; an INDEPENDENT, clean-room reference KME (different key_size, different route-key format) ↔ the same client; edge/error probes against both; the full 2×2 matrix. |
+| `etsi014_kme_server.js` | A zero-dependency, standalone ETSI GS QKD 014 V1.1.1–compliant KME (key management entity) REST server — exposes PhotonNet's simulator-produced, Cascade-reconciled and Toeplitz-privacy-amplified keys through the standard REST API. It is a genuinely SEPARATE OS process (browsers cannot open TCP sockets). Real mTLS: when `--cert/--key/--ca` are given, Node's TLS layer (`requestCert:true` + `rejectUnauthorized:true`) enforces client-certificate authentication in the TLS handshake itself — the SAE identity is read from the Subject CN of the authenticated certificate, NEVER from an HTTP header. Two independent revocation mechanisms: `--crl=` (hot-reloaded) and `--ocsp-responder=` (live query). Optional `--shield-gate=` (node Faraday-cage gate; fail-closed: missing/corrupt/stale gate or BLOCK → open mTLS sessions are cut too, 503 to an SAE node without delivery permission) and `--keystore-inbox=` (atomic key injection at run time, the loaded file is deleted); without these flags behaviour is unchanged. |
+| `etsi014_qukaydee_client.js` | **("A1")** Points the generalised ETSI-014 client at the real QuKayDee cloud endpoint instead of the local KME. **Honesty note:** "the sandbox has no network/credential access to the real QuKayDee; the live run must be done on the user's side" — the client logic is verified against the local KME; switching is only a config change. |
+| `etsi014_reference_kme.js` | An independent, clean-room, minimal "other vendor" KME used to prove that the client library really is vendor-neutral. It deliberately makes different choices from PhotonNet's own KME (128-bit keys, a different route-key separator, no external keystore file). |
+| `qukaydee_emulator.js` | Because the sandbox cannot reach the real QuKayDee cloud, a faithful local emulation of real QuKayDee's multi-KME topology — two genuinely separate KME servers (kme-1/sae-1 master, kme-2/sae-2 slave) with a shared inter-KME key-stream Map (mirroring real QuKayDee's inter-KME synchronisation), with injected realistic network latency. |
+| `qukaydee_realistic_test.js` | 7 self-tests — tests the A2 system under the realistic multi-KME, mTLS, latency-injected conditions of the QuKayDee-faithful emulator: verifies that a key produced at kme-1 can be retrieved bit-for-bit from kme-2 (cross-KME sync), that the key roots a real ECDHE-PSK TLS session, that mTLS is enforced, and that latency is really measured. |
+| `mock_ibm_client.js` | A zero-dependency integration-test client standing in for the IBM Quantum Network (or any external ETSI-014 SAE) that independently verifies certificates (with openssl) AND the full protocol-level mTLS/ETSI-014 behaviour. **Honesty note:** this script does NOT emulate the REAL IBM Quantum Network SDK (no access) — it only tests the ETSI GS QKD 014 REST contract and the mTLS authentication that ANY client (IBM included) has to follow. |
+| `build_production_server.js` | Produces a "production build" of `etsi014_kme_server.js` in which all demo/fallback authentication code (Bearer token, X-SAE-ID header mode, server modes without mTLS) is PHYSICALLY REMOVED AT BUILD TIME. Blocks wrapped in `// PROD-STRIP-BEGIN/END: <id>` markers are deleted completely. 4 build-time guarantees: manifest/source consistency, a positive grep scan that NONE of the forbidden patterns (Bearer/X-SAE-ID/demo-token) remain in the output, and that the output is still valid JS. |
+| `generate_demo_pki.sh` | One-command demo PKI generator for quickly trying local mTLS (root CA + KME server certificate + client certificates per SAE). **Honesty note:** ONLY for a quick one-command demo — it does NOT include a real openssl CA database (index.txt/serial/crlnumber), so it CANNOT support revocation (CRL/OCSP) or HSM/air-gap separation; use `pki_tools/` for those. The CA private key sits on disk in plain text. |
+| `pki_tools/ca_init.sh` | One-time root CA bootstrap (key + certificate + full openssl CA database) designed to run air-gapped/HSM-backed. Splits the PKI life cycle into 3 physically separate steps. Real/software HSM support with `--pkcs11-uri` — with it, `ca-key.pem` is NEVER PRODUCED AS A LOCAL FILE; the key pair is generated directly inside the PKCS#11 token. **Honesty note:** the `--pkcs11-uri` path could not be run in the development sandbox (network restrictions prevented installing SoftHSM2/OpenSC); it is exercised in the CI job "Gate 3c" (SoftHSM2 + pkcs11js). |
+| `pki_tools/cert_rotation_revocation_scenarios.js` | The final verification step of the PKI/mTLS work — MEASURES (without assuming) HOW 6 time-dependent rotation/revocation scenarios behave (planned rotation, emergency revocation, fail-closed under an OCSP crash, revocation in the middle of a persistent connection, expiry, etc.) against a REAL live KME server + a REAL OCSP responder + real mTLS connections. States explicitly that every number is measured live in that run, not written by hand. |
+| `pki_tools/hsm_init.sh` | Installs/initialises a SoftHSM2-based software HSM (PKCS#11 token). **Honesty note:** could not be run in the development sandbox (network restrictions prevented installing SoftHSM2/OpenSC); it runs in the CI job "Gate 3c". |
+| `pki_tools/issue_cert.sh` | Runs on the SAE/server side: generates a private key + CSR; the private key never LEAVES that machine. |
+| `pki_tools/pkcs11_bridge.js` | Lets Node.js talk directly to a PKCS#11 module (SoftHSM2 or a real hardware HSM). **Honesty note:** (1) the `pkcs11js` npm dependency could not be installed in the development sandbox (npm registry returned 403); it is installed and exercised in CI "Gate 3c"; (2) **OUT OF SCOPE** — it does NOT connect the KME server's live TLS listening socket to the HSM (Node's tls/https module has no "external signer" hook equivalent to the OpenSSL CLI's `-engine` mechanism) — that is a separate, larger engineering task. |
+| `pki_tools/revoke_cert.sh` | Instant certificate revocation and CRL regeneration on the CA side. Notes that the KME server (with `--crl=`) hot-reloads this file with `fs.watchFile`, so revocation takes effect within seconds without a restart. |
+| `pki_tools/rotate_cert.sh` | A convenience wrapper chaining `issue_cert.sh` + `sign_csr.sh`. **Scope note:** ONLY a convenience wrapper for the case where the CA and the SAE/server are IN THE SAME PLACE — in a real air-gapped deployment this script does NOT SIMULATE the CSR transport process. |
+| `pki_tools/run_ocsp_responder.sh` | Runs a real OCSP responder from the CA's `index.txt` database. **Real bugs were found and fixed:** openssl's `ocsp` command reads `-index` only at start-up and never re-reads it; restarting per request alone (`-nrequest 1`) is not enough, because the restarted process sits idle with stale data until the next request ("good" responses were measured 31+ seconds after revocation). A background watcher now compares, every 0.2 s, the fingerprint of `index.txt` (inode, size, nanosecond mtime) with the fingerprint the running child loaded, and restarts it on mismatch; the KME caches good/revoked answers for 30 s and unknown/unreachable answers for only 2 s (measured analysis: `bb84/docs/OCSP_NEGATIVE_CACHE_ANALYSIS.md`, test `ocsp_cache_staleness_test.js`). **Additional honesty note:** the responder signs OCSP responses directly with the CA's own key — real production should use a separate, short-lived delegated "OCSP signing" certificate. |
+| `pki_tools/sign_csr.sh` | CSR signing on the CA side (recorded in the openssl CA database); enforces short-lived certificates (7-day validity by default). Supports signing with an HSM-resident CA key via `--engine pkcs11`. |
 
-### 4.4 Saldırı / stres / adversarial test katmanı
+### 4.4 Attack / stress / adversarial test layer
 
-| Dosya | Ne yapar |
+| File | What it does |
 |---|---|
-| `attack_simulation_qber_escalation.js` | Bir saldırganın `NoiseMatrixCalibration.loadFromJSON()` üzerinden bir bağlantının kalibrasyon telemetrisini kademeli olarak zehirlediği yönlendirme-katmanı saldırısını simüle eder (bu, GERÇEK güven sınırıdır — köprü hiçbir `/api/inject_fault` uç noktası açığa çıkarmaz). QBER'i 3 aşamada (%1→%2→%18) enjekte eder, Dijkstra yönlendirmesinin risk modeli kripto eşiğini yeterince hızlı geçmediği için zehirli bağlantıyı seçmeye devam ettiğini gösterir. **Dürüstlük notu:** bulunan gerçek zafiyet bir kullanılabilirlik/DoS açığıdır (gizlilik ihlali değil) — `QKDSecurityProof` o anahtar materyalini yine de doğru şekilde güvensiz işaretliyor. |
-| `god_mode_ragnarok_attack.js` | Kullanıcı tarafından sağlanan orijinal "saldırı script'i" — yer tutucu bir HMAC anahtarıyla sahte bir kalibrasyon yükü imzalar. **Sonradan `_real.js` tarafından çürütüldü/aşıldı:** bu script gerçek sisteme HİÇ dokunmuyor (yanlış anahtar, yanlış kanonikleştirme, yanlış dosya/şema). |
-| `god_mode_ragnarok_attack_omega.js` | **"OMEGA v2"** — sertleştirme sonrası (`_absoluteRisk()`, `_resolveTies()` düzeltmeleri) dört saldırı cephesini (Ω1-Ω4) yeniden çalıştırır. Ω2b (masum bir bağlantıyı çerçeveleme) kasıtlı olarak kabul edilmiş, belgelenmiş bir kalıntı zayıflık/ödünleşim olarak belgelenir — gerçek tehlikeyi asla gizlemez ama yönlendirmeyi aşırı muhafazakâr yapabilir. |
-| `god_mode_ragnarok_attack_omega_v3.js` | **"OMEGA v3"** — Ω1-Ω4'ü artık gerçek yönlendirme çağrı yolunda `NoiseMatrixCalibration.riskForLink`'in yerini alan daha yeni `LinkRiskReputationEngine`'e (zamansal versiyonlama, durumlu EMA, karantina) karşı yeniden çalıştırır. **Açık tasarım sınırı:** bir imza sadece "bunu anahtar sahibi gönderdi"yi kanıtlar, "ölçüm doğru"yu DEĞİL — N_min sahte-ama-geçerli-imzalı örnekle çerçeveleme, bilinçli, belgelenmiş bir açık konu olarak kalır. |
-| `god_mode_ragnarok_attack_omega_v4.js` | **"OMEGA v4"** — Ω5 (hız-sınırlayıcının Ω2b maliyeti) ve Ω6 (bozuk bir bağlantıya karşı ayrık çoklu-yol dayanıklılığı). **Dürüstlük notu:** hız-sınırlayıcı varsayılan sabitlerle Ω2b çerçeveleme saldırısının TEK-SEFERLİK/tek-pencere versiyonunu YAKALAMIYOR — bu bir tasarım sınırlaması olarak açıkça belirtiliyor. |
-| `god_mode_ragnarok_attack_real.js` | Gerçek demo imzalama anahtarını ve gerçek kanonikleştirme/şemayı kullanan, saldırının GERÇEKTEN `verifyAndLoad()`'a ulaştığı düzeltilmiş bir versiyon. **Gerçek, önceden bilinmeyen bir normalleştirme kör noktası bulundu:** tek-örneklik bağlantı verisi risk=0'a normalleşiyor (yönlendirmede görünmez) — GERÇEK QBER ne olursa olsun; 2+ tarihsel örnekle yükselme yakalanıyor. **Dürüstlük notu:** bu "kör nokta savunması" şans/yan-etkidir, kasıtlı tasarım DEĞİLDİR — açık bir madde olarak işaretlenmiştir; gizlilik hiçbir senaryoda ihlal edilmedi, sadece yönlendirme/kullanılabilirlik sinyali risk altındaydı. |
-| `state_poisoning_drill.js` | Bireysel olarak geçerli mikro-isteklerin, sağlık göstergeleri düz kalırken bile sınırsız iç durum büyümesine yol açıp açamayacağını test eden bir "durum şişirme/bellek sızıntısı" tatbikatı. **İki gerçek biriktirici hatası bulundu ve düzeltildi:** `KeyAllocator`/`KeyDeliveryStore.byRoute` tüketilen geçmiş kayıtlarını asla budamıyordu (envanter düz görünürken sınırsız büyüme) — tüketimde en eski kaydı budayarak düzeltildi; KME `dec_keys` düz bir dizide O(n) findIndex+splice kullanıyordu — Map ile O(1)'e düzeltildi. |
-| `fidelity_collapse_drill.js` | Raporlanan bir sadakat-çöküşü telemetri olayını (φ_high=0.60, histerezis bandı 0.16→0.04, %38 ret oranı, sadakat 30sn'de %98.2'den %84.5'e düşüyor) yeniden üretip bunun mimari bir hata mı yoksa gerçek bir fotonik bant çöküşü mü olduğunu belirleyen bir "canlı olay tatbikatı". Hiçbir önceden verilen sayıya güvenilmez — telemetrinin kendi iç tutarlılığı bile (φ=0.60 ile h=0.04 birlikte var olabilir mi?) VARSAYILMADAN test edilir. |
-| `layer_stress_campaign.js` | Yedi farklı mimari katmanı (fiber zayıflaması, atlama-sayısı, yönlendirme doygunluğu, QBER/sonlu-anahtar, denetleyici kabul eşiği, ×10 talep patlaması, ölçekte KME churn'ü) kırılma noktalarına iterek her birinin çökme yerine ZARİF şekilde bozulduğunu doğrular. |
-| `safety_margin_drill.js` | "%0 güvenlik payı, en ufak donanım sapması döngüyü kırar" ve "10 THz kapasite ama termal olarak 50 Gbit/s'e boğuluyor (%99.5 donanım israfı)" iddialarını TARTIŞMAK yerine ÖLÇER. Histerezis-bant kontrol döngüsünün faz-hatası sapmalarını taban değerinin ×6'sına kadar ihmal edilebilir ret-oranı değişimiyle emdiğini gösterir (marj büyük, sıfır değil) — bandı devre dışı bırakmak (h=0) döngüyü GERÇEKTEN kırılgan yapar. |
-| `ibm_math_audit.js` | Yalnızca `photonnet_core.js`'in gerçek export'larını kullanarak "bu algoritma resmi sertifikasyon NEREDE alamaz" sorusuna cevap veren matematiksel/kriptografik denetim (14 test). Bkz. [§6](#6-ibm-etsi-014-sertifikasyon-denetimi--özet-yargı) için tam özet. |
-| `bb84_statevector.py` | NumPy tabanlı, tam/karmaşık kuantum-durum-vektörü BB84 referans simülasyonu (gerçek Hadamard + Born-kuralı genlikleri) — PhotonNet'in klasik QBER matematiğini bağımsızca doğrular. N=200.000 kübitte Eve'siz QBER~%0, Eve (intercept-resend) ile ~%24.89 (teorik: %25). |
-| `ibm_qiskit_chain.py` | Qiskit-eşdeğeri tek-atlamalı BB84 modelini bir güvenilir-düğüm aktarım zincirine genişletir (PhotonNet2.jsx'in `deriveSiftedKeyChain()` mimarisiyle eşleşir) — hedef mesafeyi ~60km'lik atlamalara böler. |
-| `ibm_qiskit_equivalent.py` | Gerçek Qiskit/Aer BB84 devre simülasyonunun matematiksel olarak eşdeğer bir yerine geçeni — çünkü bu sandbox HİÇBİR yeni pip paketi kuramıyor (Qiskit dahil, PyPI ağ erişimi engelli, tekrar tekrar doğrulandı). Hem yavaş tam-durum-vektörü referansı hem hızlı vektörleştirilmiş kapalı-form eşdeğeri içerir, istatistiksel olarak birbirine karşı çapraz doğrulanmış. |
-| `qkdnetsim_traffic_bridge.js` | Gerçek, akademik olarak doğrulanmış bir QKDNetSim (Saraybosna Üniv. + VSB Ostrava) ns-3.46 trafik profilini (500sn, 28.140 olay, patlamalı şekil) PhotonNet'in gerçek mTLS/ETSI-014 KME sunucusuna karşı GERÇEK TLS el sıkışmaları ve enc_keys/dec_keys çağrılarıyla yeniden oynatır. **Dürüstlük notu:** 28.140 gerçek mTLS el sıkışması gerçekçi olarak birkaç dakikada tek bir sandbox sürecinde tamamlanamaz — bu yüzden olay SAYISI ölçeklenir ama patlama ŞEKLİ korunur, bu ölçekleme raporda açıkça belirtilir. |
-| `run_qkdnetsim_traffic_bridge.sh` / `run_buffer_starvation_test.sh` | Geçici PKI + yerel KME sunucusu + ölçeklenmiş sentetik keystore kurup yukarıdaki köprüyü/tükenme testini çalıştıran, sonra tamamen temizleyen orkestrasyon script'leri. |
-| `client_network_report.js` | Açıklanan iş modelini uygular — müşteriler ham fiber-bağlantı/dedektör verisi gönderir, bu araç GERÇEK fizik/yönlendirme/itibar motorundan geçirerek bir siber-dayanıklılık/QBER/Ragnarok-saldırı-dayanıklılığı raporu üretir (çekirdeğe hiç dokunmadan). Fotonu GERÇEKTEN foton-foton simüle eder (kapalı-form tahmin değil). QBER hesaplanamıyorsa yanıltıcı bir "mükemmel" 0 yerine `null` döner. |
-| `compare_js4.js` | 1-100km mesafe aralığında `QuantumKeyDistribution.deriveSiftedKey()`'i Eve'li/Eve'siz karşılaştıran kısa bir kıyaslama script'i. |
+| `attack_simulation_qber_escalation.js` | Simulates a routing-layer attack in which an attacker gradually poisons a link's calibration telemetry through `NoiseMatrixCalibration.loadFromJSON()` (this is the REAL trust boundary — the bridge exposes no `/api/inject_fault` endpoint). Injects QBER in 3 stages (1 % → 2 % → 18 %) and shows that Dijkstra routing keeps choosing the poisoned link because the risk model does not cross the crypto threshold fast enough. **Honesty note:** the real vulnerability found is an availability/DoS hole (not a confidentiality breach) — `QKDSecurityProof` still correctly marks that key material as insecure. |
+| `god_mode_ragnarok_attack.js` | The original "attack script" supplied by the user — signs a fake calibration payload with a placeholder HMAC key. **Later refuted/superseded by `_real.js`:** this script NEVER touches the real system (wrong key, wrong canonicalisation, wrong file/schema). |
+| `god_mode_ragnarok_attack_omega.js` | **"OMEGA v2"** — re-runs four attack fronts (Ω1–Ω4) after hardening (`_absoluteRisk()`, `_resolveTies()` fixes). Ω2b (framing an innocent link) is documented as a deliberately accepted residual weakness/trade-off — it never hides a real danger but can make routing overly conservative. |
+| `god_mode_ragnarok_attack_omega_v3.js` | **"OMEGA v3"** — re-runs Ω1–Ω4 against the newer `LinkRiskReputationEngine` (temporal versioning, stateful EMA, quarantine), which has replaced `NoiseMatrixCalibration.riskForLink` on the real routing call path. **Explicit design limit:** a signature only proves "the key holder sent this", NOT "the measurement is correct" — framing with N_min fake-but-validly-signed samples remains a conscious, documented open issue. |
+| `god_mode_ragnarok_attack_omega_v4.js` | **"OMEGA v4"** — Ω5 (the rate limiter's Ω2b cost) and Ω6 (disjoint multipath resilience against a broken link). **Honesty note:** with default constants, the rate limiter does NOT CATCH the ONE-SHOT/single-window version of the Ω2b framing attack — stated explicitly as a design limitation. |
+| `god_mode_ragnarok_attack_real.js` | A corrected version using the real demo signing key and the real canonicalisation/schema, so that the attack REALLY reaches `verifyAndLoad()`. **A real, previously unknown normalisation blind spot was found:** single-sample link data normalises to risk = 0 (invisible to routing) — whatever the REAL QBER; with 2+ historical samples the escalation is caught. **Honesty note:** this "blind-spot defence" is luck/a side effect, NOT deliberate design — it is marked as an open item; confidentiality was not breached in any scenario, only the routing/availability signal was at risk. |
+| `state_poisoning_drill.js` | A "state bloat/memory leak" drill testing whether individually valid micro-requests can cause unbounded internal state growth while health indicators stay flat. **Two real accumulator bugs were found and fixed:** `KeyAllocator`/`KeyDeliveryStore.byRoute` never pruned consumed history records (unbounded growth while the inventory looked flat) — fixed by pruning the oldest record on consumption; KME `dec_keys` used an O(n) findIndex + splice on a flat array — fixed to O(1) with a Map. |
+| `fidelity_collapse_drill.js` | A "live incident drill" that reproduces a reported fidelity-collapse telemetry event (φ_high = 0.60, hysteresis band 0.16 → 0.04, 38 % rejection rate, fidelity falling from 98.2 % to 84.5 % in 30 s) to determine whether it is an architectural bug or a real photonic band collapse. No number given in advance is trusted — even the internal consistency of the telemetry (can φ = 0.60 and h = 0.04 coexist?) is tested WITHOUT ASSUMING it. |
+| `layer_stress_campaign.js` | Pushes seven different architectural layers (fibre attenuation, hop count, routing saturation, QBER/finite key, controller admission threshold, ×10 demand burst, KME churn at scale) to their breaking points and verifies that each degrades GRACEFULLY rather than crashing. |
+| `safety_margin_drill.js` | MEASURES, instead of ARGUING about, the claims "0 % safety margin, the slightest hardware deviation breaks the loop" and "10 THz capacity but thermally choked to 50 Gbit/s (99.5 % hardware waste)". Shows that the hysteresis-band control loop absorbs phase-error deviations up to ×6 the baseline with negligible change in rejection rate (the margin is large, not zero) — disabling the band (h = 0) REALLY makes the loop fragile. |
+| `ibm_math_audit.js` | A mathematical/cryptographic audit (14 tests) that answers "WHERE would this algorithm fail formal certification" using only the real exports of `photonnet_core.js`. See [§6](#6-ibm-etsi-014-certification-audit--summary-verdict) for the full summary. |
+| `bb84_statevector.py` | NumPy-based, full complex quantum-state-vector BB84 reference simulation (real Hadamard + Born-rule amplitudes) — independently verifies PhotonNet's classical QBER mathematics. At N = 200,000 qubits, QBER ~0 % without Eve and ~24.89 % with Eve (intercept-resend) (theory: 25 %). |
+| `ibm_qiskit_chain.py` | Extends the Qiskit-equivalent single-hop BB84 model to a trusted-node relay chain (matching the `deriveSiftedKeyChain()` architecture of PhotonNet2.jsx) — splits the target distance into ~60 km hops. |
+| `ibm_qiskit_equivalent.py` | A mathematically equivalent stand-in for a real Qiskit/Aer BB84 circuit simulation — because the development sandbox could not install ANY new pip packages (Qiskit included; PyPI network access was blocked, verified repeatedly). Contains both a slow full state-vector reference and a fast vectorised closed-form equivalent, statistically cross-validated against each other. |
+| `qkdnetsim_traffic_bridge.js` | Replays a real, academically validated QKDNetSim (University of Sarajevo + VSB Ostrava) ns-3.46 traffic profile (500 s, 28,140 events, bursty shape) against PhotonNet's real mTLS/ETSI-014 KME server with REAL TLS handshakes and enc_keys/dec_keys calls. **Honesty note:** 28,140 real mTLS handshakes cannot realistically complete in a few minutes in a single sandbox process — so the event COUNT is scaled but the burst SHAPE is preserved; this scaling is stated explicitly in the report. |
+| `run_qkdnetsim_traffic_bridge.sh` / `run_buffer_starvation_test.sh` | Orchestration scripts that set up a temporary PKI + local KME server + scaled synthetic keystore, run the bridge/starvation test above, and then clean up completely. |
+| `client_network_report.js` | Implements the described business model — customers send raw fibre-link/detector data, and this tool runs it through the REAL physics/routing/reputation engine to produce a cyber-resilience/QBER/Ragnarok-attack-resilience report (without touching the core). Simulates photons REALLY photon by photon (not a closed-form estimate). Returns `null` instead of a misleading "perfect" 0 when QBER cannot be computed. |
+| `compare_js4.js` | A short benchmark script comparing `QuantumKeyDistribution.deriveSiftedKey()` with/without Eve over 1–100 km. |
 
-### 4.5 Araçlar, build, CI/CD
+### 4.5 Tools, build, CI/CD
 
-| Dosya | Ne yapar |
+| File | What it does |
 |---|---|
-| `bb84/tools/extract_core.js` | `PhotonNet2.jsx`'ten `bb84/photonnet_core.js`'i otomatik/tekrarlanabilir şekilde üretir (§2'de ayrıntılı). `--check` modu CI kapısıdır. |
-| `bb84/tools/build_photonnet_html.js` | `PhotonNet.html` içindeki gömülü `<script>` uygulama bloğunu güncel `PhotonNet2.jsx`'ten otomatik olarak yeniden derler (aynı TS transpileModule mantığı). Marker yorumu tam olarak bir kez görünmüyorsa dosyayı değiştirmeden İPTAL EDER. |
-| `bb84/tools/extract_qkdnetsim_profile.js` | `qkdnetsim_traffic_profile.json`'ı gerçek bir QKDNetSim ns-3.46 çalıştırmasının çıktı dosyalarından yeniden üretir. Şekil (zaman-yoğunluk deseni) ile olay-sayısı (gerçek log satırları) BİLEREK ve AÇIKÇA farklı iki metrikten birleştirilir — `methodologyNote` alanında belirtilir. |
-| `bb84/tools/verify_photonnet_html.js` | Yeniden derlenen `PhotonNet.html`'i gerçek Chromium'da (Playwright) açıp konsol/sayfa hatası olmadan monte olduğunu doğrulayan bir E2E kontrolü (görüntüsü `ci-reports/`'a, depoya girmez). |
-| `bb84/tools/capture_screenshots.js` | README vitrin görüntülerini (`docs/screenshots/`) güncel `PhotonNet.html`'den yeniden üretir; iletim başarısız ya da sayfa hatası varsa dosya yazmadan 1 ile çıkar. |
-| `bb84/tools/QKDNETSIM_BUILD.md` | QKDNetSim'in (üçüncü-taraf, akademik yayınlanmış bir ns-3 modülü) bu sandbox'ta apt-get/PyPI/gitlab.com engelliyken kaynaktan nasıl derlendiğini belgeler — 3 spesifik isim-uyuşmazlığı çözümü ve iki bağımsız build oturumunda elde edilen kesin deterministik çıktı değerlerini (28.140 teslim edilen anahtar) kaydeder. |
-| `bb84/ci/run_integration_tests.sh` | GitHub Actions VE GitLab CI YAML'larının her ikisinin de çağırdığı merkezi CI entegrasyon-test orkestrasyonu. `KME_MODE` ile iki mod: "ephemeral" (varsayılan — geçici CA/sertifika, tam temizlik) ve "external" (gerçek staging KME uç noktasına karşı, CI-secret sertifikalarıyla). |
-| `.github/workflows/production-pipeline.yml`, `.gitlab-ci.yml` | CI/CD boru hatları — extract-core-check, production-build-strip, software-hsm-pkcs11, external-real-certs işlerini içerir. |
-| `package.json` | `npm run extract-core` / `extract-core:check` script kısayolları; `typescript` devDependency. |
+| `bb84/tools/extract_core.js` | Generates `bb84/photonnet_core.js` from `PhotonNet2.jsx` automatically and reproducibly (detailed in §2). `--check` mode is the CI gate. |
+| `bb84/tools/build_photonnet_html.js` | Recompiles the embedded `<script>` application block in `PhotonNet.html` / `PhotonNet_offline.html` from the current `PhotonNet2.jsx` (same TS transpileModule logic), embeds `config.json` and syncs the `<title>` with `PHOTONNET_VERSION`. ABORTS without changing the file if the marker comment does not appear exactly once. `--check` mode is used in CI. |
+| `bb84/tools/run_all_tests.js` | The `npm test` runner: sets up a temporary PKI, starts the Python HAL bridge (127.0.0.1:8765), runs every JavaScript self-test and every `hal/test_*.py`, and prints a pass/fail summary. `npm run test:fast` skips the long tests. |
+| `bb84/tools/extract_qkdnetsim_profile.js` | Regenerates `qkdnetsim_traffic_profile.json` from the output files of a real QKDNetSim ns-3.46 run. The shape (time-density pattern) and the event count (real log lines) are DELIBERATELY and EXPLICITLY combined from two different metrics — stated in the `methodologyNote` field. |
+| `bb84/tools/verify_photonnet_html.js` | An E2E check that opens the rebuilt `PhotonNet.html` in real Chromium (Playwright) and verifies it mounts without console/page errors (its screenshot goes to `ci-reports/`, not into the repository). |
+| `bb84/tools/capture_screenshots.js` | Regenerates the README screenshots (`docs/screenshots/`) from the current `PhotonNet.html`; exits with 1 without writing any file if the transmission fails or the page reports an error. |
+| `bb84/tools/QKDNETSIM_BUILD.md` | Documents how QKDNetSim (a third-party, academically published ns-3 module) was built from source in a sandbox where apt-get/PyPI/gitlab.com were blocked — records 3 specific name-mismatch fixes and the exact deterministic output values obtained in two independent build sessions (28,140 delivered keys). |
+| `bb84/ci/run_integration_tests.sh` | Central CI integration-test orchestration called by both the GitHub Actions and the GitLab CI YAML. Two modes via `KME_MODE`: "ephemeral" (default — temporary CA/certificates, full clean-up) and "external" (against a real staging KME endpoint, with CI-secret certificates). |
+| `.github/workflows/production-pipeline.yml`, `.gitlab-ci.yml` | CI/CD pipelines — gate 1 (CA private-key leak protection), gate 2 (core/HTML/config sync), gates 3a–3d (certificate rotation/revocation scenarios S1–S6 and OCSP staleness, ephemeral and external IBM integration, SoftHSM2 + PKCS#11 bridge, production build strip), gate 4 (production sealing) and gate 5 (`npm test`, all JS + Python self-tests). |
+| `package.json` | Scripts: `npm test`, `npm run test:fast`, `extract-core` / `extract-core:check`, `check-syntax`, `build-html`; `typescript` devDependency. |
 
-### 4.6 HAL — Python donanım soyutlama katmanı
+### 4.6 HAL — Python hardware abstraction layer
 
-`hal/` dizini, PhotonNet'in tarayıcı-tarafı BB84 simülasyonunu (`propPhoton()`/
-`deriveSiftedKey()`) gerçek QKD donanımına bağlamak için tasarlanmış saf
-Python bir soyutlama katmanıdır — bugün gerçek donanım YOKTUR, ama paket
-gerçek bir cihazın mevcut koda SIFIR değişiklikle, sadece TEK yeni bir
-sınıf yazılarak eklenebileceği şekilde inşa edilmiştir.
+The `hal/` directory is a pure-Python abstraction layer designed to connect PhotonNet's browser-side BB84
+simulation (`propPhoton()`/`deriveSiftedKey()`) to real QKD hardware — there is NO real hardware today,
+but the package is built so that a real device can be added with ZERO changes to existing code, by writing
+only ONE new class. Full documentation: [`hal/README.md`](hal/README.md).
 
-**Mimari kavrayış:** `propPhoton()` bir OLASILIK modelidir ("bu foton
-hayatta kaldı mı" sorusuna cevap verir), gerçek donanım ise bu soruyu
-ZATEN CEVAPLAMIŞTIR (bir dedektör ya tıklar ya tıklamaz) — bu yüzden gerçek
-donanımın işi bit ÜRETMEK değil, Bob'un gerçek dedektör tıklamalarını
-Alice'in iletim zaman damgalarıyla ZAMAN-ETİKETİ KORELASYONU yaparak QBER
-türetmektir. Bu yüzden HAL, `propPhoton` ile hiçbir ilişkisi olmayan
-tamamen bağımsız bir katman olarak yazılmıştır.
+**Architectural insight:** `propPhoton()` is a PROBABILITY model (it answers "did this photon survive"),
+whereas real hardware has ALREADY ANSWERED that question (a detector either clicks or it does not) — so the
+job of real hardware is not to PRODUCE bits but to derive QBER by TIME-TAG CORRELATION of Bob's real
+detector clicks with Alice's transmission time stamps. That is why the HAL is written as a completely
+independent layer with no relation to `propPhoton`.
 
-**Katmanlı mimari (aşağıdan yukarı):**
+**Layered architecture (bottom to top):**
 
 ```
-types.py (paylaşılan veri sınıfları, donanıma özgü kod yok)
+types.py (shared data classes, no hardware-specific code)
    ↓
-hardware_interface.py (soyut sözleşme: connect/disconnect/arm/read_clicks/status)
+hardware_interface.py (abstract contract: connect/disconnect/arm/read_clicks/status)
    ↓
-simulated_hardware.py / serial_hardware.py / tcp_hardware.py (değiştirilebilir uygulamalar)
+simulated_hardware.py / serial_hardware.py / tcp_hardware.py (interchangeable implementations)
    ↓
-binary_click_hardware.py (Serial/TCP paylaşımlı referans tel-protokolü)
+binary_click_hardware.py (reference wire protocol shared by Serial/TCP)
    ↓
-transport.py (ham bayt-düzeyi Serial/TCP taşıma)
+transport.py (raw byte-level Serial/TCP transport)
    ↓
-link_manager.py (yeniden bağlanma/backoff, arka plan yoklama, sınırlı kuyruk)
+link_manager.py (reconnect/back-off, background polling, bounded queue)
    ↓
-time_tag_correlator.py (RNG'siz korelasyon/QBER türetimi)
+time_tag_correlator.py (RNG-free correlation/QBER derivation, clock offset and drift search)
    ↓
-bridge_server.py (Flask REST+SSE köprüsü — PhotonNet.html'in Donanım paneline)
+bridge_server.py (Flask REST+SSE bridge — to the Hardware panel of PhotonNet.html)
 ```
 
-| Dosya | Ne yapar |
+| File | What it does |
 |---|---|
-| `hal/README.md` | Tam mimari dokümantasyonu (yukarıda özetlendi) + bilinen sınırlamalar. |
-| `hal/hardware_interface.py` | Soyut `HardwareInterface` sözleşmesi — kasıtlı olarak minimal, tek bir satıcının API'sine göre tasarlanmamış (belirtilen en büyük gerçek-donanım-entegrasyonu hatası budur). |
-| `hal/simulated_hardware.py` | `SimulatedHardware` — gerçek donanım gelmeden önce tüm boru hattının (LinkManager→TimeTagCorrelator→bridge_server→UI) uçtan uca test edilmesini sağlayan sahte uygulama. Kayıp/gürültü modeli PhotonNet2.jsx'in `propPhoton()`'undan bit-birebir portlanmıştır ama mimarisi yalnızca tıklama ZAMAN DAMGALARI üretir — bit yorumu daha sonra, gerçek donanımda olacağı gibi `TimeTagCorrelator`'da yapılır. |
-| `hal/serial_hardware.py` | `SerialHardware` — gerçek bir USB-UART seri SPAD/TDC cihazı için somut sürücü. **Dürüst durum:** `pyserial` bu sandbox'ta kurulamıyor, bu yüzden GERÇEK bir seri portla hiç canlı test edilmedi — sadece paylaşılan protokol mantığı (TCP mock yolu üzerinden) doğrulandı. |
-| `hal/tcp_hardware.py` | `TCPHardware` — ağ-erişilebilir bir SPAD/TDC cihazı için somut sürücü. Sadece stdlib `socket` kullanır, bu yüzden sandbox'ta değişmeden çalışır; sahte bir TCP cihaz sunucusuna karşı uçtan uca doğrulandı. |
-| `hal/binary_click_hardware.py` | `SerialHardware` ve `TCPHardware`'in paylaştığı referans tel-çerçeveleme uygulaması (13 bayt ikili tıklama kaydı). **Dürüst durum:** bu protokol GERÇEK bir satıcı spesifikasyonu DEĞİLDİR, gerçek donanım/satıcı belgeleri gelene kadar makul bir yer tutucu varsayımdır. |
-| `hal/bridge_server.py` | Tarayıcı UI'sını (`PhotonNet.html`) yerel HAL Python servisine bağlayan Flask tabanlı REST+SSE köprüsü. **Dürüst durum:** bu sandbox'ta gerçek bir WebSocket kütüphanesi kurulamadığı için stdlib/Flask tabanlı REST+SSE kullanıldı. `/api/qrng/bytes` her partiye RCT+APT (α = 2⁻²⁰) uygular; başarısız parti hiç servis edilmez, atılır ve taze parti çekilir; art arda 3 parti başarısızsa kalıcı hata (503). Sağlam kaynakta 16.384 bitlik partinin yanlış-alarm oranı ölçüldü: %0,79 — eski davranışta (tek başarısız partide 503) iki QRNG testinin 40 tekrarında 3 rastgele başarısızlık görüldü, yenisinde 0 (806 partiden 6'sı atıldı; `hal/test_qrng_intermittent_failure.py`). |
-| `hal/link_manager.py` | `LinkManager` — yeniden-bağlan-ile-geri-çekilme, sürekli arka plan yoklaması, sınırlı tıklama kuyruğu (maxsize=200.000, en-eski-düşür). |
-| `hal/time_tag_correlator.py` | `TimeTagCorrelator` — "gerçek donanım entegrasyonunun kalbi": Alice'in iletim zaman damgalarını Bob'un dedektör tıklama zaman damgalarıyla bir eşleşme penceresi içinde eşleştirir, sadece baz-eşleşen çiftlerden eleme/QBER türetir. Hiç RNG kullanmaz. |
-| `hal/noise_matrix_sweep.py` | Çalışan `bridge_server.py`'ı (gerçek HTTP çağrılarıyla) bir mesafe taramasında sürer ve dönen `SiftingResult`'lardan bir "gürültü matrisi" türetir. |
-| `hal/transport.py` | `Transport` soyutlaması (`TCPTransport`, `SerialTransport`) — ham bayt gönder/al. |
-| `hal/types.py` | Paylaşılan veri sınıfları/enum'lar (`Basis`, `DetectorChannel`, `TransmitEvent`, vb.) — donanıma özgü kod içermez. |
+| `hal/README.md` | Full architecture documentation (summarised above) + known limitations. |
+| `hal/hardware_interface.py` | The abstract `HardwareInterface` contract — deliberately minimal, not designed around a single vendor's API (the biggest real-hardware-integration mistake it names). |
+| `hal/simulated_hardware.py` | `SimulatedHardware` — a fake implementation that lets the whole pipeline (LinkManager → TimeTagCorrelator → bridge_server → UI) be tested end to end before real hardware arrives. The loss/noise model is ported bit-for-bit from `propPhoton()` in PhotonNet2.jsx, but the architecture only produces click TIME STAMPS — bit interpretation happens later in `TimeTagCorrelator`, as it would with real hardware. |
+| `hal/serial_hardware.py` | `SerialHardware` — a concrete driver for a real USB-UART serial SPAD/TDC device. **Honest status:** `pyserial` could not be installed in the development sandbox, so it has NEVER been tested live with a REAL serial port — only the shared protocol logic was verified (via the TCP mock path). |
+| `hal/tcp_hardware.py` | `TCPHardware` — a concrete driver for a network-reachable SPAD/TDC device. Uses only the stdlib `socket`, so it runs unchanged in the sandbox; verified end to end against a fake TCP device server. |
+| `hal/binary_click_hardware.py` | The reference wire-framing implementation shared by `SerialHardware` and `TCPHardware` (13-byte binary click record). **Honest status:** this protocol is NOT a REAL vendor specification; it is a reasonable placeholder assumption until real hardware/vendor documents arrive. |
+| `hal/bridge_server.py` | A Flask-based REST+SSE bridge connecting the browser UI (`PhotonNet.html`) to the local Python HAL service. **Honest status:** REST+SSE on stdlib/Flask was used because no real WebSocket library could be installed in the sandbox. `/api/qrng/bytes` applies RCT + APT (α = 2⁻²⁰) to every batch; a failing batch is never served — it is discarded and a fresh batch is drawn; 3 consecutive failing batches are a persistent failure (503). The measured false-alarm rate of a healthy source on a 16,384-bit batch is 0.79 %; with the old behaviour (503 on a single failing batch) 40 repetitions of the two QRNG tests produced 3 random failures, with the new one 0 (6 of 806 batches discarded; `hal/test_qrng_intermittent_failure.py`). |
+| `hal/link_manager.py` | `LinkManager` — reconnect with back-off, continuous background polling, bounded click queue (maxsize = 200,000, drop-oldest). |
+| `hal/time_tag_correlator.py` | `TimeTagCorrelator` — "the heart of real hardware integration": matches Alice's transmission time stamps with Bob's detector click time stamps inside a coincidence window and derives sifting/QBER only from basis-matched pairs. Uses no RNG. `estimate_timing()` finds an unknown clock offset and drift between the two time bases (segment phases + linear fit, sub-period phase histogram, integer period resolved by basis-matched error rate); `correlate_auto()` refuses to lock on unrelated data (fail-closed). Test: `hal/test_time_tag_offset.py`. |
+| `hal/qrng_interface.py`, `hal/qrng_simulated.py`, `hal/qrng_tcp_hardware.py`, `hal/qrng_serial_hardware.py`, `hal/qrng_raw_stream.py` | The QRNG contract and its drivers. `SimulatedQRNG` uses `os.urandom` — an operating-system CSPRNG, explicitly NOT a hardware QRNG. `TCPQRNG`/`SerialQRNG` share the raw-stream protocol logic in `RawStreamQRNG` (most USB/serial QRNGs stream entropy continuously; no command layer). `SerialQRNG` is untested on a live port for the same `pyserial` reason. |
+| `hal/qrng_health_tests.py` | Online health tests inspired by NIST SP 800-90B §4.4: Repetition Count Test and Adaptive Proportion Test on bit samples, plus a von Neumann debiaser. The declared min-entropy H must come from the device's characterisation report; the module does not assume it. Not a full SP 800-90B certification. |
+| `hal/detector_profile.py` | Python loader for the detector profiles in `config.json` with exactly the same validation rules and derived values as the JS core (cross-checked by `bb84/detector_profile_config_test.js`). Fail-closed on a missing/corrupt config or unknown profile id. |
+| `hal/noise_matrix_sweep.py` | Drives a running `bridge_server.py` (with real HTTP calls) through a distance sweep and derives a "noise matrix" from the returned `SiftingResult`s. |
+| `hal/transport.py` | The `Transport` abstraction (`TCPTransport`, `SerialTransport`) — raw byte send/receive. |
+| `hal/types.py` | Shared data classes/enums (`Basis`, `DetectorChannel`, `TransmitEvent`, etc.) — contains no hardware-specific code. |
 
-### 4.7 Grafik üreticileri (`gen_*.js`)
+### 4.7 Chart generators (`gen_*.js`)
 
-Depoda **45 tane** `gen_*.js` dosyası vardır. Bunların neredeyse tamamı aynı
-mekanik kalıbı izler: karşılık gelen `*_test.js`/drill dosyasının ürettiği
-`reports/*.json` dosyasını okur ve tek-dosyalık, kendi kendine yeten bir
-HTML grafiği (ışık/karanlık tema, ekran görüntüsüyle doğrulanmış, projenin
-ortak SVG/CSS "ev stili" ile) üretir. Örnek eşleşmeler:
+The repository has **45** `gen_*.js` files. Almost all follow the same mechanical pattern: they read the
+`reports/*.json` file produced by the corresponding `*_test.js`/drill file and produce a single-file,
+self-contained HTML chart (light/dark theme, verified with a screenshot, in the project's shared SVG/CSS
+"house style"). Example pairs:
 
-| Grafik üretici | Kaynak test/drill |
+| Chart generator | Source test/drill |
 |---|---|
-| `gen_precision_hygiene_chart.js` | `exact_slot_time_test.js` + `epoch_reset_controller_test.js` (bu oturumda eklendi) |
+| `gen_precision_hygiene_chart.js` | `exact_slot_time_test.js` + `epoch_reset_controller_test.js` |
 | `gen_mtls_failsafe_debounce_chart.js` | `mtls_failsafe_debounce_test.js` |
 | `gen_hardware_aging_chart.js` | `hardware_aging_model_test.js` |
 | `gen_faraday_cage_shielding_chart.js` | `faraday_cage_shielding_test.js` |
@@ -423,313 +449,294 @@ ortak SVG/CSS "ev stili" ile) üretir. Örnek eşleşmeler:
 | `gen_optical_delay_line_chart.js` / `gen_odls_optimization_chart.js` | `optical_delay_line_test.js` / `odls_optimization_drill.js` |
 | `gen_predictive_jitter_chart.js` | `predictive_jitter_test.js` |
 | `gen_memory_threshold_chart.js` | `memory_technology_threshold_test.js` |
-| `gen_entanglement_charts.js` | `entanglement_*` test dosyaları |
+| `gen_entanglement_charts.js` | the `entanglement_*` test files |
 | `gen_network_routing_chart.js` | `network_matrix_routing_test.js` / `multipath_routing_test.js` |
-| `gen_qkd_network_scale_chart.js` / `gen_qkd_rate_chart.js` / `gen_qkd_limit_chart.js` / `gen_qkd_flow_chart.js` / `gen_qkd_secure_channel_chart.js` | ilgili `qkd_*` test dosyaları |
+| `gen_qkd_network_scale_chart.js` / `gen_qkd_rate_chart.js` / `gen_qkd_limit_chart.js` / `gen_qkd_flow_chart.js` / `gen_qkd_secure_channel_chart.js` | the corresponding `qkd_*` test files |
 | `gen_backpressure_chart.js` / `gen_continuous_chart.js` / `gen_duty_cycle_chart.js` / `gen_ceiling_chart.js` | `backpressure_test.js` / `continuous_stream_test.js` / `duty_cycle_test.js` / `sla_ceiling_test.js` |
 | `gen_authenticated_channel_chart.js` / `gen_production_gate_chart.js` | `authenticated_channel_test.js` / `production_gate_test.js` |
 | `gen_key_supply_chart.js` / `gen_controller_chart.js` | `key_supply_test.js` / `qkd_session_controller_test.js` |
 | `gen_etsi014_interop_chart.js` / `gen_qukaydee_realistic_chart.js` | `etsi014_interop_test.js` / `qukaydee_realistic_test.js` |
-| `gen_landauer_chart.js` / `gen_resonance_chart.js` / `gen_safety_margin_chart.js` / `gen_collapse_drill_chart.js` / `gen_state_poisoning_chart.js` / `gen_layer_stress_chart.js` / `gen_async_sync_chart.js` | ilgili drill dosyaları |
+| `gen_landauer_chart.js` / `gen_resonance_chart.js` / `gen_safety_margin_chart.js` / `gen_collapse_drill_chart.js` / `gen_state_poisoning_chart.js` / `gen_layer_stress_chart.js` / `gen_async_sync_chart.js` | the corresponding drill files |
 | `gen_client_report_html.js` / `gen_qkdnetsim_bridge_report_html.js` | `client_network_report.js` / `qkdnetsim_traffic_bridge.js` |
-| `gen_architecture_map.js` | (bağımsız) mimari haritası/diyagramı üretir |
+| `gen_architecture_map.js` | (standalone) produces the architecture map/diagram |
 
-### 4.8 Kök seviyesi uygulama dosyaları
+### 4.8 Root-level application files
 
-| Dosya | Ne yapar |
+| File | What it does |
 |---|---|
-| `PhotonNet2.jsx` | Uygulamanın TAM kaynağı (849KB, ~14.700 satır) — UI + algoritma iç içe. `extract_core.js`'in girdisi. |
-| `PhotonNet.html` / `PhotonNet_offline.html` | Derlenmiş, tarayıcıda doğrudan açılabilen tek-dosyalık uygulama sürümleri (React bundle gömülü). |
-| `bundler/build_bundle.js`, `react_bundle.js`, `captured_modules.json`, `trace_bundle.js` | React'i CDN'siz, tek dosyaya gömmek için özel bundling araçları. |
-| `check_syntax.js` | `PhotonNet2.jsx`'i TS transpileModule ile derleyip sözdizimi hatalarını satır numarasıyla raporlayan hafif geliştirme-döngüsü aracı. |
-| `gen_world_network.py` / `world_network.js` | Neredeyse her ülkenin başkentini (+büyük ülkeler için ikinci bir metropolü) içeren küresel bir QKD ağ topolojisi üretir — koordinatlar AÇIKÇA yaklaşık/stilize (navigasyon için değil), en yakın 2 komşuya + kıtalar-arası "omurga" bağlantılarına göre bağlanır. |
-| `hal/` | §4.6'da ayrıntılı — Python donanım soyutlama katmanı. |
-| `delivery/photonnet_pki_hardening.zip` | PKI sertleştirme çalışmasının paketlenmiş teslimat arşivi. |
-| `docs/screenshots/*.png` | README vitrin görüntüleri — yalnızca `capture_screenshots.js` ile üretilir. Kök dizinde `.png`/`.zip` tutulmaz (`.gitignore`). |
+| `PhotonNet2.jsx` | The COMPLETE source of the application (~15,000 lines) — UI and algorithms interleaved. Input of `extract_core.js`. |
+| `PhotonNet.html` / `PhotonNet_offline.html` | Compiled single-file versions of the application that open directly in a browser (React bundle and `config.json` embedded). |
+| `config.json` | Detector profiles (SNSPD default, InGaAs SPAD) — the single source for both the JS core and the Python HAL; validated fail-closed. |
+| `bundler/build_bundle.js`, `react_bundle.js`, `captured_modules.json`, `trace_bundle.js` | Custom bundling tools that embed React into a single file without a CDN. |
+| `check_syntax.js` | A lightweight dev-loop tool that compiles `PhotonNet2.jsx` with TS transpileModule and reports syntax errors with line numbers. |
+| `gen_world_network.py` / `world_network.js` | Generates a global QKD network topology containing the capital of almost every country (+ a second metropolis for large countries) — coordinates are EXPLICITLY approximate/stylised (not for navigation), connected to the 2 nearest neighbours + intercontinental "backbone" links. |
+| `hal/` | Detailed in §4.6 — the Python hardware abstraction layer. |
+| `delivery/photonnet_pki_hardening.zip` | The packaged delivery archive of the PKI hardening work. |
+| `docs/screenshots/*.png` | README screenshots — produced only by `capture_screenshots.js`. No `.png`/`.zip` files are kept in the root directory (`.gitignore`). |
+| `docs/COMPARISON.md` | Positioning against existing quantum-network and QKD simulators. |
 
 ---
 
-## 5. Mühendislik/test kültürü — tekrar eden desenler
+## 5. Engineering and test culture — recurring patterns
 
-Bu depoyu okurken fark edilmesi gereken, dosyalar arası TEKRARLAYAN
-disiplinler:
+Disciplines that RECUR across files and are worth noticing when reading this repository:
 
-1. **Çekirdek dokunulmazlığı programatik olarak kanıtlanır.** Neredeyse
-   her test/drill dosyası, çalıştırmadan önce ve sonra `photonnet_core.js`
-   SHA-256'sını karşılaştırıp raporlar — "dokunulmadı" iddiası bir kere
-   varsayılmaz, HER çalıştırmada yeniden doğrulanır.
-2. **Tek-nokta sabitleri güvenilmez, ızgara/binary-search ile doğrulanır.**
-   Bu oturumda en az üç kez (φ_high, histerezis bant genişliği h, exact
-   BigInt tavanı) TEK bir ölçülmüş nokta veya varsayımdan türetilen bir
-   sabit, daha yoğun bir ızgara/aramayla ÇÖKTÜĞÜ görülüp yeniden
-   türetilmiştir — ve REDDEDİLEN ölçüt/varsayım, neden reddedildiğinin
-   kanıtı olarak raporda BIRAKILIR, silinmez.
-3. **Simüle/sezgisel değerler gerçek-donanım değerlerinden açıkça
-   ayrılır.** `sourceIsRealHardware: false` alanları, uydu-vs-yer
-   dedektör kalibrasyonu uyuşmazlığı uyarıları, RF-marjı→karanlık-olasılık
-   kalibrasyonunun doğrulanmamış bir varsayım olduğu notları, yaşlanma
-   modeli katman değerlerinin büyüklük-mertebesi yer tutucular olduğu
-   notları — proje sürekli olarak henüz gerçek donanımla doğrulanmamış
-   olanı, ölçülmüş gerçek gibi SUNMAMAYA özen gösterir.
-4. **Sandbox ağ/paket kısıtları açıkça belgelenir, gizlenmez.** SoftHSM2/
-   OpenSC/pkcs11js/pyserial/gerçek Qiskit hiçbiri bu ortamda
-   kurulamamıştır (ağ/PyPI/npm erişimi engelli) — ilgili dosyalar bunu
-   "test edilemedi, CI'da ilk gerçek doğrulama olacak" şeklinde açıkça
-   belirtir, sanki test edilmiş gibi davranmaz.
-5. **Ters/rahatsız edici bulgular saklanmaz.** Yönlendirme sırasının
-   sadakati artırmadığı, geri-basıncın ani talep sıçramalarında daha
-   FAZLA ret verebileceği, E91'in BBM92'den "daha iyi" olmadığı, gerçek
-   bir resync/bellek-sızıntısı hatasının bulunup düzeltildiği gibi
-   bulgular doğrudan raporlanır, yumuşatılmaz.
-6. **"Kanca" (hook) deseni:** gerçek dünya entegrasyon noktaları (mTLS
-   oturum tazeleme, HSM imzalama) genellikle bir callback/kanca olarak
-   sunulur; ilgili katman dosyası bu kancayı ÇAĞIRIR ama gerçek ağ/TLS
-   davranışını KENDİSİ UYGULAMAZ — bu, "gerçek KME sürecini değiştirmeme"
-   ilkesini korur.
+1. **Core immutability is proven programmatically.** Almost every test/drill file compares and reports the
+   SHA-256 of `photonnet_core.js` before and after running — the "untouched" claim is not assumed once, it
+   is re-verified on EVERY run.
+2. **Single-point constants are not trusted; they are validated with a grid/binary search.** At least
+   three times (φ_high, hysteresis band width h, the exact BigInt ceiling) a constant derived from a SINGLE
+   measured point or assumption was seen to COLLAPSE under a denser grid/search and was re-derived — and
+   the REJECTED criterion/assumption is KEPT in the report as evidence of why it was rejected, not deleted.
+3. **Simulated/heuristic values are explicitly separated from real-hardware values.**
+   `sourceIsRealHardware: false` fields, warnings about the satellite-vs-ground detector calibration
+   mismatch, notes that the RF-margin → dark-probability calibration is an unverified assumption, notes
+   that the ageing-model tier values are order-of-magnitude placeholders — the project consistently takes
+   care NOT TO PRESENT what has not yet been validated with real hardware as if it were a measured fact.
+4. **Sandbox network/package restrictions are documented, not hidden.** SoftHSM2, OpenSC, pkcs11js,
+   pyserial and real Qiskit could not be installed in the development environment (network/PyPI/npm
+   access blocked) — the affected files say so explicitly ("could not be tested here; validated in CI"
+   where a CI job exists), and never act as if they had been tested.
+5. **Counter-intuitive or uncomfortable findings are not hidden.** Findings such as routing order not
+   improving fidelity, back-pressure sometimes rejecting MORE under sudden demand spikes, E91 not being
+   "better" than BBM92, or a real resync/memory-leak bug being found and fixed are reported directly,
+   not softened.
+6. **The "hook" pattern:** real-world integration points (mTLS session refresh, HSM signing) are usually
+   offered as a callback/hook; the layer file CALLS the hook but does NOT itself implement the real
+   network/TLS behaviour — this preserves the principle of "not changing the real KME process".
 
 ---
 
-## 6. IBM ETSI-014 sertifikasyon denetimi — özet yargı
+## 6. IBM ETSI-014 certification audit — summary verdict
 
-`bb84/IBM_ONAY_MATEMATIKSEL_DENETIM.md` (14 testlik `ibm_math_audit.js` +
-fiziksel çapraz-doğrulama `bb84_statevector.py`/`compare_js4.js` temelinde,
-72 export'un tamamı okunarak hazırlanmıştır):
+`bb84/IBM_ONAY_MATEMATIKSEL_DENETIM.md` (Turkish; prepared on the basis of the 14-test `ibm_math_audit.js`
++ physical cross-validation with `bb84_statevector.py`/`compare_js4.js`, by reading all 72 exports the
+core had at the time). **The audit predates core v2; the status of each finding today is noted below.**
 
-**ETSI GS QKD 014 arayüz/protokol uyumluluğu:** muhtemelen GEÇER (API
-şekli, mTLS, SAE kimlikleri doğru).
+**ETSI GS QKD 014 interface/protocol compliance:** probably PASSES (API shape, mTLS, SAE identities
+correct).
 
-**Resmi kuantum-güvenlik sertifikasyonu:** **ALINAMAZ**, çünkü:
+**Formal quantum-security certification:** **CANNOT BE OBTAINED**, because:
 
-- **(A — mimari, simülasyonda düzeltilemez)** "Kuantum" bit üretimi
-  aslında tek bir 32-bit `mulberry32` PRNG tohumundan (`entanglementSeed`)
-  türeyen tamamen deterministik bir akıştır. Aynı tohum → bit-bit aynı
-  akış (Test 1). Tohum uzayı (2³²≈4.3×10⁹) modern GPU/ASIC ile saatler-
-  günler mertebesinde taranabilir — AES-128'in anahtar uzayından ~10²⁹ kat
-  daha küçük (Test 2/8: 2×10⁶ denemede <1ms'de bir çıktı bulundu). Nihai
-  gizlilik-yükseltme (Toeplitz) tohumu da AYNI 32-bit kaynaktan türer
-  (Test 6) — yani "gizli" anahtarın kendisi de tahmin edilebilir. Bu,
-  GLLP/Serfling ispatının dayandığı "Eve'in ölçüm sonuçları hakkında
-  ön-bilgisi yok" aksiyomunu doğrudan ihlal eder. **Gerçek donanım QRNG
-  (veya en azından NIST SP 800-90B onaylı donanım CSPRNG) olmadan bu
-  sorun çözülemez.**
-- **(B — düzeltilebilir, uygulama/süreç eksikleri)** Oturum-seviyesi
-  epsilon bütçesi TAKİP EDİLMİYOR (composable güvenlik açığı — günde
-  10.000 blok × 1 yıl ≈ toplam ε≈7×10⁻⁴, artık "ihmal edilebilir"
-  değil); `converged=true` API'si yanıltıcı olabilir (Test 4: %35 QBER'de
-  bile Cascade `converged=true` dönebiliyor, ama `ProductionSecurityAudit`
-  doğru şekilde reddediyor — API netliği sorunu, güvenlik açığı değil);
-  LDPC üretimde gereksiz çalışıyor (performans, güvenlik değil); QBER
-  eşiğine yakın davranış DOĞRU ama belgelenmemiş (kullanılabilir QBER
-  bandı gerçekte ~%9 ve altı, nominal %11 değil).
+- **(A — architectural, cannot be fixed in simulation)** At the time of the audit the "quantum" bit
+  stream was a fully deterministic stream derived from a single 32-bit `mulberry32` PRNG seed
+  (`entanglementSeed`). Same seed → bit-for-bit the same stream (Test 1). The seed space
+  (2³² ≈ 4.3×10⁹) can be searched in hours to days with a modern GPU/ASIC — ~10²⁹ times smaller than
+  AES-128's key space (Tests 2/8: an output was found in < 1 ms in 2×10⁶ attempts). The final privacy
+  amplification (Toeplitz) seed was derived from the SAME 32-bit source (Test 6) — so the "secret" key
+  itself was predictable. This directly violates the "Eve has no prior knowledge of the measurement
+  outcomes" axiom on which the GLLP/Serfling proof rests. **This cannot be solved without a real hardware
+  QRNG (or at least a NIST SP 800-90B–approved hardware CSPRNG).**
+  *Status today:* since core v2 the key bits come from an independent entropy source (platform CSPRNG) and
+  are never stretched with a PRNG, so the 2³² search no longer recovers the key. The parameter-estimation
+  subset and the Toeplitz seed are treated as public, announced values (as in standard QKD), but they are
+  still generated from a 32-bit seed; a production system should draw them from the QRNG as well. A
+  certified hardware QRNG is still required for an information-theoretic claim.
+- **(B — fixable implementation/process gaps)** The session-level epsilon budget is NOT TRACKED (a
+  composable-security gap — 10,000 blocks per day × 1 year ≈ total ε ≈ 7×10⁻⁴, no longer "negligible");
+  the `converged=true` API can be misleading (Test 4: Cascade can return `converged=true` even at 35 %
+  QBER, but `ProductionSecurityAudit` correctly rejects it — an API clarity problem, not a security hole);
+  LDPC runs unnecessarily in production (performance, not security); behaviour near the QBER threshold is
+  CORRECT but undocumented (the usable QBER band is really ~9 % and below, not the nominal 11 %).
 
-**Nihai yargı:** mühendislik kalitesi (Serfling/GLLP formülü, Cascade/
-LDPC, Toeplitz evrensel-hash, n/k ayrımı) literatürle tutarlı ve doğru
-uygulanmıştır — ama bunların hepsi yalnızca "girdi gerçekten kuantum
-rastgeleliği taşıyorsa" güvenlidir. Bu sistemde girdi kuantum değil,
-klasik ve tekrarlanabilir bir PRNG akışıdır. B kategorisi ne kadar
-düzeltilirse düzeltilsin, A kategorisi (donanım QRNG) çözülmeden resmi
-bir "bilgi-teorik güvenli" onayı verilemez.
+**Final verdict (of the audit):** the engineering quality (Serfling/GLLP formula, Cascade/LDPC, Toeplitz
+universal hashing, the n/k split) is consistent with the literature and correctly implemented — but all of
+this is secure only "if the input really carries quantum randomness". However much category B is fixed,
+no formal "information-theoretically secure" approval can be given until category A (hardware QRNG) is
+solved.
 
 ---
 
-## 7. Üretime hazırlık durumu (PKI/mTLS/HSM)
+## 7. Production readiness (PKI/mTLS/HSM)
 
-`bb84/PRODUCTION_READINESS_ROADMAP.md`'den özet (mTLS/PKI/HSM katmanının
-IBM ile teknik entegrasyonu için — yukarıdaki §6'daki temel kuantum-
-rastgelelik sorunundan AYRI bir konudur):
+Summary from `bb84/PRODUCTION_READINESS_ROADMAP.md` (for the technical integration of the mTLS/PKI/HSM
+layer with IBM — a SEPARATE topic from the fundamental quantum-randomness issue in §6 above):
 
-| # | Madde | Öncelik | Durum |
+| # | Item | Priority | Status |
 |---|---|---|---|
-| 1 | Referans OCSP yanıtlayıcısını üretim-sınıfı bir çözümle değiştir | P0 | Açık — kalıcı bağlantıda azami kilitlenme ~60sn ölçüldü |
-| 2 | HSM/PKCS#11 gerçek donanımla doğrulama | P0 | Yazılımsal katman (SoftHSM2) YAZILDI, sandbox ağ kısıtı yüzünden hiç çalıştırılamadı — ilk doğrulama CI'da |
-| 3 | Bağımsız güvenlik denetimi/sızma testi | P0 | Açık — şimdiye kadarki her şey İÇ test |
-| 4 | Demo kimlik doğrulama kodunun build-zamanı sökülmesi | P0 | **✅ ÇÖZÜLDÜ** — 19/19 test sökülmüş derlemeye karşı da geçti |
-| 5-9 | OCSP HA, PKI yönetişim dokümantasyonu (CP/CPS), olay müdahale runbook'u, rotasyon otomasyonu, CI/CD'nin gerçek IBM ortamına karşı koşulması | P1 | Açık |
-| 10-12 | OCSP negatif önbellek TTL'i, bağlantı yeniden-kullanım rehberi, Toeplitz yük testi | P2 | Açık, üretimi engellemez |
+| 1 | Replace the reference OCSP responder with a production-grade solution | P0 | Open. The measured maximum revocation delay on a persistent connection fell from ~60 s to ~30 s (the good-answer cache TTL, adjustable with `--ocsp-cache-ttl-ms`) after the staleness fixes; an event-driven responder (e.g. Dogtag OCSP, EJBCA, cfssl ocsprest) is still recommended (`bb84/docs/OCSP_NEGATIVE_CACHE_ANALYSIS.md`). |
+| 2 | Validate HSM/PKCS#11 with real hardware | P0 | The software layer (SoftHSM2 + pkcs11js) runs in CI gate 3c; validation with a real hardware HSM is still open. |
+| 3 | Independent security audit/penetration test | P0 | Open — everything so far is INTERNAL testing. |
+| 4 | Build-time removal of demo authentication code | P0 | **✅ SOLVED** — 19/19 tests also pass against the stripped build. |
+| 5–9 | OCSP HA, PKI governance documentation (CP/CPS), incident-response runbook, rotation automation, running CI/CD against the real IBM environment | P1 | Open |
+| 10–12 | OCSP negative-cache TTL, connection reuse guidance, Toeplitz load test | P2 | Negative-cache TTL done (unknown/unreachable answers are cached for 2 s instead of 30 s); the others are open and do not block production. |
 
-**Şimdiye kadar CANLI test edilip doğrulanmış olanlar:** kısa-ömürlü
-sertifikalar + sıfır-kesintili/iptalli rotasyon senaryoları; çift-katmanlı
-iptal (CRL+OCSP); fail-closed davranış (OCSP erişilemezse geçerli
-sertifikalar bile reddediliyor); mTLS+ETSI-014 uyumu (19/19 test);
-demo/bypass kodunun fiziksel sökülmesi; CI/CD entegrasyonu (GitHub
-Actions+GitLab CI); hava-boşluğu mimarisi tasarımı.
+**Tested and verified LIVE so far:** short-lived certificates + zero-downtime rotation/revocation
+scenarios; two-layer revocation (CRL + OCSP); fail-closed behaviour (if OCSP is unreachable, even valid
+certificates are rejected); mTLS + ETSI-014 compliance (19/19 tests); physical removal of demo/bypass code;
+CI/CD integration (GitHub Actions + GitLab CI); air-gap architecture design.
 
-**Önerilen aşamalandırma:** (1) şimdi — teknik inceleme/pilot, üretim
-trafiği taşımamalı; (2) P0 sonrası — sınırlı/staging entegrasyon; (3) P1
-sonrası — genel kullanılabilirlik (GA).
+**Recommended staging:** (1) now — technical review/pilot, must not carry production traffic; (2) after
+P0 — limited/staging integration; (3) after P1 — general availability (GA).
 
 ---
 
-## 8. Bu README'den sonraki oturum — girdi doğrulama + Kaos Mühendisliği turu #3-#9
+## 8. Follow-up work — input validation and chaos engineering rounds 3 to 9
 
-Bu bölüm, README'nin ilk yazıldığı commit'ten (`2742a0d`) sonra yapılan ve
-henüz §3-§7'ye işlenmemiş **22 commit**'i, aynı dürüstlük disipliniyle
-(bulgu → ölçüm → düzeltme → regresyon kontrolü → çekirdek SHA-256
-doğrulaması) özetler. Bu turun tetikleyicisi kullanıcının açık yetki
-devriydi: *"sistemin bütün hatalarını düzeltmen için bütün yetkiyi sana
-devrediyorum, yapısını bozmadan çekirdeğe zarar vermeden sistemi
-mükemmelleştir, bundan sonra gerçek makinalara bağlanacak"* — yani odak,
-gerçek dış sistemlere (gerçek KME sunucuları, gerçek uzak istemciler)
-bağlanmadan önce kalan hataları bulup kapatmaktı.
+This section summarises, with the same honesty discipline (finding → measurement → fix → regression check
+→ core SHA-256 verification), the **22 commits** made after the commit in which this README was first
+written (`2742a0d`). The trigger for this round was the user's explicit delegation: *"I hand you full
+authority to fix all the system's bugs; perfect the system without breaking its structure or harming the
+core — from now on it will be connected to real machines"* — so the focus was to find and close the
+remaining bugs before connecting to real external systems (real KME servers, real remote clients).
 
-### 8.1 Girdi doğrulama / fuzz katmanı
+### 8.1 Input validation / fuzz layer
 
-| Dosya | Bulgu / Ne yapar |
+| File | Finding / what it does |
 |---|---|
-| `chaos_fuzz_test.js` + `chaos_fuzz_worker.js` | Çekirdeğin `EXPORT_MANIFEST`'teki 15 fonksiyonuna 197 kasıtlı bozuk girdi (NaN/undefined/null/±Infinity/aşırı-büyük tamsayı/bozuk dizi) besler; her çağrı izole bir alt-process'te zaman aşımıyla çalıştırılır (kod okumasında `propPhoton`'un `reps=Infinity` ile gerçekten sonsuz döngüye girebileceği önceden fark edildiği için). **Dürüst sonuç:** 133/197 zarif bozulma, 16/197 kontrollü istisna, **4/197 GERÇEK ZAMAN AŞIMI** (`propPhoton`/`bb84Reconcile`'ın `for(i=0;i<N;i++)` deseni doğrulanmamış N'e bağlı — gerçek donanımdan bozuk bir telemetri gelirse DoS riski), 40/197 sessiz NaN + 4/197 sessiz Infinity (özellikle `estimateLinkSurvival`/`computeRepeaterGain` — NaN karşılaştırmaları hep `false` döndüğü için "riskli" eşik kontrollerini sessizce atlatabilir). Çekirdeğe dokunulmadı. |
-| `chaos_input_guard.js` + `chaos_input_guard_test.js` + `chaos_guard_verify_worker.js` | Yukarıdaki TÜM sessiz-NaN/sessiz-Infinity/zaman-aşımı bulgularını çözen, çekirdeğin ÖNÜNE konan bir doğrulama/kırpma katmanı — proje genelindeki "kanca/köprü, asla üzerine yazma" desenine uygun. Üst sınırlar aynı zamanda sonsuz-döngü DoS riskini de kapatır. `computeRepeaterGain`'in `Math.pow(10,x/10)` hattının km=100000 sınırının İÇİNDE bile üstel taşmaya uğrayabildiği kendi doğrulama testinde ayrıca bulundu — çıktı da doğrulanıp taşmada FAIL-CLOSED bir değere düşülüyor (`estimateLinkSurvival`→0 "hayatta kalmadı", iyimser değil). **Kendi kendini düzeltme:** ilk taslakta `bitCount` fallback'i 0 seçilmişti, bu `bb84Reconcile`'da yeni bir 0/0=NaN kaynağı açtı — guard'ın kendi doğrulama testi bunu yakaladı, fallback 1'e çekildi. Her düzeltme `_guard` alanıyla açıkça loglanır, sessizce yutulmaz. |
-| `client_network_report.js`, `entanglement_hom_fidelity_sim.js` (guard entegrasyonu) | Guard katmanını, çekirdeği GERÇEK/güvenilmeyen harici veriyle (müşterinin gönderdiği ham fiber-km JSON'u) çağıran gerçek çağrı noktalarına bağlar. **Gerçek entegrasyon yeni bir gerçek bulgu çıkardı:** guard'ın `sanitizeNumber()`'ı çağıranın verdiği `fallback` değerinin kendisinin `[min,max]` dışında olabileceğini kontrol etmiyordu — düzeltildi. `compare_js4.js` de `fiberT()` çağırıyor ama bu dosya (bu commit'ten bağımsız, ilk taban commit'inden beri) var olmayan bir mutlak yola require ediyor ve hiç çalışmıyor — kapsam dışı bırakıldı, dokunulmadı. |
+| `chaos_fuzz_test.js` + `chaos_fuzz_worker.js` | Feeds 197 deliberately malformed inputs (NaN/undefined/null/±Infinity/oversized integers/malformed arrays) to 15 functions in the core's `EXPORT_MANIFEST`; every call runs in an isolated child process with a time-out (because code reading had shown in advance that `propPhoton` could really loop forever with `reps=Infinity`). **Honest result:** 133/197 graceful degradation, 16/197 controlled exceptions, **4/197 REAL TIME-OUTS** (the `for(i=0;i<N;i++)` pattern of `propPhoton`/`bb84Reconcile` depends on an unvalidated N — a DoS risk if corrupt telemetry arrives from real hardware), 40/197 silent NaN + 4/197 silent Infinity (especially `estimateLinkSurvival`/`computeRepeaterGain` — since NaN comparisons always return `false`, they can silently bypass "risky" threshold checks). The core was not touched. |
+| `chaos_input_guard.js` + `chaos_input_guard_test.js` + `chaos_guard_verify_worker.js` | A validation/clamping layer placed IN FRONT of the core that resolves ALL of the silent-NaN/silent-Infinity/time-out findings above — following the project-wide "hook/bridge, never overwrite" pattern. The upper bounds also close the infinite-loop DoS risk. Its own verification test additionally found that the `Math.pow(10,x/10)` line of `computeRepeaterGain` can overflow exponentially even WITHIN the km = 100000 bound — the output is now validated too and falls back to a FAIL-CLOSED value on overflow (`estimateLinkSurvival` → 0 "did not survive", not optimistic). **Self-correction:** the first draft chose 0 as the `bitCount` fallback, which opened a new 0/0 = NaN source in `bb84Reconcile` — the guard's own verification test caught it and the fallback was moved to 1. Every correction is logged explicitly in a `_guard` field, never silently swallowed. (Since core v2 the core itself also bounds these inputs: `MAX_REPEATERS`, `MAX_RECONCILE_BITS`.) |
+| `client_network_report.js`, `entanglement_hom_fidelity_sim.js` (guard integration) | Connects the guard layer to the real call sites that call the core with REAL/untrusted external data (the raw fibre-km JSON sent by a customer). **The real integration produced a new real finding:** the guard's `sanitizeNumber()` did not check whether the caller-supplied `fallback` value itself could be outside `[min,max]` — fixed. `compare_js4.js` also calls `fiberT()`, but that file (independently of this commit, since the first base commit) requires a non-existent absolute path and never runs — left out of scope, untouched. |
 
-### 8.2 Zamansal bütünlük
+### 8.2 Temporal integrity
 
-| Dosya | Bulgu / Ne yapar |
+| File | Finding / what it does |
 |---|---|
-| `chaos_jitter_test.js` | Durum-makinesi senkronizasyonuna gecikme/jitter enjekte eden test — `epoch_reset_controller.js`'de gerçek bir sıra-dışı-varış (out-of-order arrival) hatası buldu: iletim gecikmesi yüzünden bir önceki epoch'a ait "gecikmiş" bir olay, rollover SONRASI yanlışlıkla YENİ epoch'a sayılabiliyordu. |
-| `epoch_reset_controller.js` (düzeltme) | Gecikmiş varışlar artık doğru (eski) epoch'a atanıyor ve `lateArrivals` alanında AÇIKÇA loglanıyor — ileriye dönük (zamanında/erken) rollover mantığı hiç değişmedi, düzeltme sadece geriye-bakan atamayı düzeltti. |
+| `chaos_jitter_test.js` | A test that injects latency/jitter into state-machine synchronisation — found a real out-of-order arrival bug in `epoch_reset_controller.js`: because of transmission delay, a "late" event belonging to the previous epoch could be wrongly counted in the NEW epoch after the rollover. |
+| `epoch_reset_controller.js` (fix) | Late arrivals are now assigned to the correct (old) epoch and logged EXPLICITLY in the `lateArrivals` field — the forward-looking (on-time/early) rollover logic did not change at all; the fix only corrected the backward-looking assignment. |
 
-### 8.3 Kaos Mühendisliği #3 — Stokastik/Patlama (Burst) Gürültü Enjeksiyonu
+### 8.3 Chaos engineering #3 — stochastic/burst noise injection
 
-| Dosya | Bulgu / Ne yapar |
+| File | Finding / what it does |
 |---|---|
-| `chaos_stochastic_noise_test.js` + `KAOS_STOKASTIK_GURULTU_RAPORU.md` | Çekirdeğe gerçek stokastik/patlama gürültü enjekte eder. **Dürüst ön-tarama sonucu:** çöken şey hata-düzeltme protokolü DEĞİL — çekirdek zaten gerçek stokastik mekanizmalara sahip; çöken, operatöre sunulan **güvenlik-kanıtı yorumlama/eşik** katmanıydı (bir patlama sırasında geçici olarak yükselen QBER, "gözcü var" olarak yanlış yorumlanabiliyordu). |
-| `chaos_eavesdrop_discriminator.js` + `chaos_eavesdrop_discriminator_test.js` | Koşu-testi (run-test) tabanlı bir teşhis katmanı — kısa, geçici bir QBER sıçramasını (patlama gürültüsü) sürdürülen bir yükselmeden (gerçek gözcü paterni) istatistiksel olarak ayırır. **Kapsam notu:** bu, güvenlik KARARINI (anahtarı reddet/kabul et) değiştirmez — `ProductionSecurityAudit` zaten doğru karar veriyordu; düzeltilen, operatöre sunulan YORUM/alarm eşiğiydi. |
-| `client_network_report.js` (discriminator entegrasyonu) | Eavesdrop-teşhis katmanını gerçek çağrı noktasına bağlar — izole bir düzeltme+doğrulama adımı olarak. |
+| `chaos_stochastic_noise_test.js` + `KAOS_STOKASTIK_GURULTU_RAPORU.md` | Injects real stochastic/burst noise into the core. **Honest pre-screening result:** what broke was NOT the error-correction protocol — the core already has real stochastic mechanisms; what broke was the **security-proof interpretation/threshold** layer presented to the operator (a QBER rising temporarily during a burst could be misinterpreted as "an eavesdropper is present"). |
+| `chaos_eavesdrop_discriminator.js` + `chaos_eavesdrop_discriminator_test.js` | A run-test-based diagnostic layer — statistically separates a short, transient QBER spike (burst noise) from a sustained rise (the real eavesdropper pattern). **Scope note:** it does not change the security DECISION (reject/accept the key) — `ProductionSecurityAudit` was already deciding correctly; what was fixed is the INTERPRETATION/alarm threshold presented to the operator. |
+| `client_network_report.js` (discriminator integration) | Connects the eavesdrop-diagnosis layer to the real call site — as an isolated fix + verification step. |
 
-### 8.4 Kaos Mühendisliği #4-#9 — gerçek makinelere bağlanma öncesi son tur
+### 8.4 Chaos engineering #4–#9 — the last round before connecting to real machines
 
-Bu altı tur, kullanıcının "gerçek makinalara bağlanacak" ifadesiyle
-doğrudan ilgilidir — her biri, sistemin gerçek/yavaş/kötü-niyetli bir uzak
-uçla karşılaştığında NE OLDUĞUNU (varsayılmadan) ölçer.
+These six rounds relate directly to the user's statement "it will be connected to real machines" — each
+MEASURES (without assuming) WHAT HAPPENS when the system meets a real/slow/malicious remote end.
 
-| # | Dosya(lar) | Bulgu | Düzeltme | Doğrulama |
+| # | File(s) | Finding | Fix | Verification |
 |---|---|---|---|---|
-| 4 | `ldpc_async_offload.js`, `ldpc_async_offload_test.js`, `workers/ldpc_worker.js` | `KeyPoolBuffer._finalizeBlock`, ikincil/yetkisiz-olmayan `LDPCReconciliation.reconcile`'ı TAMAMEN SENKRON çalıştırıyor — n=150.000'de ana thread'i 15-22s BLOKLUYOR. | Gerçek Node `worker_threads` ile LDPC çağrısı ayrı bir OS thread'ine devredildi (`ProductionSecurityAudit.audit()`'in yalnızca Cascade sonucunu okuduğu, LDPC'yi hiç okumadığı önceden kanıtlandı — LDPC'yi "beklemede" bırakmak güvenli). | n=20.000 davranış-eşdeğerliği + n=150.000 gecikme testi: 15.345ms→621ms (×24.7 iyileşme). **Kapsam notu:** bu köprüye bağlanacak canlı bir çağrı noktası bu depoda henüz yok (`KeyPoolBuffer.feed()` hiçbir Node script'inden çağrılmıyor, sadece dokunulmaz tarayıcı akışından). |
-| 5 | `etsi014_kme_server.js` (`readBody()`/`server_handler`) | 1MB gövde sınırını aşan istekte `req.destroy()` "end"/"error" hiç tetiklemiyor — döndürülen Promise SONSUZA KADAR askıda kalıyor, istemci temiz bir 413 yerine çıplak ECONNRESET alıyor. | `readBody()` artık `KMEError(413)` ile doğrudan reddediyor + "close" olayında savunma amaçlı ret; `!req.complete` durumunda `Connection: close` header'ı + gecikmeli soket-yok-etme (ilk düzeltme, aynı process'te ikinci isteğin ECONNRESET alması gibi YENİ bir regresyona yol açtı — bu da düzeltildi). | `chaos_kme_oversized_body_test.js`: gerçek HTTP isteğiyle 0 bulgu. |
-| 6 | `etsi014_kme_server.js` (`checkOcsp()`) | `fs.mkdtempSync`'in oluşturduğu geçici DİZİN hiç silinmiyor (sadece içindeki dosya) — her OCSP cache-miss'te (30sn TTL, yani gerçek trafikte SÜREKLİ) kalıcı boş-dizin sızıntısı. | `tmpDir` ayrıca yakalanıp `fs.rm(tmpDir,{recursive:true,force:true})` ile temizleniyor. | `chaos_kme_ocsp_tmpdir_leak_test.js`: gerçek mTLS+OCSP sunucusu + 6 farklı sertifika (cache'in aynı sertifikayı maskelemesini önlemek için) ile 0 bulgu. |
-| 7 | `pki_tools/ca_init.sh`, `pki_tools/revoke_cert.sh` | `openssl ca -gencrl -out FILE`, dosyayı yazmadan ÖNCE sıfırlıyor — gerçek bir `setImmediate` döngüsüyle dosyanın ara-anda 0 bayt olduğu ampirik olarak yakalandı. | `.tmp` dosyası + atomik POSIX `mv -f` deseni. | `chaos_pki_crl_atomic_write_test.js`: gerçek CA+sertifika ile CRL boyutu poll edildi, artık yalnızca eski/yeni TAM boyutlar gözlemleniyor. **Not:** Node'un TLS katmanı bozuk/boş bir CRL'i zaten güvenle reddediyor (KME'nin var olan try/catch'i eski CRL'i koruyor) — yani bu, sömürülebilir bir güvenlik açığı DEĞİLDİ, ama gerçek bir atomiklik kusuruydu. |
-| 7b | `pki_tools/rotate_cert.sh` | Aynı atomik-olmama deseni anahtar/sertifika dosya değişiminde de vardı. | Aynı `.tmp`+`mv -f` deseni uygulandı. | Kapsam: hijyen düzeltmesi, ayrı bir chaos-test yazılmadı. |
-| 8 | `etsi014_client_lib.js` (`httpsCall()`), `mock_ibm_client.js` (`MockIbmSaeClient.request()`) | Node'un http(s) istemcisinde VARSAYILAN istek zaman aşımı YOK — gerçek/yavaş/yanıtsız bir uzak KME'ye bağlanılırsa çağıran SONSUZA KADAR asılı kalabilir (KME sunucusunun kendi `readBody()` hatasıyla AYNI SINIF sorun, istemci tarafında). | Her ikisine de `req.setTimeout(timeoutMs,...)` + açık `reject()` + çift-settle'a karşı `settled` bayrağı eklendi (varsayılan 15000ms). `qkdnetsim_traffic_bridge.js`'in KENDİ `SaeClient.request()`'i incelendi — o zaten doğru (`timeout:8000`+`r.on("timeout",...)`) — DOKUNULMADI. | `chaos_client_lib_timeout_test.js`: gerçek, kasıtlı yanıtsız https sunucusuna karşı ~1522ms'de temiz ret (bütçe 1500ms) + gerçek mTLS KME'ye karşı regresyon kontrolü (status=200). `mock_ibm_client.js` için gerçek 3-sertifikalı PKI + gerçek mTLS KME ile tam CLI koşumu (9/10 test — 1 başarısızlık ilgisiz bir SAE-kimlik uyuşmazlığıydı, regresyon değil). |
-| 9 | `god_mode_ragnarok_attack_real.js` | Kod DOĞRUYDU ama script'in KENDİ yazdırdığı sonuç metni BAYATLAMIŞTI: script hâlâ "tek-örnek risk=0 kör noktası AÇIK" diyordu, ama çekirdeğe bu turdan ÖNCE zaten bir düzeltme (`_absoluteRisk()`/`ABSOLUTE_QBER_ALERT_THRESHOLD`) eklenmişti — script'i güncel çekirdeğe karşı çalıştırınca risk=0.98/0.18 çıktı (0 değil), kendi metniyle ÇELİŞTİ. | SONUÇ 1/2 ve "SAVAŞ RAPORU" bölümleri, sabit bir sonuç iddia etmek yerine GERÇEK ölçülen değerlere göre dinamik dallanacak şekilde yeniden yazıldı — kardeş dosyalar (`_omega.js`/`_omega_v3.js`/`_omega_v4.js`) zaten bunu doğru yapıyordu, sadece `_real.js` bayattı. | Script + 3 kardeş dosya çalıştırılıp hepsinin exit 0 verdiği ve artık kendi ölçümüyle tutarlı olduğu doğrulandı. |
-| 9b | `qkdnetsim_traffic_bridge.js` (`main()`) | Patlamalı trafiği taklit etmek için her isteği kasıtlı olarak fire-and-forget dispatch eden ana döngü, bu Promise'leri HİÇ takip etmiyordu — döngü sonunda sadece SABİT bir `sleep(1500)` vardı. Yanıt süresi bunu aşan her istek, sonucunu rapora hiç yazamadan `process.exit()` ile sessizce düşüyordu. | Her dispatch edilen Promise `pending[]`'e itiliyor; sabit sleep yerine `await Promise.allSettled(pending)` kullanılıyor. | **Ampirik kanıt:** gerçek CA/sertifika zinciri + kasıtlı 3000ms geciken gerçek bir mTLS sunucusuyla 30 olaylık yük — düzeltme ÖNCESİ 30/30 sonuç rapordan düştü (encOk+encFail=0), düzeltme SONRASI 0 kayıp (30/30). Ayrıca gerçek bir `etsi014_kme_server.js`'e karşı tam regresyon koşumu: 1416/1407 anahtar teslim, 0 hata, 0 bit-uyuşmazlığı, 3/3 sahte-sertifika reddi. |
+| 4 | `ldpc_async_offload.js`, `ldpc_async_offload_test.js`, `workers/ldpc_worker.js` | `KeyPoolBuffer._finalizeBlock` runs the secondary/non-authoritative `LDPCReconciliation.reconcile` COMPLETELY SYNCHRONOUSLY — at n = 150,000 it BLOCKS the main thread for 15–22 s. | The LDPC call was offloaded to a separate OS thread with real Node `worker_threads` (it was proven in advance that `ProductionSecurityAudit.audit()` reads only the Cascade result and never LDPC — leaving LDPC "pending" is safe). | n = 20,000 behavioural equivalence + n = 150,000 latency test: 15,345 ms → 621 ms (×24.7 improvement). **Scope note:** there is no live call site for this bridge in the repository yet (`KeyPoolBuffer.feed()` is not called from any Node script, only from the read-only browser flow). |
+| 5 | `etsi014_kme_server.js` (`readBody()`/`server_handler`) | On a request exceeding the 1 MB body limit, `req.destroy()` never fires "end"/"error" — the returned Promise HANGS FOREVER and the client gets a bare ECONNRESET instead of a clean 413. | `readBody()` now rejects directly with `KMEError(413)` + a defensive reject on the "close" event; with `!req.complete`, a `Connection: close` header + delayed socket destruction (the first fix introduced a NEW regression — a second request in the same process got ECONNRESET — which was also fixed). | `chaos_kme_oversized_body_test.js`: 0 findings with a real HTTP request. |
+| 6 | `etsi014_kme_server.js` (`checkOcsp()`) | The temporary DIRECTORY created by `fs.mkdtempSync` was never deleted (only the file inside it) — a permanent empty-directory leak on every OCSP cache miss (30 s TTL, i.e. CONTINUOUSLY under real traffic). | `tmpDir` is now captured separately and removed with `fs.rm(tmpDir,{recursive:true,force:true})`. | `chaos_kme_ocsp_tmpdir_leak_test.js`: 0 findings with a real mTLS + OCSP server + 6 different certificates (so the cache cannot mask the same certificate). |
+| 7 | `pki_tools/ca_init.sh`, `pki_tools/revoke_cert.sh` | `openssl ca -gencrl -out FILE` truncates the file BEFORE writing it — a real `setImmediate` loop caught the file empirically at 0 bytes in between. | `.tmp` file + atomic POSIX `mv -f` pattern. | `chaos_pki_crl_atomic_write_test.js`: CRL size polled with a real CA + certificate; now only the old/new FULL sizes are observed. **Note:** Node's TLS layer already rejects a corrupt/empty CRL safely (the KME's existing try/catch keeps the old CRL) — so this was NOT an exploitable security hole, but it was a real atomicity defect. |
+| 7b | `pki_tools/rotate_cert.sh` | The same non-atomic pattern existed for key/certificate file replacement. | The same `.tmp` + `mv -f` pattern was applied. | Scope: hygiene fix, no separate chaos test written. |
+| 8 | `etsi014_client_lib.js` (`httpsCall()`), `mock_ibm_client.js` (`MockIbmSaeClient.request()`) | Node's http(s) client has NO DEFAULT request time-out — when connecting to a real/slow/unresponsive remote KME, the caller can hang FOREVER (the SAME CLASS of problem as the KME server's own `readBody()` bug, on the client side). | `req.setTimeout(timeoutMs,...)` + an explicit `reject()` + a `settled` flag against double-settling were added to both (default 15,000 ms). The OWN `SaeClient.request()` of `qkdnetsim_traffic_bridge.js` was reviewed — it was already correct (`timeout:8000` + `r.on("timeout",...)`) — NOT TOUCHED. | `chaos_client_lib_timeout_test.js`: clean rejection after ~1522 ms (budget 1500 ms) against a real, deliberately unresponsive https server + a regression check against a real mTLS KME (status = 200). For `mock_ibm_client.js`, a full CLI run with a real 3-certificate PKI + a real mTLS KME (9/10 tests — the 1 failure was an unrelated SAE-identity mismatch, not a regression). |
+| 9 | `god_mode_ragnarok_attack_real.js` | The code was CORRECT but the result text the script ITSELF printed had gone STALE: the script still said "single-sample risk = 0 blind spot is OPEN", although a fix (`_absoluteRisk()`/`ABSOLUTE_QBER_ALERT_THRESHOLD`) had already been added to the core BEFORE this round — running the script against the current core gave risk = 0.98/0.18 (not 0), CONTRADICTING its own text. | The RESULT 1/2 and "WAR REPORT" sections were rewritten to branch dynamically on the REAL measured values instead of asserting a fixed result — the sibling files (`_omega.js`/`_omega_v3.js`/`_omega_v4.js`) were already doing this correctly; only `_real.js` was stale. | The script + 3 sibling files were run and verified to exit 0 and now be consistent with their own measurements. |
+| 9b | `qkdnetsim_traffic_bridge.js` (`main()`) | The main loop, which deliberately dispatches every request fire-and-forget to mimic bursty traffic, NEVER tracked these Promises — at the end of the loop there was only a FIXED `sleep(1500)`. Every request whose response took longer than that was silently dropped by `process.exit()` without ever writing its result to the report. | Every dispatched Promise is pushed to `pending[]`; `await Promise.allSettled(pending)` is used instead of the fixed sleep. | **Empirical evidence:** a 30-event load with a real CA/certificate chain + a real mTLS server deliberately delayed by 3000 ms — BEFORE the fix 30/30 results were dropped from the report (encOk + encFail = 0), AFTER the fix 0 lost (30/30). Plus a full regression run against a real `etsi014_kme_server.js`: 1416/1407 keys delivered, 0 errors, 0 bit mismatches, 3/3 forged-certificate rejections. |
 
-**Bu turun ortak noktası:** her bulgu önce gerçek bir GERÇEK-DÜNYA
-koşulunda (yanıtsız sunucu, aşırı-büyük istek gövdesi, sıra-dışı varış,
-bozuk girdi) yeniden üretildi, sonra düzeltildi, sonra AYNI gerçek koşulda
-0-bulgu olarak yeniden doğrulandı — hiçbir düzeltme "mantıken doğru
-olmalı" gerekçesiyle test edilmeden kabul edilmedi. `photonnet_core.js`
-SHA-256'sı (`8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05`)
-bu 22 commit'in HİÇBİRİNDE değişmedi — her commit öncesi/sonrası ayrıca
-doğrulandı. (Bu hash çekirdek **v1**'e aittir; v2 geçişi ve gerekçesi:
-[`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md).)
+**What this round has in common:** every finding was first reproduced under a real REAL-WORLD condition
+(unresponsive server, oversized request body, out-of-order arrival, malformed input), then fixed, then
+re-verified as 0 findings under the SAME real condition — no fix was accepted untested on the grounds that
+"it should be logically correct". The SHA-256 of `photonnet_core.js`
+(`8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05`) did not change in ANY of these 22
+commits — it was verified separately before/after every commit. (This hash belongs to core **v1**; the
+later versions and their rationale: [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md).)
 
 ---
 
-## 9. Nasıl çalıştırılır
+## 9. How to run
 
-**Tek komutla tüm öz-testler:** `npm install && pip install -r hal/requirements.txt && npm test`
-(`bb84/tools/run_all_tests.js`: test PKI'sını ve HAL köprüsünü kendisi kurar, ~90 JS testini ve Python HAL
-testlerini koşturur; `npm run test:fast` uzun testleri atlar). CI'da "Kapı 5" aynı komutu çalıştırır.
+**All self-tests with one command:** `npm install && pip install -r hal/requirements.txt && npm test`
+(`bb84/tools/run_all_tests.js` sets up the test PKI and the HAL bridge itself and runs ~90 JS tests and
+the Python HAL tests; `npm run test:fast` skips the long ones). In CI, "gate 5" runs the same command.
 
 ```bash
-# Çekirdeği kaynaktan (PhotonNet2.jsx) yeniden üret / doğrula
-node bb84/tools/extract_core.js --check      # yalnızca doğrular, yazmaz
-node bb84/tools/extract_core.js              # üretir ve üzerine yazar
+# Regenerate / verify the core from its source (PhotonNet2.jsx)
+node bb84/tools/extract_core.js --check      # verifies only, does not write
+node bb84/tools/extract_core.js              # generates and overwrites
 
-# Herhangi bir öz-test/drill dosyasını çalıştır (çoğu bağımsızdır)
+# Run any self-test/drill file (most are standalone)
 node bb84/floating_point_accumulation_test.js
 node bb84/epoch_reset_controller_test.js
 node bb84/hardware_aging_model_test.js
-# ... (bb84/*_test.js dosyalarının tamamı aynı şekilde çalıştırılır)
+# ... (all bb84/*_test.js files run the same way)
 
-# Bir test/drill'in JSON raporuna karşılık gelen HTML grafiğini üret
+# Produce the HTML chart for a test/drill's JSON report
 node bb84/gen_precision_hygiene_chart.js     # → /tmp/precision_hygiene_chart.html
 
-# Yerel bir demo PKI kurup gerçek mTLS ile KME sunucusunu başlat
+# Set up a local demo PKI and start the KME server with real mTLS
 bash bb84/generate_demo_pki.sh
 node bb84/etsi014_kme_server.js --cert=... --key=... --ca=...
 
-# Üretim-sertleştirilmiş (demo kod sökülmüş) KME derlemesini üret
+# Produce the production-hardened KME build (demo code stripped)
 node bb84/build_production_server.js
 
-# CI entegrasyon testlerini yerel olarak çalıştır (geçici PKI ile)
+# Run the CI integration tests locally (with a temporary PKI)
 bash bb84/ci/run_integration_tests.sh
 
-# HAL (Python donanım soyutlama) köprü sunucusunu başlat
-python3 hal/bridge_server.py
+# Start the HAL (Python hardware abstraction) bridge server
+python3 -m hal.bridge_server
+
+# Regenerate the README screenshots from the current PhotonNet.html
+node bb84/tools/capture_screenshots.js
 ```
 
-**Dedektör profili (çekirdek v3):** SNSPD / InGaAs gibi dedektör parametreleri yalnızca depo kökündeki
-[`config.json`](config.json) dosyasındadır; çekirdek, ağ katmanları, Python HAL ve tarayıcı aynı dosyayı
-okur. Ayrıntılar: [`bb84/docs/DETECTOR_PROFILE_DESIGN.md`](bb84/docs/DETECTOR_PROFILE_DESIGN.md).
+**Detector profile (core v3):** detector parameters such as SNSPD / InGaAs live only in
+[`config.json`](config.json) at the repository root; the core, the network layers, the Python HAL and the
+browser all read the same file. Details (Turkish):
+[`bb84/docs/DETECTOR_PROFILE_DESIGN.md`](bb84/docs/DETECTOR_PROFILE_DESIGN.md).
 
 ```bash
-# Varsayılan profil config.json → detector.active ("snspd")
+# Default profile: config.json → detector.active ("snspd")
 PHOTONNET_DETECTOR=ingaas node -e 'console.log(require("./bb84/photonnet_core.js").activeDetectorProfile())'  # Node
-PHOTONNET_DETECTOR=ingaas python3 -m hal.detector_profile     # Python: aynı kural
-#   tarayıcı: PhotonNet.html?detector=ingaas  ya da metrik çubuğundaki DEDEKTÖR seçicisi
-node bb84/detector_profile_config_test.js                     # şema + tek kaynak + JS↔Python kabul testi
-# config.json değişince HTML'i yeniden derle (yapılandırma HTML'e gömülür):
+PHOTONNET_DETECTOR=ingaas python3 -m hal.detector_profile     # Python: same rule
+#   browser: PhotonNet.html?detector=ingaas  or the DEDEKTÖR (detector) selector in the metrics bar
+node bb84/detector_profile_config_test.js                     # schema + single source + JS↔Python acceptance test
+# Rebuild the HTML when config.json changes (the configuration is embedded in the HTML):
 node bb84/tools/build_photonnet_html.js
 ```
 
-**Bilinen ortam bağımlılıkları:** bazı testler (`etsi014_client_lib_test.js`,
-`etsi014_interop_test.js`, `qkd_secure_channel_test.js`,
-`qukaydee_realistic_test.js`, `buffer_starvation_test.js`) çalışmadan önce
-`bb84/generate_demo_pki.sh` ile üretilen sertifikaların `/tmp/pki/`
-altında bulunmasını veya `--kme-url` gibi ek argümanları bekler — bu bir
-regresyon değil, çalıştırma-öncesi kurulum adımıdır.
+**Known environment dependencies:** when run on their own, some tests (`etsi014_client_lib_test.js`,
+`etsi014_interop_test.js`, `qkd_secure_channel_test.js`, `qukaydee_realistic_test.js`,
+`buffer_starvation_test.js`) expect certificates produced by `bb84/generate_demo_pki.sh` under `/tmp/pki/`
+or extra arguments such as `--kme-url` — this is not a regression but a pre-run setup step (`npm test`
+does it automatically).
 
 ---
 
-## 10. Dizin haritası
+## 10. Directory map
 
 ```
 photonnet/
-├── PhotonNet2.jsx                    # Uygulamanın TAM kaynağı (React+algoritma)
-├── PhotonNet.html / _offline.html    # Derlenmiş tek-dosya uygulama (config.json gömülü)
-├── config.json                       # Dedektör profilleri — TEK kaynak (çekirdek v3)
-├── LICENSE, NOTICE, REUSE.toml, LICENSES/   # Lisanslama (§11)
-├── package.json                      # extract-core script kısayolları
-├── bundler/                          # React'i tek dosyaya gömen özel bundler
-├── hal/                              # Python donanım soyutlama katmanı (§4.6)
-├── delivery/                         # Paketlenmiş teslimat arşivleri
-├── docs/screenshots/                 # README görüntüleri (capture_screenshots.js üretir)
-├── gen_world_network.py, world_network.js   # Küresel ağ topolojisi üretici/verisi
-└── bb84/                             # Ana simülasyon + katman kod tabanı
-    ├── photonnet_core.js             # ÇEKİRDEK — asla elle değiştirilmez (§3)
-    ├── tools/                        # extract_core.js, build/verify araçları (§4.5)
-    ├── pki_tools/                    # CA/HSM/OCSP/rotasyon script'leri (§4.3)
+├── PhotonNet2.jsx                    # COMPLETE source of the application (React + algorithms)
+├── PhotonNet.html / _offline.html    # Compiled single-file application (config.json embedded)
+├── config.json                       # Detector profiles — SINGLE source (core v3)
+├── LICENSE, NOTICE, REUSE.toml, LICENSES/   # Licensing (§11)
+├── CONTRIBUTING.md                   # Contribution terms (DCO + commercial relicensing grant)
+├── package.json                      # npm test and helper scripts
+├── bundler/                          # Custom bundler that embeds React into a single file
+├── hal/                              # Python hardware abstraction layer (§4.6)
+├── delivery/                         # Packaged delivery archives
+├── docs/                             # COMPARISON.md, screenshots/ (produced by capture_screenshots.js)
+├── gen_world_network.py, world_network.js   # Global network topology generator/data
+└── bb84/                             # Main simulation + layer code base
+    ├── photonnet_core.js             # CORE — never edited by hand (§3)
+    ├── tools/                        # extract_core.js, build/verify/test-runner tools (§4.5)
+    ├── pki_tools/                    # CA/HSM/OCSP/rotation scripts (§4.3)
     ├── ci/                           # run_integration_tests.sh (§4.5)
-    ├── docs/                         # PHI_HIGH.md, QUKAYDEE.md (kalibrasyon notları)
-    ├── reports/                      # Her test/drill'in ürettiği JSON kanıt dosyaları
-    ├── *_test.js, *_drill.js         # Öz-test/tatbikat dosyaları (§4.1-4.4)
-    ├── gen_*.js                      # Grafik üreticileri (§4.7)
-    ├── IBM_ONAY_MATEMATIKSEL_DENETIM.md      # §6'nın kaynağı
-    └── PRODUCTION_READINESS_ROADMAP.md        # §7'nin kaynağı
+    ├── docs/                         # Design notes, CORE_CHANGELOG.md, calibration notes (mostly Turkish)
+    ├── reports/                      # JSON evidence files produced by every test/drill
+    ├── *_test.js, *_drill.js         # Self-test/drill files (§4.1–4.4)
+    ├── gen_*.js                      # Chart generators (§4.7)
+    ├── IBM_ONAY_MATEMATIKSEL_DENETIM.md      # Source of §6 (Turkish)
+    └── PRODUCTION_READINESS_ROADMAP.md        # Source of §7 (Turkish)
 ```
 
 ---
 
-## 11. Lisans
+## 11. License
 
-Copyright (C) 2026 Behçet Büyükacar (**photonicquantumcore**). Üç lisanslı yapı — ayrıntı
-[`LICENSE`](LICENSE), dosya eşlemesi [`REUSE.toml`](REUSE.toml), tam metinler [`LICENSES/`](LICENSES):
+Copyright (C) 2026 Behçet Büyükacar (**photonicquantumcore**). A three-licence structure — details in
+[`LICENSE`](LICENSE), file mapping in [`REUSE.toml`](REUSE.toml), full texts in [`LICENSES/`](LICENSES):
 
-| Kapsam | Lisans |
+| Scope | License |
 |---|---|
-| Çekirdek, ağ katmanları, KME, arayüz, testler, belgeler (aşağıdakiler dışındaki her şey) | **Çift lisans:** GPL-3.0-or-later **veya** ticari lisans ([koşullar](LICENSES/LicenseRef-PhotonicQuantumCore-Commercial.txt)) |
-| Entegrasyon arayüzleri: `bb84/etsi014_client_lib.js`, `hal/hardware_interface.py`, `hal/qrng_interface.py`, `hal/types.py`, `hal/transport.py`, `hal/detector_profile.py`, `config.json` | **Apache-2.0** (üreticiler ve ortaklar kendi kodunu GPL'e tabi olmadan bağlayabilsin diye; bkz. [`NOTICE`](NOTICE)) |
-| Gömülü React/ReactDOM (`bundler/`, HTML dosyalarının içindeki React çalışma zamanı) | MIT (Meta Platforms, Inc.) |
+| Core, network layers, KME, user interface, tests, documentation (everything except the items below) | **Dual licence:** GPL-3.0-or-later **or** a commercial licence ([terms](LICENSES/LicenseRef-PhotonicQuantumCore-Commercial.txt)) |
+| Integration interfaces: `bb84/etsi014_client_lib.js`, `hal/hardware_interface.py`, `hal/qrng_interface.py`, `hal/types.py`, `hal/transport.py`, `hal/detector_profile.py`, `config.json` | **Apache-2.0** (so that vendors and partners can connect their own code without becoming subject to the GPL; see [`NOTICE`](NOTICE)) |
+| Embedded React/ReactDOM (`bundler/`, the React runtime inside the HTML files) | MIT (Meta Platforms, Inc.) |
 
-Katkı koşulları (DCO + ticari yeniden lisanslama izni): [`CONTRIBUTING.md`](CONTRIBUTING.md).
+Contribution terms (DCO + commercial relicensing grant): [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ---
 
-*Bu README, projenin tüm `bb84/` (176 .js/.sh dosyası), `hal/` (15 Python
-dosyası) ve kök seviyesi dosyaları taranarak, her dosyanın kendi baş
-yorumundaki amaç/mekanizma/dürüstlük notları temel alınarak derlenmiştir.
-Hiçbir sayı veya iddia bu tarama dışında uydurulmamıştır. §8, ilk yazım
-sonrası eklenen 22 commit'i (Kaos Mühendisliği #3-#9 + girdi doğrulama
-katmanı) kapsayacak şekilde 2026-09-16'da güncellendi — git geçmişi
-(`git log --oneline`) her zaman bu README'den daha güncel kabul
-edilmelidir.*
+*This README was compiled by scanning all of the project's `bb84/` files, the `hal/` Python files and the
+root-level files, based on the purpose/mechanism/honesty notes in each file's own header comment. No
+number or claim was invented outside this scan. §8 covers the 22 commits added after the first version;
+later core versions are recorded in `bb84/docs/CORE_CHANGELOG.md`. The git history (`git log --oneline`)
+should always be considered more up to date than this README. The original Turkish version of this README
+is available in the git history.*
