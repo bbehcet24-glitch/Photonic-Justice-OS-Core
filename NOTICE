@@ -1,0 +1,21 @@
+PhotonNet — photonicquantumcore
+Copyright (C) 2026 Behçet Büyükacar (photonicquantumcore)
+
+This product includes software developed as part of PhotonNet.
+
+The integration interfaces listed in section 2 of the LICENSE file
+(bb84/etsi014_client_lib.js, hal/hardware_interface.py, hal/qrng_interface.py,
+hal/types.py, hal/transport.py, hal/detector_profile.py, config.json) are
+licensed under the Apache License, Version 2.0 (LICENSES/Apache-2.0.txt).
+
+The remaining PhotonNet code is licensed under GPL-3.0-or-later OR a separate
+commercial licence (see LICENSE).
+
+Third-party software
+--------------------
+React and ReactDOM 19.2 — Copyright (c) Meta Platforms, Inc. and affiliates.
+Licensed under the MIT License (LICENSES/MIT.txt). Bundled in
+bundler/react_bundle.js and embedded in PhotonNet.html / PhotonNet_offline.html.
+
+Development-time tools that are not distributed with this repository:
+TypeScript (Apache-2.0, Microsoft Corporation), Flask (BSD-3-Clause, Pallets).

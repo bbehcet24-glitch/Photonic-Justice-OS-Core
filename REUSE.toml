@@ -1,0 +1,39 @@
+# REUSE (https://reuse.software) uyumlu lisans eşlemesi — hangi dosyanın hangi lisansta olduğunun tek kaynağı.
+# Tam metinler LICENSES/ klasöründedir. Genel açıklama: LICENSE.
+version = 1
+
+# 1) Varsayılan: tüm depo — çift lisans (GPL-3.0-or-later VEYA ticari)
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Behçet Büyükacar (photonicquantumcore)"
+SPDX-License-Identifier = "GPL-3.0-or-later OR LicenseRef-PhotonicQuantumCore-Commercial"
+
+# 2) Entegrasyon arayüzleri — Apache-2.0
+[[annotations]]
+path = [
+  "bb84/etsi014_client_lib.js",
+  "hal/hardware_interface.py",
+  "hal/qrng_interface.py",
+  "hal/types.py",
+  "hal/transport.py",
+  "hal/detector_profile.py",
+  "config.json",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Behçet Büyükacar (photonicquantumcore)"
+SPDX-License-Identifier = "Apache-2.0"
+
+# 3) Üçüncü taraf: paketlenmiş React/ReactDOM — MIT
+[[annotations]]
+path = ["bundler/react_bundle.js", "bundler/captured_modules.json"]
+precedence = "override"
+SPDX-FileCopyrightText = "Meta Platforms, Inc. and affiliates"
+SPDX-License-Identifier = "MIT"
+
+# 3b) Uygulama kodu (çift lisans) + gömülü React (MIT) içeren derlenmiş tek dosyalar
+[[annotations]]
+path = ["PhotonNet.html", "PhotonNet_offline.html"]
+precedence = "override"
+SPDX-FileCopyrightText = ["2026 Behçet Büyükacar (photonicquantumcore)", "Meta Platforms, Inc. and affiliates"]
+SPDX-License-Identifier = "(GPL-3.0-or-later OR LicenseRef-PhotonicQuantumCore-Commercial) AND MIT"

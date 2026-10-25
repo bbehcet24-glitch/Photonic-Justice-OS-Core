@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Behçet Büyükacar (photonicquantumcore)
+# SPDX-License-Identifier: Apache-2.0
 """
 detector_profile.py — Python HAL için dedektör profili yükleyicisi (çekirdek v3 ile AYNI kurallar).
 

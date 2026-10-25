@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+// SPDX-FileCopyrightText: 2026 Behçet Büyükacar (photonicquantumcore)
+// SPDX-License-Identifier: Apache-2.0
 "use strict";
 /**
  * etsi014_client_lib.js — vendor-neutral ETSI GS QKD 014 istemci kütüphanesi

@@ -1,0 +1,32 @@
+photonicquantumcore Commercial License — availability notice
+Copyright (C) 2026 Behçet Büyükacar (photonicquantumcore)
+
+The parts of PhotonNet identified in the top-level LICENSE file as dual licensed
+("GPL-3.0-or-later OR LicenseRef-PhotonicQuantumCore-Commercial") are, in addition
+to the GNU General Public License v3 or later, available under a separate
+commercial licence from the copyright holder.
+
+This file is a notice of availability, not the licence itself. A commercial
+licence takes effect only through a separate written agreement signed by the
+copyright holder. Until such an agreement exists, your rights to the dual-licensed
+code are those granted by the GNU General Public License v3 or later.
+
+A commercial licence is intended for organisations that wish to, for example:
+  - embed the dual-licensed code in proprietary products or services without
+    releasing their own source code under the GPL;
+  - distribute modified versions under terms other than the GPL;
+  - obtain warranties, indemnities, support or other terms that the GPL does
+    not provide.
+
+The scope, fees, term and any warranty or support obligations are set out in the
+individual written agreement. Nothing in this notice grants any licence, warranty
+or trademark right.
+
+To request a commercial licence, contact the copyright holder through the
+project's GitHub repository (https://github.com/bbehcet24-glitch).
+
+-------------------------------------------------------------------------------
+TÜRKÇE: Bu dosya bir ticari lisansın VAR OLDUĞUNU bildirir; lisansın kendisi
+değildir. Ticari lisans yalnızca telif sahibiyle imzalanan ayrı bir yazılı
+sözleşmeyle geçerli olur. Böyle bir sözleşme yoksa çift lisanslı kod üzerindeki
+haklarınız GNU GPL v3 (veya sonraki sürüm) ile verilen haklardır.

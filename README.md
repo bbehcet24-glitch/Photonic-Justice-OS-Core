@@ -36,6 +36,7 @@ sunulmamıştır.
 8. [Bu README'den sonraki oturum — girdi doğrulama + Kaos Mühendisliği turu #3-#9](#8-bu-readmeden-sonraki-oturum--girdi-doğrulama--kaos-mühendisliği-turu-3-9)
 9. [Nasıl çalıştırılır](#9-nasıl-çalıştırılır)
 10. [Dizin haritası](#10-dizin-haritası)
+11. [Lisans](#11-lisans)
 
 ---
 
@@ -670,6 +671,7 @@ photonnet/
 ├── PhotonNet2.jsx                    # Uygulamanın TAM kaynağı (React+algoritma)
 ├── PhotonNet.html / _offline.html    # Derlenmiş tek-dosya uygulama (config.json gömülü)
 ├── config.json                       # Dedektör profilleri — TEK kaynak (çekirdek v3)
+├── LICENSE, NOTICE, REUSE.toml, LICENSES/   # Lisanslama (§11)
 ├── package.json                      # extract-core script kısayolları
 ├── bundler/                          # React'i tek dosyaya gömen özel bundler
 ├── hal/                              # Python donanım soyutlama katmanı (§4.6)
@@ -687,6 +689,21 @@ photonnet/
     ├── IBM_ONAY_MATEMATIKSEL_DENETIM.md      # §6'nın kaynağı
     └── PRODUCTION_READINESS_ROADMAP.md        # §7'nin kaynağı
 ```
+
+---
+
+## 11. Lisans
+
+Copyright (C) 2026 Behçet Büyükacar (**photonicquantumcore**). Üç lisanslı yapı — ayrıntı
+[`LICENSE`](LICENSE), dosya eşlemesi [`REUSE.toml`](REUSE.toml), tam metinler [`LICENSES/`](LICENSES):
+
+| Kapsam | Lisans |
+|---|---|
+| Çekirdek, ağ katmanları, KME, arayüz, testler, belgeler (aşağıdakiler dışındaki her şey) | **Çift lisans:** GPL-3.0-or-later **veya** ticari lisans ([koşullar](LICENSES/LicenseRef-PhotonicQuantumCore-Commercial.txt)) |
+| Entegrasyon arayüzleri: `bb84/etsi014_client_lib.js`, `hal/hardware_interface.py`, `hal/qrng_interface.py`, `hal/types.py`, `hal/transport.py`, `hal/detector_profile.py`, `config.json` | **Apache-2.0** (üreticiler ve ortaklar kendi kodunu GPL'e tabi olmadan bağlayabilsin diye; bkz. [`NOTICE`](NOTICE)) |
+| Gömülü React/ReactDOM (`bundler/`, HTML dosyalarının içindeki React çalışma zamanı) | MIT (Meta Platforms, Inc.) |
+
+Katkı koşulları (DCO + ticari yeniden lisanslama izni): [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ---
 

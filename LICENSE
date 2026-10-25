@@ -1,0 +1,72 @@
+PhotonNet — photonicquantumcore
+Copyright (C) 2026 Behçet Büyükacar (photonicquantumcore)
+
+LICENSING OVERVIEW (dual licensing + permissive interfaces)
+===========================================================
+
+This repository is distributed under three licences, each applying to a clearly
+defined part of the code. The authoritative, machine-readable mapping of files
+to licences is in REUSE.toml; full licence texts are in the LICENSES/ directory.
+
+1. Core, network, KME and user-interface code — DUAL LICENSED
+   SPDX-License-Identifier: GPL-3.0-or-later OR LicenseRef-PhotonicQuantumCore-Commercial
+
+   Everything not listed in sections 2 and 3 below, including PhotonNet2.jsx,
+   bb84/photonnet_core.js, the KME server, the shielding/mesh network layers,
+   the tests and the documentation, is available under your choice of:
+
+   a) the GNU General Public License, version 3 or (at your option) any later
+      version (LICENSES/GPL-3.0-or-later.txt). You may use, study, modify and
+      redistribute it, provided that distributed derivative works are released
+      under the same licence with their source code; or
+
+   b) a separate commercial licence from the copyright holder, for organisations
+      that want to integrate or distribute this code without the obligations of
+      the GPL (LICENSES/LicenseRef-PhotonicQuantumCore-Commercial.txt).
+
+2. Integration interfaces — APACHE LICENSE 2.0
+   SPDX-License-Identifier: Apache-2.0
+
+   So that hardware manufacturers, laboratories and network operators can connect
+   their own (possibly proprietary) code to PhotonNet without becoming subject to
+   the GPL, the following integration interfaces are licensed under the Apache
+   License, Version 2.0 (LICENSES/Apache-2.0.txt; see also NOTICE):
+
+     bb84/etsi014_client_lib.js   ETSI GS QKD 014 client library
+     hal/hardware_interface.py    hardware abstraction interface
+     hal/qrng_interface.py        QRNG abstraction interface
+     hal/types.py                 shared HAL data types
+     hal/transport.py             HAL transport layer
+     hal/detector_profile.py      detector-profile loader (config.json schema)
+     config.json                  detector-profile configuration
+
+3. Third-party components — MIT
+   SPDX-License-Identifier: MIT
+
+   bundler/react_bundle.js, bundler/captured_modules.json and the React runtime
+   embedded in PhotonNet.html / PhotonNet_offline.html contain React and
+   ReactDOM 19 (Copyright (c) Meta Platforms, Inc. and affiliates), licensed
+   under the MIT License (LICENSES/MIT.txt). The PhotonNet application code in
+   those HTML files remains under section 1.
+
+Trademark: the names "photonicquantumcore" and "PhotonNet" are not licensed
+under any of the licences above (see also Apache-2.0 section 6). Contributions:
+see CONTRIBUTING.md.
+
+-------------------------------------------------------------------------------
+TÜRKÇE ÖZET
+
+Bu depo üç lisansla dağıtılır; hangi dosyanın hangi lisansta olduğu REUSE.toml
+dosyasında, tam metinler LICENSES/ klasöründedir.
+
+1. Çekirdek, ağ katmanları, KME, arayüz, testler ve belgeler (aşağıda sayılmayan
+   her şey): ÇİFT LİSANS — GNU GPL v3 ya da sonraki bir sürüm, VEYA telif
+   sahibinden alınacak ayrı bir ticari lisans. GPL'i kabul eden herkes ücretsiz
+   kullanabilir; türev çalışmasını dağıtan, kaynak kodunu da aynı lisansla açmak
+   zorundadır. Bunu istemeyen kurumlar ticari lisans alır.
+2. Entegrasyon arayüzleri (ETSI 014 istemci kütüphanesi, HAL arayüzleri, dedektör
+   profili yükleyicisi ve config.json): Apache 2.0 — üreticiler ve ortaklar kendi
+   kapalı kodlarını GPL'e tabi olmadan bağlayabilsin diye.
+3. Gömülü React/ReactDOM: MIT (Meta Platforms, Inc.).
+
+"photonicquantumcore" ve "PhotonNet" adları bu lisanslarla verilmez.

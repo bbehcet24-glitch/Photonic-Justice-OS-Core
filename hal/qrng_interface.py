@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Behçet Büyükacar (photonicquantumcore)
+# SPDX-License-Identifier: Apache-2.0
 """
 QRNGInterface — HER kuantum rastgele sayı üreteci (QRNG) sürücüsünün
 uyması gereken SÖZLEŞME.

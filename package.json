@@ -12,8 +12,8 @@
     "build-html": "node bb84/tools/build_photonnet_html.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Behçet Büyükacar (photonicquantumcore)",
+  "license": "SEE LICENSE IN LICENSE",
   "devDependencies": {
     "typescript": "6.0.3"
   }

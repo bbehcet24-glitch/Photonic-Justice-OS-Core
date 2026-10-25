@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 Behçet Büyükacar (photonicquantumcore)
+# SPDX-License-Identifier: Apache-2.0
 """
 PhotonNet Hardware Abstraction Layer — ortak veri tipleri.
 
