@@ -557,6 +557,45 @@ jobs:
           retention-days: 14
           if-no-files-found: warn
 
+  # ── KAPI 5: Tüm öz-testler (npm test) ─────────────────────────────────
+  # bb84/tools/run_all_tests.js: test PKI'sını ve HAL köprüsünü kendisi kurar, ~90 JS testini (sabit port
+  # kullananlar sıralı) ve Python HAL testlerini koşturur. Önceden CI yalnız seçili kapıları koşturuyordu;
+  # JS öz-testlerinin ve Python HAL'in tamamı yalnızca yerelde çalışıyordu.
+  all-self-tests:
+    name: "Kapı 5 — Tüm öz-testler (npm test: JS + Python HAL)"
+    needs: [extract-core-check]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - name: Depoyu çek
+        uses: actions/checkout@v4
+
+      - name: Node.js kur
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Python kur
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Bağımlılıklar (TypeScript 6.0.3 sabit, Flask)
+        run: |
+          npm install --no-save typescript@6.0.3
+          pip install -r hal/requirements.txt
+
+      - name: Tüm öz-testleri çalıştır
+        run: npm test
+
+      - name: Test özetini artifact olarak yükle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-test-summary
+          path: ci-reports/npm_test_summary.json
+          retention-days: 30
+
   # ── KAPI 3d: Üretim derlemesi — demo/bypass kimlik doğrulama kodunun
   # FİZİKSEL OLARAK SÖKÜLDÜĞÜNÜ kanıtlar ("Demo Kodlarının İçeride Kalması"
   # sertifikasyon bulgusuna yanıt). bb84/build_production_server.js,

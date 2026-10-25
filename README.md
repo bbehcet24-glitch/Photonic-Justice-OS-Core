@@ -98,7 +98,7 @@ Bu deseni denetleyen somut mekanizmalar:
   dosyalarının) SHA-256 özetini karşılaştırıp raporlar — "çekirdeğe
   dokunulmadı" iddiası her çalıştırmada YENİDEN kanıtlanır, sadece bir
   kere varsayılmaz. Çekirdek bilinçli olarak yeni sürüme geçtiğinde
-  (şu an **v3**, SHA-256 `421513f7…2bb3d4`) eski/yeni hash ve değişen her
+  (şu an **v4**, SHA-256 `af1f56a1…1a12c3`) eski/yeni hash ve değişen her
   fonksiyon [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md)'de
   belgelenir ve tüm sabitlenmiş testler yeni hash'e güncellenip yeniden koşturulur.
 - **`extract_core.js --check`**: CI kapısı — `photonnet_core.js`'in
@@ -607,6 +607,10 @@ doğrulandı. (Bu hash çekirdek **v1**'e aittir; v2 geçişi ve gerekçesi:
 ---
 
 ## 9. Nasıl çalıştırılır
+
+**Tek komutla tüm öz-testler:** `npm install && pip install -r hal/requirements.txt && npm test`
+(`bb84/tools/run_all_tests.js`: test PKI'sını ve HAL köprüsünü kendisi kurar, ~90 JS testini ve Python HAL
+testlerini koşturur; `npm run test:fast` uzun testleri atlar). CI'da "Kapı 5" aynı komutu çalıştırır.
 
 ```bash
 # Çekirdeği kaynaktan (PhotonNet2.jsx) yeniden üret / doğrula

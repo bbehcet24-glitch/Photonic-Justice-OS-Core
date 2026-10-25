@@ -11,3 +11,9 @@ bb84/qukaydee.config.json
 qukaydee.config.json
 bb84/certs/
 certs/
+
+# Python derleme çıktıları ve yerel test özetleri (kaynak değil)
+__pycache__/
+*.pyc
+ci-reports/
+compiled_check.js
