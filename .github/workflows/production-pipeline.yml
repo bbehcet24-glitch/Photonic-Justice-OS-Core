@@ -670,9 +670,11 @@ jobs:
   # SADECE elle workflow_dispatch → seal_production_milestone=true VE
   # yukarıdaki HER "her-zaman-çalışan" kapı yeşilse çalışır. Normal push/
   # PR/schedule tetiklemelerinde bu iş HİÇ değerlendirilmez bile.
+  # Kapı 5 (all-self-tests) da beklenir: eskiden listede yoktu, yani 100 testlik takım kırmızıyken
+  # bile bir sürüm mühürlenebiliyordu.
   production-milestone:
     name: "Kapı 4 — Üretim Kilometre Taşını Mühürle"
-    needs: [ca-key-secret-guard, extract-core-check, mtls-kme-scenarios, ibm-integration-test-ephemeral, software-hsm-pkcs11, production-build-strip]
+    needs: [ca-key-secret-guard, extract-core-check, mtls-kme-scenarios, ibm-integration-test-ephemeral, software-hsm-pkcs11, production-build-strip, all-self-tests]
     if: ${{ github.event_name == 'workflow_dispatch' && inputs.seal_production_milestone == true }}
     runs-on: ubuntu-24.04
     timeout-minutes: 10
