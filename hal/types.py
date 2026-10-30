@@ -119,3 +119,4 @@ class SiftingResult:
     dark_click_count: int = 0    # Bob'ta click var ama eşleşen Alice gönderimi yok (muhtemelen karanlık sayım)
     match_rate: float = 0.0      # baz uzlaşma oranı (sifted/total, teorik ~0.5)
     detected_count: int = 0
+    disclosed_count: int = 0     # bitleri zamanlama araması için açıklandığından anahtardan çıkarılan baz-uyumlu çiftler

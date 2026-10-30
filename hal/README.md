@@ -74,6 +74,7 @@ mathematics — which is why the HAL is written as an independent layer with NO 
 | `tcp_hardware.py` | `TCPHardware(BinaryClickHardware)` — a driver for a network-reachable device. Uses only the stdlib `socket` and works in the sandbox TODAY — verified end to end against the mock device server in `test_binary_click_hardware.py`. |
 | `link_manager.py` | `LinkManager` — connect / retry on disconnect (back-off), continuous `read_clicks()` calls in a background thread, status broadcasting, a bounded click queue (`maxsize=200_000`, drops the oldest when full). |
 | `time_tag_correlator.py` | `TimeTagCorrelator` — matches Alice/Bob time stamps within a coincidence window (`coincidence_window_ps`) in O(n+m) and produces sifting + QBER. **Uses no RNG** — its input consists entirely of real/realistic events. `estimate_timing()` recovers an unknown clock offset and drift between the two time bases; `correlate_auto()` uses that estimate and refuses to lock on unrelated data (fail-closed). |
+| `clock_tracker.py` | Dynamic clock tracking for `TimeTagCorrelator.correlate_tracked()`: a constant-velocity Kalman filter (state: offset and drift between Alice's and Bob's clocks) updated during the acquisition. Two measurement sources: a separate sync channel (`sync=[(t_bob, t_alice), ...]`, no integer-period ambiguity, no bits disclosed) or the data clicks themselves (sub-period phase per segment). In data mode a whole-period cycle slip is invisible to timing, so a small sample of bits per segment is compared (disclosed and excluded from the key) and a ±8-period integer search runs when the error rate is high; segments are keyed only after the next verification passes, and on a slip the pending segments and the last accepted one are discarded. Sudden jumps are detected by an innovation gate; repeated bad segments → LOST, no key from the rest (fail-closed). |
 | `qrng_interface.py` | `QRNGInterface` — the contract every quantum random number generator driver follows (`connect / disconnect / read_bytes / status`). Explains why feeding `mulberry32` a "better seed" is not a fix. |
 | `qrng_simulated.py` | `SimulatedQRNG` — `os.urandom`, an operating-system CSPRNG. Passes the production gate's "not a 32-bit PRNG" check but is explicitly **not** a hardware QRNG. |
 | `qrng_raw_stream.py`, `qrng_tcp_hardware.py`, `qrng_serial_hardware.py` | `RawStreamQRNG` and its TCP/serial drivers. Most USB/serial QRNGs stream raw entropy continuously from the moment the link opens, so there is no command layer. `SerialQRNG` is untested on a live port (no `pyserial`); the shared logic is tested over TCP (`test_qrng_raw_stream.py`). |
@@ -84,7 +85,8 @@ mathematics — which is why the HAL is written as an independent layer with NO 
 | `test_pipeline.py` | An end-to-end physics verification script based on plain `assert` (no `pytest` needed) (`SimulatedHardware` → `TimeTagCorrelator`). |
 | `test_binary_click_hardware.py` | An end-to-end protocol verification script based on plain `assert` (no `pytest` needed) — tests `TCPHardware` against a fake device (`_MockDeviceServer`) over a real socket. |
 | `test_serial_hardware_mock.py` | Because `pyserial` is NOT installed, injects a fake class imitating `serial.Serial` into `sys.modules["serial"]` and exercises `SerialHardware` directly (in particular the `read()` accumulation loop specific to `SerialTransport`, which `TCPTransport` does NOT have). It does NOT REPLACE real pyserial/real hardware — see [What was and was not tested without real hardware](#what-was-and-was-not-tested-without-real-hardware). |
-| `test_time_tag_offset.py` | Applies a known clock offset and drift to simulated clicks and checks that `estimate_timing()`/`correlate_auto()` recover them, still reveal an eavesdropper, and do not lock on unrelated data. |
+| `test_time_tag_offset.py` | Applies a known clock offset and drift to simulated clicks and checks that `estimate_timing()`/`correlate_auto()` recover them, still reveal an eavesdropper, do not lock on unrelated data, and keep the bits disclosed for the period search out of the key. |
+| `test_clock_tracker.py` | Sweep for `correlate_tracked()` against the single-estimate `correlate_auto()`: slow and large clock wander, sudden jumps, whole-period cycle slips, eavesdropping, unrelated data, sync-channel mode (including a sync outage), low count rates and non-physical fast wander as a stress test. |
 | `test_qrng_health_tests.py`, `test_qrng_raw_stream.py`, `test_qrng_intermittent_failure.py` | RCT/APT cut-offs and boundary behaviour; the raw-stream QRNG drivers against a mock device; the bridge's handling of intermittent vs persistent health-test failures. |
 | `__init__.py` | The public API exposed outside the package. |
 
@@ -243,8 +245,16 @@ specific to `SimulatedHardware`.
 In a real deployment, Alice's transmission log (a list of `TransmitEvent`) must be imported from a separate
 physical system, via a file or a classical-channel messaging protocol —
 `TimeTagCorrelator.correlate(alice_events, bob_clicks, ...)` does not know HOW you obtained these two lists;
-it only expects both to be sorted by time stamp. If the two time bases have an unknown offset or drift, use
-`correlate_auto()` (see `test_time_tag_offset.py`).
+it only expects both to be sorted by time stamp. If the two time bases have an unknown but constant offset and
+drift, `correlate_auto()` estimates them once per acquisition (see `test_time_tag_offset.py`). If the drift
+wanders, the clock can jump, or a PLL can slip by a whole period, use `correlate_tracked()` — preferably with
+the device's sync channel passed as `sync=[(t_bob_ps, t_alice_ps), ...]` (see `test_clock_tracker.py`).
+
+Measured on simulated clicks (25 km, 4 ms, ±9000 ps clock wander): `correlate_auto()` locked and reported
+7.7 % QBER, which looks like an eavesdropper; `correlate_tracked()` reported the reference 1.57 % and kept
+93 % of the key. Bits whose values are compared to resolve the integer period are disclosed and are kept out
+of the key (`SiftingResult.disclosed_count`); before this was added, `correlate_auto()` left ~965 such bits
+(about 4 % of a 1 km, 0.8 ms key) in the key.
 
 ## Data contract — why the `SiftingResult` fields mirror the JS side
 
@@ -285,6 +295,14 @@ PhotonNet.
   stream starts). If your real vendor protocol separates control/data channels properly (e.g. with a
   separate port/socket), you can remove this restriction — see the "known simplification" note in the
   header of `binary_click_hardware.py`.
+
+- **Clock tracking cost and limits (`correlate_tracked()`).** In data mode the period search and per-segment
+  verification disclose bits: about 7 % of clicks at 25 km and 27 % at 100 km in the tests. At very low count
+  rates the initial lock alone can consume all clicks of a short acquisition (150 km, 20 ms: 1295 of 1295) —
+  a sync channel is then required (with it, the full key was kept and no bits were disclosed). The tracker
+  removes predictable offset/drift only; detector jitter is untouched. Wander faster than the segment rate
+  makes it refuse to lock rather than report a wrong QBER. All of this is measured on simulated clicks with a
+  time-compressed clock model, not on a real time-tagger.
 
 ## Cabinet lock HAL (Node side)
 

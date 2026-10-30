@@ -42,6 +42,9 @@ class TimingEstimate:
     second_error_rate: float = 1.0  # ikinci en iyi tamsayı-periyot adayının hata oranı (ayrışma kanıtı)
     samples: int = 0
     reason: str = ""
+    # Tamsayı periyot araması için Bob'un baz+bitini AÇIKLADIĞI click indeksleri. Gerçek protokolde bu bitler
+    # kamuya açıktır; anahtara GİREMEZ (correlate(..., exclude_clicks=...) ile dışarıda bırakılır).
+    disclosed_clicks: tuple = ()
 
 
 class TimeTagCorrelator:
@@ -150,23 +153,33 @@ class TimeTagCorrelator:
                             err += 1
             if match >= 20:
                 scores.append((err / match, match, off))
+        disclosed = tuple(idxs)   # Bob bu click'lerin baz+bitini açıkladı (her aday m için Alice yerelde karşılaştırır)
         if not scores:
-            return TimingEstimate(False, period_ps=period, drift=drift, reason=f"±{search_ps} ps aralığında yeterli eşleşme yok (faz tepesi payı %{peak_frac * 100:.0f}) — aralığı ya da nominal ofseti büyütün")
+            return TimingEstimate(False, period_ps=period, drift=drift, disclosed_clicks=disclosed, reason=f"±{search_ps} ps aralığında yeterli eşleşme yok (faz tepesi payı %{peak_frac * 100:.0f}) — aralığı ya da nominal ofseti büyütün")
         scores.sort()
         best, second = scores[0], (scores[1] if len(scores) > 1 else (1.0, 0, 0))
         if best[0] > max_error_rate or (len(scores) > 1 and second[0] - best[0] < min_separation):
             return TimingEstimate(False, period_ps=period, drift=drift, best_error_rate=best[0], second_error_rate=second[0], samples=best[1],
+                                  disclosed_clicks=disclosed,
                                   reason=f"belirgin bir ofset yok (en iyi hata %{best[0] * 100:.1f}, ikinci %{second[0] * 100:.1f}) — yanlış kilitlenme riski, korelasyon yapılmadı")
         # corr = t − kayma·(t − t0) dönüşümü ofseti (1 − kayma) ile ölçekler; model (t = t_A + ofset + kayma·(t_A − t0)) için düzelt
-        return TimingEstimate(True, offset_ps=int(round(best[2] / (1 - drift))), drift=drift, period_ps=period, best_error_rate=best[0], second_error_rate=second[0], samples=best[1])
+        return TimingEstimate(True, offset_ps=int(round(best[2] / (1 - drift))), drift=drift, period_ps=period, best_error_rate=best[0],
+                              second_error_rate=second[0], samples=best[1], disclosed_clicks=disclosed)
 
     def correlate_auto(self, alice_events, bob_clicks, nominal_offset_ps: int = 0, search_ps: int = 2_000_000):
         """Ofset/kaymayı kestirip korelasyon yapar. Bulunamazsa (fail-closed) korelasyon YAPILMAZ.
-        Dönüş: (TimingEstimate, SiftingResult | None)."""
+        Dönüş: (TimingEstimate, SiftingResult | None). Arama için açıklanan bitler anahtardan çıkarılır."""
         est = self.estimate_timing(alice_events, bob_clicks, nominal_offset_ps=nominal_offset_ps, search_ps=search_ps)
         if not est.found:
             return est, None
-        return est, self.correlate(alice_events, bob_clicks, link_latency_ps=est.offset_ps, clock_drift=est.drift)
+        return est, self.correlate(alice_events, bob_clicks, link_latency_ps=est.offset_ps, clock_drift=est.drift,
+                                   exclude_clicks=est.disclosed_clicks)
+
+    def correlate_tracked(self, alice_events, bob_clicks, **kwargs):
+        """Edinim boyunca ofset/kaymayı Kalman filtresiyle izleyerek korelasyon (bkz. hal/clock_tracker.py).
+        Dönüş: (TrackingReport, SiftingResult | None)."""
+        from .clock_tracker import correlate_tracked
+        return correlate_tracked(self, alice_events, bob_clicks, **kwargs)
 
     def correlate(
         self,
@@ -174,11 +187,18 @@ class TimeTagCorrelator:
         bob_clicks: list[TimestampedClick],
         link_latency_ps: int = 0,
         clock_drift: float = 0.0,
+        exclude_clicks=(),
     ) -> SiftingResult:
         """Her iki liste de zaman damgasına göre SIRALI olmalıdır (gerçek
         donanımda TDC çıktısı zaten bu şekilde gelir). Karmaşıklık O(n+m)
         — iki işaretçili bir tarama, pencere küçük olduğu için pratikte
-        neredeyse doğrusal."""
+        neredeyse doğrusal.
+
+        `exclude_clicks`: bitleri zamanlama araması/doğrulaması için AÇIKLANMIŞ click indeksleri. Eşleşmeye
+        katılırlar (başka bir darbeye yanlış eşlenmesinler diye) ama anahtara ve QBER'e girmezler; sayıları
+        `disclosed_count` alanında raporlanır."""
+        excluded = exclude_clicks if isinstance(exclude_clicks, (set, frozenset)) else set(exclude_clicks)
+        disclosed_count = 0
         n_bob = len(bob_clicks)
         used = [False] * n_bob
         j = 0  # bob_clicks içinde arama penceresinin sol ucu
@@ -226,6 +246,9 @@ class TimeTagCorrelator:
                 continue  # baz uyuşmuyor — sifting'de elenir, hata sayılmaz
 
             matched_basis_count += 1
+            if best_k in excluded:
+                disclosed_count += 1
+                continue  # bit kamuya açıklandı — anahtara giremez
             alice_key_bits.append(ev.bit)
             bob_key_bits.append(bob_bit)
             if ev.bit != bob_bit:
@@ -255,4 +278,5 @@ class TimeTagCorrelator:
             dark_click_count=dark_click_count,
             match_rate=match_rate,
             detected_count=detected_count,
+            disclosed_count=disclosed_count,
         )

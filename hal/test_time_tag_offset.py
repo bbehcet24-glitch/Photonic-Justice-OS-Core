@@ -45,10 +45,16 @@ def main() -> int:
 
     print("=== 1) Ofset yokken arama sonucu değiştirmiyor ===")
     a, cl = session(1.0, False, 0.0008, 1)
-    base = c.correlate(a, cl)
     est, res = c.correlate_auto(a, cl)
+    base = c.correlate(a, cl, exclude_clicks=est.disclosed_clicks)   # aynı açıklanan bitler dışarıda
     check("ofset 0 bulundu, QBER ve eşleşme sayısı birebir aynı", est.found and abs(est.offset_ps) <= 2 and res.qber == base.qber and res.detected_count == base.detected_count,
           f"ofset={est.offset_ps} ps, QBER %{res.qber * 100:.2f} / %{base.qber * 100:.2f}, eşleşen {res.detected_count}/{base.detected_count}")
+
+    print("=== 1b) Arama için açıklanan bitler anahtara girmiyor ===")
+    full = c.correlate(a, cl)
+    check("açıklanan baz-uyumlu çiftler anahtardan çıkarıldı (anahtar = tümü − açıklanan)",
+          res.disclosed_count > 0 and res.detected_count + res.disclosed_count == full.detected_count,
+          f"açıklanan click {len(est.disclosed_clicks)}, anahtardan çıkarılan baz-uyumlu çift {res.disclosed_count}, anahtar {res.detected_count} / dışlamasız {full.detected_count}")
 
     print("=== 2) Bilinmeyen ofset ve kayma geri bulunuyor (eski korelatör eşleşme bulamıyordu) ===")
     cases = [(25.0, 0.002, 1_234_567, 0.0, 0, 3), (25.0, 0.002, -777_000, 20e-6, 0, 5), (50.0, 0.004, 245_000_123, 2e-6, 245_000_000, 7)]
@@ -57,7 +63,7 @@ def main() -> int:
         sh = shifted(a, cl, off, drift)
         naive = c.correlate(a, sh)
         est, res = c.correlate_auto(a, sh, nominal_offset_ps=nominal)
-        ref = c.correlate(a, cl)
+        ref = c.correlate(a, cl, exclude_clicks=est.disclosed_clicks)
         check(f"{km:.0f} km, ofset {off} ps, kayma {drift * 1e6:.0f} ppm: ofset ±5 ps, kayma ±0,2 ppm, QBER kaydırılmamış veriyle aynı",
               est.found and res is not None and abs(est.offset_ps - off) <= 5 and abs(est.drift - drift) <= 0.2e-6 and abs(res.qber - ref.qber) < 0.005 and res.detected_count >= 0.95 * ref.detected_count,
               f"bulunan ofset {est.offset_ps} (hata {est.offset_ps - off}), kayma {est.drift * 1e6:.2f} ppm, QBER %{(res.qber * 100 if res else -1):.2f} (ref %{ref.qber * 100:.2f}), eşleşen {res.detected_count if res else 0}/{ref.detected_count}; aramasız: {naive.detected_count} eşleşme, QBER %{naive.qber * 100:.1f}")
