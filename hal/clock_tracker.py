@@ -95,6 +95,12 @@ class TrackingReport:
     slips: list = field(default_factory=list)   # (t_Bob_ps, düzeltilen periyot sayısı)
     disclosed_clicks: int = 0                   # bitleri açıklanan click sayısı (ilk kilit + doğrulama + slip araması)
     trajectory: list = field(default_factory=list)  # (t_Bob_ps, g_ps, d, σ_g_ps) — parça başına, teşhis için
+    # PE kipi (pe_seed verildiğinde): zamanlama doğrulaması YALNIZ parametre kestirimi test click'leriyle yapılır
+    pe_mode: bool = False
+    pe_key_pairs: list = field(default_factory=list)    # (click, alice_bit, bob_bit) — anahtar çiftleri
+    pe_test_pairs: list = field(default_factory=list)   # (click, alice_bit, bob_bit) — kabul edilen parçalardaki test çiftleri
+    unexplained_discard_tests: int = 0          # cycle slip ile AÇIKLANAMAYAN atılmış pencerelerdeki test karşılaştırmaları
+    slip_discard_tests: int = 0                 # slip düzeltmesiyle atılan pencerelerdeki test karşılaştırmaları
 
 
 def _wrap(x: float, period: int) -> float:
@@ -122,9 +128,16 @@ def correlate_tracked(
     q: float = 1e-19,
     max_bad_segments: int = 3,
     max_sync_gap_ps: float | None = None,
+    pe_seed: bytes | None = None,
+    pe_fraction: float | None = None,
 ) -> tuple[TrackingReport, SiftingResult | None]:
     """Dinamik saat izlemeli korelasyon. Dönüş (TrackingReport, SiftingResult | None); kilit kurulamazsa
-    SiftingResult None'dır (fail-closed). `sync`: [(t_Bob_ps, t_Alice_ps), ...] — verilirse "sync" kipi."""
+    SiftingResult None'dır (fail-closed). `sync`: [(t_Bob_ps, t_Alice_ps), ...] — verilirse "sync" kipi.
+
+    `pe_seed` verilirse (PE kipi) tıklamaların `pe_fraction`'ı (varsayılan çekirdeğin testFraction'ı) parametre
+    kestirimi test kümesidir (hal/pe_sampling.py). İlk kilit, parça doğrulaması ve slip araması YALNIZ bu
+    tıklamaları kullanır; başka bit açıklanmaz. Sonuçta test çiftleri anahtardan ayrılır ve
+    TrackingReport.pe_key_pairs / pe_test_pairs ile çekirdeğe (bb84/hal_pe_bridge.js) aktarılır."""
     window = correlator.coincidence_window_ps
     mode = "sync" if sync else "data"
     rep = TrackingReport(found=False, mode=mode)
@@ -140,6 +153,12 @@ def correlate_tracked(
     times = [c.timestamp_ps for c in bob_clicks]
     n_b = len(times)
     disclosed: set[int] = set()
+    pe_mask = None
+    if pe_seed is not None:
+        from .pe_sampling import PE_TEST_FRACTION, test_mask
+        pe_mask = test_mask(pe_seed, n_b, PE_TEST_FRACTION if pe_fraction is None else pe_fraction)
+        disclosed.update(i for i in range(n_b) if pe_mask[i])   # protokol gereği açıklanan test click'leri
+        rep.pe_mode = True
 
     def alice_index(t_bob: float, g: float) -> tuple[int, float]:
         x = (t_bob - g - t0) / P
@@ -172,8 +191,9 @@ def correlate_tracked(
         while start < n_b and times[start] < tb:   # ilk senkron darbesinden önceki click'ler kullanılmaz
             start += 1
     else:
+        acq_sample = [i for i in range(min(acq_clicks, n_b)) if pe_mask[i]] if pe_mask else None
         est = correlator.estimate_timing(alice_events, bob_clicks[:acq_clicks], nominal_offset_ps=nominal_offset_ps,
-                                         search_ps=search_ps)
+                                         search_ps=search_ps, sample_clicks=acq_sample)
         disclosed.update(est.disclosed_clicks)
         if not est.found:
             rep.reason = f"ilk kilit kurulamadı: {est.reason}"
@@ -212,8 +232,12 @@ def correlate_tracked(
             rep.good_segments += 1
         pending, pend_n, pend_e = [], 0, 0
 
-    def drop_pending(retract_last: bool):
+    def drop_pending(retract_last: bool, explained: bool):
         nonlocal pending, pend_n, pend_e
+        if explained:
+            rep.slip_discard_tests += pend_n
+        else:
+            rep.unexplained_discard_tests += pend_n
         rep.discarded_segments += len(pending)
         if retract_last and last_committed:
             sid = last_committed.pop()
@@ -322,10 +346,13 @@ def correlate_tracked(
             continue
 
         # doğrulama: periyodun tam katı kayması zamanlamadan görülemez → küçük bir bit örneği (açıklanır)
-        k = max(1, round((b_ - a_) * verify_fraction))
-        step = max(1, (b_ - a_) // k)
-        vids = [i for i in range(a_, b_, step) if i not in disclosed][:k]
-        disclosed.update(vids)
+        if pe_mask:
+            vids = [i for i in seg if pe_mask[i]]   # PE test click'leri — zaten açıklanıyor, ek bedel yok
+        else:
+            k = max(1, round((b_ - a_) * verify_fraction))
+            step = max(1, (b_ - a_) // k)
+            vids = [i for i in range(a_, b_, step) if i not in disclosed][:k]
+            disclosed.update(vids)
         n, e = compare(vids, kf.offset_at)
         pending.append((seg_no, matches_for(seg)))
         pend_n += n
@@ -336,9 +363,12 @@ def correlate_tracked(
             commit_pending()
             continue
         # cycle slip şüphesi: son parçada ±slip_search_periods tamsayı arama
-        step2 = max(1, (b_ - a_) // slip_sample)
-        sids = [i for i in range(a_, b_, step2)][:slip_sample]
-        disclosed.update(sids)
+        if pe_mask:
+            sids = [i for i in seg if pe_mask[i]]
+        else:
+            step2 = max(1, (b_ - a_) // slip_sample)
+            sids = [i for i in range(a_, b_, step2)][:slip_sample]
+            disclosed.update(sids)
         cand = []
         for m in range(-slip_search_periods, slip_search_periods + 1):
             nn, ee = compare(sids, lambda t, m=m: kf.offset_at(t) + m * P)
@@ -349,11 +379,11 @@ def correlate_tracked(
         if clear and cand[0][1] != 0:
             kf.g += cand[0][1] * P
             rep.slips.append((t_mid, cand[0][1]))
-            drop_pending(retract_last=True)    # bekleyenler ve son kabul edilen parça karışık hizada olabilir
+            drop_pending(retract_last=True, explained=True)   # bekleyenler ve son kabul edilen parça karışık hizada olabilir
         elif clear:
             commit_pending()                   # m = 0: istatistiksel dalgalanma (ör. dinleme altında), slip yok
         else:
-            drop_pending(retract_last=True)
+            drop_pending(retract_last=True, explained=False)
             bad_run += 1
             if bad_run >= max_bad_segments:
                 rep.lost = True
@@ -365,7 +395,7 @@ def correlate_tracked(
         if pend_n >= max(8, verify_min // 3) and pend_e / pend_n <= max_error_rate:
             commit_pending()
         else:
-            drop_pending(retract_last=False)   # son parçalar doğrulanamadı: anahtara girmez
+            drop_pending(retract_last=False, explained=False)   # son parçalar doğrulanamadı: anahtara girmez
 
     rep.disclosed_clicks = len(disclosed)
     if not committed:
@@ -397,7 +427,11 @@ def correlate_tracked(
         matched += 1
         if ci in disclosed:
             disclosed_pairs += 1
+            if pe_mask:
+                rep.pe_test_pairs.append((ci, ev.bit, b_bit))
             continue
+        if pe_mask:
+            rep.pe_key_pairs.append((ci, ev.bit, b_bit))
         alice_bits.append(ev.bit)
         bob_bits.append(b_bit)
         errors += ev.bit != b_bit

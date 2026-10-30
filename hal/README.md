@@ -75,6 +75,7 @@ mathematics — which is why the HAL is written as an independent layer with NO 
 | `link_manager.py` | `LinkManager` — connect / retry on disconnect (back-off), continuous `read_clicks()` calls in a background thread, status broadcasting, a bounded click queue (`maxsize=200_000`, drops the oldest when full). |
 | `time_tag_correlator.py` | `TimeTagCorrelator` — matches Alice/Bob time stamps within a coincidence window (`coincidence_window_ps`) in O(n+m) and produces sifting + QBER. **Uses no RNG** — its input consists entirely of real/realistic events. `estimate_timing()` recovers an unknown clock offset and drift between the two time bases; `correlate_auto()` uses that estimate and refuses to lock on unrelated data (fail-closed). |
 | `clock_tracker.py` | Dynamic clock tracking for `TimeTagCorrelator.correlate_tracked()`: a constant-velocity Kalman filter (state: offset and drift between Alice's and Bob's clocks) updated during the acquisition. Two measurement sources: a separate sync channel (`sync=[(t_bob, t_alice), ...]`, no integer-period ambiguity, no bits disclosed) or the data clicks themselves (sub-period phase per segment). In data mode a whole-period cycle slip is invisible to timing, so a small sample of bits per segment is compared (disclosed and excluded from the key) and a ±8-period integer search runs when the error rate is high; segments are keyed only after the next verification passes, and on a slip the pending segments and the last accepted one are discarded. Sudden jumps are detected by an innovation gate; repeated bad segments → LOST, no key from the rest (fail-closed). |
+| `pe_sampling.py` | Shared parameter-estimation (PE) test selection: click *i* is a test click iff the first 8 bytes of SHA-256(seed ‖ i) / 2⁶⁴ < `PE_TEST_FRACTION` (0.2, equal to the core's `SecureMessageSession.DEFAULTS.testFraction`). The rule depends on Bob's click number, not on the position in the sifted list, so it stays valid when the alignment changes (cycle slip). `export_for_core()` writes the JSON consumed by `bb84/hal_pe_bridge.js`. |
 | `qrng_interface.py` | `QRNGInterface` — the contract every quantum random number generator driver follows (`connect / disconnect / read_bytes / status`). Explains why feeding `mulberry32` a "better seed" is not a fix. |
 | `qrng_simulated.py` | `SimulatedQRNG` — `os.urandom`, an operating-system CSPRNG. Passes the production gate's "not a 32-bit PRNG" check but is explicitly **not** a hardware QRNG. |
 | `qrng_raw_stream.py`, `qrng_tcp_hardware.py`, `qrng_serial_hardware.py` | `RawStreamQRNG` and its TCP/serial drivers. Most USB/serial QRNGs stream raw entropy continuously from the moment the link opens, so there is no command layer. `SerialQRNG` is untested on a live port (no `pyserial`); the shared logic is tested over TCP (`test_qrng_raw_stream.py`). |
@@ -86,6 +87,7 @@ mathematics — which is why the HAL is written as an independent layer with NO 
 | `test_binary_click_hardware.py` | An end-to-end protocol verification script based on plain `assert` (no `pytest` needed) — tests `TCPHardware` against a fake device (`_MockDeviceServer`) over a real socket. |
 | `test_serial_hardware_mock.py` | Because `pyserial` is NOT installed, injects a fake class imitating `serial.Serial` into `sys.modules["serial"]` and exercises `SerialHardware` directly (in particular the `read()` accumulation loop specific to `SerialTransport`, which `TCPTransport` does NOT have). It does NOT REPLACE real pyserial/real hardware — see [What was and was not tested without real hardware](#what-was-and-was-not-tested-without-real-hardware). |
 | `test_time_tag_offset.py` | Applies a known clock offset and drift to simulated clicks and checks that `estimate_timing()`/`correlate_auto()` recover them, still reveal an eavesdropper, do not lock on unrelated data, and keep the bits disclosed for the period search out of the key. |
+| `test_pe_integration.py` | End to end: `correlate_tracked(pe_seed=…)` → `export_for_core()` → `bb84/hal_pe_bridge.js` (the core's parameter estimation, Cascade, finite-key ℓ and Toeplitz on the same test bits). Checks that the test fraction matches the core, the selection rule is identical in Python and JS, no extra bits are disclosed for timing, ℓ > 0 and keys match under wander/slip/sync, eavesdropping is rejected, and tampering (a test bit moved into the key, a trimmed test set, a wrong seed, a different fraction, unexplained discards) is rejected. |
 | `test_clock_tracker.py` | Sweep for `correlate_tracked()` against the single-estimate `correlate_auto()`: slow and large clock wander, sudden jumps, whole-period cycle slips, eavesdropping, unrelated data, sync-channel mode (including a sync outage), low count rates and non-physical fast wander as a stress test. |
 | `test_qrng_health_tests.py`, `test_qrng_raw_stream.py`, `test_qrng_intermittent_failure.py` | RCT/APT cut-offs and boundary behaviour; the raw-stream QRNG drivers against a mock device; the bridge's handling of intermittent vs persistent health-test failures. |
 | `__init__.py` | The public API exposed outside the package. |
@@ -256,6 +258,17 @@ Measured on simulated clicks (25 km, 4 ms, ±9000 ps clock wander): `correlate_a
 of the key (`SiftingResult.disclosed_count`); before this was added, `correlate_auto()` left ~965 such bits
 (about 4 % of a 1 km, 0.8 ms key) in the key.
 
+**Using the parameter-estimation bits for timing (recommended data-mode path).** Pass `pe_seed` (≥ 16 bytes,
+announced over the authenticated channel after the quantum transmission, from the QRNG). The initial lock,
+the per-segment slip check and the slip search then use only the clicks selected as PE test bits
+(`pe_sampling.py`), which the protocol discloses anyway; nothing else is disclosed. Hand the result to the
+core with `export_for_core()` and `node bb84/hal_pe_bridge.js <file.json>`, which re-derives the test set from
+the seed, rejects any mismatch, and runs the core's post-processing without re-splitting. Measured (25 km,
+4 ms, ±9000 ps wander): 20.0 % of clicks disclosed in total, instead of 7.2 % of clicks for timing plus 20 % of
+the remaining sifted bits for PE;
+n = 32 246 key and k = 8 082 test pairs instead of 29 950 / 7 487; pre-reconciliation ℓ +9.7 %; final
+ℓ = 14 998 with matching Alice/Bob keys.
+
 ## Data contract — why the `SiftingResult` fields mirror the JS side
 
 The field names of `SiftingResult` (`qber`, `sifted_key_bits`, `lost_count`, `eavesdrop_detected`,
@@ -296,8 +309,15 @@ PhotonNet.
   separate port/socket), you can remove this restriction — see the "known simplification" note in the
   header of `binary_click_hardware.py`.
 
-- **Clock tracking cost and limits (`correlate_tracked()`).** In data mode the period search and per-segment
-  verification disclose bits: about 7 % of clicks at 25 km and 27 % at 100 km in the tests. At very low count
+- **PE test bits as timing check — open points.** Segments are kept or dropped according to the error rate
+  of their test bits (slip check, threshold 35 %). This is a post-selection similar to per-block parameter
+  estimation; its effect is small because the threshold is far above the 11 % abort limit, but a formal
+  composable security proof would have to cover it. The bridge rejects the result if test comparisons
+  dropped without a slip explanation exceed 5 % (`SUSPICIOUS_DISCARDS`). Its completeness check on the
+  test set is statistical (test share within 5σ of 20 %): it catches bulk omission, not a single omitted
+  test pair — that needs the raw click data on both sides.
+- **Clock tracking cost and limits (`correlate_tracked()`).** Without `pe_seed`, the period search and
+  per-segment verification disclose bits of their own: about 7 % of clicks at 25 km and 27 % at 100 km in the tests. At very low count
   rates the initial lock alone can consume all clicks of a short acquisition (150 km, 20 ms: 1295 of 1295) —
   a sync channel is then required (with it, the full key was kept and no bits were disclosed). The tracker
   removes predictable offset/drift only; detector jitter is untouched. Wander faster than the segment rate

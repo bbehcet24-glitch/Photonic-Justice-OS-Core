@@ -81,6 +81,7 @@ class TimeTagCorrelator:
         sample: int = 2000,   # ~1000 baz-uyumlu çift: yanlış adayların en iyisi bile ~%45 kalır (çok adaylı en-uç-değer etkisi)
         max_error_rate: float = 0.35,   # dinleme (~%25) hâlâ kilitlenir ve QBER olarak raporlanır; yanlış ofset ~%50
         min_separation: float = 0.15,
+        sample_clicks=None,   # verilirse tamsayı arama YALNIZ bu click'lerle yapılır (ör. önceden seçilmiş PE test kümesi)
     ) -> TimingEstimate:
         if len(alice_events) < 2 or len(bob_clicks) < 30:
             return TimingEstimate(False, reason="yetersiz veri (en az 2 Alice olayı ve 30 click gerekir)")
@@ -131,8 +132,13 @@ class TimeTagCorrelator:
 
         # 2) faz (periyot-altı) ve 3) tamsayı periyot araması — kayması giderilmiş zamanlarla
         phase, peak_frac = phase_of(corr)
-        step = max(1, len(bob_clicks) // sample)
-        idxs = list(range(0, len(bob_clicks), step))[:sample]
+        if sample_clicks is not None:
+            idxs = sorted(i for i in sample_clicks if 0 <= i < len(bob_clicks))
+            if len(idxs) < 30:
+                return TimingEstimate(False, period_ps=period, drift=drift, reason=f"verilen örnek çok küçük ({len(idxs)} click < 30)")
+        else:
+            step = max(1, len(bob_clicks) // sample)
+            idxs = list(range(0, len(bob_clicks), step))[:sample]
         n_a = len(alice_events)
         m_max = int(math.ceil(search_ps / period))
         scores = []
