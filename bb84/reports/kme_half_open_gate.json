@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-23T16:25:12.512Z",
+  "generatedAt": "2026-11-01T11:16:34.152Z",
   "checks": [
     {
       "name": "H1 Yarış penceresi zorlandı: enc_keys 200 → kapı slave (KDK) için kapandı → dec_keys 503 (kalkan kapısı) — canlı testteki L8 kaydının birebir aynısı, her koşuda",
@@ -19,7 +19,7 @@
     {
       "name": "H4 Aynı key_ID'lerle üçüncü dec_keys reddediliyor (tamamlanan anahtar silindi, replay yok)",
       "ok": true,
-      "detail": "dec 400: key_ID bulunamadı (rota=KDK-MSL): b31b51e4-f133-4135-91a1-ac62b9384dc0"
+      "detail": "dec 400: key_ID bulunamadı (rota=KDK-MSL): b8942590-4d56-4e14-b677-d575e138712d"
     },
     {
       "name": "H5 Düzeltilmiş L8 sınıflandırıcısı 14 durumda beklenen kararı veriyor: kanıtla eşleşen red (slave-kapalı / master-bayat / taşıma) + ertelenmiş tamamlama geçer; kanıtsız red, uyumsuz bayt, sızıntılı köken, tekrar, kayıtsız anahtar, hiç tamamlanmayan yarı-açık kalır",
@@ -42,7 +42,7 @@
     "dec2Status": 200,
     "deferredBytesMatch": true,
     "dec3Status": 400,
-    "dec3Msg": "key_ID bulunamadı (rota=KDK-MSL): b31b51e4-f133-4135-91a1-ac62b9384dc0"
+    "dec3Msg": "key_ID bulunamadı (rota=KDK-MSL): b8942590-4d56-4e14-b677-d575e138712d"
   },
   "classifier": [
     {

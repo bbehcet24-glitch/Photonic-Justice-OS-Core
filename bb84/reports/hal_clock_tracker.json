@@ -1,0 +1,85 @@
+{
+  "generatedAt": "2026-11-01T11:24:50.600Z",
+  "checks": [
+    {
+      "name": "kilit, QBER referansta, anahtar ≥ %90 (açıklanan bitler hariç)",
+      "ok": true,
+      "detail": "izleme QBER %1.57, anahtar 37437 (açıklanan click %7.2); toplu QBER %1.58, anahtar 39342"
+    },
+    {
+      "name": "izleme: QBER referansta, anahtar ≥ %90; toplu: anahtarın yarısından fazlası kayıp",
+      "ok": true,
+      "detail": "izleme QBER %1.57, anahtar 37437; toplu QBER %1.64, anahtar 12408"
+    },
+    {
+      "name": "izleme: QBER referansta, dinleme alarmı yok",
+      "ok": true,
+      "detail": "izleme QBER %1.57, anahtar 37437, sıçrama 1"
+    },
+    {
+      "name": "toplu: kilitlenip yükselmiş QBER raporluyor ya da kilitlenmiyor (karşılaştırma için)",
+      "ok": true,
+      "detail": "toplu QBER %7.73, anahtar 8225"
+    },
+    {
+      "name": "sıçrama algılandı, QBER referansta, anahtar ≥ %90",
+      "ok": true,
+      "detail": "sıçramalar [(2009, 3010)]; izleme QBER %1.57, anahtar 37277; toplu QBER %1.62, anahtar 17477"
+    },
+    {
+      "name": "tam periyot: doğrulama bitleri kaymayı buldu (+1 periyot), karışık parçalar atıldı, QBER referansta",
+      "ok": true,
+      "detail": "slip [(2059, 1)], atılan parça 3; izleme QBER %1.56, anahtar 36022; toplu sonuç yok"
+    },
+    {
+      "name": "7000 ps (> P/2): doğrulama bitleri kaymayı buldu (+1 periyot), karışık parçalar atıldı, QBER referansta",
+      "ok": true,
+      "detail": "slip [(2059, 1)], atılan parça 3; izleme QBER %1.56, anahtar 36022; toplu sonuç yok"
+    },
+    {
+      "name": "intercept-resend: QBER %20–32, eavesdrop_detected",
+      "ok": true,
+      "detail": "izleme QBER %25.48, anahtar 31509; toplu sonuç yok"
+    },
+    {
+      "name": "ilgisiz Alice günlüğü → kilit yok, sonuç yok",
+      "ok": true,
+      "detail": "ilk kilit kurulamadı: belirgin bir ofset yok (en iyi hata %46.0, ikinci %46.2) — yanlış ki"
+    },
+    {
+      "name": "açıklanan bit 0, anahtar ≥ %99 referans, QBER referansta",
+      "ok": true,
+      "detail": "izleme QBER %1.57, anahtar 40327, açıklanan 0"
+    },
+    {
+      "name": "senkronla cycle slip: sıçrama olarak görüldü, iki senkron darbesi arası atıldı, QBER referansta",
+      "ok": true,
+      "detail": "sıçrama [(2011, 12569)]; izleme QBER %1.57, anahtar 40251"
+    },
+    {
+      "name": "senkron kanalı yarıda kesilince LOST: yalnız ilk yarıdan anahtar (fail-closed)",
+      "ok": true,
+      "detail": "kilit kaybedildi (art arda 3 kötü parça; son: senkron ölçümü yok (boşl; anahtar 20316"
+    },
+    {
+      "name": "100 km (click hızı ~0,65 M/s), 200 click'lik parçalar: QBER referansta, anahtar ≥ %60 referans",
+      "ok": true,
+      "detail": "ref QBER %1.14, anahtar 3170; izleme QBER %1.04, anahtar 2302 (açıklanan click %27); toplu QBER %1.02, anahtar 687"
+    },
+    {
+      "name": "100 km, 1000 click'lik parçalar: parça içi gezinme çok büyük → anahtarın çoğu kayıp, yanlış anahtar yok",
+      "ok": true,
+      "detail": "QBER %0.98, anahtar 205"
+    },
+    {
+      "name": "150 km, 20 ms (~1300 click): veriden kilit anahtarı tüketiyor → anahtar yok; senkron kipinde tam anahtar",
+      "ok": true,
+      "detail": "veri kipi: kilit kaybedildi (art arda 3 kötü parça; son: faz tepesi zay (açıklanan 1295/1295); senkron kipi QBER %1.52, anahtar 657, ref QBER %1.52, anahtar 657"
+    },
+    {
+      "name": "her stres senaryosunda izleme ya kilit vermiyor ya da QBER referansın 0,3 puan içinde",
+      "ok": true,
+      "detail": "en büyük sapma 0.07 puan"
+    }
+  ]
+}

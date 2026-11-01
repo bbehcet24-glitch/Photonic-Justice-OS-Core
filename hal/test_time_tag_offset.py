@@ -12,15 +12,18 @@ from __future__ import annotations
 
 import sys
 
+from .report_writer import Report
 from .simulated_hardware import SimulatedAliceSource, SimulatedHardware
 from .time_tag_correlator import TimeTagCorrelator
 from .types import AcquisitionConfig, TimestampedClick
 
 FAILURES: list[str] = []
+REPORT = Report("hal_time_tag_offset")   # bb84/reports/hal_time_tag_offset.json — 📈 SONUÇLAR sekmesinde görünür
 
 
 def check(name: str, condition: bool, detail: str = "") -> None:
     print(f"  [{'OK' if condition else 'FAIL'}] {name}{(' — ' + detail) if detail else ''}")
+    REPORT.add(name, condition, detail)
     if not condition:
         FAILURES.append(name)
 
@@ -82,6 +85,7 @@ def main() -> int:
     est, res = c.correlate_auto(a, shifted(a, cl, 5_000_000, 0.0), search_ps=1_000_000)
     check("ofset arama aralığının dışında → bulunamadı (sessizce yanlış ofset seçilmiyor)", (not est.found) and res is None, est.reason[:90])
 
+    REPORT.write()
     print()
     if FAILURES:
         print(f"SONUÇ: {len(FAILURES)} kontrol BAŞARISIZ: {FAILURES}")

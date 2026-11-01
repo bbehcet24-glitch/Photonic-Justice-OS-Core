@@ -1,0 +1,45 @@
+{
+  "generatedAt": "2026-11-01T11:25:14.530Z",
+  "checks": [
+    {
+      "name": "ofset 0 bulundu, QBER ve eşleşme sayısı birebir aynı",
+      "ok": true,
+      "detail": "ofset=0 ps, QBER %1.40 / %1.40, eşleşen 23452/23452"
+    },
+    {
+      "name": "açıklanan baz-uyumlu çiftler anahtardan çıkarıldı (anahtar = tümü − açıklanan)",
+      "ok": true,
+      "detail": "açıklanan click 2000, anahtardan çıkarılan baz-uyumlu çift 965, anahtar 23452 / dışlamasız 24417"
+    },
+    {
+      "name": "25 km, ofset 1234567 ps, kayma 0 ppm: ofset ±5 ps, kayma ±0,2 ppm, QBER kaydırılmamış veriyle aynı",
+      "ok": true,
+      "detail": "bulunan ofset 1234568 (hata 1), kayma -0.00 ppm, QBER %1.63 (ref %1.63), eşleşen 19013/19013; aramasız: 0 eşleşme, QBER %0.0"
+    },
+    {
+      "name": "25 km, ofset -777000 ps, kayma 20 ppm: ofset ±5 ps, kayma ±0,2 ppm, QBER kaydırılmamış veriyle aynı",
+      "ok": true,
+      "detail": "bulunan ofset -776997 (hata 3), kayma 20.00 ppm, QBER %1.58 (ref %1.58), eşleşen 19262/19262; aramasız: 1957 eşleşme, QBER %49.8"
+    },
+    {
+      "name": "50 km, ofset 245000123 ps, kayma 2 ppm: ofset ±5 ps, kayma ±0,2 ppm, QBER kaydırılmamış veriyle aynı",
+      "ok": true,
+      "detail": "bulunan ofset 245000124 (hata 1), kayma 2.00 ppm, QBER %1.41 (ref %1.41), eşleşen 11779/11779; aramasız: 601 eşleşme, QBER %46.4"
+    },
+    {
+      "name": "intercept-resend: kilitlendi, QBER ~%25, eavesdrop_detected",
+      "ok": true,
+      "detail": "en iyi/ikinci aday hata %23.6/%45.1, QBER %25.2"
+    },
+    {
+      "name": "ilgisiz Alice günlüğü → bulunamadı, korelasyon yapılmadı",
+      "ok": true,
+      "detail": "belirgin bir ofset yok (en iyi hata %46.1, ikinci %46.6) — yanlış kilitlenme riski, korela"
+    },
+    {
+      "name": "ofset arama aralığının dışında → bulunamadı (sessizce yanlış ofset seçilmiyor)",
+      "ok": true,
+      "detail": "belirgin bir ofset yok (en iyi hata %45.3, ikinci %46.4) — yanlış kilitlenme riski, korela"
+    }
+  ]
+}

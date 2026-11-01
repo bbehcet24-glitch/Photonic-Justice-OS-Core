@@ -13,6 +13,22 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v4 | `af1f56a1adbe6e7d7566d361aedc60c4149ecf49557f4e8f2c535937f01a12c3` | `af1f56a1…1a12c3` |
 | v4.1 | `5c12cde3a6c1d4acfb935dfb9aade5e5b79a42a65d7e6e04e92d88586b676313` | `5c12cde3…676313` |
 | v4.2 | `b7b6b2437ecdd037cff301b2441ac522244018294a4755b8b3d36876c3a4a560` | `b7b6b243…a4a560` |
+| v4.3 | `5b7521ab4157de7491fcbc98dd134a84b26b881814d3aa3dc5726c3aa4f342c2` | `5b7521ab…f342c2` |
+
+## v4.3 (2026-11) — canlı güvenlik kriterleri paneli, iptal kartı (yalnız arayüz)
+
+Algoritma değişmedi; oturum, kanıt ve anahtar bitleri v4.2 ile aynı. Hash değiştiği için yeni satır açıldı.
+
+- **Yeni panel:** 📈 SONUÇLAR'da "GÜVENLİK KRİTERLERİ — SERFLING / GLLP (CANLI)" (`ResSecurityCriteria`). Son iletim için
+  `SecureMessageSession`'ın uyguladığı koşulları satır satır gösterir: her atlamada QBER_test < %11, test örneklemi
+  k ≥ 64, sonlu-anahtar ℓ ≥ mesaj biti (Serfling μ + GLLP), Cascade yakınsaması, klasik kanal kimlik doğrulaması ve
+  fail-closed sonucu. Oturum iptal edildiyse panel kırmızı çerçeve ve "ALARM — OTURUM İPTAL EDİLDİ (kod)" başlığı alır.
+  Değerler `res.session.hopChecks`'ten okunur; panel kendi başına karar vermez.
+- **İptal kartı:** iptal edilen iletimde başlık "Kısmi İletim" yerine "İletim İptal Edildi"; R_∞ ve Q_ph sonlu
+  değilse "NaN" yerine "—".
+- **Tatbikat:** `bb84/tools/ui_abort_drill.js` arayüzü Playwright ile sürer (taban → gürültü enjeksiyonu → dinleme →
+  toparlanma) ve `bb84/reports/ui_abort_drill.json`'a yazar. npm test'e dahil değil (Chromium gerekir).
+- `PHOTONNET_CORE_VERSION` "v4.3".
 
 ## v4.2 (2026-11) — 📈 SONUÇLAR sekmesi (yalnız arayüz)
 

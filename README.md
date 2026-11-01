@@ -1,6 +1,6 @@
 # PhotonNet — BB84 Quantum Key Distribution (QKD) Simulator and Production Layers
 
-**photonicquantumcore** · core engine v4.2 · `npm test`: 102 self-tests (JavaScript + Python HAL) in CI
+**photonicquantumcore** · core engine v4.3 · `npm test`: 102 self-tests (JavaScript + Python HAL) in CI
 
 PhotonNet simulates an end-to-end QKD network on a classical computer and wraps the simulation in the
 software a real deployment needs. It consists of:
@@ -68,7 +68,9 @@ the card shows ℓ of the weakest hop and the key left over after the one-time p
 
 ![Results tab](docs/screenshots/06_results.png)
 *📈 SONUÇLAR (results) tab: QBER_test and ℓ per transmission in this session, the per-hop proof matrix of the
-last transmission, the test-report snapshot embedded at build time, and the open issues from §6–§7.*
+last transmission, the live security-criteria panel (QBER_test < 11 % and k ≥ 64 per hop, finite-key ℓ ≥ message bits,
+Cascade convergence, classical authentication, fail-closed outcome; red ALARM when the session aborted), the test-report
+snapshot and the open issues from §6–§7.*
 
 ---
 
@@ -150,7 +152,7 @@ Concrete mechanisms that enforce this pattern:
   of `photonnet_core.js` (and, where relevant, of other read-only bridge files such as
   `timetag_acquisition_bridge.js`) before and after running — the claim "the core was not touched" is
   re-proven on every run, not assumed once. When the core deliberately moves to a new version (currently
-  **v4.2**, SHA-256 `b7b6b243…a4a560`), the old/new hash and every changed function are documented in
+  **v4.3**, SHA-256 `5b7521ab…f342c2`), the old/new hash and every changed function are documented in
   [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md), and all pinned tests are updated to the new
   hash and re-run.
 - **`extract_core.js --check`**: a CI gate — automatically verifies that `photonnet_core.js` is in sync
@@ -376,6 +378,7 @@ the top of the file).
 | `bb84/tools/extract_qkdnetsim_profile.js` | Regenerates `qkdnetsim_traffic_profile.json` from the output files of a real QKDNetSim ns-3.46 run. The shape (time-density pattern) and the event count (real log lines) are DELIBERATELY and EXPLICITLY combined from two different metrics — stated in the `methodologyNote` field. |
 | `bb84/tools/verify_photonnet_html.js` | An E2E check that opens the rebuilt `PhotonNet.html` in real Chromium (Playwright) and verifies it mounts without console/page errors (its screenshot goes to `ci-reports/`, not into the repository). |
 | `bb84/tools/capture_screenshots.js` | Regenerates the README screenshots (`docs/screenshots/`) from the current `PhotonNet.html`; exits with 1 without writing any file if the transmission fails or the page reports an error. |
+| `bb84/tools/ui_abort_drill.js` | Abort drill on the real UI (Playwright): baseline → noise injection → intercept-resend eavesdropping → recovery. Checks that the abort decision matches the 11 % QBER threshold, that no key or message is released on abort, that the abort line appears in the log and that the security panel shows ALARM, then recovery. Writes `bb84/reports/ui_abort_drill.json` and screenshots to `ci-reports/ui_abort_drill/`. Not part of `npm test` (needs Chromium). |
 | `bb84/tools/QKDNETSIM_BUILD.md` | Documents how QKDNetSim (a third-party, academically published ns-3 module) was built from source in a sandbox where apt-get/PyPI/gitlab.com were blocked — records 3 specific name-mismatch fixes and the exact deterministic output values obtained in two independent build sessions (28,140 delivered keys). |
 | `bb84/ci/run_integration_tests.sh` | Central CI integration-test orchestration called by both the GitHub Actions and the GitLab CI YAML. Two modes via `KME_MODE`: "ephemeral" (default — temporary CA/certificates, full clean-up) and "external" (against a real staging KME endpoint, with CI-secret certificates). |
 | `.github/workflows/production-pipeline.yml`, `.gitlab-ci.yml` | CI/CD pipelines — gate 1 (CA private-key leak protection), gate 2 (core/HTML/config sync), gates 3a–3d (certificate rotation/revocation scenarios S1–S6 and OCSP staleness, ephemeral and external IBM integration, SoftHSM2 + PKCS#11 bridge, production build strip), gate 5 (`npm test`, all JS + Python self-tests) and gate 4 (production sealing: manual dispatch only, and only after every other always-run gate, gate 5 included, has passed). |
@@ -427,6 +430,7 @@ bridge_server.py (Flask REST+SSE bridge — to the Hardware panel of PhotonNet.h
 | `hal/time_tag_correlator.py` | `TimeTagCorrelator` — "the heart of real hardware integration": matches Alice's transmission time stamps with Bob's detector click time stamps inside a coincidence window and derives sifting/QBER only from basis-matched pairs. Uses no RNG. `estimate_timing()` finds an unknown clock offset and drift between the two time bases (segment phases + linear fit, sub-period phase histogram, integer period resolved by basis-matched error rate); `correlate_auto()` refuses to lock on unrelated data (fail-closed) and keeps the bits disclosed for the period search out of the key. Test: `hal/test_time_tag_offset.py`. |
 | `hal/clock_tracker.py` | Dynamic clock tracking (`correlate_tracked()`): a constant-velocity Kalman filter for offset and drift, fed by a separate sync channel when the device has one (no bits disclosed) or by per-segment phase measurements on the data clicks; disclosed verification bits catch whole-period cycle slips; jumps are gated; repeated bad segments → no key (fail-closed). On simulated clicks with ±9000 ps clock wander the single-estimate method reported 7.7 % QBER (a false eavesdropping signal) while the tracker reported the reference 1.57 %. Test: `hal/test_clock_tracker.py`. |
 | `hal/pe_sampling.py` + `bb84/hal_pe_bridge.js` | Connects the HAL to the core's key post-processing. With `pe_seed`, the tracker verifies alignment using only the parameter-estimation test clicks (20 %, the core's `testFraction`; selection by SHA-256 of seed and click number, identical in Python and JS), so no extra bits are disclosed for timing. The bridge re-derives the test set from the seed, rejects mismatches, and runs the core's QKDSecurityProof / Cascade / Toeplitz on the same bits. Measured at 25 km with clock wander: 9.7 % larger pre-reconciliation ℓ than separate timing and PE samples. Test: `hal/test_pe_integration.py`. |
+| `hal/report_writer.py` | Writes the HAL test results to `bb84/reports/hal_clock_tracker.json`, `hal_pe_integration.json` and `hal_time_tag_offset.json`, so they appear in the 📈 SONUÇLAR tab next to the JavaScript reports. |
 | `hal/qrng_interface.py`, `hal/qrng_simulated.py`, `hal/qrng_tcp_hardware.py`, `hal/qrng_serial_hardware.py`, `hal/qrng_raw_stream.py` | The QRNG contract and its drivers. `SimulatedQRNG` uses `os.urandom` — an operating-system CSPRNG, explicitly NOT a hardware QRNG. `TCPQRNG`/`SerialQRNG` share the raw-stream protocol logic in `RawStreamQRNG` (most USB/serial QRNGs stream entropy continuously; no command layer). `SerialQRNG` is untested on a live port for the same `pyserial` reason. |
 | `hal/qrng_health_tests.py` | Online health tests inspired by NIST SP 800-90B §4.4: Repetition Count Test and Adaptive Proportion Test on bit samples, plus a von Neumann debiaser. The declared min-entropy H must come from the device's characterisation report; the module does not assume it. Not a full SP 800-90B certification. |
 | `hal/detector_profile.py` | Python loader for the detector profiles in `config.json` with exactly the same validation rules and derived values as the JS core (cross-checked by `bb84/detector_profile_config_test.js`). Fail-closed on a missing/corrupt config or unknown profile id. |
@@ -671,6 +675,9 @@ python3 -m hal.bridge_server
 
 # Regenerate the README screenshots from the current PhotonNet.html
 node bb84/tools/capture_screenshots.js
+
+# Abort drill on the real UI (baseline, noise, eavesdropping, recovery)
+node bb84/tools/ui_abort_drill.js
 ```
 
 **Detector profile (core v3):** detector parameters such as SNSPD / InGaAs live only in

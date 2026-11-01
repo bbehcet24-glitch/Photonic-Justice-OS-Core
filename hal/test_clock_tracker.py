@@ -20,17 +20,20 @@ import math
 import random
 import sys
 
+from .report_writer import Report
 from .simulated_hardware import SimulatedAliceSource, SimulatedHardware
 from .time_tag_correlator import TimeTagCorrelator
 from .types import AcquisitionConfig, TimestampedClick
 
 FAILURES: list[str] = []
+REPORT = Report("hal_clock_tracker")   # bb84/reports/hal_clock_tracker.json — 📈 SONUÇLAR sekmesinde görünür
 P = 12_500          # 80 MHz kaynak periyodu (ps)
 T = 0.004           # varsayılan edinim süresi (s)
 
 
 def check(name: str, condition: bool, detail: str = "") -> None:
     print(f"  [{'OK' if condition else 'FAIL'}] {name}{(' — ' + detail) if detail else ''}")
+    REPORT.add(name, condition, detail)
     if not condition:
         FAILURES.append(name)
 
@@ -178,6 +181,7 @@ def main() -> int:
     check("her stres senaryosunda izleme ya kilit vermiyor ya da QBER referansın 0,3 puan içinde", worst <= 0.003,
           f"en büyük sapma {worst * 100:.2f} puan")
 
+    REPORT.write()
     print()
     if FAILURES:
         print(f"SONUÇ: {len(FAILURES)} kontrol BAŞARISIZ: {FAILURES}")

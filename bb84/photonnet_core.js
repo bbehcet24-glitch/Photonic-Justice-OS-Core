@@ -98,7 +98,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v4.2";
+const PHOTONNET_CORE_VERSION = "v4.3";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -9409,6 +9409,49 @@ function ResReports({ snap }) {
                     !r.checks.length && !(r.sample || []).length && React.createElement("div", { style: { fontSize: 8, color: RES_C.muted } }, "Bu rapor bir ge\u00E7ti/kald\u0131 h\u00FCkm\u00FC i\u00E7ermiyor (\u00F6l\u00E7\u00FCm verisi).")))));
         }))));
 }
+/** Son iletimin güvenlik kriterleri (canlı). Her satır SecureMessageSession'ın gerçekten uyguladığı bir koşul;
+ *  durum oturum sonucundan okunur, yeniden hesaplanmaz. İptalde panel kırmızıya döner ve iptal kodu/gerekçesi yazılır. */
+function ResSecurityCriteria({ result }) {
+    const s = result && result.session;
+    if (!s)
+        return React.createElement("div", { style: { fontSize: 9, color: RES_C.muted, padding: "6px 0" } }, "Hen\u00FCz iletim yok \u2014 kriterler ilk oturumdan sonra dolar.");
+    const delivered = s.status === "DELIVERED";
+    const hops = Array.isArray(s.hopChecks) ? s.hopChecks : [];
+    const qs = hops.map((h) => h.qTest).filter((v) => typeof v === "number");
+    const worstQ = qs.length ? Math.max(...qs) : s.qTest;
+    const worstHop = hops.find((h) => h.qTest === worstQ);
+    const ks = hops.map((h) => h.k).filter((v) => typeof v === "number");
+    const minK = ks.length ? Math.min(...ks) : null;
+    const auth = result.classicalAuth;
+    const released = (result.otp && result.otp.keyLen > 0) || result.success;
+    const rows = [
+        { c: "QBER_test < %11 — her atlamada, açıklanan test bitlerinden", ok: worstQ != null ? worstQ < 0.11 : null,
+            v: worstQ != null ? `en yüksek %${(worstQ * 100).toFixed(2)}${worstHop && s.nHops > 1 ? ` (atlama #${worstHop.hop})` : ""}` : "—" },
+        { c: "Test örneklemi k ≥ 64 — Serfling sınırı için", ok: minK != null ? minK >= 64 : null, v: minK != null ? `en küçük k = ${minK.toLocaleString("tr-TR")}` : "—" },
+        { c: "Sonlu-anahtar ℓ ≥ mesaj biti — Serfling μ + GLLP, her atlamada", ok: delivered ? s.ell > 0 : false,
+            v: delivered ? `ℓ = ${s.ell} bit (en zayıf atlama)` : "ℓ = 0 — kanıtlı anahtar yok" },
+        { c: "Hata düzeltme (Cascade) yakınsadı", ok: s.code === "EC_FAIL" ? false : delivered ? true : null,
+            v: s.code === "EC_FAIL" ? "yakınsamadı" : delivered ? `sızıntı ${s.leakEC != null ? s.leakEC.toLocaleString("tr-TR") : "—"} bit ölçüldü` : "çalıştırılmadı (önceki kriter)" },
+        { c: "Klasik kanal kimlik doğrulaması (Wegman–Carter)", ok: auth ? auth.ok : null, v: auth ? (auth.ok ? `havuz ${auth.poolRemaining} bit` : auth.reason || "başarısız") : "—" },
+        { c: delivered ? "Mesaj kanıtlı anahtarla OTP şifreli gönderildi" : "Fail-closed: anahtar ve mesaj serbest bırakılmadı",
+            ok: delivered ? !!result.success : !released,
+            v: delivered ? (result.success ? "Bob mesajı çözdü" : "bütünlük hatası") : released ? "SIZINTI — anahtar/mesaj çıktı" : "OTP anahtarı 0 bit, mesaj gönderilmedi" },
+    ];
+    const alarm = !delivered;
+    return (React.createElement("div", null,
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 5, marginBottom: 8,
+                background: alarm ? `${RES_C.bad}1c` : `${RES_C.ok}14`, border: `1px solid ${alarm ? RES_C.bad : RES_C.ok}88` } },
+            React.createElement("span", { style: { fontSize: 16, color: alarm ? RES_C.bad : RES_C.ok } }, alarm ? "⛔" : "✓"),
+            React.createElement("div", { style: { minWidth: 0 } },
+                React.createElement("div", { style: { fontSize: 10, fontWeight: 700, color: RES_C.ink, letterSpacing: ".06em" } }, alarm ? `ALARM — OTURUM İPTAL EDİLDİ (${s.code})` : "GÜVENLİ — anahtar kanıtlandı, mesaj teslim edildi"),
+                alarm && React.createElement("div", { style: { fontSize: 9, color: RES_C.text, lineHeight: 1.4 } }, s.reason))),
+        React.createElement("div", { style: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(300px,1fr))", gap: 6 } }, rows.map((r) => (React.createElement("div", { key: r.c, style: { display: "flex", alignItems: "center", gap: 8, padding: "4px 6px", borderRadius: 4,
+                border: `1px solid ${r.ok === false ? `${RES_C.bad}55` : RES_C.line}` } },
+            React.createElement(ResStatus, { s: r.ok }),
+            React.createElement("div", { style: { minWidth: 0 } },
+                React.createElement("div", { style: { fontSize: 9, color: RES_C.ink } }, r.c),
+                React.createElement("div", { style: { fontSize: 8, color: RES_C.muted, fontFamily: "monospace" } }, r.v))))))));
+}
 function ResultsDashboard({ traffic, result, log, detectorState }) {
     const snap = (typeof window !== "undefined" && window.__PHOTONNET_REPORTS__) || null;
     const hist = traffic.filter((t) => t && t.session).slice().reverse();
@@ -9466,6 +9509,8 @@ function ResultsDashboard({ traffic, result, log, detectorState }) {
             React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginTop: 4, minHeight: 14 } },
                 k.st !== null && React.createElement(ResStatus, { s: k.st }),
                 React.createElement("span", { style: { fontSize: 8, color: RES_C.muted } }, k.note)))))),
+        React.createElement(ResPanel, { title: "G\u00DCVENL\u0130K KR\u0130TERLER\u0130 \u2014 SERFLING / GLLP (CANLI)", sub: "son iletim \u00B7 SecureMessageSession'\u0131n uygulad\u0131\u011F\u0131 ko\u015Fullar", style: last && s.status !== "DELIVERED" ? { border: `1px solid ${RES_C.bad}aa` } : undefined },
+            React.createElement(ResSecurityCriteria, { result: last })),
         React.createElement("div", { style: { display: "grid", gridTemplateColumns: "minmax(0,1.45fr) minmax(0,1fr)", gap: 10 } },
             React.createElement(ResPanel, { title: "OTURUM GE\u00C7M\u0130\u015E\u0130", sub: `${hist.length} iletim (en çok 50)` },
                 React.createElement("div", { style: { fontSize: 8, color: RES_C.text, marginBottom: 2 } }, "QBER_test (a\u00E7\u0131klanan test bitlerinden)"),
@@ -9793,7 +9838,7 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                     React.createElement("div", { style: { fontSize: 22 } }, result.success ? "✅" : "⚠️"),
                     React.createElement("div", null,
                         React.createElement("div", { style: { fontSize: 11, fontWeight: 800, letterSpacing: ".04em",
-                                color: result.success ? "#10b981" : "#f59e0b" } }, result.success ? "İletildi" : "Kısmi İletim"),
+                                color: result.success ? "#10b981" : "#f59e0b" } }, result.success ? "İletildi" : result.session && result.session.status === "ABORTED" ? "İletim İptal Edildi" : "Kısmi İletim"),
                         React.createElement("div", { style: { fontSize: 8, color: "#64748b" } },
                             result.sat,
                             " \u00FCzerinden")),
@@ -9856,12 +9901,10 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                         result.securityProof.qBit != null ? (result.securityProof.qBit * 100).toFixed(2) + "%" : "—"),
                     React.createElement("span", null,
                         "Q_ph\u2264",
-                        (result.securityProof.qPhUpper * 100).toFixed(2),
-                        "%"),
+                        result.securityProof.qPhUpper != null ? (result.securityProof.qPhUpper * 100).toFixed(2) + "%" : "—"),
                     React.createElement("span", { title: "Sonsuz-\u00F6rneklem (asimptotik) GLLP anahtar oran\u0131 \u2014 kar\u015F\u0131la\u015Ft\u0131rma i\u00E7in" },
                         "R_\u221E=",
-                        (result.securityProof.asymptoticRate * 100).toFixed(1),
-                        "%"),
+                        Number.isFinite(result.securityProof.asymptoticRate) ? (result.securityProof.asymptoticRate * 100).toFixed(1) + "%" : "—"),
                     React.createElement("span", { style: { color: result.securityProof.secure ? "#10b981" : "#f43f5e", fontWeight: 700 } },
                         "\u2113=",
                         result.securityProof.ell,

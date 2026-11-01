@@ -25,6 +25,7 @@ import subprocess
 import sys
 import tempfile
 
+from .report_writer import Report
 from .pe_sampling import PE_TEST_FRACTION, export_for_core, test_mask
 from .test_clock_tracker import P, T, session, sync_pulses, wander, warp
 from .time_tag_correlator import TimeTagCorrelator
@@ -33,10 +34,12 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BRIDGE = os.path.join(ROOT, "bb84", "hal_pe_bridge.js")
 CORE = os.path.join(ROOT, "bb84", "photonnet_core.js")
 FAILURES: list[str] = []
+REPORT = Report("hal_pe_integration")   # bb84/reports/hal_pe_integration.json — 📈 SONUÇLAR sekmesinde görünür
 
 
 def check(name: str, condition: bool, detail: str = "") -> None:
     print(f"  [{'OK' if condition else 'FAIL'}] {name}{(' — ' + detail) if detail else ''}")
+    REPORT.add(name, condition, detail)
     if not condition:
         FAILURES.append(name)
 
@@ -141,6 +144,7 @@ def main() -> int:
     t["unexplainedDiscardTests"] = len(doc["testPairs"])
     check("açıklanamayan atılmış test karşılaştırmaları sınırı aşıyor → SUSPICIOUS_DISCARDS", bridge(t).get("code") == "SUSPICIOUS_DISCARDS")
 
+    REPORT.write()
     print()
     if FAILURES:
         print(f"SONUÇ: {len(FAILURES)} kontrol BAŞARISIZ: {FAILURES}")

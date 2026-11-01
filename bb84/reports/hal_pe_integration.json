@@ -1,0 +1,70 @@
+{
+  "generatedAt": "2026-11-01T11:24:59.806Z",
+  "checks": [
+    {
+      "name": "HAL PE_TEST_FRACTION = çekirdek SecureMessageSession.DEFAULTS.testFraction",
+      "ok": true,
+      "detail": "HAL 0.2, çekirdek 0.2"
+    },
+    {
+      "name": "5000 tıklamada maske birebir aynı, pay ≈ %20",
+      "ok": true,
+      "detail": "test 994/5000"
+    },
+    {
+      "name": "açıklanan tıklama = test kümesi (zamanlama için ek bit yok)",
+      "ok": true,
+      "detail": "açıklanan 16215, test kümesi 16215, tıklama 80937"
+    },
+    {
+      "name": "çekirdek: ℓ > 0, Alice/Bob anahtarları eşleşti, QBER_test referans düzeyinde",
+      "ok": true,
+      "detail": "n=32246, k=8082, QBER_test %1.66, Cascade sızıntısı 4591, ℓ=14998"
+    },
+    {
+      "name": "yeni yolda anahtar ve test çiftleri daha fazla, ön ℓ daha büyük (aynı QBER ile)",
+      "ok": true,
+      "detail": "eski: zamanlama için 5847 tıklama + PE → n=29950, k=7487, ön ℓ=13708; yeni: n=32246, k=8082, ön ℓ=15034 (+%9.7)"
+    },
+    {
+      "name": "tam periyot slip: test bitleriyle bulundu (+1), çekirdek ℓ > 0, anahtarlar eşleşti",
+      "ok": true,
+      "detail": "slip [1], slip ile atılan test karşılaştırması 101, ℓ=14496"
+    },
+    {
+      "name": "senkron kipi: açıklanan = yalnız test kümesi, ℓ > 0",
+      "ok": true,
+      "detail": "ℓ=14886, n=32245, k=8082"
+    },
+    {
+      "name": "intercept-resend: çekirdek QBER_LIMIT ile reddetti (anahtar yok)",
+      "ok": true,
+      "detail": "QBER_LIMIT: QBER_test %25.65 ≥ %11 (k=7353) — dinleme ya da aşırı gürültü"
+    },
+    {
+      "name": "test çifti anahtara kaydırıldı → SAMPLE_MISMATCH",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "hatalı test çiftleri ve yarısı çıkarıldı (kayırmacı örneklem) → SAMPLE_MISMATCH",
+      "ok": true,
+      "detail": "test payı %11.14, beklenen %20 ± 5σ (N=36287) — test çiftleri eksik ya da fazla"
+    },
+    {
+      "name": "yanlış tohum → SAMPLE_MISMATCH",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "farklı test oranı → FRACTION_MISMATCH",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "açıklanamayan atılmış test karşılaştırmaları sınırı aşıyor → SUSPICIOUS_DISCARDS",
+      "ok": true,
+      "detail": ""
+    }
+  ]
+}

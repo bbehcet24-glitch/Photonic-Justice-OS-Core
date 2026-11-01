@@ -92,7 +92,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v4.2";
+const PHOTONNET_CORE_VERSION = "v4.3";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -9438,6 +9438,62 @@ function ResReports({ snap }) {
   );
 }
 
+/** Son iletimin güvenlik kriterleri (canlı). Her satır SecureMessageSession'ın gerçekten uyguladığı bir koşul;
+ *  durum oturum sonucundan okunur, yeniden hesaplanmaz. İptalde panel kırmızıya döner ve iptal kodu/gerekçesi yazılır. */
+function ResSecurityCriteria({ result }) {
+  const s = result && result.session;
+  if (!s) return <div style={{fontSize:9,color:RES_C.muted,padding:"6px 0"}}>Henüz iletim yok — kriterler ilk oturumdan sonra dolar.</div>;
+  const delivered = s.status === "DELIVERED";
+  const hops = Array.isArray(s.hopChecks) ? s.hopChecks : [];
+  const qs = hops.map((h) => h.qTest).filter((v) => typeof v === "number");
+  const worstQ = qs.length ? Math.max(...qs) : s.qTest;
+  const worstHop = hops.find((h) => h.qTest === worstQ);
+  const ks = hops.map((h) => h.k).filter((v) => typeof v === "number");
+  const minK = ks.length ? Math.min(...ks) : null;
+  const auth = result.classicalAuth;
+  const released = (result.otp && result.otp.keyLen > 0) || result.success;
+  const rows = [
+    { c: "QBER_test < %11 — her atlamada, açıklanan test bitlerinden", ok: worstQ != null ? worstQ < 0.11 : null,
+      v: worstQ != null ? `en yüksek %${(worstQ * 100).toFixed(2)}${worstHop && s.nHops > 1 ? ` (atlama #${worstHop.hop})` : ""}` : "—" },
+    { c: "Test örneklemi k ≥ 64 — Serfling sınırı için", ok: minK != null ? minK >= 64 : null, v: minK != null ? `en küçük k = ${minK.toLocaleString("tr-TR")}` : "—" },
+    { c: "Sonlu-anahtar ℓ ≥ mesaj biti — Serfling μ + GLLP, her atlamada", ok: delivered ? s.ell > 0 : false,
+      v: delivered ? `ℓ = ${s.ell} bit (en zayıf atlama)` : "ℓ = 0 — kanıtlı anahtar yok" },
+    { c: "Hata düzeltme (Cascade) yakınsadı", ok: s.code === "EC_FAIL" ? false : delivered ? true : null,
+      v: s.code === "EC_FAIL" ? "yakınsamadı" : delivered ? `sızıntı ${s.leakEC != null ? s.leakEC.toLocaleString("tr-TR") : "—"} bit ölçüldü` : "çalıştırılmadı (önceki kriter)" },
+    { c: "Klasik kanal kimlik doğrulaması (Wegman–Carter)", ok: auth ? auth.ok : null, v: auth ? (auth.ok ? `havuz ${auth.poolRemaining} bit` : auth.reason || "başarısız") : "—" },
+    { c: delivered ? "Mesaj kanıtlı anahtarla OTP şifreli gönderildi" : "Fail-closed: anahtar ve mesaj serbest bırakılmadı",
+      ok: delivered ? !!result.success : !released,
+      v: delivered ? (result.success ? "Bob mesajı çözdü" : "bütünlük hatası") : released ? "SIZINTI — anahtar/mesaj çıktı" : "OTP anahtarı 0 bit, mesaj gönderilmedi" },
+  ];
+  const alarm = !delivered;
+  return (
+    <div>
+      <div style={{display:"flex",alignItems:"center",gap:10,padding:"7px 10px",borderRadius:5,marginBottom:8,
+        background:alarm ? `${RES_C.bad}1c` : `${RES_C.ok}14`, border:`1px solid ${alarm ? RES_C.bad : RES_C.ok}88`}}>
+        <span style={{fontSize:16,color:alarm ? RES_C.bad : RES_C.ok}}>{alarm ? "⛔" : "✓"}</span>
+        <div style={{minWidth:0}}>
+          <div style={{fontSize:10,fontWeight:700,color:RES_C.ink,letterSpacing:".06em"}}>
+            {alarm ? `ALARM — OTURUM İPTAL EDİLDİ (${s.code})` : "GÜVENLİ — anahtar kanıtlandı, mesaj teslim edildi"}
+          </div>
+          {alarm && <div style={{fontSize:9,color:RES_C.text,lineHeight:1.4}}>{s.reason}</div>}
+        </div>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(300px,1fr))",gap:6}}>
+        {rows.map((r) => (
+          <div key={r.c} style={{display:"flex",alignItems:"center",gap:8,padding:"4px 6px",borderRadius:4,
+            border:`1px solid ${r.ok === false ? `${RES_C.bad}55` : RES_C.line}`}}>
+            <ResStatus s={r.ok}/>
+            <div style={{minWidth:0}}>
+              <div style={{fontSize:9,color:RES_C.ink}}>{r.c}</div>
+              <div style={{fontSize:8,color:RES_C.muted,fontFamily:"monospace"}}>{r.v}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ResultsDashboard({ traffic, result, log, detectorState }) {
   const snap = (typeof window !== "undefined" && window.__PHOTONNET_REPORTS__) || null;
   const hist = traffic.filter((t) => t && t.session).slice().reverse();
@@ -9489,6 +9545,10 @@ function ResultsDashboard({ traffic, result, log, detectorState }) {
           </div>
         ))}
       </div>
+      <ResPanel title="GÜVENLİK KRİTERLERİ — SERFLING / GLLP (CANLI)" sub="son iletim · SecureMessageSession'ın uyguladığı koşullar"
+        style={last && s.status !== "DELIVERED" ? { border: `1px solid ${RES_C.bad}aa` } : undefined}>
+        <ResSecurityCriteria result={last}/>
+      </ResPanel>
       <div style={{display:"grid",gridTemplateColumns:"minmax(0,1.45fr) minmax(0,1fr)",gap:10}}>
         <ResPanel title="OTURUM GEÇMİŞİ" sub={`${hist.length} iletim (en çok 50)`}>
           <div style={{fontSize:8,color:RES_C.text,marginBottom:2}}>QBER_test (açıklanan test bitlerinden)</div>
@@ -9972,7 +10032,7 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                 <div>
                   <div style={{fontSize:11,fontWeight:800,letterSpacing:".04em",
                     color:result.success?"#10b981":"#f59e0b"}}>
-                    {result.success ? "İletildi" : "Kısmi İletim"}
+                    {result.success ? "İletildi" : result.session && result.session.status === "ABORTED" ? "İletim İptal Edildi" : "Kısmi İletim"}
                   </div>
                   <div style={{fontSize:8,color:"#64748b"}}>{result.sat} üzerinden</div>
                 </div>
@@ -10032,8 +10092,8 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                   <span style={{color:"#94a3b8",fontWeight:700}}>🔐 SONLU-ANAHTAR KANITI (GLLP/Serfling):</span>
                   <span>n={result.securityProof.n}bit</span>
                   <span>Q_bit={result.securityProof.qBit!=null?(result.securityProof.qBit*100).toFixed(2)+"%":"—"}</span>
-                  <span>Q_ph≤{(result.securityProof.qPhUpper*100).toFixed(2)}%</span>
-                  <span title="Sonsuz-örneklem (asimptotik) GLLP anahtar oranı — karşılaştırma için">R_∞={(result.securityProof.asymptoticRate*100).toFixed(1)}%</span>
+                  <span>Q_ph≤{result.securityProof.qPhUpper!=null?(result.securityProof.qPhUpper*100).toFixed(2)+"%":"—"}</span>
+                  <span title="Sonsuz-örneklem (asimptotik) GLLP anahtar oranı — karşılaştırma için">R_∞={Number.isFinite(result.securityProof.asymptoticRate)?(result.securityProof.asymptoticRate*100).toFixed(1)+"%":"—"}</span>
                   <span style={{color:result.securityProof.secure?"#10b981":"#f43f5e",fontWeight:700}}>
                     ℓ={result.securityProof.ell}bit {result.securityProof.secure?"✓ KANITLANMIŞ GÜVENLİ":"✗ GÜVENLİ ANAHTAR YOK"}
                   </span>
