@@ -130,6 +130,7 @@ def correlate_tracked(
     max_sync_gap_ps: float | None = None,
     pe_seed: bytes | None = None,
     pe_fraction: float | None = None,
+    observer=None,
 ) -> tuple[TrackingReport, SiftingResult | None]:
     """Dinamik saat izlemeli korelasyon. Dönüş (TrackingReport, SiftingResult | None); kilit kurulamazsa
     SiftingResult None'dır (fail-closed). `sync`: [(t_Bob_ps, t_Alice_ps), ...] — verilirse "sync" kipi.
@@ -137,7 +138,10 @@ def correlate_tracked(
     `pe_seed` verilirse (PE kipi) tıklamaların `pe_fraction`'ı (varsayılan çekirdeğin testFraction'ı) parametre
     kestirimi test kümesidir (hal/pe_sampling.py). İlk kilit, parça doğrulaması ve slip araması YALNIZ bu
     tıklamaları kullanır; başka bit açıklanmaz. Sonuçta test çiftleri anahtardan ayrılır ve
-    TrackingReport.pe_key_pairs / pe_test_pairs ile çekirdeğe (bb84/hal_pe_bridge.js) aktarılır."""
+    TrackingReport.pe_key_pairs / pe_test_pairs ile çekirdeğe (bb84/hal_pe_bridge.js) aktarılır.
+
+    `observer` (isteğe bağlı, ör. hal/innovation_observer.KalmanInnovationObserver): her Kalman yeniliğinde
+    observer.observe(t_ps, nu, s, kind, jumped) çağrılır. Gözlemci izlemeyi DEĞİŞTİRMEZ; yalnız kaydeder."""
     window = correlator.coincidence_window_ps
     mode = "sync" if sync else "data"
     rep = TrackingReport(found=False, mode=mode)
@@ -289,7 +293,10 @@ def correlate_tracked(
                 tb, ta = sync[si]
                 kf.predict(tb)
                 nu, s = kf.innovation(tb - ta, sync_sigma_ps ** 2)
-                if abs(nu) > gate_sigma * math.sqrt(s) and abs(nu) > window / 2:
+                jumped = abs(nu) > gate_sigma * math.sqrt(s) and abs(nu) > window / 2
+                if observer is not None:
+                    observer.observe(tb, nu, s, "sync", jumped)
+                if jumped:
                     kf.reset_offset(tb - ta, sync_sigma_ps ** 2)
                     rep.jumps.append((tb, nu))
                     blackout.append((sync_states[-1][0], tb))
@@ -323,7 +330,10 @@ def correlate_tracked(
                 r_meas = max(var / len(near), 1.0)
                 z = g_pred + c
                 nu, s = kf.innovation(z, r_meas)
-                if abs(nu) > gate_sigma * math.sqrt(s) and abs(nu) > window / 2:
+                jumped = abs(nu) > gate_sigma * math.sqrt(s) and abs(nu) > window / 2
+                if observer is not None:
+                    observer.observe(t_mid, nu, s, "data", jumped)
+                if jumped:
                     kf.reset_offset(z, r_meas)
                     rep.jumps.append((t_mid, nu))
                 else:

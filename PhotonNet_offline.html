@@ -17348,7 +17348,7 @@ window.__PHOTONNET_CONFIG__ = {"schemaVersion":1,"detector":{"active":"snspd","p
 <script>
 /* ===== PhotonNet bileşeni — önceden derlenmiş (Babel/CDN gerektirmez) =====
    OTOMATİK ÜRETİLDİ — bb84/tools/build_photonnet_html.js tarafından
-   PhotonNet2.jsx kaynağından (15634 satır) TypeScript
+   PhotonNet2.jsx kaynağından (15934 satır) TypeScript
    transpileModule (JSX→React.createElement) ile yeniden derlendi.
    ELLE DÜZENLEMEYİN — değişiklikler PhotonNet2.jsx'te yapılıp bu script
    yeniden çalıştırılmalı (bkz. dosya başlığı). ===== */
@@ -17444,7 +17444,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v4.4";
+const PHOTONNET_CORE_VERSION = "v5";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -18490,7 +18490,12 @@ class QuantumKeyDistribution {
             // (eski mesafe-bağımlı "risk vergisi" burada devre dışı) — yalnızca
             // gerçek kayıp/saçılma/soğurma/faz-kayması gürültüsü uygulanır;
             // Eve'in etkisi zaten yukarıda ayrı ve doğru şekilde ele alındı.
-            const kr = propPhoton(1550, totalKm, 0, false, bitRng, undefined, undefined, { fixedPhaseProb: QKD_MISALIGNMENT_E_D });
+            // ÇEKİRDEK v5: serbest-uzay atlaması (detectorCtx.channelEta, SatelliteDownlinkChannel) fiber yayılım modeli
+            // yerine ölçülmüş kanal geçirgenliğini kullanır; hizalama hatası aynı e_d. Fiber yolu değişmedi.
+            const fsEta = detectorCtx && Number.isFinite(detectorCtx.channelEta) ? detectorCtx.channelEta : null;
+            const kr = fsEta != null
+                ? { ok: bitRng() < fsEta, flip: bitRng() < QKD_MISALIGNMENT_E_D }
+                : propPhoton(1550, totalKm, 0, false, bitRng, undefined, undefined, { fixedPhaseProb: QKD_MISALIGNMENT_E_D });
             // ÇEKİRDEK v3: dedektör modellendiğinde (detectorCtx) foton dedektöre ulaşsa bile profilin verimiyle
             // (efficiency) algılanır; algılanmazsa kayıptır ve aşağıdaki karanlık-sayım dalına düşer.
             // detectorCtx yoksa ideal dedektör (verim 1, karanlık sayım yok) — v2 ile aynı davranış.
@@ -18762,6 +18767,166 @@ class QuantumKeyDistribution {
 // ── OneTimePad — gerçek XOR tabanlı OTP şifreleme ────────────────
 // QKD anahtar kanalında artık hizalama hatası (aktif polarizasyon takibiyle, GYS tipi e_d). VARSAYIM — ölçülmedi.
 const QKD_MISALIGNMENT_E_D = 0.015;
+// ══════════════════════════════════════════════════════════════
+// ÇEKİRDEK v5 — HİBRİT UYDU + FİBER ANAHTAR DAĞITIMI (TS-HYBRID-QKD-04)
+//
+// LeoPassGeometry: dairesel LEO yörüngesinde, yer istasyonunun tam üstünden ya da yanından geçen TEK bir geçişin
+// geometrisi (Kepler, dairesel yörünge, küresel Dünya). Dünya'nın dönüşü ve atmosferik kırılma İHMAL edilir
+// (geçiş birkaç dakika sürer; kırılma 10° üstünde <0,1° — didaktik doğruluk sınırı). Görünürlük = sin(yükselti):
+// ufukta 0, tepede 1; anahtar üretimi görünürlük ≥ SAT_VISIBILITY_MIN (0,1 → ~5,7°) iken yapılır.
+//   Eğik mesafe ρ = √(R² + r² − 2Rr·cos γ), yükselti = atan2(cos γ − R/r, sin γ), cos γ(t) = cos γ0 · cos(ωt).
+//   ρ̇ = R·r·cos γ0·ω·sin(ωt)/ρ (TCA'dan önce negatif: uydu yaklaşıyor). Doppler: alınan frekans f(1 − ρ̇/c);
+//   darbe saati aynı oranla kayar (ppm = −ρ̇/c·10⁶). Bu kayma zamanlama katmanında (HAL ClockKalman) izlenir;
+//   hal/test_hybrid_sync.py geçişin farklı anlarındaki Doppler kaymasıyla izleyiciyi sınar.
+//
+// SatelliteDownlinkChannel: aşağı-bağlantı (uydu → yer) kanal geçirgenliği.
+//   η = η_geo · η_atm · η_point · η_opt · fade
+//   η_geo  = 1 − exp(−2a²/w²), w = θ·ρ (Gauss ışın, θ = BEAM_DIVERGENCE_RAD), a = alıcı açıklığı/2
+//   η_atm  = T_zenit^(1/sin el) (hava kütlesi)
+//   η_point= PointingBudget.lossFactor (mekanik izleme + ışın kayması, UI "izleme hassasiyeti")
+//   fade   = ortalama-koruyan log-normal sönüm, σ_I² = ScintillationModel (UI "türbülans"); tur başına AR(1)
+//   Varsayımlar (ölçülmedi): θ 15 µrad, açıklık 1,0 m, T_zenit 0,8 (1550 nm, açık hava), η_opt 0,5.
+//   Kaba uyum kontrolü: Micius aşağı-bağlantı QKD'sinde 645–1200 km eğik mesafede yaklaşık 22–35 dB kanal kaybı
+//   bildirilmiştir (Liao ve ark., Nature 549, 43, 2017; 850 nm). Bu model aynı aralıkta ~26–33 dB verir
+//   (bb84/hybrid_qkd_test.js). Açıklık ortalaması (aperture averaging) modellenmez: sönüm varyansı temkinli (fazla).
+//   Gökyüzü arka planı DetectorNoiseModel sabitlerinden gelir (gündüz 5 MHz, gece 200 Hz); gündüz serbest-uzay
+//   atlaması bu dedektör penceresiyle QBER eşiğini aşar — gerçek uydu QKD'sinin gece çalışmasıyla tutarlı.
+//
+// computeDynamicAlpha: QBER için DCR'ye bağlı ERKEN UYARI bandı (sabit yanlış-alarm olasılığı α, CFAR).
+//   Beklenen QBER = e_d·(1 − f) + f/2, f = hayalet click payı = (1−P_alg)·p / ((1−P_alg)·p + P_alg)
+//   Uyarı eşiği = Binom(k, beklenen)'in tam üst α kuantili / k (P[hata > eşik·k] ≤ α). Normal yaklaşım (beklenen + z_α·σ)
+//   düşük QBER'de kuyruğu küçük tahmin ediyordu: %1,6 ve k = 850'de yanlış uyarı 2,7·α ölçüldü; tam kuantil ≤ α verir.
+//   Karanlık sayım arttıkça beklenen QBER ve bant yükselir,
+//   böylece yalnız gürültüden kaynaklanan yükselme uyarı üretmez. İPTAL EŞİĞİ (%11, güvenlik kanıtından) bu
+//   fonksiyondan ETKİLENMEZ: gürültü ile dinleme kanıt açısından ayırt edilemez; eşik gürültüye göre gevşetilirse
+//   dinleyici kendi hatasını o gürültünün içine saklayabilir. Ad belirtimdeki (compute_dynamic_alpha) addır;
+//   değişen α değil, sabit α'daki bant genişliğidir.
+// ══════════════════════════════════════════════════════════════
+const EARTH_RADIUS_KM = 6371.0;
+const EARTH_MU_KM3_S2 = 398600.4418;
+const LIGHT_SPEED_KM_S = 299792.458;
+const SAT_VISIBILITY_MIN = 0.1;
+const SAT_PULSE_RATE_HZ = 1e8; // kaynak tekrar hızı (Micius aşağı-bağlantı kaynağı 100 MHz) — oturum süresi = darbe / hız
+class LeoPassGeometry {
+    /** @param {{altitudeKm?: number, maxElevationDeg?: number}} [o] */
+    constructor(o = {}) {
+        var _a, _b;
+        this.altitudeKm = _requireFiniteNumber("LeoPassGeometry", "altitudeKm", (_a = o.altitudeKm) !== null && _a !== void 0 ? _a : SAT_ALTITUDE_KM, 160, 2000);
+        this.maxElevationDeg = _requireFiniteNumber("LeoPassGeometry", "maxElevationDeg", (_b = o.maxElevationDeg) !== null && _b !== void 0 ? _b : 75, 1, 90);
+        this.r = EARTH_RADIUS_KM + this.altitudeKm;
+        this.omega = Math.sqrt(EARTH_MU_KM3_S2 / this.r ** 3);
+        this.periodS = 2 * Math.PI / this.omega;
+        // tepe yükseltisini veren merkez açı γ0 (yükselti γ'da monoton azalır → ikiye bölme)
+        const target = this.maxElevationDeg * Math.PI / 180;
+        let lo = 0, hi = Math.acos(EARTH_RADIUS_KM / this.r);
+        for (let i = 0; i < 80; i++) {
+            const mid = (lo + hi) / 2;
+            if (this._el(mid) > target)
+                lo = mid;
+            else
+                hi = mid;
+        }
+        this.gamma0 = (lo + hi) / 2;
+    }
+    _el(g) { return Math.atan2(Math.cos(g) - EARTH_RADIUS_KM / this.r, Math.sin(g)); }
+    /** @param {number} tS TCA'ya (en yakın geçiş anına) göre saniye; negatif = yaklaşma */
+    state(tS) {
+        _requireFiniteNumber("LeoPassGeometry.state", "tS", tS);
+        const R = EARTH_RADIUS_KM, r = this.r, wt = this.omega * tS;
+        const cg = Math.max(-1, Math.min(1, Math.cos(this.gamma0) * Math.cos(wt)));
+        const g = Math.acos(cg);
+        const rangeKm = Math.sqrt(R * R + r * r - 2 * R * r * cg);
+        const rangeRateKmS = R * r * Math.cos(this.gamma0) * this.omega * Math.sin(wt) / rangeKm;
+        const el = this._el(g);
+        const visibility = Math.sin(el);
+        return { tS, elevationDeg: el * 180 / Math.PI, visibility, visible: visibility >= SAT_VISIBILITY_MIN, rangeKm, rangeRateKmS,
+            dopplerPpm: -rangeRateKmS / LIGHT_SPEED_KM_S * 1e6, dopplerShiftPm: 1550e3 * rangeRateKmS / LIGHT_SPEED_KM_S, centralAngleRad: g };
+    }
+    /** Görünürlüğün ≥ SAT_VISIBILITY_MIN olduğu pencere [−T, +T] (s). */
+    visibleWindowS() {
+        if (!this.state(0).visible)
+            return null;
+        let lo = 0, hi = this.periodS / 4;
+        for (let i = 0; i < 60; i++) {
+            const mid = (lo + hi) / 2;
+            if (this.state(mid).visible)
+                lo = mid;
+            else
+                hi = mid;
+        }
+        return { fromS: -lo, toS: lo, durationS: 2 * lo };
+    }
+}
+class SatelliteDownlinkChannel {
+    constructor(o = {}) { this.o = { ...SatelliteDownlinkChannel.DEFAULTS, ...o }; }
+    /**
+     * Ortalama kanal geçirgenliği (sönüm hariç) ve sönüm istatistiği.
+     * @param {object} st LeoPassGeometry.state çıktısı
+     * @param {{turbulenceStrength?: number, pointingPrecision?: number}} [env] UI kaydırıcıları [0,1]
+     */
+    link(st, env = {}) {
+        var _a, _b;
+        const o = this.o;
+        const el = Math.max(1, st.elevationDeg);
+        const w = o.beamDivergenceRad * st.rangeKm * 1000, a = o.rxApertureM / 2;
+        const etaGeo = 1 - Math.exp(-2 * a * a / (w * w));
+        const etaAtm = Math.pow(o.zenithTransmittance, 1 / Math.sin(el * Math.PI / 180));
+        const cn2Ground = Math.pow(10, -17 + 4 * Math.max(0, Math.min(1, (_a = env.turbulenceStrength) !== null && _a !== void 0 ? _a : 0.4)));
+        const scintIndex = ScintillationModel.scintillationIndex(ScintillationModel.rytovVariance(o.wavelengthNm, el, cn2Ground));
+        const chiVariance = scintIndex / 4;
+        const etaPoint = PointingBudget.lossFactor(st.rangeKm, (_b = env.pointingPrecision) !== null && _b !== void 0 ? _b : 0.7, chiVariance);
+        const eta = etaGeo * etaAtm * etaPoint * o.opticsEfficiency;
+        return { etaGeo, etaAtm, etaPoint, etaOpt: o.opticsEfficiency, eta, lossDb: -10 * Math.log10(eta), scintIndex, chiVariance };
+    }
+}
+SatelliteDownlinkChannel.DEFAULTS = Object.freeze({ rxApertureM: 1.0, beamDivergenceRad: BEAM_DIVERGENCE_RAD, zenithTransmittance: 0.8, opticsEfficiency: 0.5, wavelengthNm: 1550 });
+/** Ters standart normal (Acklam yaklaşıklığı, |hata| < 1.2e-9). */
+function _invNorm(p) {
+    if (!(p > 0 && p < 1))
+        throw new RangeError("_invNorm: p ∈ (0,1)");
+    const a = [-39.69683028665376, 220.9460984245205, -275.9285104469687, 138.357751867269, -30.66479806614716, 2.506628277459239];
+    const b = [-54.47609879822406, 161.5858368580409, -155.6989798598866, 66.80131188771972, -13.28068155288572];
+    const c = [-0.007784894002430293, -0.3223964580411365, -2.400758277161838, -2.549732539343734, 4.374664141464968, 2.938163982698783];
+    const d = [0.007784695709041462, 0.3224671290700398, 2.445134137142996, 3.754408661907416];
+    const pl = 0.02425;
+    if (p < pl) {
+        const q = Math.sqrt(-2 * Math.log(p));
+        return (((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    if (p > 1 - pl) {
+        const q = Math.sqrt(-2 * Math.log(1 - p));
+        return -(((((c[0] * q + c[1]) * q + c[2]) * q + c[3]) * q + c[4]) * q + c[5]) / ((((d[0] * q + d[1]) * q + d[2]) * q + d[3]) * q + 1);
+    }
+    const q = p - 0.5, r = q * q;
+    return (((((a[0] * r + a[1]) * r + a[2]) * r + a[3]) * r + a[4]) * r + a[5]) * q / (((((b[0] * r + b[1]) * r + b[2]) * r + b[3]) * r + b[4]) * r + 1);
+}
+/**
+ * DCR'ye bağlı QBER erken uyarı bandı (bkz. başlık). Dönüş: {expectedQ, darkFraction, sigma, z, warnAt, alpha, abortAt}.
+ * @param {{pDark:number, pDet:number, k:number, eD?:number, alpha?:number, abortAt?:number}} p
+ *   pDark: pencere başına fiziksel hayalet-click olasılığı · pDet: ölçülen sinyal algılama olasılığı (elenmiş darbe başına)
+ *   k: test biti sayısı · alpha: sabit yanlış-alarm olasılığı (varsayılan 1e-3) · abortAt: yalnız raporlanır, DEĞİŞMEZ
+ */
+function computeDynamicAlpha(p) {
+    var _a, _b, _c;
+    const pDark = _requireFiniteNumber("computeDynamicAlpha", "pDark", p.pDark, 0, 1);
+    const pDet = _requireFiniteNumber("computeDynamicAlpha", "pDet", p.pDet, 0, 1);
+    const k = _requireFiniteNumber("computeDynamicAlpha", "k", p.k, 1);
+    const eD = (_a = p.eD) !== null && _a !== void 0 ? _a : QKD_MISALIGNMENT_E_D, alpha = (_b = p.alpha) !== null && _b !== void 0 ? _b : 1e-3, abortAt = (_c = p.abortAt) !== null && _c !== void 0 ? _c : SecureMessageSession.DEFAULTS.theoreticalQberLimit;
+    const dark = (1 - pDet) * pDark, f = dark + pDet > 0 ? dark / (dark + pDet) : 1;
+    const expectedQ = eD * (1 - f) + 0.5 * f;
+    const sigma = Math.sqrt(Math.max(expectedQ * (1 - expectedQ), 1e-12) / k);
+    const z = _invNorm(1 - alpha);
+    // tam binom üst kuantili: en küçük e ile P[X > e] ≤ α (log-pmf özyinelemesi; k ~1e4'te ucuz)
+    const kk = Math.round(k), q = Math.min(Math.max(expectedQ, 1e-12), 1 - 1e-12);
+    let logp = kk * Math.log(1 - q), cdf = Math.exp(logp), e = 0;
+    const lr = Math.log(q / (1 - q));
+    while (1 - cdf > alpha && e < kk) {
+        logp += Math.log((kk - e) / (e + 1)) + lr;
+        e++;
+        cdf += Math.exp(logp);
+    }
+    return { expectedQ, darkFraction: f, sigma, z, warnAt: e / kk, warnCount: e, alpha, abortAt };
+}
 class OneTimePad {
     // Sifted key mesajdan kısaysa seed'den deterministik genişletir.
     // Matematik deriveOtpKeyBits ile BİREBİR AYNI.
@@ -18812,6 +18977,11 @@ class SecureMessageSession {
      *    taşınır ve Bob'un ulaştığı anahtarın Alice'inkiyle aynı olduğu denetlenir.
      * @param p.msg mesaj metni · p.totalKm · p.nHops (>1 → güvenilir-düğüm zinciri) · p.evesdrop (tüm atlamalarda)
      * @param p.detectorCtx deriveSiftedKey bağlamı · p.entropyBits(n) → 0/1 dizisi (QRNG) · p.publicSeed (kamuya açık ayraç tohumu)
+     * ÇEKİRDEK v5 (isteğe bağlı, verilmezse davranış v4.4 ile aynı):
+     * @param p.hopChannels atlama başına kanal: {kind:"fiber", km} | {kind:"free-space", pass: LeoPassGeometry,
+     *   passTimeS, env: {turbulenceStrength, pointingPrecision}, channel?: SatelliteDownlinkChannel}. Uzunluk = nHops.
+     * @param p.evesdrop boolean (tüm atlamalar) ya da dinlenen atlama numaraları dizisi (ör. [0] = yalnız uydu atlaması)
+     * @param p.onEvent(ev) olay akışı: HOP_CHECK, QBER_WARNING, SESSION_ABORTED, KEY_DELIVERED (arayüz kaydına bağlanır)
      */
     constructor(p) {
         this.o = { ...SecureMessageSession.DEFAULTS, ...(p.opts || {}) };
@@ -18821,8 +18991,12 @@ class SecureMessageSession {
         this.totalKm = _requireFiniteNumber("SecureMessageSession", "totalKm", p.totalKm, 0, MAX_LINK_KM);
         this.nHops = Math.max(1, Math.round(p.nHops || 1));
         this.hopKm = this.totalKm / this.nHops;
-        this.evesdrop = !!p.evesdrop;
+        this.evesdrop = Array.isArray(p.evesdrop) ? p.evesdrop.length > 0 : !!p.evesdrop;
         this.detectorCtx = p.detectorCtx;
+        this.eveHops = Array.isArray(p.evesdrop) ? new Set(p.evesdrop.map((x) => Math.round(x))) : null; // null → tüm atlamalar (p.evesdrop)
+        this.onEvent = typeof p.onEvent === "function" ? p.onEvent : null;
+        if (p.hopChannels != null && (!Array.isArray(p.hopChannels) || p.hopChannels.length !== this.nHops))
+            throw new TypeError(`SecureMessageSession: hopChannels ${this.nHops} elemanlı bir dizi olmalı`);
         if (typeof p.entropyBits !== "function")
             throw new TypeError("SecureMessageSession: entropyBits(n) zorunlu (bağımsız entropi kaynağı)");
         this.entropyBits = p.entropyBits;
@@ -18833,6 +19007,7 @@ class SecureMessageSession {
             qkd: new QuantumKeyDistribution(((p.publicSeed >>> 0) ^ Math.imul(h + 1, 0x9e3779b1) ^ 0x51d0c0de) >>> 0),
             chanRng: mulberry32(seedFromEntropy()), // kanal (doğa) rastgeleliği: tur ve atlama başına bağımsız akış
             A: [], B: [], target: this.o.firstCheckSifted, sifted: 0, tested: 0, lastCheck: null, result: null,
+            lost: 0, dark: 0, ...SecureMessageSession._hopChannel(p.hopChannels ? p.hopChannels[h] : null, this.hopKm, h),
         }));
         this.pulses = 0;
         this.rounds = 0;
@@ -18846,15 +19021,56 @@ class SecureMessageSession {
         this.done = null;
         this.ecDiscards = 0;
     }
+    /** Atlama kanalı doğrulaması (v5). Serbest uzay: geçiş geometrisi + aşağı-bağlantı kanalı; fiber: km. */
+    static _hopChannel(spec, defaultKm, h) {
+        if (!spec || spec.kind === "fiber") {
+            const km = spec && spec.km != null ? _requireFiniteNumber("SecureMessageSession.hopChannels", `[${h}].km`, spec.km, 0, MAX_LINK_KM) : defaultKm;
+            return { kind: "fiber", km, fs: null };
+        }
+        if (spec.kind !== "free-space")
+            throw new TypeError(`SecureMessageSession: hopChannels[${h}].kind "fiber" ya da "free-space" olmalı`);
+        if (!(spec.pass instanceof LeoPassGeometry))
+            throw new TypeError(`SecureMessageSession: hopChannels[${h}].pass bir LeoPassGeometry olmalı`);
+        return { kind: "free-space", km: null, fs: { pass: spec.pass, t0: _requireFiniteNumber("SecureMessageSession.hopChannels", `[${h}].passTimeS`, spec.passTimeS),
+                env: spec.env || {}, channel: spec.channel instanceof SatelliteDownlinkChannel ? spec.channel : new SatelliteDownlinkChannel(), logAmp: 0, last: null } };
+    }
+    _emit(ev) { if (this.onEvent) {
+        try {
+            this.onEvent(ev);
+        }
+        catch (_) { /* gözlemci hatası oturumu etkilemez */ }
+    } }
     _abort(code, reason, extra = {}) {
         this.done = { done: true, status: "ABORTED", code, reason, ...this._stats(), ...extra };
+        this._emit({ type: "SESSION_ABORTED", code, reason, pulses: this.pulses });
         return this.done;
     }
     _stats() {
         return { pulses: this.pulses, totalPulsesAllHops: this.pulses * this.nHops, nHops: this.nHops, rounds: this.rounds, siftedTotal: this.siftedTotal, testedTotal: this.testedTotal,
             matchRate: this.rounds ? this.matchSum / (this.rounds * this.nHops) : 0, lost: this.lost, darkClicks: this.dark,
             worstHopQber: this.worstHopQber, lastCheck: this.lastCheck, needBits: this.needBits, ecDiscardedBlocks: this.ecDiscards,
-            hopChecks: this.hops.map((h) => ({ hop: h.hop, sifted: h.sifted, tested: h.tested, ...(h.lastCheck || {}), done: !!h.result })) };
+            hopChecks: this.hops.map((h) => ({ hop: h.hop, kind: h.kind, km: h.km, sat: h.fs ? h.fs.last : null, eve: this._eveOn(h.hop),
+                sifted: h.sifted, tested: h.tested, lost: h.lost, dark: h.dark, ...(h.lastCheck || {}), done: !!h.result })) };
+    }
+    _eveOn(hop) { return this.eveHops ? this.eveHops.has(hop) : this.evesdrop; }
+    /** Serbest-uzay atlamasının bu turdaki bağlamı: görünürlük kapısı + kanal geçirgenliği + AR(1) sönüm. null → görünmüyor. */
+    _fsContext(h) {
+        const f = h.fs, tS = f.t0 + this.pulses / this.o.pulseRateHz;
+        const st = f.pass.state(tS);
+        if (!st.visible) {
+            f.last = { tS, elevationDeg: st.elevationDeg, visibility: st.visibility, visible: false };
+            return null;
+        }
+        const ln = f.channel.link(st, f.env);
+        // log-normal sönüm (ortalama 1), tur başına AR(1); τ0 = 20 ms (ScintillationEngine ile aynı varsayım)
+        const dtS = this.o.roundPulses / this.o.pulseRateHz, rho = Math.exp(-dtS / 0.02);
+        const u1 = Math.max(1e-12, h.chanRng()), u2 = h.chanRng();
+        const zN = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+        f.logAmp = rho * f.logAmp + Math.sqrt(Math.max(0, 1 - rho * rho)) * Math.sqrt(ln.chiVariance) * zN;
+        const fade = Math.exp(2 * f.logAmp - 2 * ln.chiVariance);
+        f.last = { tS, elevationDeg: st.elevationDeg, visibility: st.visibility, visible: true, rangeKm: st.rangeKm, rangeRateKmS: st.rangeRateKmS,
+            dopplerPpm: st.dopplerPpm, dopplerShiftPm: st.dopplerShiftPm, lossDb: ln.lossDb, eta: ln.eta, scintIndex: ln.scintIndex, fade };
+        return { ...(this.detectorCtx || {}), freeSpace: true, channelEta: Math.min(1, ln.eta * fade) };
     }
     /** Bir tur: anahtarı henüz yetmeyen her atlama 1 tur darbe gönderir. Bitmediyse {done:false, ...}. */
     step() {
@@ -18866,11 +19082,22 @@ class SecureMessageSession {
         for (const h of this.hops) {
             if (h.result)
                 continue;
+            let ctx = this.detectorCtx;
+            if (h.fs) {
+                ctx = this._fsContext(h);
+                if (!ctx) {
+                    const L = h.fs.last;
+                    return this._abort("SAT_NOT_VISIBLE", `hop #${h.hop} (uydu aşağı-bağlantısı): görünürlük ${L.visibility.toFixed(3)} < ${SAT_VISIBILITY_MIN} (yükselti ${L.elevationDeg.toFixed(1)}°, geçişte t = ${L.tS.toFixed(1)} s) — atlama anahtarı tamamlanmadı; anahtar kullanılmadı, mesaj gönderilmedi`);
+                }
+            }
             const raw = _requireBits("SecureMessageSession.entropyBits", this.entropyBits(o.roundPulses));
-            const r = h.qkd.deriveSiftedKey(raw, this.hopKm, this.evesdrop, h.chanRng, this.detectorCtx);
+            const r = h.qkd.deriveSiftedKey(raw, h.km != null ? h.km : this.hopKm, this._eveOn(h.hop), h.chanRng, ctx);
             this.matchSum += r.recon.matchRate;
             this.lost += r.lostCount;
             this.dark += r.darkClickCount || 0;
+            h.lost += r.lostCount;
+            h.dark += r.darkClickCount || 0;
+            h.ctx = ctx;
             const a = r.siftedKeyBits, b = r.bobKeyBits;
             for (let i = 0; i < a.length; i++) {
                 h.A.push(a[i]);
@@ -18916,12 +19143,15 @@ class SecureMessageSession {
         h.B = B;
         const n = A.length, mu = QKDSecurityProof.statisticalFluctuation2(n, k, o.epsPE);
         const pre = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: o.epsCor, epsPA: o.epsPA, fEC: o.fEC });
-        h.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell };
+        h.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell, ...this._warnBand(h, k, q) };
         this.worstHopQber = Math.max(this.worstHopQber, q);
         this.lastCheck = chain ? { hop: h.hop, ...h.lastCheck } : h.lastCheck;
+        this._emit({ type: "HOP_CHECK", hop: h.hop, kind: h.kind, qTest: q, k, warnAt: h.lastCheck.warnAt, expectedQ: h.lastCheck.expectedQ });
+        if (h.lastCheck.warn)
+            this._emit({ type: "QBER_WARNING", hop: h.hop, kind: h.kind, qTest: q, warnAt: h.lastCheck.warnAt, expectedQ: h.lastCheck.expectedQ, abortAt: o.theoreticalQberLimit });
         if (q >= o.theoreticalQberLimit) {
             return chain
-                ? this._abort("HOP_QBER", `hop #${h.hop} QBER_test %${(q * 100).toFixed(1)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} (k=${k} test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`, { qTest: q })
+                ? this._abort("HOP_QBER", `hop #${h.hop}${h.kind === "free-space" ? " (uydu aşağı-bağlantısı)" : ""} QBER_test %${(q * 100).toFixed(1)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} (k=${k} test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`, { qTest: q })
                 : this._abort("QBER_LIMIT", `QBER_test %${(q * 100).toFixed(2)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} (k=${k} test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`, { qTest: q });
         }
         if (pre.ell < this.needBits) {
@@ -18943,7 +19173,7 @@ class SecureMessageSession {
             return null;
         }
         const proof = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: o.epsCor, epsPA: o.epsPA, fEC: o.fEC, realLeakEC: casc.leakedBits });
-        h.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell, ell: proof.ell, leakEC: casc.leakedBits };
+        h.lastCheck = { ...h.lastCheck, ell: proof.ell, leakEC: casc.leakedBits };
         this.lastCheck = chain ? { hop: h.hop, ...h.lastCheck } : h.lastCheck;
         if (proof.ell < this.needBits) {
             h.target = Math.max(h.target * 2, n + 1);
@@ -18954,6 +19184,20 @@ class SecureMessageSession {
         const keyB = QKDSecurityProof.toeplitzHash(casc.correctedBobBits, proof.ell, mulberry32(paSeed));
         h.result = { keyA, keyB, proof, q, n, k, leakEC: casc.leakedBits };
         return null;
+    }
+    /**
+     * Erken uyarı bandı (computeDynamicAlpha): atlamanın ölçülen sayımlarından P_alg ve o anki fiziksel karanlık-click
+     * olasılığı. İptal kararına KATILMAZ (iptal yalnız theoreticalQberLimit ile).
+     */
+    _warnBand(h, k, q) {
+        const ctx = h.ctx || this.detectorCtx;
+        if (!ctx || h.sifted + h.lost <= 0)
+            return {};
+        const ng = _noiseGateForProfile(activeDetectorProfile(ctx.detectorProfile));
+        const pDark = ng.effectivePhantomProbability(!!ctx.isNight, !!ctx.freeSpace);
+        const pDet = Math.max(0, Math.min(1, (h.sifted - h.dark) / (h.sifted + h.lost)));
+        const b = computeDynamicAlpha({ pDark, pDet, k, alpha: this.o.warnAlpha, abortAt: this.o.theoreticalQberLimit });
+        return { expectedQ: b.expectedQ, warnAt: b.warnAt, warnAlpha: b.alpha, pDark, pDet, warn: q > b.warnAt && q < this.o.theoreticalQberLimit };
     }
     /** Tüm atlamaların ℓ ≥ mesaj biti olduğunda: röle (güvenilir düğümler) + OTP. */
     _deliver() {
@@ -18981,6 +19225,7 @@ class SecureMessageSession {
             qTest: q, proof: worst.result.proof, leakEC: worst.result.leakEC, n: worst.result.n, k: worst.result.k,
             hopProofs: H.map((h) => ({ hop: h.hop, ell: h.result.proof.ell, qTest: h.result.q, n: h.result.n, k: h.result.k, leakEC: h.result.leakEC })),
             endToEndKeyBits: Lend, relayPublicBits: relays.length * Lend, ...this._stats() };
+        this._emit({ type: "KEY_DELIVERED", ell: worst.result.proof.ell, endToEndKeyBits: Lend, nHops: H.length });
         return this.done;
     }
     /** Senkron koşum (testler ve Node). Tarayıcı step()'i turlar arasında olay döngüsüne dönerek çağırır. */
@@ -18991,6 +19236,7 @@ class SecureMessageSession {
 SecureMessageSession.DEFAULTS = Object.freeze({
     roundPulses: 16384, maxPulses: 4194304, firstCheckSifted: 2048, testFraction: 0.2, minTestBits: 64,
     theoreticalQberLimit: 0.11, epsPE: 1e-10, epsCor: 1e-15, epsPA: 1e-10, fEC: 1.16,
+    pulseRateHz: SAT_PULSE_RATE_HZ, warnAlpha: 1e-3,
 });
 // ══════════════════════════════════════════════════════════
 // YOL HARİTASI MADDE 3 — BİÇİMSEL SONLU-ANAHTAR (FINITE-KEY) GÜVENLİK
@@ -26625,7 +26871,8 @@ function ResStatus({ s }) {
         : s === false ? [RES_C.bad, "✗", "KALDI"]
             : s === "KISMEN" ? [RES_C.warn, "◐", s]
                 : s === "AÇIK" ? [RES_C.warn, "●", s]
-                    : [RES_C.muted, "◦", "VERİ"];
+                    : s === "UYARI" ? [RES_C.warn, "▲", s]
+                        : [RES_C.muted, "◦", "VERİ"];
     return (React.createElement("span", { style: { display: "inline-flex", alignItems: "center", gap: 4, fontSize: 8, fontWeight: 700, letterSpacing: ".06em",
             color: RES_C.ink, background: `${m[0]}1f`, border: `1px solid ${m[0]}66`, borderRadius: 3, padding: "1px 6px", whiteSpace: "nowrap" } },
         React.createElement("span", { style: { color: m[0] } }, m[1]),
@@ -26707,8 +26954,10 @@ function ResHopMatrix({ hops }) {
                     cols.map((c) => React.createElement("th", { key: c.k, style: { color: RES_C.muted, fontWeight: 400, fontSize: 8, textAlign: "right" } }, c.l)))),
             React.createElement("tbody", null, hops.map((h) => (React.createElement("tr", { key: h.hop },
                 React.createElement("td", { style: { color: RES_C.text, whiteSpace: "nowrap" } },
+                    h.kind === "free-space" ? "🛰 " : "",
                     "#",
                     h.hop,
+                    h.warn ? React.createElement("span", { style: { color: RES_C.warn }, title: "QBER_test erken uyar\u0131 band\u0131n\u0131n \u00FCst\u00FCnde (iptal e\u015Fi\u011Finin alt\u0131nda)" }, " \u25B2") : null,
                     weakest === h ? React.createElement("span", { style: { color: RES_C.warn } }, " \u25C2 en zay\u0131f") : null),
                 cols.map((c) => {
                     const v = h[c.k];
@@ -26797,6 +27046,22 @@ function ResSecurityCriteria({ result }) {
             ok: delivered ? !!result.success : !released,
             v: delivered ? (result.success ? "Bob mesajı çözdü" : "bütünlük hatası") : released ? "SIZINTI — anahtar/mesaj çıktı" : "OTP anahtarı 0 bit, mesaj gönderilmedi" },
     ];
+    // ÇEKİRDEK v5: DCR'ye bağlı erken uyarı bandı (computeDynamicAlpha) — iptal kararına katılmaz
+    const banded = hops.filter((h) => typeof h.warnAt === "number" && typeof h.qTest === "number");
+    if (banded.length) {
+        const warned = banded.filter((h) => h.warn);
+        const top = banded.reduce((m, h) => (h.qTest - h.warnAt > m.qTest - m.warnAt ? h : m), banded[0]);
+        rows.push({ c: "Erken uyarı bandı (dinamik α, CFAR α = 10⁻³) — DCR'ye göre; iptal eşiği %11 sabit",
+            ok: warned.length ? "UYARI" : true,
+            v: warned.length ? `${warned.length} atlama bandın üstünde (ör. #${warned[0].hop}: %${(warned[0].qTest * 100).toFixed(2)} > %${(warned[0].warnAt * 100).toFixed(2)})`
+                : `en yakın #${top.hop}: %${(top.qTest * 100).toFixed(2)} ≤ bant %${(top.warnAt * 100).toFixed(2)} (beklenen %${(top.expectedQ * 100).toFixed(2)})` });
+    }
+    const fsHop = hops.find((h) => h.kind === "free-space");
+    if (fsHop) {
+        const L = fsHop.sat;
+        rows.push({ c: `Uydu görünürlüğü ≥ ${SAT_VISIBILITY_MIN} — hop #${fsHop.hop} (LEO aşağı-bağlantısı)`, ok: L ? !!L.visible : null,
+            v: L ? `yükselti ${L.elevationDeg.toFixed(1)}°, görünürlük ${L.visibility.toFixed(2)}${L.visible ? `, kayıp ${L.lossDb.toFixed(1)} dB, Doppler ${(Math.abs(L.dopplerPpm) < 0.05 ? 0 : L.dopplerPpm).toFixed(1)} ppm` : ""}${fsHop.eve ? " · dinlenen atlama" : ""}` : "—" });
+    }
     const alarm = !delivered;
     return (React.createElement("div", null,
         React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 10, padding: "7px 10px", borderRadius: 5, marginBottom: 8,
@@ -26970,7 +27235,59 @@ function BerGauge({ value }) {
 // ══════════════════════════════════════════════════════════════
 // LEO QUANTUM LINK PANEL (görseldeki mobil arayüz)
 // ══════════════════════════════════════════════════════════════
-function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg, evesdrop, setEvesdrop, result, phase, timeline, onOpenTimeline, mirrorOn, setMirrorOn, mirrorResult, onCollapse, onInterfere, collapsedTo, entropyDelta, isOnline, observerFrame, atmosphericTurbidity, setAtmosphericTurbidity, turbulenceStrength, setTurbulenceStrength, pointingPrecision, setPointingPrecision, nightMode, setNightMode, paQueue }) {
+/** Hibrit kipin geçiş geometrisi (çekirdek v5): 550 km dairesel yörünge, tepe yükseltisi 75°. */
+const HYBRID_PASS = new LeoPassGeometry({ altitudeKm: SAT_ALTITUDE_KM, maxElevationDeg: 75 });
+const HYBRID_CHANNEL = new SatelliteDownlinkChannel();
+/** Hibrit kipte uydu atlamasının simülasyon darbe bütçesi: 2^24 darbe = 100 MHz kaynakta geçişin 0,17 s'si. */
+const HYBRID_MAX_PULSES = 16777216;
+function HybridPassControl({ hybridOn, setHybridOn, passTimeS, setPassTimeS, running, turbulenceStrength, pointingPrecision, nightMode }) {
+    const st = HYBRID_PASS.state(passTimeS);
+    const ln = st.visible ? HYBRID_CHANNEL.link(st, { turbulenceStrength, pointingPrecision }) : null;
+    const win = HYBRID_PASS.visibleWindowS();
+    const c = st.visible ? "#10b981" : "#f43f5e";
+    return (React.createElement("div", { style: { width: 210, paddingRight: 16, borderRight: "1px solid #0a1e3a44", marginRight: 16, flexShrink: 0 } },
+        React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 8, marginBottom: 4 } },
+            React.createElement("div", { onClick: () => !running && setHybridOn(v => !v), "data-testid": "hybrid-toggle", style: { width: 30, height: 16, borderRadius: 8, cursor: "pointer", position: "relative", flexShrink: 0,
+                    background: hybridOn ? "linear-gradient(90deg,#10b981,#00d4ff)" : "#0a1628", border: `1px solid ${hybridOn ? "#10b98144" : "#1e3a5f"}` } },
+                React.createElement("div", { style: { width: 11, height: 11, borderRadius: "50%", background: "#fff", position: "absolute", top: 2, left: hybridOn ? 16 : 2, transition: "left .3s" } })),
+            React.createElement("span", { style: { fontSize: 8, color: hybridOn ? "#10b981" : "#475569", letterSpacing: ".06em" } }, "\uD83D\uDEF0 H\u0130BR\u0130T ANAHTAR (uydu + fiber)")),
+        React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 2 } },
+            React.createElement("span", { style: { fontSize: 6, color: "#334155" } }, "GE\u00C7\u0130\u015E ANI (TCA'ya g\u00F6re)"),
+            React.createElement("span", { style: { fontSize: 6, color: "#00d4ff", fontFamily: "monospace" } },
+                passTimeS >= 0 ? "+" : "",
+                passTimeS,
+                " s")),
+        React.createElement("input", { type: "range", min: -320, max: 320, step: 10, value: passTimeS, disabled: running, "data-testid": "pass-time", onChange: e => setPassTimeS(+e.target.value), style: { width: "100%", accentColor: "#10b981", cursor: "pointer", height: 3 } }),
+        React.createElement("div", { style: { fontSize: 6, color: "#64748b", fontFamily: "monospace", lineHeight: 1.5, marginTop: 3 }, title: `550 km dairesel yörünge, tepe yükseltisi 75°, Dünya dönüşü ihmal. Görünürlük = sin(yükselti) ≥ ${SAT_VISIBILITY_MIN} penceresi ${win ? `±${win.toS.toFixed(0)} s` : "yok"}. Kanal: Gauss ışın (15 µrad) · 1 m alıcı · hava kütlesi · izleme · sönüm. Doppler zamanlamada HAL Kalman izleyicisiyle izlenir (hal/test_hybrid_sync.py).` },
+            React.createElement("span", { style: { color: c } },
+                "y\u00FCkselti ",
+                st.elevationDeg.toFixed(1),
+                "\u00B0 \u00B7 g\u00F6r\u00FCn\u00FCrl\u00FCk ",
+                st.visibility.toFixed(2)),
+            React.createElement("br", null),
+            ln ? React.createElement(React.Fragment, null,
+                "e\u011Fik ",
+                st.rangeKm.toFixed(0),
+                " km \u00B7 kay\u0131p ",
+                ln.lossDb.toFixed(1),
+                " dB \u00B7 \u03C3_I\u00B2 ",
+                ln.scintIndex.toFixed(2),
+                React.createElement("br", null),
+                "Doppler ",
+                st.dopplerPpm > 0.05 ? "+" : "",
+                (Math.abs(st.dopplerPpm) < 0.05 ? 0 : st.dopplerPpm).toFixed(1),
+                " ppm \u00B7 \u0394\u03BB ",
+                st.dopplerShiftPm > 0.05 ? "+" : "",
+                (Math.abs(st.dopplerShiftPm) < 0.05 ? 0 : st.dopplerShiftPm).toFixed(1),
+                " pm")
+                : React.createElement(React.Fragment, null,
+                    "uydu g\u00F6r\u00FCnm\u00FCyor (< ",
+                    SAT_VISIBILITY_MIN,
+                    ") \u2014 anahtar \u00FCretilmez"),
+            React.createElement("br", null),
+            React.createElement("span", { style: { color: nightMode ? "#64748b" : "#f59e0b" } }, nightMode ? "gece: gökyüzü arka planı 200 Hz" : "gündüz: gökyüzü arka planı 5 MHz — QBER eşiği aşılır"))));
+}
+function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg, evesdrop, setEvesdrop, result, phase, timeline, onOpenTimeline, mirrorOn, setMirrorOn, mirrorResult, onCollapse, onInterfere, collapsedTo, entropyDelta, isOnline, observerFrame, atmosphericTurbidity, setAtmosphericTurbidity, turbulenceStrength, setTurbulenceStrength, pointingPrecision, setPointingPrecision, nightMode, setNightMode, paQueue, hybridOn, setHybridOn, passTimeS, setPassTimeS }) {
     var _a;
     const [satDist, setSatDist] = useState(550);
     // EK 42-44: atmosphericTurbidity/turbulenceStrength/pointingPrecision/
@@ -27100,7 +27417,7 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, marginBottom: 4 } },
                     React.createElement("span", { style: { fontSize: 8, color: "#475569", letterSpacing: ".08em" } }, "ATMOSFER\u0130K G\u00DCR\u00DCLT\u00DC"),
                     React.createElement("span", { style: { fontSize: 6, color: "#334155" }, title: "Hufnagel-Valley Cn\u00B2(h) + e\u011Fik-yol Rytov varyans\u0131 + Andrews-Phillips doygunluk d\u00FCzeltmesi. Kayd\u0131r\u0131c\u0131n\u0131n Cn\u00B2(0)'a haritalanmas\u0131 ve r\u00FCzgar h\u0131z\u0131 varsay\u0131lan\u0131 kalibre edilmemi\u015Ftir \u2014 didaktik model." }, "(scintillation, didaktik)")),
-                React.createElement("div", { style: { fontSize: 6, color: "#64748b", lineHeight: 1.35, marginBottom: 4 }, title: "Anahtar oturumu (SecureMessageSession) fiber kanalda \u00E7al\u0131\u015F\u0131r: g\u00F6ky\u00FCz\u00FC arka plan\u0131 ve atmosferik t\u00FCrb\u00FClans fiberde yoktur. Anahtar QBER'ini dedekt\u00F6r g\u00FCr\u00FClt\u00FCs\u00FC (\uD83D\uDD2C G\u00DCR\u00DCLT\u00DC sekmesi), mesafe ve dinleme belirler." }, "yaln\u0131z uydu mesaj kanal\u0131 \u00B7 fiber anahtar oturumunu (QBER_test, \u2113) etkilemez"),
+                React.createElement("div", { style: { fontSize: 6, color: "#64748b", lineHeight: 1.35, marginBottom: 4 }, title: "Fiber anahtar atlamalar\u0131nda g\u00F6ky\u00FCz\u00FC arka plan\u0131 ve atmosferik t\u00FCrb\u00FClans yoktur; QBER'i dedekt\u00F6r g\u00FCr\u00FClt\u00FCs\u00FC (\uD83D\uDD2C G\u00DCR\u00DCLT\u00DC sekmesi), mesafe ve dinleme belirler. \uD83D\uDEF0 H\u0130BR\u0130T kipte 0. atlama LEO a\u015Fa\u011F\u0131-ba\u011Flant\u0131s\u0131d\u0131r: t\u00FCrb\u00FClans (s\u00F6n\u00FCm), izleme hassasiyeti (i\u015Faretleme kayb\u0131) ve g\u00FCnd\u00FCz/gece (g\u00F6ky\u00FCz\u00FC arka plan\u0131) bu atlamay\u0131 etkiler." }, "mesaj kanal\u0131 + \uD83D\uDEF0 hibrit kipte uydu anahtar atlamas\u0131 \u00B7 fiber atlamalar\u0131n\u0131 etkilemez"),
                 React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 2 } },
                     React.createElement("span", { style: { fontSize: 6, color: "#334155" } }, "T\u00DCRB\u00DCLANS \u015E\u0130DDET\u0130"),
                     React.createElement("span", { style: { fontSize: 6, color: "#00d4ff", fontFamily: "monospace" } },
@@ -27158,6 +27475,7 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                                 position: "absolute", top: 2, left: mirrorOn ? 20 : 2, transition: "left .3s",
                                 boxShadow: mirrorOn ? "0 0 5px #a855f7" : "0 1px 2px rgba(0,0,0,.4)" } })),
                     React.createElement("span", { style: { fontSize: 7, color: mirrorOn ? "#a855f7" : "#475569", whiteSpace: "nowrap" } }, "\uD83E\uDE9E Mirror"))),
+            React.createElement(HybridPassControl, { hybridOn: hybridOn, setHybridOn: setHybridOn, passTimeS: passTimeS, setPassTimeS: setPassTimeS, running: running, turbulenceStrength: turbulenceStrength, pointingPrecision: pointingPrecision, nightMode: nightMode }),
             running && ACTION_LABEL[phase] && (React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 7,
                     background: "#020912", border: "1px solid #00d4ff22",
                     borderRadius: 7, padding: "6px 12px", marginRight: 16,
@@ -27470,6 +27788,9 @@ function PhotonNet() {
     const [atmosphericTurbidity, setAtmosphericTurbidity] = useState(0.2); // [0,1] sis/pus yoğunluğu (AtmosphericWindowModel)
     const [turbulenceStrength, setTurbulenceStrength] = useState(0.4); // [0,1] → Cn²(0) haritalanır (ScintillationModel)
     const [pointingPrecision, setPointingPrecision] = useState(0.7); // [0,1] 1=mükemmel izleme, 0=kaba/titrek (PointingBudget)
+    // ÇEKİRDEK v5: hibrit uydu + fiber anahtar kipi — 0. atlama LEO aşağı-bağlantısı (HYBRID_PASS geçişinde passTimeS anı)
+    const [hybridOn, setHybridOn] = useState(false);
+    const [passTimeS, setPassTimeS] = useState(0);
     const [nightMode, setNightMode] = useState(true); // gece=düşük arka plan gürültüsü (DetectorNoiseModel)
     // ÇEKİRDEK v3: dedektör profili config.json'dan (derlemede gömülü); ?detector=<kimlik> veya metrik
     // çubuğundaki seçiciyle değiştirilir. Yapılandırma hatalıysa hata gösterilir ve iletim REDDEDİLİR.
@@ -27725,6 +28046,10 @@ function PhotonNet() {
     const activeSatRef = useRef(activeSat);
     useEffect(() => { activeSatRef.current = activeSat; }, [activeSat]);
     const turbulenceStrengthRef = useRef(turbulenceStrength);
+    const hybridOnRef = useRef(hybridOn);
+    hybridOnRef.current = hybridOn;
+    const passTimeSRef = useRef(passTimeS);
+    passTimeSRef.current = passTimeS;
     useEffect(() => { turbulenceStrengthRef.current = turbulenceStrength; }, [turbulenceStrength]);
     // EK 34/35: stale-closure önleyici referanslar — BroadcastChannel efekti
     // [] dependency ile kurulur (yeniden bağlanmasın diye), bu yüzden içindeki
@@ -28879,7 +29204,30 @@ function PhotonNet() {
                 c.getRandomValues(u.subarray(off, Math.min(n, off + 65536)));
             return Array.from(u, x => x & 1);
         };
-        const session = new SecureMessageSession({ msg, totalKm, nHops: nHopsQkd, evesdrop, detectorCtx: qkdCtx, entropyBits, publicSeed: entanglementSeed });
+        // ÇEKİRDEK v5: hibrit kip — 0. atlama LEO aşağı-bağlantısı (uydu → kaynak yer istasyonu), ardından karasal fiber
+        // zinciri. Dinleme hibrit kipte YALNIZ serbest-uzay atlamasına uygulanır. Olaylar (HOP_CHECK, QBER_WARNING,
+        // SESSION_ABORTED, KEY_DELIVERED) kayda düşer.
+        const hybrid = hybridOnRef.current;
+        const passT = passTimeSRef.current;
+        const hopChannels = hybrid
+            ? [{ kind: "free-space", pass: HYBRID_PASS, passTimeS: passT, env: { turbulenceStrength, pointingPrecision } },
+                ...Array.from({ length: nHopsQkd }, () => ({ kind: "fiber", km: totalKm / nHopsQkd }))]
+            : null;
+        const onEvent = (ev) => {
+            if (ev.type === "QBER_WARNING")
+                addLog(`📡 OLAY QBER_WARNING: hop #${ev.hop}${ev.kind === "free-space" ? " (uydu)" : ""} QBER_test %${(ev.qTest * 100).toFixed(2)} > uyarı bandı %${(ev.warnAt * 100).toFixed(2)} (beklenen %${(ev.expectedQ * 100).toFixed(2)}, DCR'ye göre) — iptal eşiği %${(ev.abortAt * 100).toFixed(0)} değişmedi`, "WARN");
+            else if (ev.type === "SESSION_ABORTED")
+                addLog(`📡 OLAY SESSION_ABORTED (${ev.code}) — anahtar serbest bırakılmadı`, "ERR");
+            else if (ev.type === "KEY_DELIVERED")
+                addLog(`📡 OLAY KEY_DELIVERED: en zayıf atlamanın kanıtlı anahtarı ${ev.ell} bit, uçtan uca ${ev.endToEndKeyBits} bit, ${ev.nHops} atlama`, "OK");
+        };
+        const session = new SecureMessageSession({ msg, totalKm, nHops: hybrid ? nHopsQkd + 1 : nHopsQkd, evesdrop: hybrid ? (evesdrop ? [0] : false) : evesdrop,
+            hopChannels, detectorCtx: qkdCtx, entropyBits, publicSeed: entanglementSeed, onEvent, opts: hybrid ? { maxPulses: HYBRID_MAX_PULSES } : undefined });
+        if (hybrid) {
+            const st = HYBRID_PASS.state(passT);
+            const ln = st.visible ? HYBRID_CHANNEL.link(st, { turbulenceStrength, pointingPrecision }) : null;
+            addLog(`🛰 HİBRİT ANAHTAR: hop #0 LEO aşağı-bağlantısı (t = ${passT >= 0 ? "+" : ""}${passT} s, yükselti ${st.elevationDeg.toFixed(1)}°, görünürlük ${st.visibility.toFixed(3)}${ln ? `, eğik ${st.rangeKm.toFixed(0)} km, kayıp ${ln.lossDb.toFixed(1)} dB, Doppler ${(Math.abs(st.dopplerPpm) < 0.05 ? 0 : st.dopplerPpm).toFixed(1)} ppm / Δλ ${(Math.abs(st.dopplerShiftPm) < 0.05 ? 0 : st.dopplerShiftPm).toFixed(1)} pm` : ""}) + ${nHopsQkd} fiber atlaması${evesdrop ? " — dinleme serbest-uzay atlamasında" : ""}`, "SYS");
+        }
         if (usingTrustedChain) {
             addLog(`🔗 GÜVENİLİR-DÜĞÜM RÖLE ZİNCİRİ: ${totalKm}km → ${nHopsQkd} hop × ${(totalKm / nHopsQkd).toFixed(1)}km — her hop kendi BB84 anahtarını üretir (no-cloning tek fotonun yükseltilmesini yasaklar)`, "SYS");
             addLog(`⚠ Bu zincirin güvenliği TÜM ara düğümlerin güvenilir olmasına dayanır — ara düğümler prensipte iki komşu hop anahtarını görebilir`, "WARN");
@@ -28955,7 +29303,7 @@ function PhotonNet() {
             const poolQkd = new QuantumKeyDistribution((entanglementSeed ^ 0x504f4f4c) >>> 0); // "POOL"
             const POOL_PULSES = 16384;
             const pr = usingTrustedChain
-                ? poolQkd.deriveSiftedKeyChain(entropyBits(POOL_PULSES), totalKm, nHopsQkd, evesdrop, qkdCtx)
+                ? poolQkd.deriveSiftedKeyChain(entropyBits(POOL_PULSES), totalKm, nHopsQkd, hybrid ? false : evesdrop, qkdCtx) // hibrit kipte dinleme yalnız uydu atlamasında; havuz fiberde
                 : poolQkd.deriveSiftedKey(entropyBits(POOL_PULSES), totalKm, evesdrop, undefined, qkdCtx);
             keyPoolResult = keyPoolBuffer.feed(src, dst, usingTrustedChain ? pr.keyBits : pr.siftedKeyBits, pr.bobKeyBits, entanglementSeed, POOL_PULSES);
         }
@@ -29130,7 +29478,7 @@ function PhotonNet() {
             original: msg, decoded, channelDecoded,
             session: { status: sres.status, code: sres.code, reason: sres.reason, pulses: sres.pulses, rounds: sres.rounds,
                 siftedTotal: sres.siftedTotal, testedTotal: sres.testedTotal, qTest: qber, ell: delivered ? sres.proof.ell : 0,
-                n: delivered ? sres.n : null, k: delivered ? sres.k : null, nHops: nHopsQkd,
+                n: delivered ? sres.n : null, k: delivered ? sres.k : null, nHops: sres.nHops, hybrid: hybrid ? { passTimeS: passT } : null,
                 // 📈 SONUÇLAR sekmesi için (çekirdek v4.2): atlama başına kanıt — iptal edilen oturumlarda da (son kontrol)
                 hopChecks: sres.hopChecks, leakEC: delivered ? sres.leakEC : null, worstHopQber: sres.worstHopQber,
                 endToEndKeyBits: delivered ? sres.endToEndKeyBits : 0, relayPublicBits: delivered ? sres.relayPublicBits : 0,
@@ -30420,7 +30768,7 @@ function PhotonNet() {
             React.createElement("div", { style: { padding: "0 12px", minWidth: 120, display: "flex", flexDirection: "column", justifyContent: "center" } },
                 React.createElement("div", { style: { fontSize: 7, color: "#1e3a5f", letterSpacing: ".1em", marginBottom: 2 } }, "THROUGHPUT"),
                 React.createElement(Spark, { data: throughput, color: "#00d4ff", h: 16 }))),
-        React.createElement(LeoPanel, { sats: sats, activeSat: activeSat, setActiveSat: setActiveSat, onSend: transmit, running: running, msg: msg, setMsg: setMsg, evesdrop: evesdrop, setEvesdrop: setEvesdrop, result: result, paQueue: paQueue, phase: phase, timeline: timeline, onOpenTimeline: () => setTab("TML"), mirrorOn: mirrorOn, setMirrorOn: setMirrorOn, mirrorResult: mirrorResult, onCollapse: collapseUniverse, onInterfere: interfereUniverses, collapsedTo: collapsedTo, entropyDelta: entropyDelta, isOnline: isOnline, observerFrame: observerFrame, atmosphericTurbidity: atmosphericTurbidity, setAtmosphericTurbidity: setAtmosphericTurbidity, turbulenceStrength: turbulenceStrength, setTurbulenceStrength: setTurbulenceStrength, pointingPrecision: pointingPrecision, setPointingPrecision: setPointingPrecision, nightMode: nightMode, setNightMode: setNightMode }),
+        React.createElement(LeoPanel, { sats: sats, activeSat: activeSat, setActiveSat: setActiveSat, onSend: transmit, running: running, msg: msg, setMsg: setMsg, evesdrop: evesdrop, setEvesdrop: setEvesdrop, result: result, paQueue: paQueue, phase: phase, timeline: timeline, onOpenTimeline: () => setTab("TML"), mirrorOn: mirrorOn, setMirrorOn: setMirrorOn, mirrorResult: mirrorResult, onCollapse: collapseUniverse, onInterfere: interfereUniverses, collapsedTo: collapsedTo, entropyDelta: entropyDelta, isOnline: isOnline, observerFrame: observerFrame, atmosphericTurbidity: atmosphericTurbidity, setAtmosphericTurbidity: setAtmosphericTurbidity, turbulenceStrength: turbulenceStrength, setTurbulenceStrength: setTurbulenceStrength, pointingPrecision: pointingPrecision, setPointingPrecision: setPointingPrecision, nightMode: nightMode, setNightMode: setNightMode, hybridOn: hybridOn, setHybridOn: setHybridOn, passTimeS: passTimeS, setPassTimeS: setPassTimeS }),
         React.createElement("div", { style: { display: "flex", flex: 1, minHeight: 0 } },
             React.createElement("div", { style: { width: 180, flexShrink: 0, background: "#030610",
                     borderRight: "1px solid #0a162888",

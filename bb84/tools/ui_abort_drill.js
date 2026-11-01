@@ -70,7 +70,7 @@ const chk = (name, ok, detail) => { out.checks.push({ name, ok: !!ok, detail });
     const ui = await page.evaluate(() => {
       const t = document.body.innerText;
       return { alarm: /ALARM — OTURUM İPTAL EDİLDİ \(([A-Z_]+)\)/.exec(t), safe: /GÜVENLİ — anahtar kanıtlandı/.test(t),
-        failClosed: /OTP anahtarı 0 bit, mesaj gönderilmedi/.test(t), ell: (/ℓ = (\d+) bit \(en zayıf atlama\)/.exec(t) || [])[1] || null };
+        failClosed: /OTP anahtarı 0 bit, mesaj gönderilmedi/.test(t), ell: (/Sonlu-anahtar ℓ ≥ mesaj biti[^\n]*\n\s*ℓ = (\d+) bit \(en zayıf atlama\)/.exec(t) || [])[1] || null };
     });
     const rec = { label, qber: r.qber, abort: r.abortLine && r.otpLine && /GÖNDERİLMEDİ/.test(r.otpLine) ? (/\(([A-Z_]+)\)/.exec(r.abortLine) || [])[1] : null,
       alarm: ui.alarm ? ui.alarm[1] : null, safe: ui.safe, failClosed: ui.failClosed, ell: ui.ell ? +ui.ell : 0, otpLine: r.otpLine, abortLine: r.abortLine };

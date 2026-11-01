@@ -1,0 +1,52 @@
+{
+  "generatedAt": "2026-11-01T13:19:04.419Z",
+  "checks": [
+    {
+      "name": "Y1 Geçiş geometrisi: periyot ~95,5 dk, görünürlük ≥ 0,1 penceresi ±285 s, kenarda Doppler 20–25 ppm (yaklaşma +), TCA'da 0",
+      "ok": true,
+      "detail": "periyot 95.50 dk, pencere ±284.7 s, kenar 23.13 ppm (yükselti 5.8°), Δλ -35.8 pm"
+    },
+    {
+      "name": "Y2 Aşağı-bağlantı kaybı: 645 km ve 1200 km'de 20–40 dB (Micius ~22–35 dB ile kaba uyum), tepe noktası en düşük, mesafeyle artıyor",
+      "ok": true,
+      "detail": "tepe (568 km) 25.9 dB · 645 km 27.2 dB · 1200 km 34.2 dB (geometrik 28.1, atmosfer 2.5, izleme 0.5, optik 3,0)"
+    },
+    {
+      "name": "Y3 Gece, tepe noktası: hibrit oturum (uydu + 3×60 km fiber) teslim; 0. atlama serbest uzay; KEY_DELIVERED olayı",
+      "ok": true,
+      "detail": "DELIVERED, ℓ 308 bit, 0. atlama QBER %1.46 (kayıp 25.9 dB, yükselti 75.0°), 3.899.392 darbe/link; olaylar HOP_CHECK, KEY_DELIVERED"
+    },
+    {
+      "name": "Y4 Görünürlük < 0,1 (t = +400 s): SAT_NOT_VISIBLE ilk turda, anahtar ve mesaj yok",
+      "ok": true,
+      "detail": "hop #0 (uydu aşağı-bağlantısı): görünürlük -0.036 < 0.1 (yükselti -2.1°, geçişte t = 400.0 s) — atlama anahtarı tamamlanmadı; anahtar kullanılmadı, mesaj gönderilmedi"
+    },
+    {
+      "name": "Y5 Gündüz: gökyüzü arka planı → HOP_QBER (0. atlama); beklenen QBER ve uyarı bandı yükseldi, iptal eşiği %11 değişmedi",
+      "ok": true,
+      "detail": "0. atlama QBER %53.53, beklenen %48.28, uyarı bandı %55.96 — iptal %11'de (bant iptali gevşetmez)"
+    },
+    {
+      "name": "Y6 Dinleme yalnız uydu atlamasında: HOP_QBER 0. atlamada, gerekçe 'uydu aşağı-bağlantısı', fiber atlamaları dinlenmiyor",
+      "ok": true,
+      "detail": "%25.06 — hop #0 (uydu aşağı-bağlantısı) QBER_test %25.1 ≥ %11 (k=411 test biti) — dinleme ya da aşırı gürültü; anahtar "
+    },
+    {
+      "name": "Y7 computeDynamicAlpha: DCR arttıkça bant genişliyor (SNSPD < InGaAs < 100× InGaAs), abortAt hep %11; tam binom kuantiliyle yanlış uyarı ≤ α (Monte Carlo payıyla 1,5α)",
+      "ok": true,
+      "detail": "bant SNSPD %2.94 (beklenen %1.50) · InGaAs %3.06 (%1.58) · 100× %11.18 (%8.15); yanlış uyarı 10/20000 = 5.0e-4 (α = 0.001; ayrık binomda tam kuantil α'nın altında kalır)"
+    },
+    {
+      "name": "Y8 Geriye uyum: hopChannels yokken ve açık fiber atlamalarıyla aynı tohumlarda birebir aynı sonuç (v4.4 davranışı korunuyor)",
+      "ok": true,
+      "detail": "DELIVERED/DELIVERED, darbe 196608/196608, QBER %1.52/%1.52, OTP anahtarı aynı"
+    },
+    {
+      "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
+      "ok": true,
+      "detail": "f34e3c7b75bcac86…"
+    }
+  ],
+  "passed": 9,
+  "total": 9
+}

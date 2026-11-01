@@ -236,7 +236,7 @@ async function main() {
   const after = hashes();
   const unchanged = GUARDED.every((f) => before[f] === after[f]);
   chk("Bütünlük: çekirdek, ağ, karar katmanı ve KME sunucusu SHA-256'sı test boyunca değişmedi; kilit HAL'i çekirdeği import etmiyor",
-    unchanged && after["photonnet_core.js"] === "e8de863c426936e0398c9848b9cdea5441ec846ec5dad9854f8976201343815c" && !/require\(["']\.\/photonnet_core/.test(fs.readFileSync(path.join(__dirname, "cabinet_lock_hal.js"), "utf8")),
+    unchanged && after["photonnet_core.js"] === "f34e3c7b75bcac86aa06c192f3cec9c64931a14bef661b050792825249b3cc7f" && !/require\(["']\.\/photonnet_core/.test(fs.readFileSync(path.join(__dirname, "cabinet_lock_hal.js"), "utf8")),
     `${GUARDED.length} dosya ${unchanged ? "değişmedi" : "DEĞİŞTİ"}`);
 
   out.allChecksPassed = out.checks.every((x) => x.ok);

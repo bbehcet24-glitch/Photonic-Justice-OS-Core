@@ -15,6 +15,40 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v4.2 | `b7b6b2437ecdd037cff301b2441ac522244018294a4755b8b3d36876c3a4a560` | `b7b6b243…a4a560` |
 | v4.3 | `5b7521ab4157de7491fcbc98dd134a84b26b881814d3aa3dc5726c3aa4f342c2` | `5b7521ab…f342c2` |
 | v4.4 | `e8de863c426936e0398c9848b9cdea5441ec846ec5dad9854f8976201343815c` | `e8de863c…43815c` |
+| v5 | `f34e3c7b75bcac86aa06c192f3cec9c64931a14bef661b050792825249b3cc7f` | `f34e3c7b…b3cc7f` |
+
+## v5 (2026-11) — hibrit uydu + fiber anahtar oturumu, QBER erken uyarı bandı, olay akışı (TS-HYBRID-QKD-04)
+
+**Algoritma eklendi.** `hopChannels` verilmeyen oturumlar v4.4 ile birebir aynı sonucu verir (bb84/hybrid_qkd_test.js Y8:
+aynı tohumlarla aynı darbe sayısı, QBER ve OTP anahtarı).
+
+- **LeoPassGeometry:** dairesel LEO yörüngesinde tek geçiş (Kepler, küresel Dünya; Dünya dönüşü ve kırılma ihmal).
+  Görünürlük = sin(yükselti), anahtar için ≥ 0,1. 550 km / tepe 75°: periyot 95,5 dk, pencere ±285 s, Doppler kenarda
+  ±23 ppm (1550 nm'de ±36 pm), TCA'da işaret değiştirir.
+- **SatelliteDownlinkChannel:** η = Gauss ışın geometrisi (15 µrad, 1 m alıcı) × hava kütlesi (T_zenit 0,8) × izleme
+  (PointingBudget) × optik 0,5 × log-normal sönüm (ScintillationModel, tur başına AR(1)). Ölçülen: tepe 25,9 dB, 645 km
+  27,2 dB, 1200 km 34,2 dB — Micius'un bildirdiği ~22–35 dB aralığıyla kaba uyum. Parametreler varsayımdır.
+- **SecureMessageSession:** `hopChannels` (atlama başına fiber / serbest uzay), `evesdrop` atlama dizisi (ör. `[0]` =
+  yalnız uydu atlaması), `onEvent` (HOP_CHECK, QBER_WARNING, SESSION_ABORTED, KEY_DELIVERED). Yeni iptal kodu
+  **SAT_NOT_VISIBLE**: uydu atlaması sırasında görünürlük < 0,1 → anahtar yok. Serbest-uzay atlamasında gökyüzü arka
+  planı (gündüz 5 MHz) QBER'i ~%48'e çıkarır → HOP_QBER (gerçek uydu QKD'sinin gece çalışmasıyla tutarlı).
+- **computeDynamicAlpha:** DCR'ye bağlı QBER erken uyarı bandı. Beklenen QBER = e_d(1−f) + f/2 (f: ölçülen algılama
+  olasılığı ve fiziksel karanlık-click olasılığından hayalet click payı); uyarı eşiği Binom(k, beklenen)'in tam üst α
+  kuantili (α = 10⁻³, sabit yanlış-alarm olasılığı). İlk sürüm normal yaklaşım kullanıyordu; %1,6 ve k = 850'de yanlış
+  uyarı 2,7·α ölçüldü, tam kuantille 0,5·α. **İptal eşiği %11 bu banttan etkilenmez** — gürültü ile dinleme kanıt
+  açısından ayırt edilemez; eşik gürültüye göre gevşetilirse dinleyici kendi hatasını o gürültüde saklayabilir.
+- **deriveSiftedKey:** `detectorCtx.channelEta` verilirse fiber yayılımı yerine bu geçirgenlik ve aynı e_d kullanılır.
+- **Arayüz:** 🛰 HİBRİT ANAHTAR anahtarı ve geçiş anı kaydırıcısı (yükselti, görünürlük, kayıp, Doppler canlı);
+  hibrit kipte dinleme yalnız uydu atlamasına; güvenlik panelinde "Erken uyarı bandı" ve "Uydu görünürlüğü" satırları;
+  atlama matrisinde 🛰 ve ▲ işaretleri; olaylar KAYIT'a "📡 OLAY" olarak düşer. Hibrit kipte darbe bütçesi 2²⁴
+  (100 MHz kaynakta geçişin 0,17 s'si) — gerçek bir geçiş ~570 s anahtar toplar; düşük yükseltide KEY_BUDGET bu
+  simülasyon bütçesinin sonucudur, fiziksel sınır değildir.
+- **HAL:** `hal/hybrid_sync.py` (LeoPass, HybridSyncSimulator: Doppler'i zaman etiketlerine uygular),
+  `hal/innovation_observer.py` (KalmanInnovationObserver: NIS χ² testi, sabit α), `correlate_tracked(observer=…)`.
+  `hal/test_hybrid_sync.py`: senkron kipi geçişin 5 anında referans QBER'de, gözlemci yanlış alarm vermiyor, veri kipi
+  uydu sayım hızında kilitlenmiyor (fail-closed), senkron kanalına 300 ps kaydırma alarm, 1500 ps sıçrama; yalnız
+  dedektör tarafındaki kaydırma gözlemcide görünmez (anahtar kaybı olarak ortaya çıkar — belgelendi).
+- `PHOTONNET_CORE_VERSION` "v5".
 
 ## v4.4 (2026-11) — gürültü kapısı fiziği düzeltildi; gürültü etkisi ve birleşik QBER arayüzde
 

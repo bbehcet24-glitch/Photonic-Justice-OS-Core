@@ -22,7 +22,7 @@ const crypto = require("crypto");
 const core = require("./photonnet_core.js");
 const QA = require("./qber_abort_policy.js");
 
-const CORE_SHA = "e8de863c426936e0398c9848b9cdea5441ec846ec5dad9854f8976201343815c";
+const CORE_SHA = "f34e3c7b75bcac86aa06c192f3cec9c64931a14bef661b050792825249b3cc7f";
 const coreSha = () => crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
 
 function session(seed, km, eve, nBits = 4096) {
