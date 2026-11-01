@@ -1,20 +1,25 @@
 {
-  "generatedAt": "2026-11-01T10:53:13.095Z",
+  "generatedAt": "2026-11-01T12:17:39.915Z",
   "checks": [
     {
       "name": "U1 taban: iki iletim teslim, güvenlik paneli GÜVENLİ, QBER_test < %11",
       "ok": true,
-      "detail": "QBER %2.08 / %2.34, ℓ 281 / 197 bit"
+      "detail": "QBER %2.36 / %2.34, ℓ 198 / 257 bit"
+    },
+    {
+      "name": "U2 enjeksiyon anahtar oturumuna ulaşıyor: fiziksel karanlık-click olasılığı nominalin üstünde",
+      "ok": true,
+      "detail": "enjeksiyon sonrası nominalin ×160.2 katı"
     },
     {
       "name": "U2 gürültü enjeksiyonu: karar QBER eşiğiyle tutarlı (ölçülen değer raporlanır)",
       "ok": true,
-      "detail": "QBER_test %2.05 → teslim (ℓ=247); gürültü kapısı karanlık sayım artışını filtreledi, QBER eşiğin altında kaldı"
+      "detail": "QBER_test %2.46 → teslim (ℓ=208); hayalet click katkısı %0.069 (201 hayalet click / 145.660 elenmiş bit · atlama 60 km · P_alg 4.70e-2); %11 için gereken gürültü nominalin ×1.8e+4 katı — 60 km'lik atlamalarda sinyal karanlık sayımdan çok güçlü"
     },
     {
       "name": "U3 dinleme: oturum iptal (QBER_LIMIT/HOP_QBER), QBER_test ≥ %11",
       "ok": true,
-      "detail": "QBER_test %26.50, kod HOP_QBER"
+      "detail": "QBER_test %24.78, kod HOP_QBER"
     },
     {
       "name": "U3 fail-closed: OTP anahtarı 0 bit, mesaj gönderilmedi (kayıt satırı + panel)",
@@ -24,12 +29,17 @@
     {
       "name": "U3 iptal kaydı KAYIT'ta, güvenlik paneli ALARM",
       "ok": true,
-      "detail": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 QBER_test %26.5 ≥ %11 (k=449 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi"
+      "detail": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 QBER_test %24.8 ≥ %11 (k=456 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi"
     },
     {
       "name": "U4 toparlanma: dinleme kapanınca teslim, panel yeniden GÜVENLİ",
       "ok": true,
-      "detail": "QBER_test %2.23, ℓ 247 bit"
+      "detail": "QBER_test %2.14, ℓ 226 bit"
+    },
+    {
+      "name": "U5 KEY_BUDGET: 147 km tek atlamada oturum iptal, ℓ = 0, anahtar ve mesaj serbest bırakılmadı, panel ALARM",
+      "ok": true,
+      "detail": "⛔ İLETİM İPTAL (KEY_BUDGET): link başına 4.194.304 darbede yeterli kanıtlanmış anahtar birikmedi (gereken 104 bit) — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; d"
     },
     {
       "name": "sayfada JavaScript hatası yok",
@@ -40,13 +50,13 @@
   "transmissions": [
     {
       "label": "taban #1",
-      "qber": 0.0208,
+      "qber": 0.0236,
       "abort": null,
       "alarm": null,
       "safe": true,
       "failClosed": false,
-      "ell": 281,
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=281; uçtan uca anahtar 8430 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "ell": 198,
+      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=198; uçtan uca anahtar 5940 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
       "abortLine": null
     },
     {
@@ -56,42 +66,53 @@
       "alarm": null,
       "safe": true,
       "failClosed": false,
-      "ell": 197,
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=197; uçtan uca anahtar 5910 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "ell": 257,
+      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=257; uçtan uca anahtar 7710 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
       "abortLine": null
     },
     {
       "label": "gürültü enjeksiyonu",
-      "qber": 0.020499999999999997,
+      "qber": 0.0246,
       "abort": null,
       "alarm": null,
       "safe": true,
       "failClosed": false,
-      "ell": 247,
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=247; uçtan uca anahtar 7410 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "ell": 208,
+      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=208; uçtan uca anahtar 6240 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
       "abortLine": null
     },
     {
       "label": "dinleme",
-      "qber": 0.265,
+      "qber": 0.24780000000000002,
       "abort": "HOP_QBER",
       "alarm": "HOP_QBER",
       "safe": false,
       "failClosed": true,
       "ell": 0,
       "otpLine": "OTP: kanıtlanmış anahtar yok — mesaj şifrelenmedi ve GÖNDERİLMEDİ (bozuk metin teslim edilmez)",
-      "abortLine": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 QBER_test %26.5 ≥ %11 (k=449 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi"
+      "abortLine": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 QBER_test %24.8 ≥ %11 (k=456 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi"
     },
     {
       "label": "dinleme kapalı",
-      "qber": 0.0223,
+      "qber": 0.021400000000000002,
       "abort": null,
       "alarm": null,
       "safe": true,
       "failClosed": false,
-      "ell": 247,
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=247; uçtan uca anahtar 7410 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
-      "abortLine": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 QBER_test %26.5 ≥ %11 (k=449 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi"
+      "ell": 226,
+      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=226; uçtan uca anahtar 6780 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "abortLine": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 QBER_test %24.8 ≥ %11 (k=456 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi"
+    },
+    {
+      "label": "Zagreb → Ljubljana",
+      "qber": null,
+      "abort": "KEY_BUDGET",
+      "alarm": "KEY_BUDGET",
+      "safe": false,
+      "failClosed": true,
+      "ell": 0,
+      "otpLine": "OTP: kanıtlanmış anahtar yok — mesaj şifrelenmedi ve GÖNDERİLMEDİ (bozuk metin teslim edilmez)",
+      "abortLine": "⛔ İLETİM İPTAL (KEY_BUDGET): link başına 4.194.304 darbede yeterli kanıtlanmış anahtar birikmedi (gereken 104 bit) — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; daha kısa hop, ek güvenilir düğüm ya da yakın bir hedef seçin"
     }
   ]
 }

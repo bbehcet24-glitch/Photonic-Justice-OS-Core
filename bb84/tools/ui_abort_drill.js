@@ -6,11 +6,14 @@
  *
  * PhotonNet.html gerçek Chromium'da (Playwright) açılır ve bir kullanıcı gibi sürülür:
  *   U1  Taban: iki iletim — teslim, güvenlik paneli "GÜVENLİ".
- *   U2  Gürültü enjeksiyonu (🔬 GÜRÜLTÜ: 5× ısıl dalgalanma + fiber sızıntısı) → iletim. Karar QBER eşiğiyle
- *       tutarlı olmalı (QBER < %11 → teslim; ≥ %11 → iptal). Ölçülen değer olduğu gibi raporlanır.
+ *   U2  Gürültü enjeksiyonu (🔬 GÜRÜLTÜ: 5× ısıl dalgalanma + fiber sızıntısı) → iletim. Enjeksiyon dedektörün
+ *       fiziksel karanlık-click olasılığını yükseltmeli (anahtar oturumu bu değeri kullanır, çekirdek v4.4) ve karar
+ *       QBER eşiğiyle tutarlı olmalı. Ölçülen katkı (hayalet click / elenmiş bit) GÜRÜLTÜ sekmesinden okunur.
  *   U3  Dinleme (Eavesdrop anahtarı, intercept-resend) → iletim: oturum iptal (QBER_LIMIT/HOP_QBER), ℓ = 0,
  *       OTP anahtarı 0 bit, mesaj gönderilmedi, iptal satırı kayıtta, 📈 SONUÇLAR'daki güvenlik paneli ALARM.
  *   U4  Dinleme kapatılır → iletim: sistem kendiliğinden toparlanır (teslim, panel GÜVENLİ).
+ *   U5  Zagreb → Ljubljana (147 km, tek atlama — 150 km altı rota bölünmez) → iletim: darbe bütçesinde yeterli
+ *       kanıtlı anahtar birikmez, oturum KEY_BUDGET ile iptal, panel ALARM, anahtar ve mesaj serbest bırakılmaz.
  * Ekran görüntüleri: ci-reports/ui_abort_drill/*.png. Rapor: bb84/reports/ui_abort_drill.json (+ rapor özeti).
  *
  * KAPSAM: Yarı-açık anahtarların ertelenmiş tamamlanması ve köken denetimi (ETSI-014 enc/dec arasında kalkan
@@ -71,6 +74,9 @@ const chk = (name, ok, detail) => { out.checks.push({ name, ok: !!ok, detail });
     });
     const rec = { label, qber: r.qber, abort: r.abortLine && r.otpLine && /GÖNDERİLMEDİ/.test(r.otpLine) ? (/\(([A-Z_]+)\)/.exec(r.abortLine) || [])[1] : null,
       alarm: ui.alarm ? ui.alarm[1] : null, safe: ui.safe, failClosed: ui.failClosed, ell: ui.ell ? +ui.ell : 0, otpLine: r.otpLine, abortLine: r.abortLine };
+    // KEY_BUDGET: hiçbir atlama parametre kestirimine yetecek bit toplayamadı → bu iletimde QBER_test ölçülmedi
+    // (kayıttaki son QBER satırı önceki iletime aittir).
+    if (rec.alarm === "KEY_BUDGET" && !/QBER_test/.test(rec.abortLine || "")) rec.qber = null;
     out.transmissions.push(rec);
     console.log(`  ${label}: QBER_test %${r.qber != null ? (r.qber * 100).toFixed(2) : "—"} · ${rec.alarm ? `İPTAL (${rec.alarm})` : rec.safe ? `TESLİM, ℓ=${rec.ell}` : "?"}`);
     return rec;
@@ -87,15 +93,28 @@ const chk = (name, ok, detail) => { out.checks.push({ name, ok: !!ok, detail });
 
     console.log("U2 — gürültü enjeksiyonu");
     await tab("🔬 GÜRÜLTÜ");
+    const physX = async () => { const t = await page.evaluate(() => document.body.innerText); const m = /FİZİKSEL KARANLIK-CLICK OLASILIĞI\s+\S+\s+pencere başına, kapı dahil · nominalin ×([\d.]+) katı/.exec(t); return m ? +m[1] : null; };
     for (let i = 0; i < 5; i++) { await page.locator("button", { hasText: "Isıl Dalgalanma Enjekte Et" }).first().click(); await page.waitForTimeout(250); }
     await page.locator("button", { hasText: "Fiber Sızıntısı Enjekte Et" }).first().click();
     await page.waitForTimeout(800);
+    const xInj = await physX();
     await shot("02_gurultu_enjeksiyonu.png");
     const n1 = await send("gürültü enjeksiyonu");
+    await tab("🔬 GÜRÜLTÜ");
+    const imp = await page.evaluate(() => {
+      const t = document.body.innerText;
+      const g = (re) => (re.exec(t) || [])[1] || null;
+      return { meas: g(/SON İLETİM — ÖLÇÜLEN KATKI\s+(%[\d.,]+)/), proj: g(/ŞU ANKİ GÜRÜLTÜYLE BEKLENEN KATKI\s+(%[\d.,]+)/),
+        need: g(/%11 EŞİĞİ İÇİN GEREKEN GÜRÜLTÜ\s+(×\S+)/), detail: g(/SON İLETİM — ÖLÇÜLEN KATKI\s+%[\d.,]+\s+([^\n]+)/) };
+    });
+    await shot("02b_gurultu_anahtar_etkisi.png");
+    chk("U2 enjeksiyon anahtar oturumuna ulaşıyor: fiziksel karanlık-click olasılığı nominalin üstünde", xInj != null && xInj > 2,
+      `enjeksiyon sonrası nominalin ×${xInj} katı`);
     const consistent = n1.qber < 0.11 ? (n1.safe && !n1.alarm) : !!n1.alarm;
     chk("U2 gürültü enjeksiyonu: karar QBER eşiğiyle tutarlı (ölçülen değer raporlanır)", consistent,
       `QBER_test %${(n1.qber * 100).toFixed(2)} → ${n1.alarm ? `iptal (${n1.alarm})` : `teslim (ℓ=${n1.ell})`}; ` +
-      (n1.qber < 0.11 ? "gürültü kapısı karanlık sayım artışını filtreledi, QBER eşiğin altında kaldı" : "eşik aşıldı"));
+      `hayalet click katkısı ${imp.meas} (${imp.detail || "—"}); %11 için gereken gürültü nominalin ${imp.need} katı — ` +
+      "60 km'lik atlamalarda sinyal karanlık sayımdan çok güçlü");
     await page.locator("button", { hasText: "Fiber Sızıntısını Gider" }).first().click().catch(() => {});
 
     console.log("U3 — dinleme (intercept-resend)");
@@ -119,6 +138,15 @@ const chk = (name, ok, detail) => { out.checks.push({ name, ok: !!ok, detail });
     chk("U4 toparlanma: dinleme kapanınca teslim, panel yeniden GÜVENLİ", r1.safe && !r1.alarm && r1.ell > 0,
       `QBER_test %${(r1.qber * 100).toFixed(2)}, ℓ ${r1.ell} bit`);
     await shot("05_toparlanma_sonuclar.png");
+
+    console.log("U5 — anahtar bütçesi (147 km tek atlama)");
+    const sels = page.locator("select");
+    await sels.nth(1).selectOption("ZAG"); await sels.nth(2).selectOption("LJU");
+    await page.waitForTimeout(500);
+    const k1 = await send("Zagreb → Ljubljana");
+    chk("U5 KEY_BUDGET: 147 km tek atlamada oturum iptal, ℓ = 0, anahtar ve mesaj serbest bırakılmadı, panel ALARM",
+      k1.alarm === "KEY_BUDGET" && k1.ell === 0 && k1.failClosed, (k1.abortLine || "").slice(0, 170));
+    await shot("06_anahtar_butcesi_iptal.png");
     chk("sayfada JavaScript hatası yok", errors.length === 0, errors.slice(0, 2).join(" | ") || "0 hata");
   } catch (e) {
     chk("tatbikat tamamlandı", false, String(e && e.message || e).slice(0, 200));

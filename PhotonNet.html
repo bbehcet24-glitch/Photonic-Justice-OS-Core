@@ -17348,7 +17348,7 @@ window.__PHOTONNET_CONFIG__ = {"schemaVersion":1,"detector":{"active":"snspd","p
 <script>
 /* ===== PhotonNet bileşeni — önceden derlenmiş (Babel/CDN gerektirmez) =====
    OTOMATİK ÜRETİLDİ — bb84/tools/build_photonnet_html.js tarafından
-   PhotonNet2.jsx kaynağından (15543 satır) TypeScript
+   PhotonNet2.jsx kaynağından (15634 satır) TypeScript
    transpileModule (JSX→React.createElement) ile yeniden derlendi.
    ELLE DÜZENLEMEYİN — değişiklikler PhotonNet2.jsx'te yapılıp bu script
    yeniden çalıştırılmalı (bkz. dosya başlığı). ===== */
@@ -17444,7 +17444,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v4.3";
+const PHOTONNET_CORE_VERSION = "v4.4";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -18040,11 +18040,16 @@ class DetectorNoiseModel {
 //   3) KALİBRASYON DÖNGÜSÜ: gerçek sistemler PERİYODİK OLARAK "kör"
 //      (kaynak kapalı) pencereler örnekleyip GÜNCEL karanlık-sayım
 //      oranını yeniden ölçer — ANLIK ham değer hiçbir zaman doğrudan
-//      gözlemlenemez, yalnızca EN SON kalibrasyonun tahmini bilinir
-//      (dürüstlük: bu yüzden effectivePhantomProbability HAM/anlık
-//      sıcaklık sapmasını değil, calibratedDarkRateHz'i kullanır — tıpkı
-//      gerçek bir sistemde olduğu gibi, aradaki gecikme GERÇEK bir
-//      güvenlik açığı penceresidir, gizlenmez).
+//      gözlemlenemez, yalnızca EN SON kalibrasyonun tahmini bilinir.
+//      ÇEKİRDEK v4.4 DÜZELTMESİ: tahmin YALNIZ kapı denetleyicisini (AGC)
+//      besler. Dedektörde gerçekten oluşan hayalet click'ler fiziğe uyar:
+//      HAM oran × daraltılmış kapı (effectivePhantomProbability). v4.3'e
+//      kadar anahtar oturumu tahmini oranı fiziksel olasılık sanıyordu;
+//      enjeksiyondan hemen sonra gürültünün %0,2'si, gündüz kipinde (tahmin
+//      neredeyse hiç güncellenmez) kalıcı olarak ~%10'u anahtara ulaşıyordu
+//      (ölçüldü). Bir tahmin gerçek click'leri yok edemez; gecikme yalnız
+//      sistemin gürültüyü OLDUĞUNDAN DÜŞÜK sanmasıdır ve QBER_test bunu
+//      açıklanan bitlerden yakalar.
 //   4) ZAMAN-KORELASYONLU KAPI (Coincidence Gating): gerçek fotonlar
 //      kaynağın saatine göre DAR bir beklenen-varış penceresinde gelir;
 //      karanlık sayımlar zaman içinde RASTGELE (üniform) dağılır. Kapıyı
@@ -18215,12 +18220,20 @@ class NoiseGateMiddleware {
             this.history.shift();
         return { rawDarkRateHz: raw, calibratedDarkRateHz: this.calibratedDarkRateHz, gateRatio: this.gateRatio, target };
     }
-    /** deriveSiftedKey'in gerçekte kullandığı, KALİBRE EDİLMİŞ + KAPI-DARALTILMIŞ hayalet-click olasılığı. */
+    /**
+     * deriveSiftedKey'in kullandığı FİZİKSEL hayalet-click olasılığı: HAM (gerçek) oran × daraltılmış kapı.
+     * Kapı daraltma zamanda düzgün dağılan karanlık sayımları gerçekten keser; kalibrasyon tahmini ise yalnız
+     * kapının ne kadar daraltılacağına karar verir (bkz. runCalibrationCycle). Çekirdek v4.4.
+     */
     effectivePhantomProbability(isNight, freeSpace = true) {
         const backgroundRate = !freeSpace ? 0 : (isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ);
-        const totalRate = this.calibratedDarkRateHz + backgroundRate;
         const gatedWidth = this._p().detectionWindowS * this.gateRatio;
-        return 1 - Math.exp(-totalRate * gatedWidth);
+        return 1 - Math.exp(-(this.rawDarkRateHz() + backgroundRate) * gatedWidth);
+    }
+    /** Sistemin KALİBRASYON TAHMİNİNE göre beklediği hayalet-click olasılığı (gösterim; fiziksel olasılık değil). */
+    estimatedPhantomProbability(isNight, freeSpace = true) {
+        const backgroundRate = !freeSpace ? 0 : (isNight ? NIGHTTIME_BACKGROUND_RATE_HZ : DAYTIME_BACKGROUND_RATE_HZ);
+        return 1 - Math.exp(-(this.calibratedDarkRateHz + backgroundRate) * this._p().detectionWindowS * this.gateRatio);
     }
     /** Kapı daraltmanın dürüst bedeli: gateRatio=1 iken 0, GATE_MIN_RATIO'da REAL_CLICK_MISS_AT_MIN_GATE tavanına lineer yaklaşır. */
     realClickMissProbability() {
@@ -18490,11 +18503,12 @@ class QuantumKeyDistribution {
                 // açabilir — bu, foton kaybından TAMAMEN BAĞIMSIZ, dedektör-taraflı
                 // bir olay. Faz 5'ten önce bu olasılık DOĞRUDAN DetectorNoiseModel'in
                 // ham/anlık formülünden geliyordu; artık noiseGateMiddleware'in
-                // KALİBRE EDİLMİŞ + ZAMAN-KORELASYONLU-KAPI-DARALTILMIŞ tahminini
-                // (gatedP) kullanır. TEK bir roll ile üç yollu bir karar verilir:
+                // HAM oran × ZAMAN-KORELASYONLU-KAPI-DARALTILMIŞ olasılığını (gatedP;
+                // çekirdek v4.4 — kalibrasyon tahmini yalnız kapı genişliğini seçer)
+                // kullanır. TEK bir roll ile üç yollu bir karar verilir:
                 // roll<gatedP → kabul edilen hayalet click (gerçek dedektör de
-                // bunu kabul ederdi); gatedP<=roll<rawP → kapı bu olayı BAŞARIYLA
-                // FİLTRELEDİ (kalibrasyonsuz sistemde anahtara karışacaktı);
+                // bunu kabul ederdi); gatedP<=roll<rawP → daraltılmış kapı bu olayı
+                // FİLTRELEDİ (tam genişlikteki kapıda anahtara karışacaktı);
                 // roll>=rawP → zaten hiç click olmayacaktı. Hayalet click Alice'in
                 // bitinden bağımsız rastgele bir değer taşır, bu yüzden sifted
                 // kümeye %50 ihtimalle hata olarak katılır — gerçek dedektör
@@ -26798,6 +26812,54 @@ function ResSecurityCriteria({ result }) {
                 React.createElement("div", { style: { fontSize: 9, color: RES_C.ink } }, r.c),
                 React.createElement("div", { style: { fontSize: 8, color: RES_C.muted, fontFamily: "monospace" } }, r.v))))))));
 }
+/**
+ * 🔬 GÜRÜLTÜ sekmesi — enjekte edilen gürültünün FİBER BB84 anahtar oturumuna etkisi (çekirdek v4.4).
+ * Ölçülen: son iletimin kendi sayımları (elenmiş bit, hayalet click, kayıp). Kestirim: aynı atlama uzunluğunda,
+ * ŞU ANKİ fiziksel karanlık-click olasılığıyla beklenen QBER katkısı. Kestirim, son iletimde ölçülen algılama
+ * olasılığını (P_alg = sinyal click / elenmiş darbe) kullanır; ayrı bir kayıp modeli varsaymaz.
+ */
+function NgmKeyImpact({ session, ngm, tick }) {
+    void tick; // her kalibrasyon turunda/enjeksiyonda yeniden çiz
+    const C = { ink: "#cbd5e1", mut: "#64748b", lab: "#1e3a5f", ok: "#10b981", warn: "#f59e0b", bad: "#f43f5e" };
+    if (!ngm || !ngm.profile)
+        return null;
+    const win = ngm.profile.detectionWindowS;
+    const pNom = 1 - Math.exp(-ngm.profile.darkCountRateHz * win);
+    const pNow = ngm.effectivePhantomProbability(false, false);
+    const pEst = ngm.estimatedPhantomProbability(false, false);
+    const pct = (x, d = 2) => (x == null || !Number.isFinite(x) ? "—" : `%${(x * 100).toFixed(d)}`);
+    const s = session && Number.isFinite(session.darkClicks) && Number.isFinite(session.lostCount) && session.siftedTotal > 0 ? session : null;
+    let meas = null, proj = null, need = null, pDet = null;
+    if (s) {
+        const sig = s.siftedTotal - s.darkClicks, undet = s.lostCount + s.darkClicks;
+        pDet = sig / Math.max(1, sig + undet);
+        meas = 0.5 * s.darkClicks / s.siftedTotal;
+        const f = (p) => ((1 - pDet) * p) / ((1 - pDet) * p + pDet);
+        proj = 0.5 * f(pNow);
+        const hops = Array.isArray(s.hopChecks) ? s.hopChecks.filter((h) => Number.isFinite(h.qTest) && h.k > 0) : [];
+        const pooled = hops.length ? hops.reduce((a, h) => a + h.qTest * h.k, 0) / hops.reduce((a, h) => a + h.k, 0) : null;
+        if (pooled != null) {
+            const fReq = 2 * (0.11 - Math.max(0, pooled - meas));
+            if (fReq > 0 && fReq < 1) {
+                const pReq = (fReq * pDet) / ((1 - fReq) * (1 - pDet));
+                need = { pReq, x: pReq / pNom, hz: pReq < 1 ? -Math.log(1 - pReq) / (win * ngm.gateRatio) : Infinity };
+            }
+        }
+    }
+    const row = (l, v, note, c) => (React.createElement("div", { style: { display: "flex", gap: 10, alignItems: "baseline", padding: "4px 0", borderBottom: "1px solid #0a162888" } },
+        React.createElement("span", { style: { fontSize: 8, color: C.lab, letterSpacing: ".06em", width: 250, flexShrink: 0 } }, l),
+        React.createElement("span", { style: { fontSize: 12, fontWeight: 700, color: c || C.ink, fontFamily: "monospace", width: 120, flexShrink: 0 } }, v),
+        React.createElement("span", { style: { fontSize: 8, color: C.mut, lineHeight: 1.4 } }, note)));
+    return (React.createElement("div", { style: { background: "#0a0d1f", border: "1px solid #00d4ff22", borderRadius: 8, padding: "13px 15px", marginBottom: 12 } },
+        React.createElement("div", { style: { fontSize: 10, color: "#00d4ff", fontWeight: 700, letterSpacing: ".08em", marginBottom: 4 } }, "\uD83D\uDD11 ANAHTAR OTURUMUNA ETK\u0130S\u0130 (F\u0130BER BB84)"),
+        React.createElement("div", { style: { fontSize: 8, color: C.mut, lineHeight: 1.5, marginBottom: 6 } }, "Enjeksiyonlar dedekt\u00F6rdeki ger\u00E7ek karanl\u0131k-click olas\u0131l\u0131\u011F\u0131n\u0131 de\u011Fi\u015Ftirir; anahtar oturumu bu fiziksel de\u011Feri kullan\u0131r (kalibrasyon tahmini yaln\u0131z kap\u0131 geni\u015Fli\u011Fini se\u00E7er). G\u00FCr\u00FClt\u00FCn\u00FCn QBER'e katk\u0131s\u0131, sinyalin ne kadar zay\u0131f oldu\u011Funa, yani atlama uzunlu\u011Funa ba\u011Fl\u0131d\u0131r."),
+        row("FİZİKSEL KARANLIK-CLICK OLASILIĞI", pNow.toExponential(2), `pencere başına, kapı dahil · nominalin ×${(pNow / pNom).toFixed(1)} katı`, pNow > pNom * 2.5 ? C.warn : C.ok),
+        row("SİSTEMİN TAHMİNİ (KALİBRASYON)", pEst.toExponential(2), pEst < pNow * 0.5 ? "tahmin gerçeğin altında: kalibrasyon henüz yetişmedi (gürültü yine de anahtara ulaşır, QBER_test yakalar)" : "tahmin gerçekle uyumlu"),
+        s ? (React.createElement(React.Fragment, null,
+            row("SON İLETİM — ÖLÇÜLEN KATKI", pct(meas, 3), `${s.darkClicks.toLocaleString("tr-TR")} hayalet click / ${s.siftedTotal.toLocaleString("tr-TR")} elenmiş bit · atlama ${s.hopKm != null ? s.hopKm.toFixed(0) : "—"} km · P_alg ${pDet.toExponential(2)}`),
+            row("ŞU ANKİ GÜRÜLTÜYLE BEKLENEN KATKI", pct(proj, 3), `aynı atlama uzunluğunda, şu anki fiziksel olasılıkla (kestirim) · iptal eşiği %11`, proj >= 0.05 ? C.bad : proj >= 0.01 ? C.warn : C.ok),
+            row("%11 EŞİĞİ İÇİN GEREKEN GÜRÜLTÜ", need ? `×${need.x >= 1e4 ? need.x.toExponential(1) : need.x.toFixed(0)}` : "—", need ? `nominalin bu katı (≈ ${need.hz >= 1e6 ? (need.hz / 1e6).toFixed(1) + " MHz" : need.hz >= 1e3 ? (need.hz / 1e3).toFixed(0) + " kHz" : need.hz.toFixed(0) + " Hz"} karanlık oran). Uzun atlamada bu noktaya varmadan anahtar bütçesi biter (KEY_BUDGET).` : "son iletimin atlama verisi yok"))) : row("SON İLETİM", "—", "henüz iletim yok: GÖNDER'e basın, ölçülen katkı burada görünür")));
+}
 function ResultsDashboard({ traffic, result, log, detectorState }) {
     const snap = (typeof window !== "undefined" && window.__PHOTONNET_REPORTS__) || null;
     const hist = traffic.filter((t) => t && t.session).slice().reverse();
@@ -26808,8 +26870,14 @@ function ResultsDashboard({ traffic, result, log, detectorState }) {
     const vPassed = verdicts.filter((r) => r.pass).length;
     const auth = last && last.classicalAuth;
     const hops = s && Array.isArray(s.hopChecks) ? s.hopChecks : null;
+    // Çok atlamalı rotada "son QBER_test" EN KÖTÜ atlamadır; k ≈ 450 test bitiyle atlama başına istatistiksel sapma
+    // ±0,5 puan olduğundan 31 atlamanın en kötüsü birleşik değerden belirgin yüksek çıkar (ölçüldü: 1842 km'de en kötü
+    // %2,08, birleşik %1,49). Birleşik değer: tüm atlamaların açıklanan test bitlerindeki toplam hata / toplam test biti.
+    const hq = hops ? hops.filter((h) => Number.isFinite(h.qTest) && h.k > 0) : [];
+    const pooledQ = hq.length > 1 ? hq.reduce((a, h) => a + h.qTest * h.k, 0) / hq.reduce((a, h) => a + h.k, 0) : null;
     const kpis = [
-        { l: "QBER_test (son)", v: s && s.qTest != null ? `%${(s.qTest * 100).toFixed(2)}` : "—", st: s && s.qTest != null ? s.qTest < 0.11 : null, note: "iptal eşiği %11" },
+        { l: hq.length > 1 ? "QBER_test — en kötü atlama (son)" : "QBER_test (son)", v: s && s.qTest != null ? `%${(s.qTest * 100).toFixed(2)}` : "—", st: s && s.qTest != null ? s.qTest < 0.11 : null,
+            note: pooledQ != null ? `birleşik %${(pooledQ * 100).toFixed(2)} · ${hq.length} atlama · eşik %11` : "iptal eşiği %11" },
         { l: s && s.nHops > 1 ? "ℓ — en zayıf atlama (son)" : "ℓ — kanıtlı anahtar (son)", v: s ? `${s.ell.toLocaleString("tr-TR")} bit` : "—", st: s ? s.ell > 0 : null, note: s ? `${s.nHops} atlama` : "" },
         { l: "Teslim edilen iletim", v: hist.length ? `${delivered}/${hist.length}` : "—", st: hist.length ? delivered === hist.length : null, note: "bu oturumda" },
         { l: "Klasik kanal kimlik doğrulama", v: auth ? (auth.ok ? "doğrulandı" : "BAŞARISIZ") : "—", st: auth ? auth.ok : null, note: auth ? `Wegman–Carter · havuz ${auth.poolRemaining} bit` : "" },
@@ -27032,6 +27100,7 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, marginBottom: 4 } },
                     React.createElement("span", { style: { fontSize: 8, color: "#475569", letterSpacing: ".08em" } }, "ATMOSFER\u0130K G\u00DCR\u00DCLT\u00DC"),
                     React.createElement("span", { style: { fontSize: 6, color: "#334155" }, title: "Hufnagel-Valley Cn\u00B2(h) + e\u011Fik-yol Rytov varyans\u0131 + Andrews-Phillips doygunluk d\u00FCzeltmesi. Kayd\u0131r\u0131c\u0131n\u0131n Cn\u00B2(0)'a haritalanmas\u0131 ve r\u00FCzgar h\u0131z\u0131 varsay\u0131lan\u0131 kalibre edilmemi\u015Ftir \u2014 didaktik model." }, "(scintillation, didaktik)")),
+                React.createElement("div", { style: { fontSize: 6, color: "#64748b", lineHeight: 1.35, marginBottom: 4 }, title: "Anahtar oturumu (SecureMessageSession) fiber kanalda \u00E7al\u0131\u015F\u0131r: g\u00F6ky\u00FCz\u00FC arka plan\u0131 ve atmosferik t\u00FCrb\u00FClans fiberde yoktur. Anahtar QBER'ini dedekt\u00F6r g\u00FCr\u00FClt\u00FCs\u00FC (\uD83D\uDD2C G\u00DCR\u00DCLT\u00DC sekmesi), mesafe ve dinleme belirler." }, "yaln\u0131z uydu mesaj kanal\u0131 \u00B7 fiber anahtar oturumunu (QBER_test, \u2113) etkilemez"),
                 React.createElement("div", { style: { display: "flex", justifyContent: "space-between", marginBottom: 2 } },
                     React.createElement("span", { style: { fontSize: 6, color: "#334155" } }, "T\u00DCRB\u00DCLANS \u015E\u0130DDET\u0130"),
                     React.createElement("span", { style: { fontSize: 6, color: "#00d4ff", fontFamily: "monospace" } },
@@ -29065,7 +29134,9 @@ function PhotonNet() {
                 // 📈 SONUÇLAR sekmesi için (çekirdek v4.2): atlama başına kanıt — iptal edilen oturumlarda da (son kontrol)
                 hopChecks: sres.hopChecks, leakEC: delivered ? sres.leakEC : null, worstHopQber: sres.worstHopQber,
                 endToEndKeyBits: delivered ? sres.endToEndKeyBits : 0, relayPublicBits: delivered ? sres.relayPublicBits : 0,
-                ecDiscardedBlocks: sres.ecDiscardedBlocks, totalKm },
+                ecDiscardedBlocks: sres.ecDiscardedBlocks, totalKm,
+                // 🔬 GÜRÜLTÜ sekmesinin "anahtar oturumuna etkisi" paneli için (çekirdek v4.4): ölçülen kanal sayımları
+                lostCount: sres.lost, darkClicks: sres.darkClicks, hopKm: totalKm / nHopsQkd },
             bits, recv,
             lostCount: totalLost, // DÜZELTME: 'lost' değil 'lostCount'
             flipCount: totalFlip,
@@ -29993,6 +30064,7 @@ function PhotonNet() {
     function injectThermalFluctuation() {
         const before = noiseGateMiddleware.tempDriftMk;
         noiseGateMiddleware.advanceThermalDrift(14);
+        setNoiseGateState((st) => ({ ...st, tempDriftMk: noiseGateMiddleware.tempDriftMk, rawDarkRateHz: noiseGateMiddleware.rawDarkRateHz() }));
         addLog(`🌡️ ISIL DALGALANMA ENJEKTE EDİLDİ: SNSPD bias noktası zorlandı (${before.toFixed(2)}mK → ${noiseGateMiddleware.tempDriftMk.toFixed(2)}mK) `
             + `— kalibrasyon turlarını ve 🔬 GÜRÜLTÜ sekmesini izleyin, sistem otonom olarak toparlanacak`, "SYS");
     }
@@ -30000,6 +30072,7 @@ function PhotonNet() {
         const next = !fiberLeakActive;
         noiseGateMiddleware.fiberLeakBoostHz = next ? 3200 : 0;
         setFiberLeakActive(next);
+        setNoiseGateState((st) => ({ ...st, rawDarkRateHz: noiseGateMiddleware.rawDarkRateHz() }));
         addLog(next
             ? "💧 FİBER SIZINTISI ENJEKTE EDİLDİ: hatta ekstra ~3200Hz başıboş foton sızıntısı simüle ediliyor — kalıcıdır, elle giderilmelidir"
             : "💧 FİBER SIZINTISI GİDERİLDİ: sızıntı arka planı kaldırıldı", "SYS");
@@ -31468,6 +31541,7 @@ function PhotonNet() {
                             borderRadius: 4, padding: "9px 10px" } },
                         React.createElement("div", { style: { fontSize: 7, color: "#1e3a5f", letterSpacing: ".1em", marginBottom: 3 } }, m.l),
                         React.createElement("div", { style: { fontSize: 16, fontWeight: 700, color: m.c, fontFamily: "monospace" } }, m.v))))),
+                    React.createElement(NgmKeyImpact, { session: result && result.session ? result.session : null, ngm: noiseGateMiddleware, tick: noiseGateState }),
                     React.createElement("div", { style: { background: "#0a0d1f", border: "1px solid #00d4ff22", borderRadius: 8, padding: "13px 15px", marginBottom: 12 } },
                         React.createElement("div", { style: { fontSize: 10, color: "#00d4ff", fontWeight: 700, letterSpacing: ".08em", marginBottom: 8 } }, "\uD83C\uDF21\uFE0F SNSPD SICAKLIK S\u00DCR\u00DCKLENMES\u0130"),
                         React.createElement("div", { style: { position: "relative", height: 14, borderRadius: 7, overflow: "hidden",

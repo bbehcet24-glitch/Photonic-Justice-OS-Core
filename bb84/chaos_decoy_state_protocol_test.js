@@ -216,7 +216,7 @@ function testPnsWorstCaseDemonstration() {
 function testCoreUntouched() {
   console.log("\n── Test 8: çekirdek dosyası bu çalışma boyunca DEĞİŞMEDİ ──");
   const hash = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
-  const expected = "5b7521ab4157de7491fcbc98dd134a84b26b881814d3aa3dc5726c3aa4f342c2";
+  const expected = "e8de863c426936e0398c9848b9cdea5441ec846ec5dad9854f8976201343815c";
   check("bb84/photonnet_core.js SHA-256 beklenen değerle eşleşiyor", hash === expected, `hash=${hash}`);
 }
 

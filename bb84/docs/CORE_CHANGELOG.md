@@ -14,6 +14,31 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v4.1 | `5c12cde3a6c1d4acfb935dfb9aade5e5b79a42a65d7e6e04e92d88586b676313` | `5c12cde3…676313` |
 | v4.2 | `b7b6b2437ecdd037cff301b2441ac522244018294a4755b8b3d36876c3a4a560` | `b7b6b243…a4a560` |
 | v4.3 | `5b7521ab4157de7491fcbc98dd134a84b26b881814d3aa3dc5726c3aa4f342c2` | `5b7521ab…f342c2` |
+| v4.4 | `e8de863c426936e0398c9848b9cdea5441ec846ec5dad9854f8976201343815c` | `e8de863c…43815c` |
+
+## v4.4 (2026-11) — gürültü kapısı fiziği düzeltildi; gürültü etkisi ve birleşik QBER arayüzde
+
+**Algoritma değişti** (yalnız `NoiseGateMiddleware.effectivePhantomProbability`); nominal koşulda (sapma 0, sızıntı 0)
+sonuç v4.3 ile aynı olasılığı verir.
+
+- **Kusur:** Anahtar oturumu (`deriveSiftedKey`) dedektörde oluşan hayalet click olasılığını kalibrasyon TAHMİNİNDEN
+  (`calibratedDarkRateHz`) hesaplıyordu. Bir tahmin gerçek karanlık sayımları yok edemez. Ölçüldü (5× ısıl dalgalanma
+  + 3200 Hz fiber sızıntısı): enjeksiyon anında fiziksel gürültünün %0,2'si anahtara ulaşıyordu; 2,2 s'lik kalibrasyon
+  turlarıyla gündüz kipinde ~26 s sonra bile yalnız %8–18'i. Arayüz tatbikatında gürültü enjeksiyonunun QBER'i
+  değiştirmemesinin bir nedeni buydu (kullanıcı eleştirisiyle bulundu; önceki açıklama "kapı filtreledi" yanlıştı).
+- **Düzeltme:** fiziksel olasılık = ham oran (sıcaklık sapması + sızıntı) × daraltılmış kapı. Kalibrasyon tahmini
+  yalnız kapı denetleyicisini besler; yeni `estimatedPhantomProbability` tahmini gösterim için verir. Düzeltmeden
+  sonra kullanılan/fiziksel oran her zaman %100. 60 km tek atlama: QBER_test %1,17 → gürültüyle %2,17.
+- **Ölçek (değişmedi, artık görünür):** 150 km üstü rotalar ≤60 km atlamalara bölünür. 60 km'de enjekte edilen
+  gürültünün QBER katkısı ~%0,25–1; %11'e varmak için çok daha uzun atlama gerekir, orada da anahtar bütçesi önce biter
+  (120 km tek atlama + gürültü: QBER_test %5,4 iken KEY_BUDGET iptali).
+- **🔬 GÜRÜLTÜ sekmesi:** yeni "ANAHTAR OTURUMUNA ETKİSİ" paneli (`NgmKeyImpact`): fiziksel ve tahmini karanlık-click
+  olasılığı, son iletimde ölçülen katkı (hayalet click / elenmiş bit), şu anki gürültüyle aynı atlamada beklenen katkı ve
+  %11 eşiği için gereken gürültü katı. `res.session` artık `lostCount`, `darkClicks`, `hopKm` taşıyor.
+- **📈 SONUÇLAR:** çok atlamalı rotada QBER kutucuğu "en kötü atlama" olarak etiketlenir ve birleşik değeri gösterir
+  (1842 km/31 atlama: en kötü %2,46, birleşik %1,57; k ≈ 860 test bitiyle atlama başına sapma ±0,4 puan).
+- **Atmosferik sürgüler:** "yalnız uydu mesaj kanalı · fiber anahtar oturumunu etkilemez" notu (oturum freeSpace:false).
+- `PHOTONNET_CORE_VERSION` "v4.4".
 
 ## v4.3 (2026-11) — canlı güvenlik kriterleri paneli, iptal kartı (yalnız arayüz)
 

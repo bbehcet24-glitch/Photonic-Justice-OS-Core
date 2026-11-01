@@ -1,6 +1,6 @@
 # PhotonNet — BB84 Quantum Key Distribution (QKD) Simulator and Production Layers
 
-**photonicquantumcore** · core engine v4.3 · `npm test`: 102 self-tests (JavaScript + Python HAL) in CI
+**photonicquantumcore** · core engine v4.4 · `npm test`: 102 self-tests (JavaScript + Python HAL) in CI
 
 PhotonNet simulates an end-to-end QKD network on a classical computer and wraps the simulation in the
 software a real deployment needs. It consists of:
@@ -70,7 +70,7 @@ the card shows ℓ of the weakest hop and the key left over after the one-time p
 *📈 SONUÇLAR (results) tab: QBER_test and ℓ per transmission in this session, the per-hop proof matrix of the
 last transmission, the live security-criteria panel (QBER_test < 11 % and k ≥ 64 per hop, finite-key ℓ ≥ message bits,
 Cascade convergence, classical authentication, fail-closed outcome; red ALARM when the session aborted), the test-report
-snapshot and the open issues from §6–§7.*
+snapshot and the open issues from §6–§7. On multi-hop routes the QBER tile shows the worst hop and the pooled value.*
 
 ---
 
@@ -152,7 +152,7 @@ Concrete mechanisms that enforce this pattern:
   of `photonnet_core.js` (and, where relevant, of other read-only bridge files such as
   `timetag_acquisition_bridge.js`) before and after running — the claim "the core was not touched" is
   re-proven on every run, not assumed once. When the core deliberately moves to a new version (currently
-  **v4.3**, SHA-256 `5b7521ab…f342c2`), the old/new hash and every changed function are documented in
+  **v4.4**, SHA-256 `e8de863c…43815c`), the old/new hash and every changed function are documented in
   [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md), and all pinned tests are updated to the new
   hash and re-run.
 - **`extract_core.js --check`**: a CI gate — automatically verifies that `photonnet_core.js` is in sync
@@ -378,7 +378,7 @@ the top of the file).
 | `bb84/tools/extract_qkdnetsim_profile.js` | Regenerates `qkdnetsim_traffic_profile.json` from the output files of a real QKDNetSim ns-3.46 run. The shape (time-density pattern) and the event count (real log lines) are DELIBERATELY and EXPLICITLY combined from two different metrics — stated in the `methodologyNote` field. |
 | `bb84/tools/verify_photonnet_html.js` | An E2E check that opens the rebuilt `PhotonNet.html` in real Chromium (Playwright) and verifies it mounts without console/page errors (its screenshot goes to `ci-reports/`, not into the repository). |
 | `bb84/tools/capture_screenshots.js` | Regenerates the README screenshots (`docs/screenshots/`) from the current `PhotonNet.html`; exits with 1 without writing any file if the transmission fails or the page reports an error. |
-| `bb84/tools/ui_abort_drill.js` | Abort drill on the real UI (Playwright): baseline → noise injection → intercept-resend eavesdropping → recovery. Checks that the abort decision matches the 11 % QBER threshold, that no key or message is released on abort, that the abort line appears in the log and that the security panel shows ALARM, then recovery. Writes `bb84/reports/ui_abort_drill.json` and screenshots to `ci-reports/ui_abort_drill/`. Not part of `npm test` (needs Chromium). |
+| `bb84/tools/ui_abort_drill.js` | Abort drill on the real UI (Playwright): baseline → noise injection → intercept-resend eavesdropping → recovery → a 147 km single-hop route (Zagreb → Ljubljana) that ends in KEY_BUDGET. Checks that the abort decision matches the 11 % QBER threshold, that no key or message is released on abort, that the abort line appears in the log and that the security panel shows ALARM, then recovery. Writes `bb84/reports/ui_abort_drill.json` and screenshots to `ci-reports/ui_abort_drill/`. Not part of `npm test` (needs Chromium). |
 | `bb84/tools/QKDNETSIM_BUILD.md` | Documents how QKDNetSim (a third-party, academically published ns-3 module) was built from source in a sandbox where apt-get/PyPI/gitlab.com were blocked — records 3 specific name-mismatch fixes and the exact deterministic output values obtained in two independent build sessions (28,140 delivered keys). |
 | `bb84/ci/run_integration_tests.sh` | Central CI integration-test orchestration called by both the GitHub Actions and the GitLab CI YAML. Two modes via `KME_MODE`: "ephemeral" (default — temporary CA/certificates, full clean-up) and "external" (against a real staging KME endpoint, with CI-secret certificates). |
 | `.github/workflows/production-pipeline.yml`, `.gitlab-ci.yml` | CI/CD pipelines — gate 1 (CA private-key leak protection), gate 2 (core/HTML/config sync), gates 3a–3d (certificate rotation/revocation scenarios S1–S6 and OCSP staleness, ephemeral and external IBM integration, SoftHSM2 + PKCS#11 bridge, production build strip), gate 5 (`npm test`, all JS + Python self-tests) and gate 4 (production sealing: manual dispatch only, and only after every other always-run gate, gate 5 included, has passed). |
