@@ -25,7 +25,7 @@ const DP = require("./detector_profile.js");
 const ING = DP.activeDetectorProfile("ingaas"), SNS = DP.activeDetectorProfile("snspd");
 const etaFor = (km, prof) => NET.linkEta(km, { detectorEfficiency: prof.efficiency });
 
-const CORE_SHA = "f34e3c7b75bcac86aa06c192f3cec9c64931a14bef661b050792825249b3cc7f";
+const CORE_SHA = "528321cb930b3266c602f42a0ab304128e839ba663b1dbb4bdaad02de1130cc1";
 const coreSha = () => crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
 const RATE = 1e9, ED = 0.02, E0 = 0.5, F_EC = 1.16;
 const h2 = (p) => (p <= 0 || p >= 1 ? 0 : -p * Math.log2(p) - (1 - p) * Math.log2(1 - p));

@@ -23,7 +23,7 @@ const path = require("path");
 const crypto = require("crypto");
 const Q = require("./quantum_phase_buffer.js");
 
-const CORE_SHA = "f34e3c7b75bcac86aa06c192f3cec9c64931a14bef661b050792825249b3cc7f";
+const CORE_SHA = "528321cb930b3266c602f42a0ab304128e839ba663b1dbb4bdaad02de1130cc1";
 const coreSha = () => crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
 function mulberry32(a) { return () => { a |= 0; a = (a + 0x6d2b79f5) | 0; let t = Math.imul(a ^ (a >>> 15), 1 | a); t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
 

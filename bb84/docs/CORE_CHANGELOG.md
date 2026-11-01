@@ -15,7 +15,7 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v4.2 | `b7b6b2437ecdd037cff301b2441ac522244018294a4755b8b3d36876c3a4a560` | `b7b6b243…a4a560` |
 | v4.3 | `5b7521ab4157de7491fcbc98dd134a84b26b881814d3aa3dc5726c3aa4f342c2` | `5b7521ab…f342c2` |
 | v4.4 | `e8de863c426936e0398c9848b9cdea5441ec846ec5dad9854f8976201343815c` | `e8de863c…43815c` |
-| v5 | `f34e3c7b75bcac86aa06c192f3cec9c64931a14bef661b050792825249b3cc7f` | `f34e3c7b…b3cc7f` |
+| v5 | `528321cb930b3266c602f42a0ab304128e839ba663b1dbb4bdaad02de1130cc1` | `528321cb…130cc1` |
 
 ## v5 (2026-11) — hibrit uydu + fiber anahtar oturumu, QBER erken uyarı bandı, olay akışı (TS-HYBRID-QKD-04)
 

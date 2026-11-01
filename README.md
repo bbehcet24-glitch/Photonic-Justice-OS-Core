@@ -152,7 +152,7 @@ Concrete mechanisms that enforce this pattern:
   of `photonnet_core.js` (and, where relevant, of other read-only bridge files such as
   `timetag_acquisition_bridge.js`) before and after running — the claim "the core was not touched" is
   re-proven on every run, not assumed once. When the core deliberately moves to a new version (currently
-  **v5**, SHA-256 `f34e3c7b…b3cc7f`), the old/new hash and every changed function are documented in
+  **v5**, SHA-256 `528321cb…130cc1`), the old/new hash and every changed function are documented in
   [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md), and all pinned tests are updated to the new
   hash and re-run.
 - **`extract_core.js --check`**: a CI gate — automatically verifies that `photonnet_core.js` is in sync

@@ -17348,7 +17348,7 @@ window.__PHOTONNET_CONFIG__ = {"schemaVersion":1,"detector":{"active":"snspd","p
 <script>
 /* ===== PhotonNet bileşeni — önceden derlenmiş (Babel/CDN gerektirmez) =====
    OTOMATİK ÜRETİLDİ — bb84/tools/build_photonnet_html.js tarafından
-   PhotonNet2.jsx kaynağından (15934 satır) TypeScript
+   PhotonNet2.jsx kaynağından (15937 satır) TypeScript
    transpileModule (JSX→React.createElement) ile yeniden derlendi.
    ELLE DÜZENLEMEYİN — değişiklikler PhotonNet2.jsx'te yapılıp bu script
    yeniden çalıştırılmalı (bkz. dosya başlığı). ===== */
@@ -27050,11 +27050,14 @@ function ResSecurityCriteria({ result }) {
     const banded = hops.filter((h) => typeof h.warnAt === "number" && typeof h.qTest === "number");
     if (banded.length) {
         const warned = banded.filter((h) => h.warn);
+        const over = banded.filter((h) => h.qTest >= 0.11); // iptal eşiğini aşan atlama: uyarı değil, iptal
         const top = banded.reduce((m, h) => (h.qTest - h.warnAt > m.qTest - m.warnAt ? h : m), banded[0]);
+        const fq = (x) => `%${(x * 100).toFixed(2)}`;
         rows.push({ c: "Erken uyarı bandı (dinamik α, CFAR α = 10⁻³) — DCR'ye göre; iptal eşiği %11 sabit",
-            ok: warned.length ? "UYARI" : true,
-            v: warned.length ? `${warned.length} atlama bandın üstünde (ör. #${warned[0].hop}: %${(warned[0].qTest * 100).toFixed(2)} > %${(warned[0].warnAt * 100).toFixed(2)})`
-                : `en yakın #${top.hop}: %${(top.qTest * 100).toFixed(2)} ≤ bant %${(top.warnAt * 100).toFixed(2)} (beklenen %${(top.expectedQ * 100).toFixed(2)})` });
+            ok: over.length ? null : warned.length ? "UYARI" : true,
+            v: over.length ? `#${over[0].hop}: ${fq(over[0].qTest)} ≥ %11 → bant (${fq(over[0].warnAt)}) değil iptal eşiği uygulandı`
+                : warned.length ? `${warned.length} atlama bandın üstünde (ör. #${warned[0].hop}: ${fq(warned[0].qTest)} > ${fq(warned[0].warnAt)})`
+                    : `en yakın #${top.hop}: ${fq(top.qTest)} ≤ bant ${fq(top.warnAt)} (beklenen ${fq(top.expectedQ)})` });
     }
     const fsHop = hops.find((h) => h.kind === "free-space");
     if (fsHop) {
