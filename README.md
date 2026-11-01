@@ -1,6 +1,6 @@
 # PhotonNet — BB84 Quantum Key Distribution (QKD) Simulator and Production Layers
 
-**photonicquantumcore** · core engine v4.1 · `npm test`: 100 self-tests (JavaScript + Python HAL) in CI
+**photonicquantumcore** · core engine v4.2 · `npm test`: 102 self-tests (JavaScript + Python HAL) in CI
 
 PhotonNet simulates an end-to-end QKD network on a classical computer and wraps the simulation in the
 software a real deployment needs. It consists of:
@@ -65,6 +65,10 @@ the card shows ℓ of the weakest hop and the key left over after the one-time p
 | Node watchdog grid | Proactive bottleneck prediction |
 | ![Noise calibration](docs/screenshots/04_noise_matrix.png) | ![Satellite view](docs/screenshots/05_satellite.png) |
 | Detector noise calibration (config.json profile) | LEO satellite constellation |
+
+![Results tab](docs/screenshots/06_results.png)
+*📈 SONUÇLAR (results) tab: QBER_test and ℓ per transmission in this session, the per-hop proof matrix of the
+last transmission, the test-report snapshot embedded at build time, and the open issues from §6–§7.*
 
 ---
 
@@ -146,7 +150,7 @@ Concrete mechanisms that enforce this pattern:
   of `photonnet_core.js` (and, where relevant, of other read-only bridge files such as
   `timetag_acquisition_bridge.js`) before and after running — the claim "the core was not touched" is
   re-proven on every run, not assumed once. When the core deliberately moves to a new version (currently
-  **v4.1**, SHA-256 `5c12cde3…676313`), the old/new hash and every changed function are documented in
+  **v4.2**, SHA-256 `b7b6b243…a4a560`), the old/new hash and every changed function are documented in
   [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md), and all pinned tests are updated to the new
   hash and re-run.
 - **`extract_core.js --check`**: a CI gate — automatically verifies that `photonnet_core.js` is in sync
@@ -366,7 +370,8 @@ the top of the file).
 | File | What it does |
 |---|---|
 | `bb84/tools/extract_core.js` | Generates `bb84/photonnet_core.js` from `PhotonNet2.jsx` automatically and reproducibly (detailed in §2). `--check` mode is the CI gate. |
-| `bb84/tools/build_photonnet_html.js` | Recompiles the embedded `<script>` application block in `PhotonNet.html` / `PhotonNet_offline.html` from the current `PhotonNet2.jsx` (same TS transpileModule logic), embeds `config.json` and syncs the `<title>` with `PHOTONNET_VERSION`. ABORTS without changing the file if the marker comment does not appear exactly once. `--check` mode is used in CI. |
+| `bb84/tools/build_photonnet_html.js` | Recompiles the embedded `<script>` application block in `PhotonNet.html` / `PhotonNet_offline.html` from the current `PhotonNet2.jsx` (same TS transpileModule logic), embeds `config.json`, links `bb84/reports/reports_snapshot.js` (the 📈 SONUÇLAR tab's data) with a fixed `<script src>` tag, and syncs the `<title>` with `PHOTONNET_VERSION`. ABORTS without changing the file if the marker comment does not appear exactly once. `--check` mode is used in CI. |
+| `bb84/tools/build_reports_snapshot.js` | Writes `bb84/reports/reports_snapshot.js`: a summary of every `bb84/reports/*.json` (pass/fail per check, details cut to 220 characters; reports without a verdict are marked as data, not as passed) plus the last `npm test` result. Run automatically at the end of `npm test`; `npm run reports-snapshot` by hand. |
 | `bb84/tools/run_all_tests.js` | The `npm test` runner: sets up a temporary PKI, starts the Python HAL bridge (127.0.0.1:8765), runs every JavaScript self-test and every `hal/test_*.py`, and prints a pass/fail summary. `npm run test:fast` skips the long tests. |
 | `bb84/tools/extract_qkdnetsim_profile.js` | Regenerates `qkdnetsim_traffic_profile.json` from the output files of a real QKDNetSim ns-3.46 run. The shape (time-density pattern) and the event count (real log lines) are DELIBERATELY and EXPLICITLY combined from two different metrics — stated in the `methodologyNote` field. |
 | `bb84/tools/verify_photonnet_html.js` | An E2E check that opens the rebuilt `PhotonNet.html` in real Chromium (Playwright) and verifies it mounts without console/page errors (its screenshot goes to `ci-reports/`, not into the repository). |
@@ -467,7 +472,7 @@ self-contained HTML chart (light/dark theme, verified with a screenshot, in the 
 | File | What it does |
 |---|---|
 | `PhotonNet2.jsx` | The COMPLETE source of the application (~15,000 lines) — UI and algorithms interleaved. Input of `extract_core.js`. |
-| `PhotonNet.html` / `PhotonNet_offline.html` | Compiled single-file versions of the application that open directly in a browser (React bundle and `config.json` embedded). |
+| `PhotonNet.html` / `PhotonNet_offline.html` | Compiled single-file versions of the application that open directly in a browser (React bundle and `config.json` embedded; the test-report summary is loaded from `bb84/reports/reports_snapshot.js`, so open the HTML from the repository root to see it). The 📈 SONUÇLAR tab shows only measured data: session QBER_test/ℓ history, the per-hop proof matrix, the embedded test reports and the documented open issues. |
 | `config.json` | Detector profiles (SNSPD default, InGaAs SPAD) — the single source for both the JS core and the Python HAL; validated fail-closed. |
 | `bundler/build_bundle.js`, `react_bundle.js`, `captured_modules.json`, `trace_bundle.js` | Custom bundling tools that embed React into a single file without a CDN. |
 | `check_syntax.js` | A lightweight dev-loop tool that compiles `PhotonNet2.jsx` with TS transpileModule and reports syntax errors with line numbers. |

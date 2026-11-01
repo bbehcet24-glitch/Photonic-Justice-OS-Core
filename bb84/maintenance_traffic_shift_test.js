@@ -169,7 +169,7 @@ function main() {
   const after = hashes();
   const unchanged = GUARDED.every((f) => before[f] === after[f]);
   chk("Bütünlük: çekirdek ve yeniden kullanılan modüllerin SHA-256'sı test boyunca değişmedi; koordinatör çekirdeği import etmiyor",
-    unchanged && after["photonnet_core.js"] === "5c12cde3a6c1d4acfb935dfb9aade5e5b79a42a65d7e6e04e92d88586b676313" && !/photonnet_core/.test(fs.readFileSync(path.join(__dirname, "maintenance_traffic_coordinator.js"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "")),
+    unchanged && after["photonnet_core.js"] === "b7b6b2437ecdd037cff301b2441ac522244018294a4755b8b3d36876c3a4a560" && !/photonnet_core/.test(fs.readFileSync(path.join(__dirname, "maintenance_traffic_coordinator.js"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "")),
     `${GUARDED.length} dosya ${unchanged ? "değişmedi" : "DEĞİŞTİ"} · core ${after["photonnet_core.js"].slice(0, 16)}…`);
 
   out.allChecksPassed = out.checks.every((x) => x.ok);

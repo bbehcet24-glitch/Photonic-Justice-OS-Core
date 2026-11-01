@@ -113,6 +113,9 @@ async function main() {
   for (const f of failed) console.log(`\n✗ ${f.name} (çıkış ${f.code})\n${f.tail}`);
   fs.mkdirSync(path.join(ROOT, "ci-reports"), { recursive: true });
   fs.writeFileSync(path.join(ROOT, "ci-reports", "npm_test_summary.json"), JSON.stringify({ generatedAt: new Date().toISOString(), passed: results.length - failed.length, total: results.length, results: results.map(({ tail, ...r }) => r) }, null, 2));
+  // 📈 SONUÇLAR sekmesinin okuduğu özet (bb84/reports/reports_snapshot.js) bu koşunun raporlarıyla güncellenir
+  try { const s = require("./build_reports_snapshot.js").writeSnapshot(); console.log(`[npm test] rapor özeti güncellendi: ${s.reports.length} rapor`); }
+  catch (e) { console.error(`[npm test] rapor özeti yazılamadı: ${e.message}`); }
   process.exit(failed.length ? 1 : 0);
 }
 main().catch((e) => { console.error(e); process.exit(2); });

@@ -25,6 +25,7 @@ const SHOTS = [
   ["03_prediction.png", "🔮 TAHMİN", "Proaktif darboğaz tahmin paneli"],
   ["04_noise_matrix.png", "🔬 GÜRÜLTÜ", "Dedektör gürültü kalibrasyonu ve gürültü kapısı"],
   ["05_satellite.png", "🛰 UYDU", "LEO uydu takımyıldızı görünümü"],
+  ["06_results.png", "📈 SONUÇLAR", "Sonuçlar sekmesi: oturum geçmişi, atlama kanıt matrisi, gömülü test raporları"],
 ];
 
 (async () => {
@@ -51,7 +52,22 @@ const SHOTS = [
         await page.waitForTimeout(2500);
         await page.keyboard.press("Escape");
         await page.waitForTimeout(300);
+        if (tab === "📈 SONUÇLAR") {
+          // geçmiş grafiği tek noktayla boş görünmesin: iki iletim daha (sekmedeki "teslim edilen" sayacı beklenir)
+          for (const want of [2, 3]) {
+            await page.locator("button", { hasText: "GÖNDER" }).first().click();
+            await page.waitForFunction((w) => {
+              const t = document.body.innerText;
+              return new RegExp(`TESLİM EDİLEN İLETİM\\s+\\d+/${w}(\\s|$)`).test(t) && !/ANAHTAR ÜRETİMİ/.test(t);
+            }, want, { timeout: 240000 });
+            await page.waitForTimeout(800);
+            await page.keyboard.press("Escape");
+          }
+        }
       }
+      // Playwright'ın tıklamadan önceki scrollIntoView'u üst çubuğu kaydırabilir; görüntü için sıfırla
+      await page.evaluate(() => document.querySelectorAll("*").forEach((el) => { if (el.scrollLeft) el.scrollLeft = 0; }));
+      await page.waitForTimeout(200);
       shots.push([file, await page.screenshot(), desc]);
     }
     if (errors.length) throw new Error("Sayfa hataları:\n  " + errors.slice(0, 5).join("\n  "));

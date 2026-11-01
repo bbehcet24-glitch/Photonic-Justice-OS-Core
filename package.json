@@ -9,7 +9,8 @@
     "extract-core:check": "node bb84/tools/extract_core.js --check",
     "test:fast": "node bb84/tools/run_all_tests.js --skip-slow",
     "check-syntax": "node check_syntax.js",
-    "build-html": "node bb84/tools/build_photonnet_html.js"
+    "build-html": "node bb84/tools/build_photonnet_html.js",
+    "reports-snapshot": "node bb84/tools/build_reports_snapshot.js"
   },
   "keywords": [],
   "author": "Behçet Büyükacar (photonicquantumcore)",

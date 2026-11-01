@@ -92,7 +92,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v4.1";
+const PHOTONNET_CORE_VERSION = "v4.2";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -9224,6 +9224,317 @@ function Oscilloscope({ active, color="#00d4ff" }) {
 }
 
 // ── Spark line ────────────────────────────────────────────────
+// ── 📈 SONUÇLAR sekmesi (çekirdek v4.2) ─────────────────────────────────────────────────────────────
+// Yalnız sistemin GERÇEKTEN ürettiği veriyi gösterir: bu oturumdaki iletimlerin SecureMessageSession
+// sonuçları (QBER_test, ℓ, atlama başına kanıt) ve derleme anında gömülen test raporu anlık görüntüsü
+// (window.__PHOTONNET_REPORTS__ — bb84/reports/reports_snapshot.js, npm test sonunda build_reports_snapshot.js
+// üretir; HTML <script src> ile yükler). Ölçülmeyen bir değer "—" olarak kalır; tahmin,
+// süs ya da örnek veri yoktur. Renk: tek seri / sıralı (camgöbeği) + durum renkleri her zaman simge ve
+// metinle birlikte (✓/✗/●), yalnız renge dayanmaz.
+const RES_C = { panel: "#020409", line: "#0a1628", label: "#1e3a5f", muted: "#475569", text: "#94a3b8", ink: "#cbd5e1",
+  series: "#00d4ff", ok: "#10b981", bad: "#f43f5e", warn: "#f59e0b", info: "#7c3aed" };
+const RES_OPEN_ISSUES = [
+  // Kaynak: README §6–§7, bb84/PRODUCTION_READINESS_ROADMAP.md, hal/README.md — durumlar oradaki gibidir.
+  { t: "Sertifikalı donanım QRNG", s: "AÇIK", d: "Entropi platform CSPRNG'si; bilgi-kuramsal güvenlik için gerekli (denetim A)." },
+  { t: "Yayımlanmış bir deneyle karşılaştırma", s: "AÇIK", d: "Fizik parametreleri literatür değeri/varsayım; deneysel doğrulama yok." },
+  { t: "Oturum düzeyi ε bütçesi takibi", s: "AÇIK", d: "Atlama başına ε var; ağ/oturum toplamı izlenmiyor (denetim B)." },
+  { t: "Üretim sınıfı OCSP yanıtlayıcısı", s: "AÇIK", d: "Açık bağlantıda iptal gecikmesi üst sınırı ~30 s (önbellek TTL)." },
+  { t: "Gerçek donanım HSM", s: "KISMEN", d: "SoftHSM2 + PKCS#11 CI Kapı 3c'de çalışıyor; donanım HSM denenmedi." },
+  { t: "Bağımsız güvenlik denetimi / sızma testi", s: "AÇIK", d: "Şimdiye kadarki her şey iç test." },
+  { t: "PE test bitleriyle parça seçimi — biçimsel kanıt", s: "AÇIK", d: "Son-seçim etkisi küçük; birleştirilebilir kanıtta ele alınmalı." },
+  { t: "Demo kimlik doğrulama kodunun sökülmesi", s: "ÇÖZÜLDÜ", d: "Üretim derlemesinde fiziksel olarak siliniyor (CI Kapı 3d)." },
+];
+
+function ResStatus({ s }) {
+  const m = s === true || s === "ÇÖZÜLDÜ" ? [RES_C.ok, "✓", s === true ? "GEÇTİ" : s]
+    : s === false ? [RES_C.bad, "✗", "KALDI"]
+    : s === "KISMEN" ? [RES_C.warn, "◐", s]
+    : s === "AÇIK" ? [RES_C.warn, "●", s]
+    : [RES_C.muted, "◦", "VERİ"];
+  return (
+    <span style={{display:"inline-flex",alignItems:"center",gap:4,fontSize:8,fontWeight:700,letterSpacing:".06em",
+      color:RES_C.ink,background:`${m[0]}1f`,border:`1px solid ${m[0]}66`,borderRadius:3,padding:"1px 6px",whiteSpace:"nowrap"}}>
+      <span style={{color:m[0]}}>{m[1]}</span>{m[2]}
+    </span>
+  );
+}
+
+function ResPanel({ title, sub, children, style }) {
+  return (
+    <div style={{background:RES_C.panel,border:`1px solid ${RES_C.line}`,borderRadius:6,padding:"10px 12px",minWidth:0,...style}}>
+      <div style={{display:"flex",alignItems:"baseline",gap:8,marginBottom:8}}>
+        <span style={{fontSize:8,color:RES_C.text,fontWeight:700,letterSpacing:".12em"}}>{title}</span>
+        {sub && <span style={{fontSize:8,color:RES_C.label}}>{sub}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+/** Tek seri çizgi/çubuk grafik + yatay eşik çizgisi + üzerine gelince ipucu. Tek eksen. */
+function ResSeriesChart({ points, kind, yMax, fmt, threshold, thresholdLabel, height = 130, tip }) {
+  const [hover, setHover] = useState(null);
+  const W = 560, H = height, L = 40, R = 10, T = 10, B = 20;
+  const n = points.length;
+  if (!n) return <div style={{height:H,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:RES_C.muted}}>Henüz iletim yok — GÖNDER ile bir oturum başlatın.</div>;
+  const iw = W - L - R, ih = H - T - B, pad = 14;   // pad: ilk/son işaret eksen etiketlerinin üstüne binmesin
+  const x = (i) => L + pad + (n === 1 ? (iw - 2 * pad) / 2 : (i / (n - 1)) * (iw - 2 * pad));
+  const y = (v) => T + ih - (Math.min(v, yMax) / yMax) * ih;
+  const ticks = [0, yMax / 2, yMax];
+  const bw = Math.max(3, Math.min(18, iw / n - 2));
+  const onMove = (e) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const px = ((e.clientX - r.left) / r.width) * W;
+    let best = 0;
+    for (let i = 1; i < n; i++) if (Math.abs(x(i) - px) < Math.abs(x(best) - px)) best = i;
+    setHover(best);
+  };
+  const line = points.map((p, i) => (p.v == null ? null : `${x(i)},${y(p.v)}`)).filter(Boolean).join(" ");
+  return (
+    <div style={{position:"relative"}}>
+      <svg viewBox={`0 0 ${W} ${H}`} width="100%" style={{display:"block"}} onMouseMove={onMove} onMouseLeave={() => setHover(null)}>
+        {ticks.map((t) => (
+          <g key={t}>
+            <line x1={L} x2={W - R} y1={y(t)} y2={y(t)} stroke={RES_C.line} strokeWidth={1}/>
+            <text x={L - 6} y={y(t) + 3} fontSize={8} fill={RES_C.muted} textAnchor="end" fontFamily="monospace">{fmt(t)}</text>
+          </g>
+        ))}
+        {threshold != null && (
+          <g>
+            <line x1={L} x2={W - R} y1={y(threshold)} y2={y(threshold)} stroke={RES_C.bad} strokeWidth={1} strokeDasharray="4 3"/>
+            <text x={W - R} y={y(threshold) - 4} fontSize={8} fill={RES_C.text} textAnchor="end">{thresholdLabel}</text>
+          </g>
+        )}
+        {kind === "bar" && points.map((p, i) => p.v != null && (
+          <rect key={i} x={x(i) - bw / 2} y={y(p.v)} width={bw} height={Math.max(0, T + ih - y(p.v))} rx={2}
+            fill={RES_C.series} opacity={hover == null || hover === i ? 0.9 : 0.45}/>
+        ))}
+        {kind === "bar" && points.map((p, i) => p.flag && (
+          <text key={`f${i}`} x={x(i)} y={T + ih - 3} fontSize={9} fill={RES_C.bad} textAnchor="middle">✗</text>
+        ))}
+        {kind === "line" && line && <polyline points={line} fill="none" stroke={RES_C.series} strokeWidth={2} strokeLinejoin="round"/>}
+        {kind === "line" && points.map((p, i) => p.v != null && (
+          <circle key={i} cx={x(i)} cy={y(p.v)} r={hover === i ? 5 : 4} fill={RES_C.series} stroke={RES_C.panel} strokeWidth={2}/>
+        ))}
+        {hover != null && <line x1={x(hover)} x2={x(hover)} y1={T} y2={T + ih} stroke={RES_C.muted} strokeWidth={1} strokeDasharray="2 2"/>}
+        <text x={L} y={H - 5} fontSize={8} fill={RES_C.muted}>#1</text>
+        <text x={W - R} y={H - 5} fontSize={8} fill={RES_C.muted} textAnchor="end">#{n} (iletim sırası)</text>
+      </svg>
+      {hover != null && (
+        <div style={{position:"absolute",top:4,left:`${Math.min(70, (x(hover) / W) * 100)}%`,pointerEvents:"none",
+          background:"#0a1628f2",border:`1px solid ${RES_C.label}`,borderRadius:4,padding:"5px 8px",fontSize:9,color:RES_C.ink,
+          fontFamily:"monospace",whiteSpace:"nowrap",zIndex:2}}>
+          {tip(points[hover], hover)}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Atlama kanıt matrisi: satır = atlama, sütun = ölçüm; hücre koyuluğu sütun içinde göreli büyüklük (tek ton). */
+function ResHopMatrix({ hops }) {
+  if (!hops || !hops.length) return <div style={{fontSize:9,color:RES_C.muted,padding:"20px 0",textAlign:"center"}}>Son iletimde atlama kanıtı yok.</div>;
+  const cols = [
+    { k: "qTest", l: "QBER_test", f: (v) => v == null ? "—" : `%${(v * 100).toFixed(2)}` },
+    { k: "n", l: "n (anahtar)", f: (v) => v == null ? "—" : v.toLocaleString("tr-TR") },
+    { k: "k", l: "k (test)", f: (v) => v == null ? "—" : v.toLocaleString("tr-TR") },
+    { k: "leakEC", l: "Cascade sızıntı", f: (v) => v == null ? "—" : v.toLocaleString("tr-TR") },
+    { k: "ell", l: "ℓ", f: (v) => v == null ? "—" : v.toLocaleString("tr-TR") },
+  ];
+  const rng = {};
+  cols.forEach((c) => {
+    const vals = hops.map((h) => h[c.k]).filter((v) => typeof v === "number");
+    rng[c.k] = vals.length ? [Math.min(...vals), Math.max(...vals)] : [0, 1];
+  });
+  const weakest = hops.reduce((w, h) => (typeof h.ell === "number" && (w == null || h.ell < w.ell) ? h : w), null);
+  return (
+    <div style={{maxHeight:260,overflowY:"auto"}}>
+      <table style={{width:"100%",borderCollapse:"separate",borderSpacing:2,fontFamily:"monospace",fontSize:9}}>
+        <thead>
+          <tr>
+            <th style={{color:RES_C.muted,fontWeight:400,textAlign:"left",fontSize:8}}>atlama</th>
+            {cols.map((c) => <th key={c.k} style={{color:RES_C.muted,fontWeight:400,fontSize:8,textAlign:"right"}}>{c.l}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {hops.map((h) => (
+            <tr key={h.hop}>
+              <td style={{color:RES_C.text,whiteSpace:"nowrap"}}>#{h.hop}{weakest === h ? <span style={{color:RES_C.warn}}> ◂ en zayıf</span> : null}</td>
+              {cols.map((c) => {
+                const v = h[c.k];
+                const [lo, hi] = rng[c.k];
+                const a = typeof v === "number" ? 0.06 + 0.44 * (hi > lo ? (v - lo) / (hi - lo) : 0.5) : 0;
+                return (
+                  <td key={c.k} title={`atlama #${h.hop} · ${c.l}: ${c.f(v)}`}
+                    style={{textAlign:"right",padding:"3px 6px",borderRadius:3,color:RES_C.ink,
+                      background:`rgba(0,212,255,${a.toFixed(3)})`}}>{c.f(v)}</td>
+                );
+              })}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div style={{fontSize:8,color:RES_C.label,marginTop:4}}>Hücre koyuluğu: sütun içinde en küçükten (açık) en büyüğe (koyu). Mesaj ancak en zayıf atlamanın ℓ'si mesaj boyunu karşılarsa gider.</div>
+    </div>
+  );
+}
+
+function ResReports({ snap }) {
+  const [q, setQ] = useState("");
+  const [open, setOpen] = useState(null);
+  if (!snap) return <div style={{fontSize:9,color:RES_C.muted,lineHeight:1.5}}>Test raporu özeti yüklenemedi: bb84/reports/reports_snapshot.js bulunamadı. HTML'i depo kökünden açın; özeti üretmek için <code>npm test</code> ya da <code>npm run reports-snapshot</code>.</div>;
+  const list = snap.reports.filter((r) => !q || r.f.toLowerCase().includes(q.toLowerCase()));
+  const npmFailed = snap.npmTest ? snap.npmTest.results.filter((r) => !r.ok) : [];
+  return (
+    <div>
+      {snap.npmTest && (
+        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,flexWrap:"wrap"}}>
+          <ResStatus s={npmFailed.length === 0}/>
+          <span style={{fontSize:9,color:RES_C.ink}}>son npm test: {snap.npmTest.passed}/{snap.npmTest.total} geçti</span>
+          {npmFailed.map((r) => <span key={r.n} style={{fontSize:8,color:RES_C.ink,fontFamily:"monospace"}}><span style={{color:RES_C.bad}}>✗</span> {r.n}</span>)}
+        </div>
+      )}
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="rapor ara…"
+        style={{width:"100%",boxSizing:"border-box",background:"#0a1628",border:`1px solid ${RES_C.label}`,borderRadius:3,
+          color:RES_C.ink,fontSize:9,padding:"4px 7px",marginBottom:6,fontFamily:"monospace"}}/>
+      <div style={{maxHeight:300,overflowY:"auto"}}>
+        {list.map((r) => {
+          const passed = r.checks.filter((c) => c.ok).length;
+          return (
+            <div key={r.f} style={{borderBottom:`1px solid ${RES_C.line}`}}>
+              <div onClick={() => setOpen(open === r.f ? null : r.f)}
+                style={{display:"flex",alignItems:"center",gap:8,padding:"4px 2px",cursor:"pointer"}}>
+                <ResStatus s={r.pass}/>
+                <span style={{fontSize:9,color:RES_C.ink,fontFamily:"monospace",flex:1,minWidth:0,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{r.f}</span>
+                <span style={{display:"flex",gap:2,flexWrap:"wrap",maxWidth:150,justifyContent:"flex-end"}}>
+                  {r.checks.slice(0, 24).map((c, i) => (
+                    <span key={i} title={`${c.ok ? "✓" : "✗"} ${c.n}`}
+                      style={{width:8,height:8,borderRadius:2,background:c.ok ? RES_C.ok : RES_C.bad,opacity:.85}}/>
+                  ))}
+                </span>
+                <span style={{fontSize:8,color:RES_C.muted,width:64,textAlign:"right",fontFamily:"monospace"}}>
+                  {r.checks.length ? `${passed}/${r.checks.length}` : r.findings ? `${r.findings} bulgu` : r.note || (r.kind === "overall" ? "genel hüküm" : "—")}
+                </span>
+              </div>
+              {open === r.f && (
+                <div style={{padding:"2px 4px 8px 20px"}}>
+                  <div style={{fontSize:8,color:RES_C.label,marginBottom:3}}>üretildi: {r.t || "—"}</div>
+                  {r.checks.map((c, i) => (
+                    <div key={i} style={{fontSize:8,lineHeight:1.45,marginBottom:3}}>
+                      <span style={{color:c.ok ? RES_C.ok : RES_C.bad}}>{c.ok ? "✓" : "✗"}</span>{" "}
+                      <span style={{color:RES_C.ink}}>{c.n}</span>
+                      {c.d && <div style={{color:RES_C.muted,marginLeft:12}}>{c.d}</div>}
+                    </div>
+                  ))}
+                  {(r.sample || []).map((s, i) => <div key={`s${i}`} style={{fontSize:8,color:RES_C.muted}}>• {s}</div>)}
+                  {!r.checks.length && !(r.sample || []).length && <div style={{fontSize:8,color:RES_C.muted}}>Bu rapor bir geçti/kaldı hükmü içermiyor (ölçüm verisi).</div>}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function ResultsDashboard({ traffic, result, log, detectorState }) {
+  const snap = (typeof window !== "undefined" && window.__PHOTONNET_REPORTS__) || null;
+  const hist = traffic.filter((t) => t && t.session).slice().reverse();
+  const last = result && result.session ? result : null;
+  const s = last ? last.session : null;
+  const delivered = hist.filter((t) => t.session.status === "DELIVERED").length;
+  const verdicts = snap ? snap.reports.filter((r) => r.pass !== null) : [];
+  const vPassed = verdicts.filter((r) => r.pass).length;
+  const auth = last && last.classicalAuth;
+  const hops = s && Array.isArray(s.hopChecks) ? s.hopChecks : null;
+  const kpis = [
+    { l: "QBER_test (son)", v: s && s.qTest != null ? `%${(s.qTest * 100).toFixed(2)}` : "—", st: s && s.qTest != null ? s.qTest < 0.11 : null, note: "iptal eşiği %11" },
+    { l: s && s.nHops > 1 ? "ℓ — en zayıf atlama (son)" : "ℓ — kanıtlı anahtar (son)", v: s ? `${s.ell.toLocaleString("tr-TR")} bit` : "—", st: s ? s.ell > 0 : null, note: s ? `${s.nHops} atlama` : "" },
+    { l: "Teslim edilen iletim", v: hist.length ? `${delivered}/${hist.length}` : "—", st: hist.length ? delivered === hist.length : null, note: "bu oturumda" },
+    { l: "Klasik kanal kimlik doğrulama", v: auth ? (auth.ok ? "doğrulandı" : "BAŞARISIZ") : "—", st: auth ? auth.ok : null, note: auth ? `Wegman–Carter · havuz ${auth.poolRemaining} bit` : "" },
+    { l: "Dedektör profili", v: detectorState && detectorState.profile ? detectorState.profile.label.split(" ")[0] : "—", st: null, note: detectorState && detectorState.profile ? `η %${(detectorState.profile.efficiency * 100).toFixed(0)}` : "" },
+    snap && snap.npmTest
+      ? { l: "Son npm test koşusu", v: `${snap.npmTest.passed}/${snap.npmTest.total}`, st: snap.npmTest.passed === snap.npmTest.total, note: `${(snap.npmTest.at || "").slice(0, 10)} · ${verdicts.length} hükümlü rapor` }
+      : { l: "Test raporları", v: snap ? `${vPassed}/${verdicts.length}` : "—", st: snap ? vPassed === verdicts.length : null, note: snap ? `${snap.reports.length} rapor · ${snap.latest ? snap.latest.slice(0, 10) : "—"}` : "özet yok" },
+    { l: "Çekirdek", v: PHOTONNET_CORE_VERSION, st: null, note: `uygulama v${PHOTONNET_VERSION}` },
+  ];
+  const qPts = hist.map((t) => ({ v: t.session.qTest, t }));
+  const lPts = hist.map((t) => ({ v: t.session.ell, flag: t.session.status !== "DELIVERED", t }));
+  const qMax = Math.max(0.15, ...qPts.map((p) => p.v || 0)) * 1.05;
+  const lMax = Math.max(64, ...lPts.map((p) => p.v || 0)) * 1.1;
+  const tip = (p, i) => {
+    const se = p.t.session;
+    return (<>
+      <div style={{color:RES_C.text}}>#{i + 1} · {p.t.src}→{p.t.dst} · {p.t.time}</div>
+      <div>QBER_test {se.qTest != null ? `%${(se.qTest * 100).toFixed(2)}` : "—"} · ℓ {se.ell} bit · {se.nHops} atlama</div>
+      <div style={{color:se.status === "DELIVERED" ? RES_C.ok : RES_C.bad}}>{se.status === "DELIVERED" ? "✓ TESLİM" : `✗ İPTAL (${se.code})`}</div>
+    </>);
+  };
+  return (
+    <div style={{flex:1,overflowY:"auto",padding:12,zIndex:1,position:"relative",display:"flex",flexDirection:"column",gap:10}}>
+      <div style={{display:"flex",alignItems:"baseline",gap:10}}>
+        <span style={{fontSize:8,color:RES_C.label,letterSpacing:".12em"}}>SONUÇLAR — OTURUM VE TEST KANITLARI</span>
+        <span style={{fontSize:8,color:RES_C.muted}}>yalnız ölçülen değerler; ölçülmeyen "—"</span>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:8}}>
+        {kpis.map((k) => (
+          <div key={k.l} style={{background:RES_C.panel,border:`1px solid ${RES_C.line}`,borderRadius:6,padding:"8px 10px"}}>
+            <div style={{fontSize:7,color:RES_C.label,letterSpacing:".1em",marginBottom:4}}>{k.l.toLocaleUpperCase("tr-TR")}</div>
+            <div style={{fontSize:16,fontWeight:700,color:RES_C.ink,fontFamily:"monospace",whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{k.v}</div>
+            <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4,minHeight:14}}>
+              {k.st !== null && <ResStatus s={k.st}/>}
+              <span style={{fontSize:8,color:RES_C.muted}}>{k.note}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"minmax(0,1.45fr) minmax(0,1fr)",gap:10}}>
+        <ResPanel title="OTURUM GEÇMİŞİ" sub={`${hist.length} iletim (en çok 50)`}>
+          <div style={{fontSize:8,color:RES_C.text,marginBottom:2}}>QBER_test (açıklanan test bitlerinden)</div>
+          <ResSeriesChart points={qPts} kind="line" yMax={qMax} fmt={(v) => `%${(v * 100).toFixed(0)}`}
+            threshold={0.11} thresholdLabel="iptal eşiği %11" tip={tip}/>
+          <div style={{fontSize:8,color:RES_C.text,margin:"8px 0 2px"}}>ℓ — kanıtlı anahtar (bit; ✗ = iptal, anahtar yok)</div>
+          <ResSeriesChart points={lPts} kind="bar" yMax={lMax} fmt={(v) => Math.round(v).toLocaleString("tr-TR")} tip={tip} height={110}/>
+        </ResPanel>
+        <ResPanel title="ATLAMA KANIT MATRİSİ" sub={last ? `son iletim · ${s.status === "DELIVERED" ? "teslim" : `iptal (${s.code})`}` : ""}>
+          <ResHopMatrix hops={hops}/>
+        </ResPanel>
+      </div>
+      <div style={{display:"grid",gridTemplateColumns:"minmax(0,1.45fr) minmax(0,1fr)",gap:10}}>
+        <ResPanel title="TEST RAPORLARI" sub={snap ? `bb84/reports · en yeni rapor ${snap.latest || "—"}${snap.npmTest ? ` · son npm test ${snap.npmTest.passed}/${snap.npmTest.total} (${(snap.npmTest.at || "").slice(0, 16).replace("T", " ")})` : ""}` : ""}>
+          <ResReports snap={snap}/>
+        </ResPanel>
+        <div style={{display:"flex",flexDirection:"column",gap:10,minWidth:0}}>
+          <ResPanel title="AÇIK KONULAR" sub="README §6–§7 ve HAL belgelerinden">
+            {RES_OPEN_ISSUES.map((o) => (
+              <div key={o.t} style={{display:"flex",gap:8,alignItems:"flex-start",padding:"3px 0",borderBottom:`1px solid ${RES_C.line}`}}>
+                <ResStatus s={o.s}/>
+                <div style={{minWidth:0}}>
+                  <div style={{fontSize:9,color:RES_C.ink}}>{o.t}</div>
+                  <div style={{fontSize:8,color:RES_C.muted}}>{o.d}</div>
+                </div>
+              </div>
+            ))}
+          </ResPanel>
+          <ResPanel title="KAYIT" sub="son 14 satır (tamamı: 📋 KAYIT)">
+            <div style={{fontFamily:"monospace",fontSize:8,lineHeight:1.5,maxHeight:170,overflowY:"auto"}}>
+              {log.slice(-14).map((e) => (
+                <div key={e.id} style={{display:"flex",gap:6}}>
+                  <span style={{color:RES_C.label,flexShrink:0}}>{e.ts}</span>
+                  <span style={{color:LC[e.type] || RES_C.muted,flexShrink:0,minWidth:26,fontWeight:700}}>{e.type}</span>
+                  <span style={{color:RES_C.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{e.text}</span>
+                </div>
+              ))}
+              {!log.length && <div style={{color:RES_C.muted}}>Kayıt boş.</div>}
+            </div>
+          </ResPanel>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Spark({ data, color, h=28 }) {
   if (!data||data.length<2) return <div style={{height:h}}/>;
   const mx=Math.max(...data)||1, mn=Math.min(...data);
@@ -11564,7 +11875,11 @@ function PhotonNet() {
       original:msg, decoded, channelDecoded,
       session: { status: sres.status, code: sres.code, reason: sres.reason, pulses: sres.pulses, rounds: sres.rounds,
         siftedTotal: sres.siftedTotal, testedTotal: sres.testedTotal, qTest: qber, ell: delivered ? sres.proof.ell : 0,
-        n: delivered ? sres.n : null, k: delivered ? sres.k : null, nHops: nHopsQkd },
+        n: delivered ? sres.n : null, k: delivered ? sres.k : null, nHops: nHopsQkd,
+        // 📈 SONUÇLAR sekmesi için (çekirdek v4.2): atlama başına kanıt — iptal edilen oturumlarda da (son kontrol)
+        hopChecks: sres.hopChecks, leakEC: delivered ? sres.leakEC : null, worstHopQber: sres.worstHopQber,
+        endToEndKeyBits: delivered ? sres.endToEndKeyBits : 0, relayPublicBits: delivered ? sres.relayPublicBits : 0,
+        ecDiscardedBlocks: sres.ecDiscardedBlocks, totalKm },
       bits, recv,
       lostCount:totalLost,   // DÜZELTME: 'lost' değil 'lostCount'
       flipCount:totalFlip,
@@ -12677,8 +12992,11 @@ function PhotonNet() {
   `}</style>
 
   {/* ══ TOPBAR ══════════════════════════════════════════════ */}
+  {/* Üst çubuk kendi içinde yatay kayar (v4.2): dar ekranda sağa taşan öğelere (sekmeler dahil) ulaşılabilir;
+      odak/scrollIntoView yalnız çubuğu kaydırır. Önceden kök kapsayıcı (overflow:hidden) kayıp sol paneli
+      kesiyordu; 1366 px'te son sekmelere ulaşılamıyordu. */}
   <div style={{height:46,background:"#030610",borderBottom:"1px solid #0a162888",
-    display:"flex",alignItems:"center",padding:"0 14px",gap:10,flexShrink:0}}>
+    display:"flex",alignItems:"center",padding:"0 14px",gap:10,flexShrink:0,overflowX:"auto",overflowY:"hidden",scrollbarWidth:"none"}}>
     <div style={{width:26,height:26,borderRadius:4,
       background:"linear-gradient(135deg,#00d4ff22,#7c3aed22)",
       border:"1px solid #00d4ff33",
@@ -12710,7 +13028,7 @@ function PhotonNet() {
       </div>
     ))}
     <div style={{display:"flex",gap:2,marginLeft:"auto"}}>
-      {[["MAP","🌐 AĞ"],["SAT","🛰 UYDU"],["TRF","📊 TRAFİK"],["TML","⧉ ZAMAN ÇİZ."],["GRAPH","🕸 GRAPH"],["WDG","🛡 BEKÇİ"],["PRED","🔮 TAHMİN"],["NGM","🔬 GÜRÜLTÜ"],["HW","🔧 DONANIM"],["LOG","📋 KAYIT"]].map(([k,l])=>(
+      {[["MAP","🌐 AĞ"],["SAT","🛰 UYDU"],["TRF","📊 TRAFİK"],["TML","⧉ ZAMAN ÇİZ."],["GRAPH","🕸 GRAPH"],["WDG","🛡 BEKÇİ"],["PRED","🔮 TAHMİN"],["NGM","🔬 GÜRÜLTÜ"],["HW","🔧 DONANIM"],["RES","📈 SONUÇLAR"],["LOG","📋 KAYIT"]].map(([k,l])=>(
         <button key={k} className={`ptab ${tab===k?"on":""}`} onClick={()=>setTab(k)}>{l}</button>
       ))}
     </div>
@@ -14881,6 +15199,11 @@ function PhotonNet() {
             </div>
           )}
         </div>
+      )}
+
+      {/* 📈 SONUÇLAR (çekirdek v4.2): oturum + gömülü test raporu kanıtları */}
+      {tab==="RES"&&(
+        <ResultsDashboard traffic={traffic} result={result} log={log} detectorState={detectorState}/>
       )}
 
       {/* LOG */}

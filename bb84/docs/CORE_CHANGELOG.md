@@ -12,6 +12,23 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v3 | `421513f72bad1fb32b24c78453f9f6fdcbdbab83bd10f044d58ffc71b42bb3d4` | `421513f7…2bb3d4` |
 | v4 | `af1f56a1adbe6e7d7566d361aedc60c4149ecf49557f4e8f2c535937f01a12c3` | `af1f56a1…1a12c3` |
 | v4.1 | `5c12cde3a6c1d4acfb935dfb9aade5e5b79a42a65d7e6e04e92d88586b676313` | `5c12cde3…676313` |
+| v4.2 | `b7b6b2437ecdd037cff301b2441ac522244018294a4755b8b3d36876c3a4a560` | `b7b6b243…a4a560` |
+
+## v4.2 (2026-11) — 📈 SONUÇLAR sekmesi (yalnız arayüz)
+
+Algoritma değişmedi; oturum, kanıt ve anahtar bitleri v4.1 ile aynı. Hash değiştiği için yeni satır açıldı.
+
+- **Yeni sekme:** `ResultsDashboard` bileşeni. Yalnız ölçülen veriyi gösterir: bu oturumdaki iletimlerin QBER_test ve ℓ
+  geçmişi, son iletimin atlama başına kanıt matrisi (`hopChecks`: n, k, QBER_test, Cascade sızıntısı, ℓ), derleme
+  anında gömülen test raporu özeti ve README §6–§7'deki açık konular. Ölçülmeyen değer "—" olarak kalır.
+- **Sonuç nesnesi:** `res.session` artık `hopChecks`, `leakEC`, `worstHopQber`, `endToEndKeyBits`, `relayPublicBits`,
+  `ecDiscardedBlocks`, `totalKm` alanlarını taşıyor (iptal edilen oturumlarda da son kontrol).
+- **Üst çubuk:** kendi içinde yatay kayıyor. Önceden dar ekranda kök kapsayıcı (overflow:hidden) kayıyor, sol panel
+  kesiliyor ve 1366 px'te son sekmelere ulaşılamıyordu.
+- **Rapor özeti:** `bb84/tools/build_reports_snapshot.js` `bb84/reports/*.json` ve son `npm test` özetini
+  `bb84/reports/reports_snapshot.js` dosyasına yazar (`npm test` sonunda otomatik); HTML onu sabit bir `<script src>`
+  etiketiyle yükler. İçerik HTML'e gömülmez: gömülü kopya her test koşusunda eskiyip `--check`'i bozuyordu (denendi).
+- `PHOTONNET_CORE_VERSION` "v4.2".
 
 ## v4.1 (2026-10) — sonuç kartında ℓ etiketi (yalnız arayüz)
 

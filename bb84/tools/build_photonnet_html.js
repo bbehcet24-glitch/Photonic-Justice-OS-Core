@@ -16,6 +16,7 @@
 // yalnızca uygulama script'i değiştirilir.
 //
 // config.json (dedektör profilleri) doğrulanıp <script id="photonnet-config"> olarak gömülür (çekirdek v3).
+// bb84/reports/reports_snapshot.js <script src> ile bağlanır (📈 SONUÇLAR sekmesi, çekirdek v4.2; içerik gömülmez).
 //
 // KULLANIM: node bb84/tools/build_photonnet_html.js           → PhotonNet.html + PhotonNet_offline.html yazar
 //           node bb84/tools/build_photonnet_html.js --check   → yalnız doğrular (CI)
@@ -58,6 +59,12 @@ window.__PHOTONNET_CONFIG__ = ${json};
 </script>
 ` };
 }
+
+// ── Test raporu özeti (📈 SONUÇLAR sekmesi, çekirdek v4.2) ─────────────────────────────────────────
+// HTML'e GÖMÜLMEZ: raporlar her test koşusunda yeniden yazıldığından gömülü kopya --check'i bozardı. Yerine
+// sabit bir <script src> etiketi eklenir; dosyayı bb84/tools/build_reports_snapshot.js üretir (npm test sonunda
+// otomatik). file:// ile açılınca klasik <script src> yüklenir; dosya yoksa sekme bunu açıkça söyler.
+const REPORTS_TAG = '<script id="photonnet-reports" src="bb84/reports/reports_snapshot.js"></script>';
 
 function requireTypescript() {
   try {
@@ -170,6 +177,13 @@ try {
     newHtml = newHtml.slice(0, scriptOpenIdx) + cfgBlock + "\n" + newHtml.slice(scriptOpenIdx);
   }
   if (newHtml.split(CONFIG_OPEN).length - 1 !== 1) throw new Error("[build_photonnet_html] config bloğu sayısı 1 değil — iptal edildi");
+
+  // ── Test raporu özeti etiketi: config bloğunun HEMEN arkasına (yoksa eklenir; içerik sabittir) ──
+  if (!newHtml.includes(REPORTS_TAG)) {
+    const cfgEnd = newHtml.indexOf("</script>", newHtml.indexOf(CONFIG_OPEN)) + "</script>".length;
+    newHtml = newHtml.slice(0, cfgEnd) + "\n" + REPORTS_TAG + newHtml.slice(cfgEnd);
+  }
+  if (newHtml.split(REPORTS_TAG).length - 1 !== 1) throw new Error("[build_photonnet_html] rapor etiketi sayısı 1 değil — iptal edildi");
 
   // ── Kendi kendini doğrulama: gömülecek script SÖZDİZİMSEL olarak geçerli mi? ──
   // (Bu script tarayıcı globallerine — React/document/window — bağımlı
