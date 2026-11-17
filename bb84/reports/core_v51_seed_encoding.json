@@ -1,0 +1,42 @@
+{
+  "generatedAt": "2026-11-17T17:52:54.386Z",
+  "checks": [
+    {
+      "name": "E1 Metin ↔ bit UTF-8: Türkçe ve emoji kayıpsız gidiş-dönüş, \"Merhaba Dünya\" = 112 bit",
+      "ok": true,
+      "detail": "4 örnek birebir döndü: true; \"Merhaba Dünya\" 112 bit (v5: 104); \"ğ\" 16 bit (v5'in 8 bitlik dönüşümü 0x1f veriyordu → bozuk)"
+    },
+    {
+      "name": "E2 Toeplitz tohumu: her atlamada n + ℓ − 1 bit (tam 2-evrensel aile), entropiden; anahtarlar eşleşti, mesaj çözüldü",
+      "ok": true,
+      "detail": "#0: n 3426 + ℓ 394 − 1 = 3819 bit · #1: n 3558 + ℓ 416 − 1 = 3973 bit · #2: n 3318 + ℓ 291 − 1 = 3608 bit · çözülen \"Teşekkürler, İğdır\""
+    },
+    {
+      "name": "E3 PE alt kümesi: tam k, tekrarsız, düzgün (her indis ≈ k/N); aynı akış aynı, farklı akış farklı alt küme",
+      "ok": true,
+      "detail": "N=50, k=10, 20000 çekiliş: sıklık 0.194–0.206 (beklenen 0.200, en büyük sapma 0.0060)"
+    },
+    {
+      "name": "E4 QKDSecurityProof.run: aynı entanglementSeed ile iki çağrı farklı anahtar (tohum oturum tohumundan değil); PE süzgeci rng fonksiyonu kabul ediyor",
+      "ok": true,
+      "detail": "ℓ 1405 bit, iki çağrı farklı; split(rng) test payı 0.2011"
+    },
+    {
+      "name": "E5 KEY_BUDGET türü ayrılıyor: uydu atlamasında simülasyon darbe bütçesi (gerekçe bunu söylüyor), 147 km fiberde hat kaybı",
+      "ok": true,
+      "detail": "uydu (t = −230 s): KEY_BUDGET/simulation-pulse-budget — uydu atlaması (#0): bu SİMÜLASYON darbe bütçesinin sınırıdır (100 MHz kaynakta geçişin 0.04 s'si; gerçek geçiş ~569 s anahtar toplar), fiziksel bir sınır değildir · fiber 147 km: KEY_BUDGET/link-loss"
+    },
+    {
+      "name": "E6 Aynı entropi akışıyla iki oturum birebir aynı (QRNG kaydıyla yeniden oynatılabilir)",
+      "ok": true,
+      "detail": "DELIVERED/DELIVERED, QBER 1.93%/1.93%, OTP anahtarı aynı"
+    },
+    {
+      "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
+      "ok": true,
+      "detail": "905987d79187c88b…"
+    }
+  ],
+  "passed": 7,
+  "total": 7
+}

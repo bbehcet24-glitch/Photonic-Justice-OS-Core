@@ -16,6 +16,32 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v4.3 | `5b7521ab4157de7491fcbc98dd134a84b26b881814d3aa3dc5726c3aa4f342c2` | `5b7521ab…f342c2` |
 | v4.4 | `e8de863c426936e0398c9848b9cdea5441ec846ec5dad9854f8976201343815c` | `e8de863c…43815c` |
 | v5 | `528321cb930b3266c602f42a0ab304128e839ba663b1dbb4bdaad02de1130cc1` | `528321cb…130cc1` |
+| v5.1 | `905987d79187c88b114d9465ead5108dda851f4886542de46c2a845ae49650e4` | `905987d7…9650e4` |
+
+## v5.1 (2026-11) — PE alt kümesi ve Toeplitz tohumu entropiden, UTF-8 metin kodlaması (hakem bulguları B3, C4, C5)
+
+**Algoritma değişti.** Bulgular PhotonNet çekirdek v5 için yapılan hakem incelemesinden (17 Kasım 2026).
+
+- **Toeplitz tohumu (B3):** v5'e kadar gizlilik yükseltmenin Toeplitz matrisi 32 bitlik bir mulberry32 tohumundan
+  türetiliyordu (`SecureMessageSession`: publicSeed; `QKDSecurityProof.run`: entanglementSeed; havuz blokları:
+  entanglementSeed ^ "BLK1"). n×ℓ Toeplitz ailesi n+ℓ−1 rastgele bit ister; 2³² elemanlı bir alt küme ℓ > 32 için
+  2-evrensel değildir, bu yüzden artık özet lemması uygulanamaz ve ℓ güvenlik iddiası taşıyamaz. Tohumun açıklanması
+  sorun değildir; sorun ailenin küçüklüğüdür. Şimdi tohum tam n+ℓ−1 bit ve entropi kaynağından çekilir
+  (oturumda `entropyBits`, havuzda ve `run`'da platform CSPRNG; `crypto.getRandomValues` yoksa fail-closed hata).
+  Ölçülen: 180 km / 3 atlamada tohum 3614–3723 bit.
+- **PE test alt kümesi (B3 ile aynı kök):** test bitlerinin seçimi de 32 bitlik, iletimden önce bilinen tohumdan
+  geliyordu. Seçim önceden bilinirse dinleyici yalnız test edilmeyecek bitlere saldırarak QBER kontrolünden kaçabilir.
+  Şimdi alt küme değerlendirme anında, entropiden, Floyd algoritmasıyla seçilir (`_sampleSubset`, sapmasız
+  reddetmeli örnekleme). Havuz bloklarında Bernoulli seçimi platform CSPRNG akışıyla. `publicSeed` yalnız Cascade blok
+  permütasyonlarında kalır (gizlilik gerektirmez).
+- **UTF-8 (C4):** `t2b` her karakterin kod noktasının düşük 8 bitini alıyordu; 255'i aşan karakterler (ğ, ş, ı, İ,
+  Ğ, Ş, —, emoji) kesiliyordu ("ğ" → 0x1F). Artık UTF-8 (TextEncoder/TextDecoder), kayıpsız. "Merhaba Dünya" 104 değil
+  112 bit; OTP kapısı ℓ ≥ 112 ister.
+- **KEY_BUDGET türü (C5):** uydu atlamasındaki bütçe iptali `budgetKind: "simulation-pulse-budget"` taşır ve gerekçe
+  bunun simülasyon darbe bütçesi olduğunu, fiziksel sınır olmadığını söyler; fiber için `"link-loss"`.
+- **Kanıt bağlama (B1):** `npm test` özeti koşu başındaki git HEAD'i, ağacın temiz olup olmadığını ve çekirdek
+  SHA-256'sını kaydeder; 📈 SONUÇLAR sekmesi commit'i gösterir.
+- Test: `bb84/core_v51_seed_encoding_test.js` (E1–E6). `PHOTONNET_CORE_VERSION` "v5.1".
 
 ## v5 (2026-11) — hibrit uydu + fiber anahtar oturumu, QBER erken uyarı bandı, olay akışı (TS-HYBRID-QKD-04)
 

@@ -61,7 +61,7 @@ function buildSnapshot() {
   let npmTest = null;
   try {
     const s = JSON.parse(fs.readFileSync(NPM_SUMMARY, "utf-8"));
-    npmTest = { at: s.generatedAt, passed: s.passed, total: s.total,
+    npmTest = { at: s.generatedAt, passed: s.passed, total: s.total, gitHead: s.gitHead || null, gitClean: s.gitClean ?? null, coreSha256: s.coreSha256 || null,
       results: (s.results || []).map((r) => ({ n: r.name, ok: !!r.ok, ms: r.ms })) };
   } catch (_) { /* yerel koşu yok: sekme yalnız raporları gösterir */ }
   return { builtAt: new Date().toISOString(), latest, reports, npmTest };

@@ -1,6 +1,6 @@
 # PhotonNet — BB84 Quantum Key Distribution (QKD) Simulator and Production Layers
 
-**photonicquantumcore** · core engine v5 · `npm test`: 104 self-tests (JavaScript + Python HAL) in CI
+**photonicquantumcore** · core engine v5.1 · `npm test`: 105 self-tests (JavaScript + Python HAL) in CI
 
 PhotonNet simulates an end-to-end QKD network on a classical computer and wraps the simulation in the
 software a real deployment needs. It consists of:
@@ -31,6 +31,14 @@ SHA-256 in the tests; every core version is recorded in
 source, an unhealthy QRNG batch, a revoked certificate or an unknown detector profile stops the
 operation instead of falling back silently. Almost every file states what it does **not** do
 ("honesty note" / "scope note"); this README follows the same rule.
+
+**Scope of the claims.** Three limits apply wherever this README says "secure", "end to end" or "ℓ":
+(1) ℓ is the finite-key length the Serfling/GLLP bound gives **under the simulator's channel model and a CSPRNG
+entropy source**; it is a simulation metric, not a certified security level (since core v5.1 the Toeplitz seed is
+the full n+ℓ−1 bits, so the hashing family itself is 2-universal). (2) On a trusted-node route, "end to end" means
+the key is relayed through every intermediate node, and security rests on all of them (31 nodes on the default
+İstanbul → Bağdat route). (3) The ETSI-014 KME, mTLS and OCSP/CRL stack is tested on its own (19/19); the browser
+application's key session is **not** connected to the KME.
 
 **What it is not.** It is a simulation and an integration stack, not a QKD device. There is no photonic
 hardware and no certified QRNG; entropy comes from the platform CSPRNG, so security is computational, not
@@ -152,7 +160,7 @@ Concrete mechanisms that enforce this pattern:
   of `photonnet_core.js` (and, where relevant, of other read-only bridge files such as
   `timetag_acquisition_bridge.js`) before and after running — the claim "the core was not touched" is
   re-proven on every run, not assumed once. When the core deliberately moves to a new version (currently
-  **v5**, SHA-256 `528321cb…130cc1`), the old/new hash and every changed function are documented in
+  **v5.1**, SHA-256 `905987d7…9650e4`), the old/new hash and every changed function are documented in
   [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md), and all pinned tests are updated to the new
   hash and re-run.
 - **`extract_core.js --check`**: a CI gate — automatically verifies that `photonnet_core.js` is in sync
@@ -216,6 +224,7 @@ the top of the file).
 
 | File | What it does |
 |---|---|
+| `core_v51_seed_encoding_test.js` | **Core v5.1** — 7/7: UTF-8 text encoding (Turkish characters and emoji round-trip; "Merhaba Dünya" = 112 bits, the old 8-bit conversion cut "ğ" to 0x1F); the Toeplitz seed is the full n+ℓ−1 bits from the entropy source on every hop; the parameter-estimation subset is uniform and drawn at evaluation time; `QKDSecurityProof.run` no longer derives its seed from the session seed; satellite `KEY_BUDGET` is labelled as a simulation pulse budget; seeded entropy replays exactly. |
 | `hybrid_qkd_test.js` | **Core v5** — 9/9 self-tests for the hybrid satellite + fiber key session: LEO pass geometry (95.5 min period, ±285 s visibility window, ±23 ppm Doppler), downlink loss 25.9–34.2 dB at 568–1200 km (rough agreement with the ~22–35 dB reported for Micius), delivery at zenith at night, `SAT_NOT_VISIBLE` below visibility 0.1, daytime sky background → `HOP_QBER`, eavesdropping only on the satellite hop, the DCR-dependent warning band (exact binomial quantile, false-warning rate ≤ α) with the 11 % abort threshold unchanged, and identical results to v4.4 when no channels are given. |
 | `timetag_acquisition_bridge.js` | **Phase 1** — converts a raw picosecond time-tagged detector click stream (the format a real time-tagger would produce) into the format expected by the classical sifting layer. `TimeTagEmulator` models Bob's 4 detector channels (H/V/D/A) with detector efficiency, dark-count probability, Gaussian timing jitter (Box–Muller), dead time and optical misalignment. QBER_ABORT = 0.11. Basis/bit choices come from an injectable `qrng` interface backed by `crypto.randomBytes` — `mulberry32` is used ONLY for physical noise, NOT for key material. |
 | `timetag_acquisition_test.js` | 7/7 self-tests: clean-line QBER stays at the optical-misalignment floor; QBER rises predictably with dark counts; widening the coincidence window trades yield↑ against QBER↑; an eavesdropper (Eve) is caught (QBER ~25 % → abort); 3 different randomness sources change QBER by < 0.6 % (QBER comes from physics, not from the RNG choice); sifted bits are packed correctly into the ETSI-014 format. |
@@ -380,7 +389,7 @@ the top of the file).
 | `bb84/tools/verify_photonnet_html.js` | An E2E check that opens the rebuilt `PhotonNet.html` in real Chromium (Playwright) and verifies it mounts without console/page errors (its screenshot goes to `ci-reports/`, not into the repository). |
 | `bb84/tools/capture_screenshots.js` | Regenerates the README screenshots (`docs/screenshots/`) from the current `PhotonNet.html`; exits with 1 without writing any file if the transmission fails or the page reports an error. |
 | `bb84/tools/ui_abort_drill.js` | Abort drill on the real UI (Playwright): baseline → noise injection → intercept-resend eavesdropping → recovery → a 147 km single-hop route (Zagreb → Ljubljana) that ends in KEY_BUDGET. Checks that the abort decision matches the 11 % QBER threshold, that no key or message is released on abort, that the abort line appears in the log and that the security panel shows ALARM, then recovery. Writes `bb84/reports/ui_abort_drill.json` and screenshots to `ci-reports/ui_abort_drill/`. Not part of `npm test` (needs Chromium). |
-| `bb84/tools/ts_hybrid_qkd_04.js` | Scenario TS-HYBRID-QKD-04 on the real UI (Playwright): terrestrial baseline, 🛰 hybrid satellite + fiber key at three moments of a LEO pass (zenith, −60 s with +14.8 ppm Doppler, +300 s below the visibility limit → `SAT_NOT_VISIBLE`), InGaAs with the DCR-dependent warning band, intercept-resend on the free-space hop → `HOP_QBER`, recovery with a `KEY_DELIVERED` event, and the 147 km `KEY_BUDGET` route. Spec criteria the model does not meet stay failed in the report (e.g. the 1.17–1.50 % baseline band; measured ≈1.5 %). Writes `bb84/reports/ts_hybrid_qkd_04.json`. Not part of `npm test`. |
+| `bb84/tools/ts_hybrid_qkd_04.js` | Scenario TS-HYBRID-QKD-04 on the real UI (Playwright): terrestrial baseline, 🛰 hybrid satellite + fiber key at three moments of a LEO pass (zenith, −60 s with +14.8 ppm Doppler, +300 s below the visibility limit → `SAT_NOT_VISIBLE`), InGaAs with the DCR-dependent warning band, intercept-resend on the free-space hop → `HOP_QBER`, recovery with a `KEY_DELIVERED` event, and the 147 km `KEY_BUDGET` route. The baseline gate is statistical consistency with the model (pooled QBER within 4σ of the expected value); the spec's fixed 1.17–1.50 % band is recorded as an observation, not a gate, because the model's own mean (≈1.5 %) sits on its edge. Writes `bb84/reports/ts_hybrid_qkd_04.json`. Not part of `npm test`. |
 | `bb84/tools/QKDNETSIM_BUILD.md` | Documents how QKDNetSim (a third-party, academically published ns-3 module) was built from source in a sandbox where apt-get/PyPI/gitlab.com were blocked — records 3 specific name-mismatch fixes and the exact deterministic output values obtained in two independent build sessions (28,140 delivered keys). |
 | `bb84/ci/run_integration_tests.sh` | Central CI integration-test orchestration called by both the GitHub Actions and the GitLab CI YAML. Two modes via `KME_MODE`: "ephemeral" (default — temporary CA/certificates, full clean-up) and "external" (against a real staging KME endpoint, with CI-secret certificates). |
 | `.github/workflows/production-pipeline.yml`, `.gitlab-ci.yml` | CI/CD pipelines — gate 1 (CA private-key leak protection), gate 2 (core/HTML/config sync), gates 3a–3d (certificate rotation/revocation scenarios S1–S6 and OCSP staleness, ephemeral and external IBM integration, SoftHSM2 + PKCS#11 bridge, production build strip), gate 5 (`npm test`, all JS + Python self-tests) and gate 4 (production sealing: manual dispatch only, and only after every other always-run gate, gate 5 included, has passed). |

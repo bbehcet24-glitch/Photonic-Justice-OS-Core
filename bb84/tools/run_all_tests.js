@@ -86,6 +86,16 @@ async function pool(items, n, fn) {
 
 async function main() {
   const t0 = Date.now(), results = [];
+  // Kanıtı commit'e bağla (hakem bulgusu B1): koşu BAŞINDAKİ git HEAD, çalışma ağacının temiz olup olmadığı ve
+  // çekirdek SHA-256 özete yazılır. Testler bb84/reports/*.json'u yeniden yazdığı için durum koşu başında okunur.
+  const provenance = (() => {
+    const git = (args) => { try { return execFileSync("git", args, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] }).trim(); } catch (_) { return null; } };
+    const dirty = git(["status", "--porcelain", "--untracked-files=no"]);
+    return { startedAt: new Date().toISOString(), gitHead: git(["rev-parse", "HEAD"]), gitClean: dirty === "",
+      dirtyFiles: dirty ? dirty.split("\n").length : 0,
+      coreSha256: require("crypto").createHash("sha256").update(fs.readFileSync(path.join(ROOT, "bb84", "photonnet_core.js"))).digest("hex") };
+  })();
+  console.log(`[npm test] commit ${provenance.gitHead ? provenance.gitHead.slice(0, 7) : "—"} (${provenance.gitClean ? "temiz ağaç" : `${provenance.dirtyFiles} değişmiş dosya`}), çekirdek ${provenance.coreSha256.slice(0, 8)}…`);
   const rec = (name, r) => { results.push({ name, ok: r.code === 0, code: r.code, ms: r.ms, tail: r.code === 0 ? "" : r.out.trim().split("\n").slice(-8).join("\n") }); console.log(`${r.code === 0 ? "✓" : "✗"} ${name} (${(r.ms / 1000).toFixed(1)} s)`); };
 
   console.log(`[npm test] test PKI'sı: ${ensureTestPki()}`);
@@ -112,7 +122,7 @@ async function main() {
   console.log(`\n══ ${results.length - failed.length}/${results.length} geçti (${((Date.now() - t0) / 60000).toFixed(1)} dk) ══`);
   for (const f of failed) console.log(`\n✗ ${f.name} (çıkış ${f.code})\n${f.tail}`);
   fs.mkdirSync(path.join(ROOT, "ci-reports"), { recursive: true });
-  fs.writeFileSync(path.join(ROOT, "ci-reports", "npm_test_summary.json"), JSON.stringify({ generatedAt: new Date().toISOString(), passed: results.length - failed.length, total: results.length, results: results.map(({ tail, ...r }) => r) }, null, 2));
+  fs.writeFileSync(path.join(ROOT, "ci-reports", "npm_test_summary.json"), JSON.stringify({ generatedAt: new Date().toISOString(), ...provenance, passed: results.length - failed.length, total: results.length, results: results.map(({ tail, ...r }) => r) }, null, 2));
   // 📈 SONUÇLAR sekmesinin okuduğu özet (bb84/reports/reports_snapshot.js) bu koşunun raporlarıyla güncellenir
   try { const s = require("./build_reports_snapshot.js").writeSnapshot(); console.log(`[npm test] rapor özeti güncellendi: ${s.reports.length} rapor`); }
   catch (e) { console.error(`[npm test] rapor özeti yazılamadı: ${e.message}`); }

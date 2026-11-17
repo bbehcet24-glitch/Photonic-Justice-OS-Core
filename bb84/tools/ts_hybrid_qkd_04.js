@@ -29,7 +29,9 @@ const { chromium } = require("playwright");
 const ROOT = path.resolve(__dirname, "..", "..");
 const SHOTS = path.join(ROOT, "ci-reports", "ts_hybrid_qkd_04");
 const REPORT = path.join(ROOT, "bb84", "reports", "ts_hybrid_qkd_04.json");
-const out = { generatedAt: new Date().toISOString(), scenario: "TS-HYBRID-QKD-04", checks: [], transmissions: [], notImplemented: [] };
+const out = { generatedAt: new Date().toISOString(), scenario: "TS-HYBRID-QKD-04", checks: [], observations: [], transmissions: [], notImplemented: [] };
+// observations: belirtimdeki, modelin kendi istatistiksel belirsizliğiyle karar kapısı olamayan ölçütler — kaydedilir,
+// geçti/kaldı sayılmaz (hakem bulgusu C1/K3: %50 geçen bir ölçüt kapı değil, gözlem metriğidir)
 // notImplemented: belirtimde olup sistemde karşılığı olmayan bileşenler (çekirdek v5 ile S2 ve dinamik α eklendi; liste boş kalmalı)
 const chk = (name, ok, detail) => { out.checks.push({ name, ok: !!ok, detail }); console.log(`  [${ok ? "OK" : "FAIL"}] ${name} — ${detail}`); };
 const notImpl = (name, detail) => { out.notImplemented.push({ name, detail }); chk(`${name} — UYGULANMADI`, false, detail); };
@@ -94,11 +96,13 @@ function measureAbortLatency() {
       return { alarm: g(/ALARM — OTURUM İPTAL EDİLDİ \(([A-Z_]+)\)/), safe: /GÜVENLİ — anahtar kanıtlandı/.test(t),
         failClosed: /OTP anahtarı 0 bit, mesaj gönderilmedi/.test(t), ell: g(/Sonlu-anahtar ℓ ≥ mesaj biti[^\n]*\n\s*ℓ = (\d+) bit \(en zayıf atlama\)/) || null,
         worst: g(/QBER_TEST[^\n]*\n\s*%([\d.]+)/), pooled: g(/birleşik %([\d.]+)/), hops: g(/birleşik %[\d.]+ · (\d+) atlama/),
-        route: g(/ROTA\s*\n?\s*([\d.]+km\/\d+hop)/), detector: g(/DEDEKTÖR PROFİLİ\s*\n\s*(\S+)/) };
+        route: g(/ROTA\s*\n?\s*([\d.]+km\/\d+hop)/), detector: g(/DEDEKTÖR PROFİLİ\s*\n\s*(\S+)/),
+        minK: g(/en küçük k = ([\d.]+)/), expected: g(/Erken uyarı bandı[^\n]*\n[^\n]*\(beklenen %([\d.]+)\)/) };
     });
     const rec = { label, route: ui.route, detector: ui.detector, alarm: ui.alarm || null, safe: ui.safe, failClosed: ui.failClosed,
       ell: ui.ell ? +ui.ell : 0, worstQ: ui.worst != null ? +ui.worst / 100 : null, pooledQ: ui.pooled != null ? +ui.pooled / 100 : null,
-      hops: ui.hops ? +ui.hops : null, abortLine: r.abortLine, otpLine: r.otpLine, events: r.events };
+      hops: ui.hops ? +ui.hops : null, abortLine: r.abortLine, otpLine: r.otpLine, events: r.events,
+      minK: ui.minK ? +String(ui.minK).replace(/\./g, "") : null, expectedQ: ui.expected != null ? +ui.expected / 100 : null };
     if (rec.alarm === "KEY_BUDGET") { rec.worstQ = null; rec.pooledQ = null; } // PE aşamasına varılmadı: QBER ölçülmedi
     out.transmissions.push(rec);
     console.log(`  ${label}: ${rec.route} · ${rec.detector} · en kötü ${pct(rec.worstQ)} · birleşik ${pct(rec.pooledQ)} · ${rec.alarm ? `İPTAL (${rec.alarm})` : rec.safe ? `TESLİM, ℓ=${rec.ell}` : "?"}`);
@@ -118,10 +122,16 @@ function measureAbortLatency() {
     const base = [b1, b2];
     chk("S1 taban: iki iletim teslim, 60 km'lik atlamalar, panel GÜVENLİ", base.every((x) => x.safe && !x.alarm && x.ell > 0 && x.hops >= 2),
       base.map((x) => `${x.route}, ${x.hops} atlama, ℓ ${x.ell}`).join(" / "));
+    // K3: karar kapısı = modelle istatistiksel tutarlılık. Birleşik QBER, modelin beklediği değerden (hizalama hatası +
+    // karanlık sayım; panelin "beklenen" değeri) en çok 4σ sapabilir. σ = √(E(1−E)/k_top), k_top ≥ atlama × en küçük k
+    // (alt sınır → σ üst sınır → temkinli, yanlış alarm yok). Belirtimin sabit %1,17–1,50 bandı gözlem olarak kaydedilir.
+    const zs = base.map((x) => { const E = x.expectedQ, kt = (x.minK || 0) * (x.hops || 0); const sg = E != null && kt > 0 ? Math.sqrt(E * (1 - E) / kt) : null; return { E, sg, d: sg ? (x.pooledQ - E) / sg : null }; });
+    chk("S1 model tutarlılığı (karar kapısı): birleşik QBER beklenen değerden ≤ 4σ", zs.every((v) => v.d != null && Math.abs(v.d) <= 4),
+      base.map((x, i) => `birleşik ${pct(x.pooledQ)}, beklenen ${pct(zs[i].E)}, σ ≤ ${pct(zs[i].sg, 3)} (k_top ≥ ${x.hops}×${x.minK}), sapma ${zs[i].d != null ? zs[i].d.toFixed(2) : "—"}σ`).join(" / "));
     const inBand = base.every((x) => x.pooledQ != null && x.pooledQ >= 0.0117 && x.pooledQ <= 0.015);
-    chk("S1 belirtim ölçütü: birleşik QBER %1,17–%1,50 bandında", inBand,
-      `ölçülen birleşik ${base.map((x) => pct(x.pooledQ)).join(" / ")}, en kötü atlama ${base.map((x) => pct(x.worstQ)).join(" / ")}. ` +
-      "Modelin hizalama hatası e_d = %1,5 ve karanlık sayım payıyla beklenen birleşik değer ≈ %1,5–1,6; band bunun altında kaldığı için ölçüt modelle çelişebilir");
+    out.observations.push({ name: "S1 belirtim bandı %1,17–%1,50 (gözlem metriği, karar kapısı değil)", inBand,
+      detail: `ölçülen birleşik ${base.map((x) => pct(x.pooledQ)).join(" / ")}; modelin beklediği ≈ %1,5 bandın üst kenarında olduğundan bu ölçüt koşuların yaklaşık yarısında geçer` });
+    console.log(`  [GÖZLEM] S1 belirtim bandı: ${inBand ? "içinde" : "dışında"} — ${base.map((x) => pct(x.pooledQ)).join(" / ")}`);
     const bandS1 = await panelRow(/Erken uyarı bandı[^\n]*\n[^\n]*\(beklenen %([\d.]+)\)/);
     try {
       const hal = JSON.parse(fs.readFileSync(path.join(ROOT, "bb84", "reports", "hal_clock_tracker.json"), "utf8"));

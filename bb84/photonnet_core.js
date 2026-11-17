@@ -98,7 +98,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v5";
+const PHOTONNET_CORE_VERSION = "v5.1";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -1617,6 +1617,75 @@ class OneTimePad {
 //   6. Darbe bütçesi biterse İPTAL ("rota çok kayıplı") — anahtar ASLA sahte rastgelelikle uzatılmaz.
 // Güvenilir-düğüm zincirinde her hop'un QBER'i de eşikle denetlenir.
 // ══════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════
+// ÇEKİRDEK v5.1 — KAMUYA AÇIK AMA ÖNCEDEN BİLİNMEYEN RASTGELELİK (PE alt kümesi, Toeplitz tohumu)
+//
+// v5'e kadar parametre kestirimi (PE) test alt kümesi ve Toeplitz gizlilik yükseltme tohumu 32 bitlik bir
+// mulberry32 tohumundan (publicSeed / entanglementSeed) türetiliyordu. İki ayrı kusur:
+//  1) Toeplitz ailesi: n×ℓ Toeplitz matrisi n+ℓ−1 rastgele bit ister. 32 bitlik tohum en fazla 2³² matris seçer;
+//     ℓ > 32 için bu alt küme 2-evrensel DEĞİLDİR (çarpışma olasılığı 2^−ℓ'yi sağlamaz), yani artık özet lemması
+//     (leftover hash lemma) uygulanamaz ve ℓ bir güvenlik iddiası olarak taşınamaz. Tohumun kamuya açık olması sorun
+//     değildir (standart QKD'de açıklanır); sorun ailenin küçüklüğüdür.
+//  2) PE alt kümesi: tohum iletimden ÖNCE belliyse dinleyici hangi bitlerin test edileceğini bilir ve yalnız test
+//     edilmeyecek bitlere saldırarak QBER kontrolünden kaçabilir. Alt küme iletimden SONRA, öngörülemez seçilmelidir.
+// Düzeltme: ikisi de oturumun bağımsız entropi kaynağından (entropyBits: QRNG / platform CSPRNG) değerlendirme
+// anında çekilir. Toeplitz tohumu tam n+ℓ−1 bittir. Değerler yine kamuya açıklanır; yalnız önceden bilinmezler.
+// ══════════════════════════════════════════════════════════════
+/** Platform CSPRNG'sinden n bit (globalThis.crypto.getRandomValues). Yoksa fırlatır — sessizce PRNG'ye düşmez. */
+function _systemEntropyBits(n) {
+    const c = typeof globalThis !== "undefined" ? globalThis.crypto : null;
+    if (!c || typeof c.getRandomValues !== "function")
+        throw new Error("_systemEntropyBits: crypto.getRandomValues yok — güvenli entropi olmadan gizlilik yükseltme/PE seçimi yapılmaz");
+    const u = new Uint8Array(n);
+    for (let off = 0; off < n; off += 65536)
+        c.getRandomValues(u.subarray(off, Math.min(n, off + 65536)));
+    return Array.from(u, (x) => x & 1);
+}
+/** Bit dizisini toeplitzHash'in beklediği rng() arayüzüne çevirir: her çağrı bir biti tüketir (bit 0 → 0.25, 1 → 0.75). */
+function _bitsAsRng(bits) {
+    let i = 0;
+    return () => { if (i >= bits.length)
+        throw new Error("_bitsAsRng: tohum bitleri tükendi"); return bits[i++] ? 0.75 : 0.25; };
+}
+/** [0, m) aralığında düzgün tamsayı: entropi bitlerinden reddetmeli örnekleme (sapmasız). */
+function _uniformInt(m, entropyBits) {
+    if (!(Number.isInteger(m) && m >= 1))
+        throw new RangeError("_uniformInt: m ≥ 1 tamsayı");
+    if (m === 1)
+        return 0;
+    const w = Math.ceil(Math.log2(m));
+    for (;;) {
+        const b = entropyBits(w);
+        let v = 0;
+        for (let i = 0; i < w; i++)
+            v = v * 2 + (b[i] & 1);
+        if (v < m)
+            return v;
+    }
+}
+/** N öğeden k'lık düzgün rastgele alt küme (Floyd algoritması), entropi bitlerinden. Sıralı indisler döner. */
+function _sampleSubset(N, k, entropyBits) {
+    if (!(Number.isInteger(N) && Number.isInteger(k) && k >= 0 && k <= N))
+        throw new RangeError("_sampleSubset: 0 ≤ k ≤ N tamsayı");
+    const S = new Set();
+    for (let j = N - k; j < N; j++) {
+        const t = _uniformInt(j + 1, entropyBits);
+        S.add(S.has(t) ? j : t);
+    }
+    return [...S].sort((a, b) => a - b);
+}
+/** Platform CSPRNG'sinden [0,1) akışı (her değer 32 bit). Havuz bloklarında PE Bernoulli seçimi ve Toeplitz tohumu için. */
+function _systemRandom() {
+    const c = typeof globalThis !== "undefined" ? globalThis.crypto : null;
+    if (!c || typeof c.getRandomValues !== "function")
+        throw new Error("_systemRandom: crypto.getRandomValues yok");
+    const buf = new Uint32Array(1024);
+    let i = buf.length;
+    return () => { if (i >= buf.length) {
+        c.getRandomValues(buf);
+        i = 0;
+    } return buf[i++] / 4294967296; };
+}
 class SecureMessageSession {
     /**
      * ÇEKİRDEK v4 (docs/CORE_CHANGELOG.md):
@@ -1654,7 +1723,7 @@ class SecureMessageSession {
         if (typeof p.entropyBits !== "function")
             throw new TypeError("SecureMessageSession: entropyBits(n) zorunlu (bağımsız entropi kaynağı)");
         this.entropyBits = p.entropyBits;
-        this.publicRng = mulberry32(((p.publicSeed >>> 0) ^ 0x534d5353) >>> 0); // "SMSS" — test alt kümesi / PA tohumu (kamuya açık)
+        this.publicRng = mulberry32(((p.publicSeed >>> 0) ^ 0x534d5353) >>> 0); // "SMSS" — yalnız Cascade blok permütasyonları (kamuya açık; gizlilik gerektirmez). PE alt kümesi ve Toeplitz tohumu v5.1'den beri entropyBits'ten.
         const seedFromEntropy = () => _requireBits("SecureMessageSession.entropyBits", this.entropyBits(32)).reduce((s, b) => ((s << 1) | b) >>> 0, 0);
         this.hops = Array.from({ length: this.nHops }, (_, h) => ({
             hop: h,
@@ -1769,7 +1838,12 @@ class SecureMessageSession {
             return this._deliver();
         if (this.pulses >= o.maxPulses) {
             const slow = this.hops.filter((h) => !h.result).map((h) => h.hop);
-            return this._abort("KEY_BUDGET", `link başına ${this.pulses.toLocaleString("tr-TR")} darbede ${this.nHops > 1 ? `${slow.length}/${this.nHops} atlamada (ör. #${slow.slice(0, 3).join(", #")}) ` : ""}yeterli kanıtlanmış anahtar birikmedi (gereken ${this.needBits} bit) — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; daha kısa hop, ek güvenilir düğüm ya da yakın bir hedef seçin`);
+            // v5.1: yavaş atlama uydu atlamasıysa bu bir SİMÜLASYON bütçesi sınırıdır (geçişin küçük bir kesri), fiziksel sınır değil
+            const fsSlow = this.hops.find((h) => !h.result && h.kind === "free-space");
+            const budgetNote = fsSlow
+                ? ` — uydu atlaması (#${fsSlow.hop}): bu SİMÜLASYON darbe bütçesinin sınırıdır (${o.pulseRateHz / 1e6} MHz kaynakta geçişin ${(this.pulses / o.pulseRateHz).toFixed(2)} s'si; gerçek geçiş ~${Math.round(fsSlow.fs.pass.visibleWindowS().durationS)} s anahtar toplar), fiziksel bir sınır değildir`
+                : " — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; daha kısa hop, ek güvenilir düğüm ya da yakın bir hedef seçin";
+            return this._abort("KEY_BUDGET", `link başına ${this.pulses.toLocaleString("tr-TR")} darbede ${this.nHops > 1 ? `${slow.length}/${this.nHops} atlamada (ör. #${slow.slice(0, 3).join(", #")}) ` : ""}yeterli kanıtlanmış anahtar birikmedi (gereken ${this.needBits} bit)${budgetNote}`, { budgetKind: fsSlow ? "simulation-pulse-budget" : "link-loss" });
         }
         return { done: false, ...this._stats() };
     }
@@ -1777,21 +1851,21 @@ class SecureMessageSession {
     _evaluateHop(h) {
         const o = this.o, N = h.A.length, chain = this.nHops > 1;
         const k = Math.min(N - 1, Math.max(o.minTestBits, Math.round(o.testFraction * N)));
-        const idx = Array.from({ length: N }, (_, i) => i);
-        for (let i = N - 1; i > 0; i--) {
-            const j = Math.floor(this.publicRng() * (i + 1));
-            const t = idx[i];
-            idx[i] = idx[j];
-            idx[j] = t;
-        }
+        // v5.1: test alt kümesi iletimden SONRA, oturumun entropi kaynağından (öngörülemez) seçilir; sonra açıklanır.
+        const test = _sampleSubset(N, k, this.entropyBits), isTest = new Uint8Array(N);
+        for (const i of test)
+            isTest[i] = 1;
         let e = 0;
-        for (let i = 0; i < k; i++)
-            if (h.A[idx[i]] !== h.B[idx[i]])
+        for (const i of test)
+            if (h.A[i] !== h.B[i])
                 e++;
         const q = e / k;
         h.tested += k;
         this.testedTotal += k;
-        const keep = idx.slice(k).sort((x, y) => x - y);
+        const keep = [];
+        for (let i = 0; i < N; i++)
+            if (!isTest[i])
+                keep.push(i);
         const A = keep.map((i) => h.A[i]), B = keep.map((i) => h.B[i]); // test bitleri AÇIKLANDI → atıldı
         h.A = A;
         h.B = B;
@@ -1833,9 +1907,12 @@ class SecureMessageSession {
             h.target = Math.max(h.target * 2, n + 1);
             return null;
         }
-        const paSeed = (this.publicRng() * 4294967296) >>> 0;
-        const keyA = QKDSecurityProof.toeplitzHash(A, proof.ell, mulberry32(paSeed));
-        const keyB = QKDSecurityProof.toeplitzHash(casc.correctedBobBits, proof.ell, mulberry32(paSeed));
+        // v5.1: Toeplitz tohumu tam n+ℓ−1 bit, entropi kaynağından (2-evrensel ailenin tamamı); Alice ve Bob aynı
+        // (açıklanan) tohumu kullanır.
+        const paSeedBits = _requireBits("SecureMessageSession.entropyBits", this.entropyBits(A.length + proof.ell - 1));
+        const keyA = QKDSecurityProof.toeplitzHash(A, proof.ell, _bitsAsRng(paSeedBits));
+        const keyB = QKDSecurityProof.toeplitzHash(casc.correctedBobBits, proof.ell, _bitsAsRng(paSeedBits));
+        h.lastCheck = { ...h.lastCheck, paSeedBits: paSeedBits.length };
         h.result = { keyA, keyB, proof, q, n, k, leakEC: casc.leakedBits };
         return null;
     }
@@ -2441,8 +2518,11 @@ class QKDSecurityProof {
         const proof = this.secureKeyLength(siftedKeyBits.length, qBit, opts);
         let finalKeyBits = [];
         if (proof.secure) {
-            const seedRng = mulberry32((entanglementSeed ^ 0x50415345) >>> 0); // "PASE" — gizlilik yükseltme tohumu
-            finalKeyBits = this.toeplitzHash(siftedKeyBits, proof.ell, seedRng);
+            // v5.1: tohum tam n+ℓ−1 bit, entropiden (opts.entropyBits verilmezse platform CSPRNG). entanglementSeed artık
+            // gizlilik yükseltmeye girmez (32 bitlik aile 2-evrensel değildi).
+            const src = typeof opts.entropyBits === "function" ? opts.entropyBits : _systemEntropyBits;
+            const seedBits = _requireBits("QKDSecurityProof.run.entropyBits", src(siftedKeyBits.length + proof.ell - 1));
+            finalKeyBits = this.toeplitzHash(siftedKeyBits, proof.ell, _bitsAsRng(seedBits));
         }
         return { proof, finalKeyBits };
     }
@@ -2486,7 +2566,9 @@ class ParameterEstimationFilter {
      * @param {number} publicSeed - kamuya açık, kimlik-doğrulamalı ayraç tohumu (Eve görebilir, değiştiremez)
      */
     static split(bitPairs, testFraction, publicSeed) {
-        const rng = mulberry32(publicSeed >>> 0);
+        // v5.1: publicSeed bir fonksiyonsa doğrudan rng olarak kullanılır (havuz blokları platform CSPRNG akışı verir);
+        // sayı verilirse eski davranış (mulberry32) — yalnız geriye uyum ve testler için.
+        const rng = typeof publicSeed === "function" ? publicSeed : mulberry32(publicSeed >>> 0);
         const testSet = [], keySet = [];
         for (const bp of bitPairs) {
             (rng() < testFraction ? testSet : keySet).push(bp);
@@ -2982,8 +3064,7 @@ class KeyPoolBuffer {
         const blockBits = pool.bitPairs.splice(0, KeyPoolBuffer.BLOCK_THRESHOLD_BITS); // bu bloğu havuzdan ÇEK — fazlalık sonraki bloğa taşınır
         const blockSentPulses = pool.sentPulses; // bu bloğa katkıda bulunan TÜM iletimlerin toplam gönderilen darbe sayısı
         pool.sentPulses = 0; // bir sonraki blok için sıfırla (blockBits gibi bu bloğa özgü pay da "tüketildi")
-        const publicSeed = (entanglementSeed ^ 0x50450053 ^ pool.blocksFinalized) >>> 0; // "PE\0S"+blok sırası — kamuya açık/kimlik-doğrulamalı ayraç tohumu
-        const pe = ParameterEstimationFilter.split(blockBits, KeyPoolBuffer.TEST_FRACTION, publicSeed);
+        const pe = ParameterEstimationFilter.split(blockBits, KeyPoolBuffer.TEST_FRACTION, _systemRandom()); // v5.1: blok kapanınca, öngörülemez
         pool.blocksFinalized++;
         this.stats.blocksFinalized++;
         // ── GERÇEK HATA DÜZELTME (Cascade birincil, LDPC karşılaştırma) ──
@@ -3045,7 +3126,7 @@ class KeyPoolBuffer {
         let deliveryEntry = null;
         let paPending = false;
         if (audit.secure) {
-            const seedRng = mulberry32((entanglementSeed ^ 0x424c4b31 ^ pool.blocksFinalized) >>> 0); // "BLK1"+blok sırası
+            const seedRng = _systemRandom(); // v5.1: Toeplitz tohumu platform CSPRNG akışından (n+ℓ−1 bağımsız bit); önceden 32 bitlik "BLK1" tohumu
             // BÜYÜK BLOK (ör. 10⁵-10⁶ bit) KARARI: n·ell maliyeti eşiği aşıyorsa
             // (bkz. ToeplitzAsyncEngine.SYNC_THRESHOLD_OPS, dosya-üstü DOĞRULUK/
             // PERFORMANS notu) SENKRON hesap bu satırda ana iş parçacığını
@@ -3828,11 +3909,17 @@ function charSimilarity(a, b) {
     const dist = dp[m][n];
     return 1 - dist / Math.max(m, n);
 }
+// ÇEKİRDEK v5.1: metin ↔ bit dönüşümü UTF-8'e sabitlendi. v5'e kadar t2b her karakterin kod noktasının düşük
+// 8 bitini alıyordu (charCodeAt & 0xFF): 255'i aşan karakterler (ğ U+011F, ş, ı, İ, Ğ, Ş, —, emoji) KESİLİYOR ve
+// çözülen metin bozuk çıkıyordu (ör. "ğ" → 0x1F). "Merhaba Dünya" bu yüzden 104 bit sayılıyordu; UTF-8'de 112 bit
+// (ü = 2 bayt). OTP kapısı "ℓ ≥ mesaj biti" olduğundan kodlama artık tek ve kayıpsız: UTF-8.
 function t2b(t) {
+    if (typeof t !== "string")
+        throw new TypeError("t2b: metin (string) bekleniyor");
     const o = [];
-    for (const c of t)
+    for (const byte of new TextEncoder().encode(t))
         for (let i = 7; i >= 0; i--)
-            o.push((c.charCodeAt(0) >> i) & 1);
+            o.push((byte >> i) & 1);
     return o;
 }
 // EK 18 (yardımcı): Shannon entropisi — bir olay-tipi dağılımının
@@ -3907,13 +3994,16 @@ function analyzeManyWorlds(timeline) {
     };
 }
 function b2t(b) {
-    let s = "";
+    if (!Array.isArray(b))
+        throw new TypeError("b2t: bit dizisi bekleniyor");
+    const bytes = [];
     for (let i = 0; i + 7 < b.length; i += 8) {
-        const v = b.slice(i, i + 8).reduce((a, x, j) => a + (x << (7 - j)), 0);
+        const v = b.slice(i, i + 8).reduce((a, x, j) => a + ((x & 1) << (7 - j)), 0);
         if (v > 0)
-            s += String.fromCharCode(v);
+            bytes.push(v); // sıfır baytlar (didaktik kanalda kayıp bitler) önceki gibi atlanır
     }
-    return s;
+    // bozuk dizi (gürültülü didaktik kanal) U+FFFD ile gösterilir; hata fırlatılmaz
+    return new TextDecoder("utf-8", { fatal: false }).decode(new Uint8Array(bytes));
 }
 // propPhoton: 5. parametre 'rng' opsiyoneldir. Verilmezse Math.random kullanılır
 // (mevcut canlı iletim davranışı bire bir korunur). Replay'de mulberry32 seed'li
@@ -9805,7 +9895,7 @@ function ResultsDashboard({ traffic, result, log, detectorState }) {
         { l: "Klasik kanal kimlik doğrulama", v: auth ? (auth.ok ? "doğrulandı" : "BAŞARISIZ") : "—", st: auth ? auth.ok : null, note: auth ? `Wegman–Carter · havuz ${auth.poolRemaining} bit` : "" },
         { l: "Dedektör profili", v: detectorState && detectorState.profile ? detectorState.profile.label.split(" ")[0] : "—", st: null, note: detectorState && detectorState.profile ? `η %${(detectorState.profile.efficiency * 100).toFixed(0)}` : "" },
         snap && snap.npmTest
-            ? { l: "Son npm test koşusu", v: `${snap.npmTest.passed}/${snap.npmTest.total}`, st: snap.npmTest.passed === snap.npmTest.total, note: `${(snap.npmTest.at || "").slice(0, 10)} · ${verdicts.length} hükümlü rapor` }
+            ? { l: "Son npm test koşusu", v: `${snap.npmTest.passed}/${snap.npmTest.total}`, st: snap.npmTest.passed === snap.npmTest.total, note: `${(snap.npmTest.at || "").slice(0, 10)}${snap.npmTest.gitHead ? ` · commit ${snap.npmTest.gitHead.slice(0, 7)}${snap.npmTest.gitClean === false ? " (değişmiş ağaç)" : ""}` : ""} · ${verdicts.length} hükümlü rapor` }
             : { l: "Test raporları", v: snap ? `${vPassed}/${verdicts.length}` : "—", st: snap ? vPassed === verdicts.length : null, note: snap ? `${snap.reports.length} rapor · ${snap.latest ? snap.latest.slice(0, 10) : "—"}` : "özet yok" },
         { l: "Çekirdek", v: PHOTONNET_CORE_VERSION, st: null, note: `uygulama v${PHOTONNET_VERSION}` },
     ];
@@ -10025,8 +10115,8 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                 React.createElement("div", { style: { fontSize: 7, color: "#1e3a5f", marginTop: 2, fontFamily: "monospace" }, title: "Bu, girilen metnin ham karakter/bit say\u0131s\u0131d\u0131r \u2014 QKD performans \u00F6l\u00E7\u00FCt\u00FC DE\u011E\u0130LD\u0130R. Ger\u00E7ek anahtar \u00FCretim h\u0131z\u0131 (bit/saniye) i\u00E7in sonu\u00E7 panelindeki 'QKD' g\u00F6stergesine bak\u0131n." },
                     msg.length,
                     "/28 kr \u00B7 ",
-                    msg.length * 8,
-                    " bit (mesaj boyutu, QKD h\u0131z\u0131 de\u011Fil)")),
+                    t2b(msg).length,
+                    " bit UTF-8 (mesaj boyutu, QKD h\u0131z\u0131 de\u011Fil)")),
             React.createElement("div", { style: { paddingRight: 16, borderRight: "1px solid #0a1e3a44", marginRight: 16, flexShrink: 0 } },
                 React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 5, marginBottom: 4 } },
                     React.createElement("span", { style: { fontSize: 8, color: "#475569", letterSpacing: ".08em" } }, "WAVELENGTH"),
@@ -14867,5 +14957,5 @@ function PhotonNet() {
 }
 
 module.exports = {
-  propPhoton, propPhotonRelayChain, mulberry32, combineSeed, WL, fiberT, lega, poissonSample, LeoPassGeometry, SatelliteDownlinkChannel, computeDynamicAlpha, SAT_VISIBILITY_MIN, SAT_PULSE_RATE_HZ, EARTH_RADIUS_KM, LIGHT_SPEED_KM_S, QuantumKeyDistribution, SecureMessageSession, QKD_MISALIGNMENT_E_D, MAX_LINK_KM, MAX_REPEATERS, MAX_RECONCILE_BITS, bb84Reconcile, validateDetectorConfig, configureDetectorProfiles, listDetectorProfiles, activeDetectorProfile, setActiveDetectorProfile, onDetectorProfileChange, detectorProfileSource, DETECTOR_TECHNOLOGIES, deriveOtpKeyBits, otpEncryptBits, otpDecryptBits, LinkGradedEavesdropThresholdAlgorithm, eavesdropProbability, NoiseMatrixCalibration, noiseMatrixCalibration, EdgeWeightPolicy, defaultWeightPolicy, LinkRiskReputationEngine, linkRiskReputationEngine, CalibrationRateLimiter, NetworkTopology, networkTopology, routeCalculation, routeCalculationResilient, routeIsSuspect, DOS_SUSPECT_RISK_THRESHOLD, ScintillationModel, ScintillationEngine, scintillationEngine, PointingBudget, DetectorNoiseModel, AtmosphericWindowModel, satQ, physicalSimulation, hEnc, hDec, t2b, b2t, bitsToBase64, computeRepeaterGain, estimateLinkSurvival, dynamicRedundancyFor, ParameterEstimationFilter, CascadeReconciliation, LDPCReconciliation, QKDSecurityProof, ProductionSecurityAudit, ToeplitzAsyncEngine, toeplitzParity32, toeplitzPackBits, toeplitzRowsFromPackedWords, KeyPoolBuffer, keyPoolBuffer, KeyDeliveryStore, keyDeliveryStore, deterministicKeyId, ClassicalAuthChannel, classicalAuthChannel, NodeWatchdog, nodeWatchdog, LinkOutageController, linkOutageController, MetricTrendInjector, metricTrendInjector, PredictiveTelemetryEngine, predictiveEngine, NoiseGateMiddleware, noiseGateMiddleware, CALIBRATION_EMA_ALPHA, CALIBRATION_WINDOW_S, GATE_MIN_RATIO, GATE_STEP, GATE_TARGET_MULTIPLIER, MSG_RELAY_COEFF_OVERRIDE, MSG_RELAY_COMPENSATION, MSG_RELAY_HOP_KM, MSG_RELAY_HOP_REPS, MSG_RELAY_THRESHOLD_KM, REAL_CLICK_MISS_AT_MIN_GATE, SNSPD_DARKRATE_TEMP_GAIN, SNSPD_TEMP_DRIFT_SIGMA, SNSPD_TEMP_MEAN_REVERSION, SNSPD_TEMP_TRIP_MK
+  propPhoton, propPhotonRelayChain, mulberry32, combineSeed, WL, fiberT, lega, poissonSample, _sampleSubset, _uniformInt, _bitsAsRng, _systemEntropyBits, LeoPassGeometry, SatelliteDownlinkChannel, computeDynamicAlpha, SAT_VISIBILITY_MIN, SAT_PULSE_RATE_HZ, EARTH_RADIUS_KM, LIGHT_SPEED_KM_S, QuantumKeyDistribution, SecureMessageSession, QKD_MISALIGNMENT_E_D, MAX_LINK_KM, MAX_REPEATERS, MAX_RECONCILE_BITS, bb84Reconcile, validateDetectorConfig, configureDetectorProfiles, listDetectorProfiles, activeDetectorProfile, setActiveDetectorProfile, onDetectorProfileChange, detectorProfileSource, DETECTOR_TECHNOLOGIES, deriveOtpKeyBits, otpEncryptBits, otpDecryptBits, LinkGradedEavesdropThresholdAlgorithm, eavesdropProbability, NoiseMatrixCalibration, noiseMatrixCalibration, EdgeWeightPolicy, defaultWeightPolicy, LinkRiskReputationEngine, linkRiskReputationEngine, CalibrationRateLimiter, NetworkTopology, networkTopology, routeCalculation, routeCalculationResilient, routeIsSuspect, DOS_SUSPECT_RISK_THRESHOLD, ScintillationModel, ScintillationEngine, scintillationEngine, PointingBudget, DetectorNoiseModel, AtmosphericWindowModel, satQ, physicalSimulation, hEnc, hDec, t2b, b2t, bitsToBase64, computeRepeaterGain, estimateLinkSurvival, dynamicRedundancyFor, ParameterEstimationFilter, CascadeReconciliation, LDPCReconciliation, QKDSecurityProof, ProductionSecurityAudit, ToeplitzAsyncEngine, toeplitzParity32, toeplitzPackBits, toeplitzRowsFromPackedWords, KeyPoolBuffer, keyPoolBuffer, KeyDeliveryStore, keyDeliveryStore, deterministicKeyId, ClassicalAuthChannel, classicalAuthChannel, NodeWatchdog, nodeWatchdog, LinkOutageController, linkOutageController, MetricTrendInjector, metricTrendInjector, PredictiveTelemetryEngine, predictiveEngine, NoiseGateMiddleware, noiseGateMiddleware, CALIBRATION_EMA_ALPHA, CALIBRATION_WINDOW_S, GATE_MIN_RATIO, GATE_STEP, GATE_TARGET_MULTIPLIER, MSG_RELAY_COEFF_OVERRIDE, MSG_RELAY_COMPENSATION, MSG_RELAY_HOP_KM, MSG_RELAY_HOP_REPS, MSG_RELAY_THRESHOLD_KM, REAL_CLICK_MISS_AT_MIN_GATE, SNSPD_DARKRATE_TEMP_GAIN, SNSPD_TEMP_DRIFT_SIGMA, SNSPD_TEMP_MEAN_REVERSION, SNSPD_TEMP_TRIP_MK
 };
