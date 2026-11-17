@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T00:07:05.274Z",
+  "generatedAt": "2026-11-17T18:21:29.850Z",
   "checks": [
     {
       "name": "(A) KALİBRASYON DUYARLILIĞI: marj=0→referans, +10dB→×10, çok negatif→~0, olasılık [0,1]'e sınırlı",
@@ -29,7 +29,7 @@
     {
       "name": "ÇEKİRDEĞE DOKUNULMADI: rf_noise_bridge.js photonnet_core.js'i DOĞRUDAN import ETMEZ VE dosyanın SHA-256'sı değişmedi",
       "ok": true,
-      "detail": "kaynakta doğrudan core import taraması: yok ✓ · SHA-256 8f879fde86be0129… öncesi = sonrası ✓ — yalnız zaten test edilmiş katman dosyaları (faraday_cage_shielding, timetag_acquisition_bridge, detector_recalibration) beslendi"
+      "detail": "kaynakta doğrudan core import taraması: yok ✓ · SHA-256 11bf00156cf2efea… öncesi = sonrası ✓ — yalnız zaten test edilmiş katman dosyaları (faraday_cage_shielding, timetag_acquisition_bridge, detector_recalibration) beslendi"
     }
   ],
   "calibration": {
@@ -78,7 +78,7 @@
   "coreIntegrity": {
     "noDirectCoreImport": true,
     "unchanged": true,
-    "sha256": "8f879fde86be0129"
+    "sha256": "11bf00156cf2efea"
   },
   "allChecksPassed": true
 }

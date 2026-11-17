@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-12T15:02:26.046Z",
-  "coreShaVerified": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05",
+  "generatedAt": "2026-11-17T18:16:32.203Z",
+  "coreShaVerified": "11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79",
   "params": {
     "trialsPerMode": 300,
     "bitCount": 6000,
@@ -79,19 +79,19 @@
       "n": 300,
       "avgBurstFraction": 0,
       "qber": {
-        "mean": 0.01379,
-        "stdev": 0.00277,
-        "max": 0.02121,
-        "min": 0.00714
+        "mean": 0.01481,
+        "stdev": 0.00282,
+        "max": 0.02176,
+        "min": 0.00763
       },
       "falseEavesdropRate": 0,
       "peSampleCount": 300,
-      "peBiasMeanAbs": 0.0036,
+      "peBiasMeanAbs": 0.00384,
       "cascadeSampleCount": 300,
-      "cascadeConvergedRate": 0.96,
-      "cascadeMeanLeak": 205.7,
+      "cascadeConvergedRate": 0.9533,
+      "cascadeMeanLeak": 219.2,
       "secureKeyRate": 1,
-      "meanEll": 342.8,
+      "meanEll": 324.8,
       "emptyKeySampleTrials": 0
     },
     {
@@ -100,19 +100,19 @@
       "n": 300,
       "avgBurstFraction": 0.0322,
       "qber": {
-        "mean": 0.01645,
-        "stdev": 0.00282,
-        "max": 0.02515,
+        "mean": 0.01763,
+        "stdev": 0.00288,
+        "max": 0.02705,
         "min": 0.00811
       },
       "falseEavesdropRate": 0,
       "peSampleCount": 300,
-      "peBiasMeanAbs": 0.004,
+      "peBiasMeanAbs": 0.00398,
       "cascadeSampleCount": 300,
-      "cascadeConvergedRate": 0.97,
-      "cascadeMeanLeak": 246.6,
+      "cascadeConvergedRate": 0.9833,
+      "cascadeMeanLeak": 259.2,
       "secureKeyRate": 1,
-      "meanEll": 315.6,
+      "meanEll": 296.8,
       "emptyKeySampleTrials": 0
     },
     {
@@ -121,19 +121,19 @@
       "n": 300,
       "avgBurstFraction": 0.0324,
       "qber": {
-        "mean": 0.01613,
-        "stdev": 0.00258,
-        "max": 0.02492,
-        "min": 0.00882
+        "mean": 0.01727,
+        "stdev": 0.00269,
+        "max": 0.02633,
+        "min": 0.0092
       },
       "falseEavesdropRate": 0,
       "peSampleCount": 300,
-      "peBiasMeanAbs": 0.00382,
+      "peBiasMeanAbs": 0.00402,
       "cascadeSampleCount": 300,
-      "cascadeConvergedRate": 0.9933,
-      "cascadeMeanLeak": 239.2,
+      "cascadeConvergedRate": 0.98,
+      "cascadeMeanLeak": 251.9,
       "secureKeyRate": 1,
-      "meanEll": 310.2,
+      "meanEll": 293.3,
       "emptyKeySampleTrials": 0
     },
     {
@@ -142,19 +142,19 @@
       "n": 300,
       "avgBurstFraction": 0.1304,
       "qber": {
-        "mean": 0.04527,
-        "stdev": 0.00447,
-        "max": 0.05946,
-        "min": 0.03285
+        "mean": 0.04753,
+        "stdev": 0.00471,
+        "max": 0.06034,
+        "min": 0.0351
       },
       "falseEavesdropRate": 0,
       "peSampleCount": 300,
-      "peBiasMeanAbs": 0.0062,
+      "peBiasMeanAbs": 0.00619,
       "cascadeSampleCount": 300,
       "cascadeConvergedRate": 1,
-      "cascadeMeanLeak": 607.9,
-      "secureKeyRate": 0.0933,
-      "meanEll": 3,
+      "cascadeMeanLeak": 630.6,
+      "secureKeyRate": 0.0433,
+      "meanEll": 1.1,
       "emptyKeySampleTrials": 0
     },
     {
@@ -163,19 +163,19 @@
       "n": 300,
       "avgBurstFraction": 0.1303,
       "qber": {
-        "mean": 0.04084,
-        "stdev": 0.00429,
-        "max": 0.05241,
-        "min": 0.02875
+        "mean": 0.04286,
+        "stdev": 0.00443,
+        "max": 0.0553,
+        "min": 0.03016
       },
       "falseEavesdropRate": 0,
       "peSampleCount": 300,
-      "peBiasMeanAbs": 0.00581,
+      "peBiasMeanAbs": 0.00567,
       "cascadeSampleCount": 300,
       "cascadeConvergedRate": 1,
-      "cascadeMeanLeak": 528.9,
-      "secureKeyRate": 0.2567,
-      "meanEll": 9.8,
+      "cascadeMeanLeak": 551.6,
+      "secureKeyRate": 0.1267,
+      "meanEll": 4.4,
       "emptyKeySampleTrials": 0
     },
     {
@@ -184,17 +184,17 @@
       "n": 300,
       "avgBurstFraction": 0.3336,
       "qber": {
-        "mean": 0.14911,
-        "stdev": 0.00806,
-        "max": 0.16936,
-        "min": 0.12505
+        "mean": 0.15279,
+        "stdev": 0.00823,
+        "max": 0.17424,
+        "min": 0.12841
       },
       "falseEavesdropRate": 1,
       "peSampleCount": 300,
-      "peBiasMeanAbs": 0.00909,
+      "peBiasMeanAbs": 0.00987,
       "cascadeSampleCount": 300,
       "cascadeConvergedRate": 1,
-      "cascadeMeanLeak": 1721.1,
+      "cascadeMeanLeak": 1749,
       "secureKeyRate": 0,
       "meanEll": 0,
       "emptyKeySampleTrials": 0
@@ -205,17 +205,17 @@
       "n": 300,
       "avgBurstFraction": 0.3335,
       "qber": {
-        "mean": 0.15058,
-        "stdev": 0.00767,
-        "max": 0.17603,
-        "min": 0.13011
+        "mean": 0.15452,
+        "stdev": 0.00761,
+        "max": 0.18022,
+        "min": 0.13665
       },
       "falseEavesdropRate": 1,
       "peSampleCount": 300,
-      "peBiasMeanAbs": 0.01051,
+      "peBiasMeanAbs": 0.01073,
       "cascadeSampleCount": 300,
       "cascadeConvergedRate": 1,
-      "cascadeMeanLeak": 1591.4,
+      "cascadeMeanLeak": 1623.1,
       "secureKeyRate": 0,
       "meanEll": 0,
       "emptyKeySampleTrials": 0
@@ -224,9 +224,9 @@
   "findings": [
     {
       "severity": "light",
-      "qberDelta": 0.00266,
-      "vsIidQberDelta": 0.00032,
-      "vsIidLeakDelta": 7.4,
+      "qberDelta": 0.00282,
+      "vsIidQberDelta": 0.00036,
+      "vsIidLeakDelta": 7.3,
       "vsIidSecureDelta": 0,
       "burstSum": {
         "key": "burst_light",
@@ -234,19 +234,19 @@
         "n": 300,
         "avgBurstFraction": 0.0322,
         "qber": {
-          "mean": 0.01645,
-          "stdev": 0.00282,
-          "max": 0.02515,
+          "mean": 0.01763,
+          "stdev": 0.00288,
+          "max": 0.02705,
           "min": 0.00811
         },
         "falseEavesdropRate": 0,
         "peSampleCount": 300,
-        "peBiasMeanAbs": 0.004,
+        "peBiasMeanAbs": 0.00398,
         "cascadeSampleCount": 300,
-        "cascadeConvergedRate": 0.97,
-        "cascadeMeanLeak": 246.6,
+        "cascadeConvergedRate": 0.9833,
+        "cascadeMeanLeak": 259.2,
         "secureKeyRate": 1,
-        "meanEll": 315.6,
+        "meanEll": 296.8,
         "emptyKeySampleTrials": 0
       },
       "iidSum": {
@@ -255,47 +255,47 @@
         "n": 300,
         "avgBurstFraction": 0.0324,
         "qber": {
-          "mean": 0.01613,
-          "stdev": 0.00258,
-          "max": 0.02492,
-          "min": 0.00882
+          "mean": 0.01727,
+          "stdev": 0.00269,
+          "max": 0.02633,
+          "min": 0.0092
         },
         "falseEavesdropRate": 0,
         "peSampleCount": 300,
-        "peBiasMeanAbs": 0.00382,
+        "peBiasMeanAbs": 0.00402,
         "cascadeSampleCount": 300,
-        "cascadeConvergedRate": 0.9933,
-        "cascadeMeanLeak": 239.2,
+        "cascadeConvergedRate": 0.98,
+        "cascadeMeanLeak": 251.9,
         "secureKeyRate": 1,
-        "meanEll": 310.2,
+        "meanEll": 293.3,
         "emptyKeySampleTrials": 0
       }
     },
     {
       "severity": "moderate",
-      "qberDelta": 0.03148,
-      "vsIidQberDelta": 0.00443,
+      "qberDelta": 0.03272,
+      "vsIidQberDelta": 0.00467,
       "vsIidLeakDelta": 79,
-      "vsIidSecureDelta": -0.1634,
+      "vsIidSecureDelta": -0.0834,
       "burstSum": {
         "key": "burst_moderate",
         "label": "PATLAMA — orta",
         "n": 300,
         "avgBurstFraction": 0.1304,
         "qber": {
-          "mean": 0.04527,
-          "stdev": 0.00447,
-          "max": 0.05946,
-          "min": 0.03285
+          "mean": 0.04753,
+          "stdev": 0.00471,
+          "max": 0.06034,
+          "min": 0.0351
         },
         "falseEavesdropRate": 0,
         "peSampleCount": 300,
-        "peBiasMeanAbs": 0.0062,
+        "peBiasMeanAbs": 0.00619,
         "cascadeSampleCount": 300,
         "cascadeConvergedRate": 1,
-        "cascadeMeanLeak": 607.9,
-        "secureKeyRate": 0.0933,
-        "meanEll": 3,
+        "cascadeMeanLeak": 630.6,
+        "secureKeyRate": 0.0433,
+        "meanEll": 1.1,
         "emptyKeySampleTrials": 0
       },
       "iidSum": {
@@ -304,27 +304,27 @@
         "n": 300,
         "avgBurstFraction": 0.1303,
         "qber": {
-          "mean": 0.04084,
-          "stdev": 0.00429,
-          "max": 0.05241,
-          "min": 0.02875
+          "mean": 0.04286,
+          "stdev": 0.00443,
+          "max": 0.0553,
+          "min": 0.03016
         },
         "falseEavesdropRate": 0,
         "peSampleCount": 300,
-        "peBiasMeanAbs": 0.00581,
+        "peBiasMeanAbs": 0.00567,
         "cascadeSampleCount": 300,
         "cascadeConvergedRate": 1,
-        "cascadeMeanLeak": 528.9,
-        "secureKeyRate": 0.2567,
-        "meanEll": 9.8,
+        "cascadeMeanLeak": 551.6,
+        "secureKeyRate": 0.1267,
+        "meanEll": 4.4,
         "emptyKeySampleTrials": 0
       }
     },
     {
       "severity": "severe",
-      "qberDelta": 0.13532,
-      "vsIidQberDelta": -0.00147,
-      "vsIidLeakDelta": 129.7,
+      "qberDelta": 0.13798,
+      "vsIidQberDelta": -0.00173,
+      "vsIidLeakDelta": 125.9,
       "vsIidSecureDelta": 0,
       "burstSum": {
         "key": "burst_severe",
@@ -332,17 +332,17 @@
         "n": 300,
         "avgBurstFraction": 0.3336,
         "qber": {
-          "mean": 0.14911,
-          "stdev": 0.00806,
-          "max": 0.16936,
-          "min": 0.12505
+          "mean": 0.15279,
+          "stdev": 0.00823,
+          "max": 0.17424,
+          "min": 0.12841
         },
         "falseEavesdropRate": 1,
         "peSampleCount": 300,
-        "peBiasMeanAbs": 0.00909,
+        "peBiasMeanAbs": 0.00987,
         "cascadeSampleCount": 300,
         "cascadeConvergedRate": 1,
-        "cascadeMeanLeak": 1721.1,
+        "cascadeMeanLeak": 1749,
         "secureKeyRate": 0,
         "meanEll": 0,
         "emptyKeySampleTrials": 0
@@ -353,17 +353,17 @@
         "n": 300,
         "avgBurstFraction": 0.3335,
         "qber": {
-          "mean": 0.15058,
-          "stdev": 0.00767,
-          "max": 0.17603,
-          "min": 0.13011
+          "mean": 0.15452,
+          "stdev": 0.00761,
+          "max": 0.18022,
+          "min": 0.13665
         },
         "falseEavesdropRate": 1,
         "peSampleCount": 300,
-        "peBiasMeanAbs": 0.01051,
+        "peBiasMeanAbs": 0.01073,
         "cascadeSampleCount": 300,
         "cascadeConvergedRate": 1,
-        "cascadeMeanLeak": 1591.4,
+        "cascadeMeanLeak": 1623.1,
         "secureKeyRate": 0,
         "meanEll": 0,
         "emptyKeySampleTrials": 0

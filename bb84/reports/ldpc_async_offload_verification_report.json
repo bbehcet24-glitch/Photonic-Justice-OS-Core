@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-10-23T10:15:04.775Z",
-  "coreShaVerified": "157d81da543cabfafca4a58b69aac574ce7180ac760563cecd918c666581cf3b",
+  "generatedAt": "2026-11-17T18:19:42.436Z",
+  "coreShaVerified": "11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79",
   "tests": {
     "behavioralEquivalence": {
       "n": 20000,
@@ -15,19 +15,19 @@
       "n": 150000,
       "qberTarget": 0.03,
       "seed": 990002,
-      "originalSyncDispatchMs": 32639,
-      "nonBlockingDispatchMs": 914,
-      "dispatchRatioPct": 2.8,
-      "ldpcWorkerRoundTripMs": 33890,
+      "originalSyncDispatchMs": 14244,
+      "nonBlockingDispatchMs": 485,
+      "dispatchRatioPct": 3.4,
+      "ldpcWorkerRoundTripMs": 15219,
       "settled": true,
       "ldpcDiffs": [],
       "pass": true
     },
     "coreNativeOffload": {
       "n": 150000,
-      "skippedDispatchMs": 1038,
+      "skippedDispatchMs": 269,
       "skippedStatus": "skipped",
-      "hookDispatchMs": 1121,
+      "hookDispatchMs": 332,
       "pendingAtReturn": true,
       "settled": true,
       "finalStatus": "done",

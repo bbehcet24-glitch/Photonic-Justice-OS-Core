@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T16:48:09.224Z",
+  "generatedAt": "2026-11-17T18:16:18.955Z",
   "targetFiles": [
     "bb84/pki_tools/revoke_cert.sh",
     "bb84/pki_tools/ca_init.sh"

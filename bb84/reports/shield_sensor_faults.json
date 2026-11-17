@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T00:25:54.013Z",
+  "generatedAt": "2026-11-17T18:21:30.455Z",
   "part": "2/3 sensör arızaları",
   "checks": [
     {
@@ -30,7 +30,7 @@
     {
       "name": "F6 Y0 telemetrisi kesikken (ATS, 10–15 s) KDK→ATS fiberine ×5 enjeksiyon: SE normal olduğu için seviye NORMAL kalıyor; bayrakla eksik okumaların kapsadığı aralığa değen 7 blok (sınırdaki 9–10 s ve 15–16 s dahil) LEKELİ (0 bit serbest), dışındakiler temiz; bayraksız eski yol aynı blokları içeri-giriş MODELİNİN Y0'ıyla (gerçeğin 1/5'i) serbest bırakıyordu",
       "ok": true,
-      "detail": "bayraklı: 7 blok, 7 lekeli, serbest 0 bit, aralık dışı temiz: true · eski yol: 7 blok, serbest 14.466 Mbit (model Y0 ile)"
+      "detail": "bayraklı: 7 blok, 7 lekeli, serbest 0 bit, aralık dışı temiz: true · eski yol: 7 blok, serbest 14.454 Mbit (model Y0 ile)"
     },
     {
       "name": "F7 Mesh: KDK kilit olayıyla karantinada; tek komşu kanıtı KDK→ATS linki ama ATS'nin ortam sensörü 2 s'den beri yok → beklenen Y0 hesaplanamıyor, oran NaN → kanıt YOK sayılıyor (temiz değil) → 44 s boyunca serbest bırakma yok. Düzeltmeden önce NaN oran filtreyi geçip temiz kanıt gibi sayılıyordu (aynı senaryoda ~31 s'de PROBATION)",
@@ -43,9 +43,9 @@
       "detail": "driverError: \"USB sensör bağlantısı koptu\" · çerçeve: 0"
     },
     {
-      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = 8f879fde…dc7b05)",
+      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = 11bf0015…651f79)",
       "ok": true,
-      "detail": "8f879fde86be0129…"
+      "detail": "11bf00156cf2efea…"
     }
   ],
   "passed": 9,

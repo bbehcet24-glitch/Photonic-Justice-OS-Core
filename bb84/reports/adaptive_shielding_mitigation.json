@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T23:45:59.307Z",
+  "generatedAt": "2026-11-17T18:14:58.668Z",
   "checks": [
     {
       "name": "(A) SE_gerekli tersi emissionDetectabilityCheck ile birebir tutarlı (tespit ⟺ SE < SE_gerekli)",
@@ -24,7 +24,7 @@
     {
       "name": "(E) SE_gerekli ≤ SE < hedef: mevcut önkoşul REDDEDER, bu katman ADAPT + mTLS AÇIK + R>0",
       "ok": true,
-      "detail": "mtlsHandshakePrecondition(SE=45) allowed=false · katman: ADAPT, mTLS=true, R=5.08e-4/darbe — gevşetme yalnız açık tehdit modeliyle (bkz. B)"
+      "detail": "mtlsHandshakePrecondition(SE=45) allowed=false · katman: ADAPT, mTLS=true, R=5.25e-4/darbe — gevşetme yalnız açık tehdit modeliyle (bkz. B)"
     },
     {
       "name": "(F) 200 ms'lik 25 dB düşüşü: BLOCK yok, mTLS hiç kopmuyor, HOLD penceresine değen bloklar lekeli, havuz muhasebesi korunuyor, aç kalınmıyor",
@@ -49,12 +49,12 @@
     {
       "name": "(J) İçeri-giriş gürültüsü anahtar hızını 0'a indirince HOLD (BLOCK değil), mTLS açık",
       "ok": true,
-      "detail": "SE 32,5 dB (taban 30, eşik 32.01) → Y0≈5.72e-4 → HOLD, mTLS=true · \"HOLD (anahtar hızı 0: tepe Y0≈5.72e-4, hiçbir izinli parametre seti pozitif sonlu-anahtar …\""
+      "detail": "SE 32,5 dB (taban 30, eşik 32.01) → Y0≈5.63e-4 → HOLD, mTLS=true · \"HOLD (anahtar hızı 0: tepe Y0≈5.63e-4, hiçbir izinli parametre seti pozitif sonlu-anahtar …\""
     },
     {
       "name": "(K) Ölçülmüş vakum-decoy Y0'ı verilince model yerine o kullanılıyor (SE iyi görünse bile)",
       "ok": true,
-      "detail": "SE=62 dB (model Y0≈1e-5) ama measuredY0=2e-4 → Y0eff=0.0002, bekleyen parametreler μ=0.75 ν=0.06 r=0.750 (devreye alma μ=0.55 r=0.800)"
+      "detail": "SE=62 dB (model Y0≈1e-5) ama measuredY0=2e-4 → Y0eff=0.0002, bekleyen parametreler μ=0.75 ν=0.06 r=0.750 (devreye alma μ=0.6 r=0.833)"
     },
     {
       "name": "(L) Sürdürülmüş taban ihlali: 630 ms sonra BLOCK + mTLS kesik; kurtarma 6300 ms marjlı iyi okuma ister; soğuk başlangıçta gecikmesiz BLOCK",
@@ -84,7 +84,7 @@
     {
       "name": "ÇEKİRDEĞE VE YENİDEN KULLANILAN MODÜLLERE DOKUNULMADI",
       "ok": true,
-      "detail": "8 dosyanın SHA-256'sı öncesi=sonrası ✓ · doğrudan core import yok ✓ · core=8f879fde86be0129… ✓"
+      "detail": "8 dosyanın SHA-256'sı öncesi=sonrası ✓ · doğrudan core import yok ✓ · core=11bf00156cf2efea… ✓"
     }
   ],
   "seRequired": {
@@ -191,7 +191,7 @@
     "legacyAllowed": false,
     "level": "ADAPT",
     "mtls": true,
-    "R": 0.0005079893013925021
+    "R": 0.0005249004028347416
   },
   "transient": {
     "levelTimeMs": {
@@ -201,7 +201,7 @@
     "holdStartMs": 5000,
     "holdEndMs": 5800,
     "quarantinedBits": 0,
-    "releasedBits": 15583904,
+    "releasedBits": 18682216,
     "deliveredBits": 9000000,
     "starvedMs": 0,
     "legacyDebounceCut": false
@@ -231,7 +231,7 @@
   "integrity": {
     "unchanged": true,
     "noCoreImport": true,
-    "coreSha256": "8f879fde86be012938e710deda77c55d0c1e8e340c2b82f8672ce02bf4dc7b05"
+    "coreSha256": "11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79"
   },
   "allChecksPassed": true
 }

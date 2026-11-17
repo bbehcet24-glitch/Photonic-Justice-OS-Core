@@ -1,13 +1,13 @@
 {
-  "generatedAt": "2026-09-12T16:26:55.186Z",
+  "generatedAt": "2026-11-17T18:23:07.103Z",
   "targetFile": "bb84/etsi014_kme_server.js (çekirdek DEĞİL — bkz. not)",
   "findings": [],
   "memoryTrend": {
-    "rssBeforeKb": 55840,
-    "rssAfterKb": 108312,
+    "rssBeforeKb": 45904,
+    "rssAfterKb": 96184,
     "requests": 600,
-    "deltaKb": 52472,
-    "deltaPerRequestKb": 87.45
+    "deltaKb": 50280,
+    "deltaPerRequestKb": 83.8
   },
   "overallPass": true
 }

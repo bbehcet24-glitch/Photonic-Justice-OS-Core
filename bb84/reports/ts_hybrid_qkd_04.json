@@ -1,31 +1,31 @@
 {
-  "generatedAt": "2026-11-01T13:36:04.678Z",
+  "generatedAt": "2026-11-17T18:33:43.200Z",
   "scenario": "TS-HYBRID-QKD-04",
   "checks": [
     {
       "name": "S1 taban: iki iletim teslim, 60 km'lik atlamalar, panel GÜVENLİ",
       "ok": true,
-      "detail": "1842km/5hop, 31 atlama, ℓ 216 / 1855km/6hop, 31 atlama, ℓ 221"
+      "detail": "1842km/5hop, 31 atlama, ℓ 249 / 1855km/6hop, 31 atlama, ℓ 280"
     },
     {
-      "name": "S1 belirtim ölçütü: birleşik QBER %1,17–%1,50 bandında",
+      "name": "S1 model tutarlılığı (karar kapısı): birleşik QBER beklenen değerden ≤ 4σ",
       "ok": true,
-      "detail": "ölçülen birleşik %1.50 / %1.41, en kötü atlama %2.43 / %2.14. Modelin hizalama hatası e_d = %1,5 ve karanlık sayım payıyla beklenen birleşik değer ≈ %1,5–1,6; band bunun altında kaldığı için ölçüt modelle çelişebilir"
+      "detail": "birleşik %1.39, beklenen %1.50, σ ≤ %0.076 (k_top ≥ 31×832), sapma -1.45σ / birleşik %1.33, beklenen %1.50, σ ≤ %0.076 (k_top ≥ 31×822), sapma -2.23σ"
     },
     {
       "name": "S1 Kalman saat izleyicisi jitter/gezinmeyi sönümlüyor (HAL testi; arayüze bağlı değil)",
       "ok": true,
-      "detail": "izleme QBER %1.57, anahtar 37437, sıçrama 1 — kaynak: bb84/reports/hal_clock_tracker.json (2026-11-01T11:24:50.600Z)"
+      "detail": "izleme QBER %1.57, anahtar 37437, sıçrama 1 — kaynak: bb84/reports/hal_clock_tracker.json (2026-11-17T18:32:38.450Z)"
     },
     {
       "name": "S2 tepe noktası (t = 0, yükselti 75°): hibrit oturum teslim, 0. atlama uydu aşağı-bağlantısı, görünürlük ≥ 0,1",
       "ok": true,
-      "detail": "yükselti 75.0°, görünürlük 0.97, kayıp 25.9 dB, Doppler 0.0 ppm · ℓ 226 bit · 32 atlama"
+      "detail": "yükselti 75.0°, görünürlük 0.97, kayıp 25.9 dB, Doppler 0.0 ppm · ℓ 221 bit · 32 atlama"
     },
     {
       "name": "S2 yaklaşma (t = −60 s): Doppler kayması hesaba katılıyor (+14,8 ppm), oturum teslim",
       "ok": true,
-      "detail": "yükselti 48.2°, görünürlük 0.75, kayıp 28.2 dB, Doppler 14.8 ppm · ℓ 228 bit. Zamanlama tarafı: hal/test_hybrid_sync.py (senkron kipi ±22 ppm'i izliyor)"
+      "detail": "yükselti 48.2°, görünürlük 0.75, kayıp 28.2 dB, Doppler 14.8 ppm · ℓ 167 bit. Zamanlama tarafı: hal/test_hybrid_sync.py (senkron kipi ±22 ppm'i izliyor)"
     },
     {
       "name": "S2 görünürlük < 0,1 (t = +300 s): SAT_NOT_VISIBLE, anahtar üretilmedi, panel ALARM",
@@ -40,27 +40,27 @@
     {
       "name": "S2 🔬 GÜRÜLTÜ sekmesi: ham karanlık sayım oranı canlı güncelleniyor (2,2 s'lik kalibrasyon turu)",
       "ok": true,
-      "detail": "50 Hz → 5 s sonra 59 Hz"
+      "detail": "67 Hz → 5 s sonra 60 Hz"
     },
     {
       "name": "S3 InGaAs: yanlış alarm yok (teslim, panel GÜVENLİ, iptal eşiği %11)",
       "ok": true,
-      "detail": "dedektör InGaAs/InP, birleşik %1.49, en kötü %2.19, ℓ 176"
+      "detail": "dedektör InGaAs/InP, birleşik %1.53, en kötü %2.29, ℓ 209"
     },
     {
       "name": "S3 dinamik α: DCR arttıkça beklenen QBER ve uyarı bandı yükseliyor; iptal eşiği %11 sabit",
       "ok": true,
-      "detail": "beklenen QBER SNSPD %1.50 → InGaAs %1.59; satır: en yakın #24: %2.17 ≤ bant %3.02 (beklenen %1.59). Bant α = 10⁻³ sabit yanlış-alarm olasılığıyla hesaplanır (tam binom kuantili); iptal kararına katılmaz"
+      "detail": "beklenen QBER SNSPD %1.50 → InGaAs %1.59; satır: en yakın #28: %2.29 ≤ bant %3.14 (beklenen %1.59). Bant α = 10⁻³ sabit yanlış-alarm olasılığıyla hesaplanır (tam binom kuantili); iptal kararına katılmaz"
     },
     {
       "name": "S3 InGaAs + uydu atlaması: QBER alarmı yok (sonuç ölçülen haliyle raporlanır)",
       "ok": true,
-      "detail": "iptal (KEY_BUDGET) — ⛔ İLETİM İPTAL (KEY_BUDGET): link başına 16.777.216 darbede 1/32 atlamada (ör. #0) yeterli kanıtlanmış anahtar birikmedi (gereken 104 bit) — rota bu d. InGaAs verimi %10: uydu atlamasında elenmiş bit hızı SNSPD'nin ~1/8'i"
+      "detail": "iptal (KEY_BUDGET) — ⛔ İLETİM İPTAL (KEY_BUDGET): link başına 16.777.216 darbede 1/32 atlamada (ör. #0) yeterli kanıtlanmış anahtar birikmedi (gereken 112 bit) — uydu atla. InGaAs verimi %10: uydu atlamasında elenmiş bit hızı SNSPD'nin ~1/8'i"
     },
     {
       "name": "S4 fail-closed: uydu atlamasında QBER ≥ %11 → HOP_QBER (hop #0, uydu aşağı-bağlantısı), panel ALARM",
       "ok": true,
-      "detail": "QBER %29.23 — ⛔ İLETİM İPTAL (HOP_QBER): hop #0 (uydu aşağı-bağlantısı) QBER_test %29.2 ≥ %11 (k=414 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı,"
+      "detail": "QBER %22.57 — ⛔ İLETİM İPTAL (HOP_QBER): hop #0 (uydu aşağı-bağlantısı) QBER_test %22.6 ≥ %11 (k=412 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı,"
     },
     {
       "name": "S4 sıfır sızıntı: ℓ = 0, OTP anahtarı 0 bit, mesaj gönderilmedi; olay akışında SESSION_ABORTED, KEY_DELIVERED yok",
@@ -70,22 +70,29 @@
     {
       "name": "S4 iptal gecikmesi: ihlali ölçen PE değerlendirmesi iptali aynı çağrıda döndürüyor (ms)",
       "ok": true,
-      "detail": "HOP_QBER, değerlendirme + iptal 3.06 ms (Node, çekirdek)"
+      "detail": "HOP_QBER, değerlendirme + iptal 4.87 ms (Node, çekirdek)"
     },
     {
       "name": "S5 toparlanma: saldırı kaldırılınca hibrit akışta taze anahtar (KEY_DELIVERED), panel GÜVENLİ",
       "ok": true,
-      "detail": "ℓ 229, birleşik %1.46 · olaylar: KEY_DELIVERED. Her iletim yeni bir oturumdur; iptal edilen anahtar yeniden kullanılmaz"
+      "detail": "ℓ 128, birleşik %1.48 · olaylar: QBER_WARNING, KEY_DELIVERED. Her iletim yeni bir oturumdur; iptal edilen anahtar yeniden kullanılmaz"
     },
     {
       "name": "S6 KEY_BUDGET: QBER %11'e varmadan bütçe bitti, oturum iptal, ℓ = 0, anahtar bloke",
       "ok": true,
-      "detail": "147km/1hop — ⛔ İLETİM İPTAL (KEY_BUDGET): link başına 4.194.304 darbede yeterli kanıtlanmış anahtar birikmedi (gereken 104 bit) — rota bu dedektör/kayıp varsayımlarıyla çok "
+      "detail": "147km/1hop — ⛔ İLETİM İPTAL (KEY_BUDGET): link başına 4.194.304 darbede yeterli kanıtlanmış anahtar birikmedi (gereken 112 bit) — rota bu dedektör/kayıp varsayımlarıyla çok "
     },
     {
       "name": "sayfada JavaScript hatası yok",
       "ok": true,
       "detail": "0 hata"
+    }
+  ],
+  "observations": [
+    {
+      "name": "S1 belirtim bandı %1,17–%1,50 (gözlem metriği, karar kapısı değil)",
+      "inBand": true,
+      "detail": "ölçülen birleşik %1.39 / %1.33; modelin beklediği ≈ %1,5 bandın üst kenarında olduğundan bu ölçüt koşuların yaklaşık yarısında geçer"
     }
   ],
   "transmissions": [
@@ -96,15 +103,17 @@
       "alarm": null,
       "safe": true,
       "failClosed": false,
-      "ell": 216,
-      "worstQ": 0.024300000000000002,
-      "pooledQ": 0.015,
+      "ell": 249,
+      "worstQ": 0.0239,
+      "pooledQ": 0.0139,
       "hops": 31,
       "abortLine": null,
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=216; uçtan uca anahtar 6480 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "otpLine": "OTP: mesaj 112 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=249; uçtan uca anahtar 7470 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
       "events": [
         "KEY_DELIVERED"
-      ]
+      ],
+      "minK": 832,
+      "expectedQ": 0.015
     },
     {
       "label": "S1 taban #2",
@@ -113,53 +122,59 @@
       "alarm": null,
       "safe": true,
       "failClosed": false,
-      "ell": 221,
-      "worstQ": 0.021400000000000002,
-      "pooledQ": 0.0141,
+      "ell": 280,
+      "worstQ": 0.0236,
+      "pooledQ": 0.013300000000000001,
       "hops": 31,
       "abortLine": null,
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=221; uçtan uca anahtar 6630 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "otpLine": "OTP: mesaj 112 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=280; uçtan uca anahtar 8400 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
       "events": [
         "KEY_DELIVERED"
-      ]
+      ],
+      "minK": 822,
+      "expectedQ": 0.015
     },
     {
       "label": "S2 hibrit t=+0 s",
-      "route": "1855km/6hop",
-      "detector": "SNSPD",
-      "alarm": null,
-      "safe": true,
-      "failClosed": false,
-      "ell": 226,
-      "worstQ": 0.022400000000000003,
-      "pooledQ": 0.0146,
-      "hops": 32,
-      "abortLine": null,
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (32 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=226; uçtan uca anahtar 7006 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
-      "events": [
-        "KEY_DELIVERED"
-      ]
-    },
-    {
-      "label": "S2 hibrit t=-60 s",
       "route": "1842km/5hop",
       "detector": "SNSPD",
       "alarm": null,
       "safe": true,
       "failClosed": false,
-      "ell": 228,
-      "worstQ": 0.0219,
-      "pooledQ": 0.0148,
+      "ell": 221,
+      "worstQ": 0.023700000000000002,
+      "pooledQ": 0.013999999999999999,
       "hops": 32,
       "abortLine": null,
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (32 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=228; uçtan uca anahtar 7068 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "otpLine": "OTP: mesaj 112 bitlik KANITLANMIŞ anahtarla (32 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=221; uçtan uca anahtar 6851 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
       "events": [
         "KEY_DELIVERED"
-      ]
+      ],
+      "minK": 821,
+      "expectedQ": 0.015
+    },
+    {
+      "label": "S2 hibrit t=-60 s",
+      "route": "1855km/6hop",
+      "detector": "SNSPD",
+      "alarm": null,
+      "safe": true,
+      "failClosed": false,
+      "ell": 167,
+      "worstQ": 0.0229,
+      "pooledQ": 0.0152,
+      "hops": 32,
+      "abortLine": null,
+      "otpLine": "OTP: mesaj 112 bitlik KANITLANMIŞ anahtarla (32 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=167; uçtan uca anahtar 5177 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "events": [
+        "KEY_DELIVERED"
+      ],
+      "minK": 820,
+      "expectedQ": 0.015
     },
     {
       "label": "S2 hibrit t=+300 s",
-      "route": "1855km/6hop",
+      "route": "1842km/5hop",
       "detector": "SNSPD",
       "alarm": "SAT_NOT_VISIBLE",
       "safe": false,
@@ -172,7 +187,9 @@
       "otpLine": "OTP: kanıtlanmış anahtar yok — mesaj şifrelenmedi ve GÖNDERİLMEDİ (bozuk metin teslim edilmez)",
       "events": [
         "SESSION_ABORTED"
-      ]
+      ],
+      "minK": null,
+      "expectedQ": null
     },
     {
       "label": "S3 InGaAs (karasal)",
@@ -181,15 +198,17 @@
       "alarm": null,
       "safe": true,
       "failClosed": false,
-      "ell": 176,
-      "worstQ": 0.0219,
-      "pooledQ": 0.0149,
+      "ell": 209,
+      "worstQ": 0.0229,
+      "pooledQ": 0.015300000000000001,
       "hops": 31,
       "abortLine": "⛔ İLETİM İPTAL (SAT_NOT_VISIBLE): hop #0 (uydu aşağı-bağlantısı): görünürlük 0.079 < 0.1 (yükselti 4.5°, geçişte t = 300.0 s) — atlama anahtarı tamamlanmadı; anahtar kullanılmadı, mesaj gönderilmedi",
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=176; uçtan uca anahtar 5280 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "otpLine": "OTP: mesaj 112 bitlik KANITLANMIŞ anahtarla (31 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=209; uçtan uca anahtar 6270 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
       "events": [
         "KEY_DELIVERED"
-      ]
+      ],
+      "minK": 820,
+      "expectedQ": 0.0159
     },
     {
       "label": "S3 InGaAs (hibrit, t = 0)",
@@ -201,12 +220,14 @@
       "ell": 0,
       "worstQ": null,
       "pooledQ": null,
-      "hops": 31,
-      "abortLine": "⛔ İLETİM İPTAL (KEY_BUDGET): link başına 16.777.216 darbede 1/32 atlamada (ör. #0) yeterli kanıtlanmış anahtar birikmedi (gereken 104 bit) — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; daha kısa hop, ek güvenilir düğüm ya da yakın bir hedef seçin",
+      "hops": 32,
+      "abortLine": "⛔ İLETİM İPTAL (KEY_BUDGET): link başına 16.777.216 darbede 1/32 atlamada (ör. #0) yeterli kanıtlanmış anahtar birikmedi (gereken 112 bit) — uydu atlaması (#0): bu SİMÜLASYON darbe bütçesinin sınırıdır (100 MHz kaynakta geçişin 0.17 s'si; gerçek geçiş ~569 s anahtar toplar), fiziksel bir sınır değildir",
       "otpLine": "OTP: kanıtlanmış anahtar yok — mesaj şifrelenmedi ve GÖNDERİLMEDİ (bozuk metin teslim edilmez)",
       "events": [
         "SESSION_ABORTED"
-      ]
+      ],
+      "minK": 410,
+      "expectedQ": 0.0161
     },
     {
       "label": "S4 dinleme (uydu atlaması)",
@@ -216,31 +237,36 @@
       "safe": false,
       "failClosed": true,
       "ell": 0,
-      "worstQ": 0.2923,
-      "pooledQ": 0.018500000000000003,
+      "worstQ": 0.2257,
+      "pooledQ": 0.018600000000000002,
       "hops": 32,
-      "abortLine": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 (uydu aşağı-bağlantısı) QBER_test %29.2 ≥ %11 (k=414 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi",
+      "abortLine": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 (uydu aşağı-bağlantısı) QBER_test %22.6 ≥ %11 (k=412 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi",
       "otpLine": "OTP: kanıtlanmış anahtar yok — mesaj şifrelenmedi ve GÖNDERİLMEDİ (bozuk metin teslim edilmez)",
       "events": [
         "SESSION_ABORTED"
-      ]
+      ],
+      "minK": 412,
+      "expectedQ": null
     },
     {
       "label": "S5 toparlanma (hibrit)",
-      "route": "1722km/4hop",
+      "route": "1842km/5hop",
       "detector": "SNSPD",
       "alarm": null,
       "safe": true,
       "failClosed": false,
-      "ell": 229,
-      "worstQ": 0.023399999999999997,
-      "pooledQ": 0.0146,
-      "hops": 30,
-      "abortLine": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 (uydu aşağı-bağlantısı) QBER_test %29.2 ≥ %11 (k=414 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi",
-      "otpLine": "OTP: mesaj 104 bitlik KANITLANMIŞ anahtarla (30 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=229; uçtan uca anahtar 6641 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
+      "ell": 128,
+      "worstQ": 0.0223,
+      "pooledQ": 0.0148,
+      "hops": 32,
+      "abortLine": "⛔ İLETİM İPTAL (HOP_QBER): hop #0 (uydu aşağı-bağlantısı) QBER_test %22.6 ≥ %11 (k=412 test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi",
+      "otpLine": "OTP: mesaj 112 bitlik KANITLANMIŞ anahtarla (32 atlamanın her biri kendi ℓ'siyle, en zayıf ℓ=128; uçtan uca anahtar 3968 bitlik açık röle yayınıyla taşındı) şifrelendi, klasik kanaldan gönderildi, Bob kendi anahtarıyla çözdü → bütünlük ✓",
       "events": [
+        "QBER_WARNING",
         "KEY_DELIVERED"
-      ]
+      ],
+      "minK": 820,
+      "expectedQ": 0.015
     },
     {
       "label": "S6 Zagreb → Ljubljana",
@@ -253,11 +279,13 @@
       "worstQ": null,
       "pooledQ": null,
       "hops": null,
-      "abortLine": "⛔ İLETİM İPTAL (KEY_BUDGET): link başına 4.194.304 darbede yeterli kanıtlanmış anahtar birikmedi (gereken 104 bit) — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; daha kısa hop, ek güvenilir düğüm ya da yakın bir hedef seçin",
+      "abortLine": "⛔ İLETİM İPTAL (KEY_BUDGET): link başına 4.194.304 darbede yeterli kanıtlanmış anahtar birikmedi (gereken 112 bit) — rota bu dedektör/kayıp varsayımlarıyla çok kayıplı; daha kısa hop, ek güvenilir düğüm ya da yakın bir hedef seçin",
       "otpLine": "OTP: kanıtlanmış anahtar yok — mesaj şifrelenmedi ve GÖNDERİLMEDİ (bozuk metin teslim edilmez)",
       "events": [
         "SESSION_ABORTED"
-      ]
+      ],
+      "minK": null,
+      "expectedQ": null
     }
   ],
   "notImplemented": []

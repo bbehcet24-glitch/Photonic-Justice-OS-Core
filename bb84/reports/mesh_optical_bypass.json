@@ -1,11 +1,11 @@
 {
-  "generatedAt": "2026-10-12T23:24:14.499Z",
+  "generatedAt": "2026-11-17T18:20:23.358Z",
   "part": "3/3 optik bypass",
   "checks": [
     {
       "name": "B1 Planlayıcı (KDK): 6 komşu çiftinden doğrudan linki olan 2'si (MSL–ASY, ASY–ATS) aday değil → 4 aday; sanal link uzunluğu = iki fiberin toplamı, η 3 + 1,5 dB kayıpla; hız uzunlukla kesin azalıyor; seçilen fiberler ayrık; seçim BKR–ATS (BKR↔ATS'nin güvenilir ara düğümü 3 → 0)",
       "ok": true,
-      "detail": "ATS–MSL 47 km 193.8 kbps · BKR–ATS 53 km 137.8 kbps · BKR–ASY 57 km 108.6 kbps · BKR–MSL 76 km 22.8 kbps · seçilen: BKR–ATS · tasarruf 3 ara düğüm"
+      "detail": "ATS–MSL 47 km 193.4 kbps · BKR–ATS 53 km 137.5 kbps · BKR–ASY 57 km 108.4 kbps · BKR–MSL 76 km 22.7 kbps · seçilen: BKR–ATS · tasarruf 3 ara düğüm"
     },
     {
       "name": "B2 Dışlama + yarar şartı: ATS de karantinadayken KDK bypass planı ATS'yi hiçbir adaya koymuyor (kalan komşular BKR, MSL, ASY; MSL–ASY doğrudan bağlı → 2 aday); kalan adayların hiçbiri güvenilir ara düğüm tasarrufu sağlamadığı için bypass SEÇİLMİYOR (boşuna fiber askıya alınmaz)",
@@ -38,9 +38,9 @@
       "detail": "69 s sonra: QUARANTINED · KDK kanıtı: self=1.06, neighbor=null · operatör onayı → PROBATION"
     },
     {
-      "name": "Çekirdek ve yeniden kullanılan modüller değişmedi (photonnet_core.js SHA-256 = 8f879fde…dc7b05)",
+      "name": "Çekirdek ve yeniden kullanılan modüller değişmedi (photonnet_core.js SHA-256 = 11bf0015…651f79)",
       "ok": true,
-      "detail": "photonnet_core.js 8f879fde86be… · adaptive_shielding_mitigation.js e422b7ba63f3… · qkd_network_scale.js b5bdf72ef541…"
+      "detail": "photonnet_core.js 11bf00156cf2… · adaptive_shielding_mitigation.js ac19ff793cc8… · qkd_network_scale.js b5bdf72ef541…"
     }
   ],
   "passed": 8,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-22T23:48:57.502Z",
+  "generatedAt": "2026-11-17T18:20:59.052Z",
   "checks": [
     {
       "name": "Q1 ℓ = 0 uçurumu çekirdeğin formülünden: çekirdeğin tek-parametreli n=k kısayolu (secureKeyLength) n = 10⁶'da %9,59 veriyor (detector_recalibration raporuyla aynı); politika iki-parametreli Serfling μ kullanıyor, aynı n = k'da %9,50 (daha muhafazakâr); blok boyuyla tekdüze artıyor; hepsi %11'in altında",
@@ -19,17 +19,17 @@
     {
       "name": "Q4 Çekirdek oturumu (50 km, 4096 darbe): çekirdeğin kâhin QBER'i %11'in altında, bayrak YOK, anahtarı kullanırdı; politika ABORT — mesaj boyunda (n ≈ 10³) uçurum çok düşük, sonlu-anahtar anlamında güvenli anahtar ÇIKMIYOR",
       "ok": true,
-      "detail": "4096 darbeden sifted 184 bit · çekirdek kâhin QBER %1.63, bayrak false · politika: n=147, k=37, QBER_test %2.70, uçurum %0.00 → ABORT (blok çok küçük (n=147, k=37): hiçbir QBER'de ℓ > 0 değil)"
+      "detail": "4096 darbeden sifted 183 bit · çekirdek kâhin QBER %1.09, bayrak false · politika: n=146, k=37, QBER_test %0.00, uçurum %0.00 → ABORT (blok çok küçük (n=146, k=37): hiçbir QBER'de ℓ > 0 değil)"
     },
     {
       "name": "Q5 Çekirdek + intercept-resend casusu: QBER ~%25, çekirdek bayrağı ve politika ikisi de iptal",
       "ok": true,
-      "detail": "çekirdek QBER %23.79, bayrak true · politika ABORT"
+      "detail": "çekirdek QBER %23.30, bayrak true · politika ABORT"
     },
     {
       "name": "Q6 Havuzlanmış blok (200 çekirdek oturumu, 50 km, ~3·10⁴ anahtar biti): uçurum %7'nin üstüne çıkıyor → PROCEED, ℓ > 0, anahtar test bitlerinden ayrık; aynı havuz casus altında ABORT",
       "ok": true,
-      "detail": "temiz: sifted 38737, n=30990, k=7747, QBER_test %2.31, uçurum %7.17, ℓ=12273 (n'nin %39.6'i) · casus: QBER_test %26.09 → ABORT"
+      "detail": "temiz: sifted 38753, n=31002, k=7751, QBER_test %1.39, uçurum %7.17, ℓ=15179 (n'nin %49.0'i) · casus: QBER_test %26.13 → ABORT"
     },
     {
       "name": "Q7 Kapı kanıtı: etkin eşik ≤ ℓ-uçurumu (n = 10⁶, k = 2,5·10⁵) ve öz-test üç kararı doğru veriyor",
@@ -39,7 +39,7 @@
     {
       "name": "Çekirdek değişmedi (photonnet_core.js SHA-256)",
       "ok": true,
-      "detail": "8f879fde86be0129…"
+      "detail": "11bf00156cf2efea…"
     }
   ],
   "passed": 8,

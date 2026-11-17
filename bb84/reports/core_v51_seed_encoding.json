@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T17:52:54.386Z",
+  "generatedAt": "2026-11-17T18:16:36.119Z",
   "checks": [
     {
       "name": "E1 Metin ↔ bit UTF-8: Türkçe ve emoji kayıpsız gidiş-dönüş, \"Merhaba Dünya\" = 112 bit",
@@ -9,12 +9,12 @@
     {
       "name": "E2 Toeplitz tohumu: her atlamada n + ℓ − 1 bit (tam 2-evrensel aile), entropiden; anahtarlar eşleşti, mesaj çözüldü",
       "ok": true,
-      "detail": "#0: n 3426 + ℓ 394 − 1 = 3819 bit · #1: n 3558 + ℓ 416 − 1 = 3973 bit · #2: n 3318 + ℓ 291 − 1 = 3608 bit · çözülen \"Teşekkürler, İğdır\""
+      "detail": "#0: n 3295 + ℓ 398 − 1 = 3692 bit · #1: n 3539 + ℓ 314 − 1 = 3852 bit · #2: n 6701 + ℓ 1568 − 1 = 8268 bit · çözülen \"Teşekkürler, İğdır\""
     },
     {
       "name": "E3 PE alt kümesi: tam k, tekrarsız, düzgün (her indis ≈ k/N); aynı akış aynı, farklı akış farklı alt küme",
       "ok": true,
-      "detail": "N=50, k=10, 20000 çekiliş: sıklık 0.194–0.206 (beklenen 0.200, en büyük sapma 0.0060)"
+      "detail": "N=50, k=10, 20000 çekiliş: sıklık 0.193–0.206 (beklenen 0.200, en büyük sapma 0.0072)"
     },
     {
       "name": "E4 QKDSecurityProof.run: aynı entanglementSeed ile iki çağrı farklı anahtar (tohum oturum tohumundan değil); PE süzgeci rng fonksiyonu kabul ediyor",
@@ -34,7 +34,7 @@
     {
       "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
       "ok": true,
-      "detail": "905987d79187c88b…"
+      "detail": "11bf00156cf2efea…"
     }
   ],
   "passed": 7,

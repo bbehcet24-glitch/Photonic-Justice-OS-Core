@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-12T00:54:08.494Z",
+  "generatedAt": "2026-11-17T18:20:29.597Z",
   "checks": [
     {
       "name": "(A) TRANSIENT BAĞIŞIKLIK: kısa kötü okuma effectiveAllowed'ı HİÇ false yapmaz (SUSPECT'e geçer ama kilit AÇIK kalır), transient geçince OK'e döner",
@@ -49,7 +49,7 @@
     {
       "name": "ÇEKİRDEĞE DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası"
+      "detail": "SHA-256 11bf00156cf2efea… öncesi = sonrası"
     }
   ],
   "defaults": {
@@ -2996,7 +2996,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "8f879fde86be0129"
+    "sha256": "11bf00156cf2efea"
   },
   "allChecksPassed": true
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-23T14:02:02.087Z",
+  "generatedAt": "2026-11-17T18:20:32.761Z",
   "checks": [
     {
       "name": "(A) ODLS OLMADAN: 9-adımlık geçişte pencere paketleri TAMAMEN düşer",
@@ -29,7 +29,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — ODLS bağımsız L5.6, fizik motordan (entanglement_swap_scheduler) alınır"
+      "detail": "SHA-256 11bf00156cf2efea… öncesi = sonrası — ODLS bağımsız L5.6, fizik motordan (entanglement_swap_scheduler) alınır"
     }
   ],
   "fiber": {
@@ -223,7 +223,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "8f879fde86be0129"
+    "sha256": "11bf00156cf2efea"
   },
   "params": {
     "steps": 9,

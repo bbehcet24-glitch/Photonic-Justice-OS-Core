@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-01T12:00:28.018Z",
+  "generatedAt": "2026-11-17T18:16:40.233Z",
   "checks": [
     {
       "name": "P1 Şema fail-closed: 14 bozuk yapılandırmanın hepsi JS çekirdeğinde (TypeError/RangeError) VE Python HAL'de (DetectorConfigError) reddediliyor; depodaki config.json kabul ediliyor",
@@ -44,7 +44,7 @@
     {
       "name": "Çekirdek sabitlenmiş sürümle aynı ve hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
       "ok": true,
-      "detail": "e8de863c426936e0…"
+      "detail": "11bf00156cf2efea…"
     }
   ],
   "physics": {

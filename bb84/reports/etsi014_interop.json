@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T16:05:45.498Z",
+  "generatedAt": "2026-11-17T18:23:23.762Z",
   "checks": [
     {
       "name": "(A) İSTEMCİMİZ ↔ BİZİM KME: §6 akışı geçiyor (key_size 256), master===slave",
@@ -29,7 +29,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 8f879fde86be0129… — referans KME çekirdeği require ETMEZ (gerçekten bağımsız)"
+      "detail": "SHA-256 11bf00156cf2efea… — referans KME çekirdeği require ETMEZ (gerçekten bağımsız)"
     }
   ],
   "ourFlow": {
@@ -76,7 +76,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "8f879fde86be0129"
+    "sha256": "11bf00156cf2efea"
   },
   "allChecksPassed": true
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-16T22:50:12.329Z",
+  "generatedAt": "2026-11-17T18:17:04.891Z",
   "checks": [
     {
       "name": "(A) TEMEL SIFIRLAMA: 30 gün dolunca epochLocalCount 0'a ÇEKİLİR (yeni kayıt EKLENDİKTEN sonraki değeriyle), epochIndex artar, lifetimeCount (BigInt) İKİSİNİN TOPLAMINI korur",
@@ -34,7 +34,7 @@
     {
       "name": "ÇEKİRDEĞE DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası"
+      "detail": "SHA-256 11bf00156cf2efea… öncesi = sonrası"
     }
   ],
   "epochDurationS": 2592000,
@@ -99,7 +99,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "8f879fde86be0129"
+    "sha256": "11bf00156cf2efea"
   },
   "allChecksPassed": true
 }

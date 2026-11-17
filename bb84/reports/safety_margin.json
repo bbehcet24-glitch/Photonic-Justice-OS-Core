@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-23T12:37:42.387Z",
+  "generatedAt": "2026-11-17T18:31:10.328Z",
   "checks": [
     {
       "name": "(1) GÜVENLİK PAYI %0 DEĞİL: döngü e_ph sapmasını GENİŞ marjla yutuyor",
@@ -34,7 +34,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — düzeltme yalnız katmanda (qkd_key_supply provisionForRate)"
+      "detail": "SHA-256 11bf00156cf2efea… öncesi = sonrası — düzeltme yalnız katmanda (qkd_key_supply provisionForRate)"
     }
   ],
   "margin": {
@@ -153,7 +153,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "8f879fde86be0129"
+    "sha256": "11bf00156cf2efea"
   },
   "params": {
     "nominalEPh": 0.054209,

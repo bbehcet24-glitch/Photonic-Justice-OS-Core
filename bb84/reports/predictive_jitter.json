@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-23T13:03:50.659Z",
+  "generatedAt": "2026-11-17T18:20:34.996Z",
   "checks": [
     {
       "name": "(A) DRIFT ÖĞRENİLDİ: ön-besleme artığı jitter tabanına iniyor",
@@ -34,7 +34,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası — modül bağımsız L5.5, yalnız mulberry32 çağrılıyor"
+      "detail": "SHA-256 11bf00156cf2efea… öncesi = sonrası — modül bağımsız L5.5, yalnız mulberry32 çağrılıyor"
     }
   ],
   "drift": {
@@ -494,7 +494,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "8f879fde86be0129"
+    "sha256": "11bf00156cf2efea"
   },
   "params": {
     "N": 4000,

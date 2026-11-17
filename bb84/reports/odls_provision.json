@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-25T04:23:24.982Z",
+  "generatedAt": "2026-11-17T18:20:32.582Z",
   "checks": [
     {
       "name": "(A) provisionOdls SMF/9-adım L5.6 senaryosuyla birebir (~2,36 dB, ~%58)",
@@ -29,7 +29,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 8f879fde86be0129… öncesi = sonrası"
+      "detail": "SHA-256 11bf00156cf2efea… öncesi = sonrası"
     }
   ],
   "smf9": {
@@ -105,7 +105,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "8f879fde86be0129"
+    "sha256": "11bf00156cf2efea"
   },
   "allChecksPassed": true
 }
