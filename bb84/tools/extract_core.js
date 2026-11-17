@@ -126,7 +126,7 @@ const EXPORT_MANIFEST = [
   "propPhoton", "propPhotonRelayChain", "mulberry32", "combineSeed", "WL", "fiberT", "lega",
   "poissonSample",
   // ── Çekirdek v5.1: PE alt kümesi ve Toeplitz tohumu entropiden (öngörülemez, tam uzunluk) ──
-  "_sampleSubset", "_uniformInt", "_bitsAsRng", "_systemEntropyBits",
+  "_sampleSubset", "_uniformInt", "_bitsAsRng", "_systemEntropyBits", "_systemRandom",
   // ── Çekirdek v5: hibrit uydu + fiber (LEO geçiş geometrisi, aşağı-bağlantı kanalı, QBER erken uyarı bandı) ──
   "LeoPassGeometry", "SatelliteDownlinkChannel", "computeDynamicAlpha", "SAT_VISIBILITY_MIN", "SAT_PULSE_RATE_HZ", "EARTH_RADIUS_KM", "LIGHT_SPEED_KM_S",
   // ── Katman 1: BB84 çekirdek protokolü (baz uzlaşması + sifted key + QBER) ──

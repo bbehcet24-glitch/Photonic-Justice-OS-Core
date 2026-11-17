@@ -40,7 +40,7 @@ const path = require("path");
 const crypto = require("crypto");
 
 const CORE_PATH = path.join(__dirname, "photonnet_core.js");
-const CORE_SHA_EXPECTED = "905987d79187c88b114d9465ead5108dda851f4886542de46c2a845ae49650e4";
+const CORE_SHA_EXPECTED = "11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79";
 
 function verifyCoreHash() {
   const hash = crypto.createHash("sha256").update(fs.readFileSync(CORE_PATH)).digest("hex");
@@ -76,6 +76,12 @@ function mulberry32(seed) {
   };
 }
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
+
+// Çekirdek v5.1: KeyPoolBuffer PE seçimini ve Toeplitz tohumunu randomSource'tan alır (varsayılan platform CSPRNG,
+// her çağrıda farklı). Bu test senkron ve iş parçacığına devredilmiş yolun BİREBİR aynı sonucu verdiğini denetler; bunun
+// için karşılaştırılan iki örneğe aynı tohumlu rastgelelik kaynağı verilir. Üretim varsayılanı değişmez.
+function seededRandomSource(seed) { let c = 0; return () => mulberry32((seed ^ 0x52414e44 ^ c++) >>> 0); }
+function seededPool(seed) { const k = new KeyPoolBuffer(); k.randomSource = seededRandomSource(seed); return k; }
 
 function makeSyntheticBitPairs(nBits, qberTarget, seed) {
   const rng = mulberry32(seed >>> 0);
@@ -117,8 +123,8 @@ async function testA_behavioralEquivalence() {
   const origThreshold = KeyPoolBuffer.BLOCK_THRESHOLD_BITS;
   KeyPoolBuffer.BLOCK_THRESHOLD_BITS = N;
   try {
-    const kpbOrig = new KeyPoolBuffer();
-    const kpbNew = new KeyPoolBuffer();
+    const kpbOrig = seededPool(SEED);
+    const kpbNew = seededPool(SEED);
     const poolOrig = { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 };
     const poolNew = { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 };
 
@@ -170,8 +176,8 @@ async function testB_blockingEliminated() {
   const origThreshold = KeyPoolBuffer.BLOCK_THRESHOLD_BITS;
   KeyPoolBuffer.BLOCK_THRESHOLD_BITS = N;
   try {
-    const kpbOrig = new KeyPoolBuffer();
-    const kpbNew = new KeyPoolBuffer();
+    const kpbOrig = seededPool(SEED);
+    const kpbNew = seededPool(SEED);
     const poolOrig = { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 };
     const poolNew = { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 };
 
@@ -229,7 +235,7 @@ async function testC_coreNativeOffload() {
   try {
     // C1: kancasız → "skipped", ana iş parçacığı kilitlenmez
     KeyPoolBuffer.ldpcOffload = null;
-    const kSkip = new KeyPoolBuffer();
+    const kSkip = seededPool(SEED);
     const tS = Date.now();
     kSkip._finalizeBlock("routeC_skip", { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 }, SEED);
     const skipMs = Date.now() - tS;
@@ -240,7 +246,7 @@ async function testC_coreNativeOffload() {
 
     // C2: kanca = runLdpcOnWorker → "pending" hemen, sonra "done", referansla aynı
     KeyPoolBuffer.ldpcOffload = runLdpcOnWorker;
-    const kHook = new KeyPoolBuffer();
+    const kHook = seededPool(SEED);
     const tH = Date.now();
     kHook._finalizeBlock("routeC_hook", { bitPairs: makeSyntheticBitPairs(N, QBER, SEED), sentPulses: N * 2, blocksFinalized: 0 }, SEED);
     const hookMs = Date.now() - tH;

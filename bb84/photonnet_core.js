@@ -3008,6 +3008,9 @@ class ProductionSecurityAudit {
 // ══════════════════════════════════════════════════════════
 class KeyPoolBuffer {
     constructor() {
+        // v5.1: PE seçimi ve Toeplitz tohumu için rastgelelik kaynağı (çağrı başına yeni bir rng döndüren fabrika).
+        // Varsayılan platform CSPRNG; testler iki örneğe aynı tohumlu fabrikayı vererek bit-bit eşdeğerlik denetleyebilir.
+        this.randomSource = _systemRandom;
         this.pools = {}; // routeKey -> { bitPairs:[{bit,isError}], sentPulses, totalFed, blocksFinalized }
         this.stats = { totalBitsFed: 0, blocksFinalized: 0, totalSecureBitsProduced: 0 };
         // productionBlocks: MADDE (n/k denetim fonksiyonu) — her tamamlanan
@@ -3064,7 +3067,7 @@ class KeyPoolBuffer {
         const blockBits = pool.bitPairs.splice(0, KeyPoolBuffer.BLOCK_THRESHOLD_BITS); // bu bloğu havuzdan ÇEK — fazlalık sonraki bloğa taşınır
         const blockSentPulses = pool.sentPulses; // bu bloğa katkıda bulunan TÜM iletimlerin toplam gönderilen darbe sayısı
         pool.sentPulses = 0; // bir sonraki blok için sıfırla (blockBits gibi bu bloğa özgü pay da "tüketildi")
-        const pe = ParameterEstimationFilter.split(blockBits, KeyPoolBuffer.TEST_FRACTION, _systemRandom()); // v5.1: blok kapanınca, öngörülemez
+        const pe = ParameterEstimationFilter.split(blockBits, KeyPoolBuffer.TEST_FRACTION, this.randomSource()); // v5.1: blok kapanınca, öngörülemez
         pool.blocksFinalized++;
         this.stats.blocksFinalized++;
         // ── GERÇEK HATA DÜZELTME (Cascade birincil, LDPC karşılaştırma) ──
@@ -3126,7 +3129,7 @@ class KeyPoolBuffer {
         let deliveryEntry = null;
         let paPending = false;
         if (audit.secure) {
-            const seedRng = _systemRandom(); // v5.1: Toeplitz tohumu platform CSPRNG akışından (n+ℓ−1 bağımsız bit); önceden 32 bitlik "BLK1" tohumu
+            const seedRng = this.randomSource(); // v5.1: Toeplitz tohumu platform CSPRNG akışından (n+ℓ−1 bağımsız bit); önceden 32 bitlik "BLK1" tohumu
             // BÜYÜK BLOK (ör. 10⁵-10⁶ bit) KARARI: n·ell maliyeti eşiği aşıyorsa
             // (bkz. ToeplitzAsyncEngine.SYNC_THRESHOLD_OPS, dosya-üstü DOĞRULUK/
             // PERFORMANS notu) SENKRON hesap bu satırda ana iş parçacığını
@@ -14957,5 +14960,5 @@ function PhotonNet() {
 }
 
 module.exports = {
-  propPhoton, propPhotonRelayChain, mulberry32, combineSeed, WL, fiberT, lega, poissonSample, _sampleSubset, _uniformInt, _bitsAsRng, _systemEntropyBits, LeoPassGeometry, SatelliteDownlinkChannel, computeDynamicAlpha, SAT_VISIBILITY_MIN, SAT_PULSE_RATE_HZ, EARTH_RADIUS_KM, LIGHT_SPEED_KM_S, QuantumKeyDistribution, SecureMessageSession, QKD_MISALIGNMENT_E_D, MAX_LINK_KM, MAX_REPEATERS, MAX_RECONCILE_BITS, bb84Reconcile, validateDetectorConfig, configureDetectorProfiles, listDetectorProfiles, activeDetectorProfile, setActiveDetectorProfile, onDetectorProfileChange, detectorProfileSource, DETECTOR_TECHNOLOGIES, deriveOtpKeyBits, otpEncryptBits, otpDecryptBits, LinkGradedEavesdropThresholdAlgorithm, eavesdropProbability, NoiseMatrixCalibration, noiseMatrixCalibration, EdgeWeightPolicy, defaultWeightPolicy, LinkRiskReputationEngine, linkRiskReputationEngine, CalibrationRateLimiter, NetworkTopology, networkTopology, routeCalculation, routeCalculationResilient, routeIsSuspect, DOS_SUSPECT_RISK_THRESHOLD, ScintillationModel, ScintillationEngine, scintillationEngine, PointingBudget, DetectorNoiseModel, AtmosphericWindowModel, satQ, physicalSimulation, hEnc, hDec, t2b, b2t, bitsToBase64, computeRepeaterGain, estimateLinkSurvival, dynamicRedundancyFor, ParameterEstimationFilter, CascadeReconciliation, LDPCReconciliation, QKDSecurityProof, ProductionSecurityAudit, ToeplitzAsyncEngine, toeplitzParity32, toeplitzPackBits, toeplitzRowsFromPackedWords, KeyPoolBuffer, keyPoolBuffer, KeyDeliveryStore, keyDeliveryStore, deterministicKeyId, ClassicalAuthChannel, classicalAuthChannel, NodeWatchdog, nodeWatchdog, LinkOutageController, linkOutageController, MetricTrendInjector, metricTrendInjector, PredictiveTelemetryEngine, predictiveEngine, NoiseGateMiddleware, noiseGateMiddleware, CALIBRATION_EMA_ALPHA, CALIBRATION_WINDOW_S, GATE_MIN_RATIO, GATE_STEP, GATE_TARGET_MULTIPLIER, MSG_RELAY_COEFF_OVERRIDE, MSG_RELAY_COMPENSATION, MSG_RELAY_HOP_KM, MSG_RELAY_HOP_REPS, MSG_RELAY_THRESHOLD_KM, REAL_CLICK_MISS_AT_MIN_GATE, SNSPD_DARKRATE_TEMP_GAIN, SNSPD_TEMP_DRIFT_SIGMA, SNSPD_TEMP_MEAN_REVERSION, SNSPD_TEMP_TRIP_MK
+  propPhoton, propPhotonRelayChain, mulberry32, combineSeed, WL, fiberT, lega, poissonSample, _sampleSubset, _uniformInt, _bitsAsRng, _systemEntropyBits, _systemRandom, LeoPassGeometry, SatelliteDownlinkChannel, computeDynamicAlpha, SAT_VISIBILITY_MIN, SAT_PULSE_RATE_HZ, EARTH_RADIUS_KM, LIGHT_SPEED_KM_S, QuantumKeyDistribution, SecureMessageSession, QKD_MISALIGNMENT_E_D, MAX_LINK_KM, MAX_REPEATERS, MAX_RECONCILE_BITS, bb84Reconcile, validateDetectorConfig, configureDetectorProfiles, listDetectorProfiles, activeDetectorProfile, setActiveDetectorProfile, onDetectorProfileChange, detectorProfileSource, DETECTOR_TECHNOLOGIES, deriveOtpKeyBits, otpEncryptBits, otpDecryptBits, LinkGradedEavesdropThresholdAlgorithm, eavesdropProbability, NoiseMatrixCalibration, noiseMatrixCalibration, EdgeWeightPolicy, defaultWeightPolicy, LinkRiskReputationEngine, linkRiskReputationEngine, CalibrationRateLimiter, NetworkTopology, networkTopology, routeCalculation, routeCalculationResilient, routeIsSuspect, DOS_SUSPECT_RISK_THRESHOLD, ScintillationModel, ScintillationEngine, scintillationEngine, PointingBudget, DetectorNoiseModel, AtmosphericWindowModel, satQ, physicalSimulation, hEnc, hDec, t2b, b2t, bitsToBase64, computeRepeaterGain, estimateLinkSurvival, dynamicRedundancyFor, ParameterEstimationFilter, CascadeReconciliation, LDPCReconciliation, QKDSecurityProof, ProductionSecurityAudit, ToeplitzAsyncEngine, toeplitzParity32, toeplitzPackBits, toeplitzRowsFromPackedWords, KeyPoolBuffer, keyPoolBuffer, KeyDeliveryStore, keyDeliveryStore, deterministicKeyId, ClassicalAuthChannel, classicalAuthChannel, NodeWatchdog, nodeWatchdog, LinkOutageController, linkOutageController, MetricTrendInjector, metricTrendInjector, PredictiveTelemetryEngine, predictiveEngine, NoiseGateMiddleware, noiseGateMiddleware, CALIBRATION_EMA_ALPHA, CALIBRATION_WINDOW_S, GATE_MIN_RATIO, GATE_STEP, GATE_TARGET_MULTIPLIER, MSG_RELAY_COEFF_OVERRIDE, MSG_RELAY_COMPENSATION, MSG_RELAY_HOP_KM, MSG_RELAY_HOP_REPS, MSG_RELAY_THRESHOLD_KM, REAL_CLICK_MISS_AT_MIN_GATE, SNSPD_DARKRATE_TEMP_GAIN, SNSPD_TEMP_DRIFT_SIGMA, SNSPD_TEMP_MEAN_REVERSION, SNSPD_TEMP_TRIP_MK
 };

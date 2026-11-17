@@ -95,8 +95,8 @@ function finalizeBlockNonBlocking(kpb, routeKey, pool, entanglementSeed) {
   const blockBits = pool.bitPairs.splice(0, KeyPoolBuffer.BLOCK_THRESHOLD_BITS);
   const blockSentPulses = pool.sentPulses;
   pool.sentPulses = 0;
-  const publicSeed = (entanglementSeed ^ 0x50450053 ^ pool.blocksFinalized) >>> 0;
-  const pe = ParameterEstimationFilter.split(blockBits, KeyPoolBuffer.TEST_FRACTION, publicSeed);
+  // çekirdek v5.1 ile aynı: PE seçimi ve Toeplitz tohumu kpb.randomSource'tan (varsayılan platform CSPRNG)
+  const pe = ParameterEstimationFilter.split(blockBits, KeyPoolBuffer.TEST_FRACTION, kpb.randomSource());
   pool.blocksFinalized++;
   kpb.stats.blocksFinalized++;
 
@@ -150,7 +150,7 @@ function finalizeBlockNonBlocking(kpb, routeKey, pool, entanglementSeed) {
   productionBlock.audit = audit;
   let finalKeyBits = [], deliveryEntry = null, paPending = false;
   if (audit.secure) {
-    const seedRng = mulberry32((entanglementSeed ^ 0x424c4b31 ^ pool.blocksFinalized) >>> 0);
+    const seedRng = kpb.randomSource();
     const costEstimate = pe.keyBits.length * audit.ell;
     if (costEstimate <= ToeplitzAsyncEngine.SYNC_THRESHOLD_OPS) {
       finalKeyBits = QKDSecurityProof.toeplitzHash(pe.keyBits, audit.ell, seedRng);

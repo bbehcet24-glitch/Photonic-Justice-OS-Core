@@ -2879,6 +2879,9 @@ class KeyPoolBuffer {
   static TEST_FRACTION = 0.2;         // PE için ayrılan pay — literatürde tipik %10-%30 aralığından, istatistiksel güç/anahtar-verimi dengesi için
 
   constructor() {
+    // v5.1: PE seçimi ve Toeplitz tohumu için rastgelelik kaynağı (çağrı başına yeni bir rng döndüren fabrika).
+    // Varsayılan platform CSPRNG; testler iki örneğe aynı tohumlu fabrikayı vererek bit-bit eşdeğerlik denetleyebilir.
+    this.randomSource = _systemRandom;
     this.pools = {};   // routeKey -> { bitPairs:[{bit,isError}], sentPulses, totalFed, blocksFinalized }
     this.stats = { totalBitsFed: 0, blocksFinalized: 0, totalSecureBitsProduced: 0 };
     // productionBlocks: MADDE (n/k denetim fonksiyonu) — her tamamlanan
@@ -2937,7 +2940,7 @@ class KeyPoolBuffer {
     const blockBits = pool.bitPairs.splice(0, KeyPoolBuffer.BLOCK_THRESHOLD_BITS); // bu bloğu havuzdan ÇEK — fazlalık sonraki bloğa taşınır
     const blockSentPulses = pool.sentPulses; // bu bloğa katkıda bulunan TÜM iletimlerin toplam gönderilen darbe sayısı
     pool.sentPulses = 0; // bir sonraki blok için sıfırla (blockBits gibi bu bloğa özgü pay da "tüketildi")
-    const pe = ParameterEstimationFilter.split(blockBits, KeyPoolBuffer.TEST_FRACTION, _systemRandom()); // v5.1: blok kapanınca, öngörülemez
+    const pe = ParameterEstimationFilter.split(blockBits, KeyPoolBuffer.TEST_FRACTION, this.randomSource()); // v5.1: blok kapanınca, öngörülemez
 
     pool.blocksFinalized++;
     this.stats.blocksFinalized++;
@@ -3004,7 +3007,7 @@ class KeyPoolBuffer {
     let deliveryEntry = null;
     let paPending = false;
     if (audit.secure) {
-      const seedRng = _systemRandom(); // v5.1: Toeplitz tohumu platform CSPRNG akışından (n+ℓ−1 bağımsız bit); önceden 32 bitlik "BLK1" tohumu
+      const seedRng = this.randomSource(); // v5.1: Toeplitz tohumu platform CSPRNG akışından (n+ℓ−1 bağımsız bit); önceden 32 bitlik "BLK1" tohumu
       // BÜYÜK BLOK (ör. 10⁵-10⁶ bit) KARARI: n·ell maliyeti eşiği aşıyorsa
       // (bkz. ToeplitzAsyncEngine.SYNC_THRESHOLD_OPS, dosya-üstü DOĞRULUK/
       // PERFORMANS notu) SENKRON hesap bu satırda ana iş parçacığını

@@ -16,7 +16,7 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v4.3 | `5b7521ab4157de7491fcbc98dd134a84b26b881814d3aa3dc5726c3aa4f342c2` | `5b7521ab…f342c2` |
 | v4.4 | `e8de863c426936e0398c9848b9cdea5441ec846ec5dad9854f8976201343815c` | `e8de863c…43815c` |
 | v5 | `528321cb930b3266c602f42a0ab304128e839ba663b1dbb4bdaad02de1130cc1` | `528321cb…130cc1` |
-| v5.1 | `905987d79187c88b114d9465ead5108dda851f4886542de46c2a845ae49650e4` | `905987d7…9650e4` |
+| v5.1 | `11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79` | `11bf0015…651f79` |
 
 ## v5.1 (2026-11) — PE alt kümesi ve Toeplitz tohumu entropiden, UTF-8 metin kodlaması (hakem bulguları B3, C4, C5)
 
@@ -39,6 +39,10 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
   112 bit; OTP kapısı ℓ ≥ 112 ister.
 - **KEY_BUDGET türü (C5):** uydu atlamasındaki bütçe iptali `budgetKind: "simulation-pulse-budget"` taşır ve gerekçe
   bunun simülasyon darbe bütçesi olduğunu, fiziksel sınır olmadığını söyler; fiber için `"link-loss"`.
+- **Havuz rastgeleliği enjekte edilebilir:** `KeyPoolBuffer.randomSource` (varsayılan platform CSPRNG) PE seçimini ve
+  Toeplitz tohumunu verir; `bb84/ldpc_async_offload.js` aynı kaynağı kullanır. İlk v5.1 koşusunda
+  `ldpc_async_offload_test` kaldı: senkron ve iş parçacığına devredilmiş yolun bit-bit eşdeğerliğini denetliyor ve iki
+  yol artık farklı rastgelelik çekiyordu. Test iki örneğe aynı tohumlu kaynağı veriyor.
 - **Kanıt bağlama (B1):** `npm test` özeti koşu başındaki git HEAD'i, ağacın temiz olup olmadığını ve çekirdek
   SHA-256'sını kaydeder; 📈 SONUÇLAR sekmesi commit'i gösterir.
 - Test: `bb84/core_v51_seed_encoding_test.js` (E1–E6). `PHOTONNET_CORE_VERSION` "v5.1".
