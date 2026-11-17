@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:21:28.821Z",
+  "generatedAt": "2026-11-17T21:15:35.144Z",
   "checks": [
     {
       "name": "B1 Eski algoritma hiç darbe tutmuyor ve eşik üstü darbelerin hepsini gönderiyor; düzeltilmiş tampon bunların büyük kısmını tutuyor (kalan: izleme gecikmesi, bkz. B3)",
@@ -39,7 +39,7 @@
     {
       "name": "Çekirdek değişmedi (photonnet_core.js SHA-256)",
       "ok": true,
-      "detail": "11bf00156cf2efea…"
+      "detail": "6a5effd30eb0be09…"
     }
   ],
   "passed": 8,

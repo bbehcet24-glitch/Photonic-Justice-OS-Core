@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:20:26.498Z",
+  "generatedAt": "2026-11-17T21:14:28.398Z",
   "part": "2/3 karantina",
   "checks": [
     {
@@ -43,9 +43,9 @@
       "detail": "tek link: neden ambiguous, karantina {AVR, MSL} · iki link: neden tx/tx, karantina {AVR}"
     },
     {
-      "name": "Çekirdek ve yeniden kullanılan modüller değişmedi (photonnet_core.js SHA-256 = 11bf0015…651f79)",
+      "name": "Çekirdek ve yeniden kullanılan modüller değişmedi (photonnet_core.js SHA-256 = 6a5effd3…e91c6b)",
       "ok": true,
-      "detail": "photonnet_core.js 11bf00156cf2… · adaptive_shielding_mitigation.js ac19ff793cc8… · qkd_network_scale.js b5bdf72ef541…"
+      "detail": "photonnet_core.js 6a5effd30eb0… · adaptive_shielding_mitigation.js ac19ff793cc8… · qkd_network_scale.js b5bdf72ef541…"
     }
   ],
   "passed": 9,

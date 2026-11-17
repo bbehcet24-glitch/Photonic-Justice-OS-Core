@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:22:08.788Z",
+  "generatedAt": "2026-11-17T21:16:15.648Z",
   "checks": [
     {
       "name": "(A) TEMİZ HAT: QBER optik hizasızlık tabanına (eDetect ~%1) oturuyor, anahtar güvenli",
@@ -24,7 +24,7 @@
     {
       "name": "(E) QRNG SEAM: Alice baz/bit enjekte edilebilir kaynaktan (mulberry32 DEĞİL); QBER RNG'den bağımsız",
       "ok": true,
-      "detail": "üç farklı QRNG kaynağı (tohumlu-101/202 + crypto.randomBytes) → QBER %1.26/%0.98/%1.15 (yayılım %0.28). QBER RNG seçiminden DEĞİL fizikten geliyor. Anahtar seçimi crypto entropiden (üretimde donanım QRNG buraya takılır); mulberry32 yalnız fiziksel gürültü için"
+      "detail": "üç farklı QRNG kaynağı (tohumlu-101/202 + crypto.randomBytes) → QBER %1.26/%0.98/%1.26 (yayılım %0.29). QBER RNG seçiminden DEĞİL fizikten geliyor. Anahtar seçimi crypto entropiden (üretimde donanım QRNG buraya takılır); mulberry32 yalnız fiziksel gürültü için"
     },
     {
       "name": "(F) FAZ 0 KÖPRÜSÜ: distile bitler KME route export biçimine paketlenip ETSI-014 ucuna takılabiliyor",
@@ -34,7 +34,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 11bf00156cf2efea… öncesi = sonrası — köprü bağımsız L(acq), yalnız mulberry32 fizik için"
+      "detail": "SHA-256 6a5effd30eb0be09… öncesi = sonrası — köprü bağımsız L(acq), yalnız mulberry32 fizik için"
     }
   ],
   "clean": {
@@ -122,16 +122,16 @@
   "qrngSeam": {
     "seed101": 1.26,
     "seed202": 0.98,
-    "crypto": 1.15,
-    "spread": 0.28
+    "crypto": 1.26,
+    "spread": 0.29
   },
   "kmeBridge": {
     "keys": 34,
-    "sample": "4d9e72ba"
+    "sample": "6f39f522"
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "11bf00156cf2efea"
+    "sha256": "6a5effd30eb0be09"
   },
   "params": {
     "pulses": 200000,

@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-11-17T18:16:18.915Z",
-  "coreShaVerified": "11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79",
+  "generatedAt": "2026-11-17T21:08:57.594Z",
+  "coreShaVerified": "6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b",
   "totalCalls": 197,
-  "elapsedS": 10.8,
+  "elapsedS": 10.5,
   "counts": {
     "HANDLED": 84,
     "KONTROLLÜ_HATA": 113
@@ -102,7 +102,7 @@
       "argüman": "km",
       "girdi": "null",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "fiberT: km sonlu bir sayı olmalı (alınan: null)"
     },
     {
@@ -526,7 +526,7 @@
       "argüman": "bitCount",
       "girdi": "undefined",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "bb84Reconcile: bitCount negatif olmayan bir tam sayı olmalı (alınan: undefined)"
     },
     {
@@ -542,7 +542,7 @@
       "argüman": "bitCount",
       "girdi": "Infinity",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 0,
+      "elapsedMs": 1,
       "detay": "bb84Reconcile: bitCount negatif olmayan bir tam sayı olmalı (alınan: Infinity)"
     },
     {
@@ -558,7 +558,7 @@
       "argüman": "bitCount",
       "girdi": "negatif (-1)",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 0,
+      "elapsedMs": 1,
       "detay": "bb84Reconcile: bitCount negatif olmayan bir tam sayı olmalı (alınan: -1)"
     },
     {
@@ -574,7 +574,7 @@
       "argüman": "bitCount",
       "girdi": "sayısal olmayan metin (\"abc\")",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 0,
+      "elapsedMs": 1,
       "detay": "bb84Reconcile: bitCount negatif olmayan bir tam sayı olmalı (alınan: abc)"
     },
     {
@@ -582,7 +582,7 @@
       "argüman": "bitCount",
       "girdi": "boş obje ({})",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "bb84Reconcile: bitCount negatif olmayan bir tam sayı olmalı (alınan: [object Object])"
     },
     {
@@ -590,16 +590,16 @@
       "argüman": "rng",
       "girdi": "undefined",
       "verdict": "HANDLED",
-      "elapsedMs": 1,
-      "detay": "{\"aliceBases\":[\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"…"
+      "elapsedMs": 0,
+      "detay": "{\"aliceBases\":[\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\"…"
     },
     {
       "hedef": "bb84Reconcile",
       "argüman": "rng",
       "girdi": "null",
       "verdict": "HANDLED",
-      "elapsedMs": 0,
-      "detay": "{\"aliceBases\":[\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"R…"
+      "elapsedMs": 1,
+      "detay": "{\"aliceBases\":[\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"REC\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"DIAG\",\"REC\",\"…"
     },
     {
       "hedef": "bb84Reconcile",
@@ -622,7 +622,7 @@
       "argüman": "nm",
       "girdi": "NaN",
       "verdict": "HANDLED",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "0.11699999999999999"
     },
     {
@@ -654,7 +654,7 @@
       "argüman": "nm",
       "girdi": "-Infinity",
       "verdict": "HANDLED",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "0.11699999999999999"
     },
     {
@@ -702,7 +702,7 @@
       "argüman": "km",
       "girdi": "undefined",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 0,
+      "elapsedMs": 1,
       "detay": "fiberT: km sonlu bir sayı olmalı (alınan: undefined)"
     },
     {
@@ -774,7 +774,7 @@
       "argüman": "km",
       "girdi": "undefined",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 0,
+      "elapsedMs": 1,
       "detay": "computeRepeaterGain: km sonlu bir sayı olmalı (alınan: undefined)"
     },
     {
@@ -814,7 +814,7 @@
       "argüman": "km",
       "girdi": "aşırı büyük (1e308)",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "computeRepeaterGain: km=1e+308 geçerli aralığın [0, 1000000] dışında"
     },
     {
@@ -1070,7 +1070,7 @@
       "argüman": "legaCtx",
       "girdi": "bozuk coeffOverride/atmosphericConditions",
       "verdict": "HANDLED",
-      "elapsedMs": 0,
+      "elapsedMs": 1,
       "detay": "0.6309573444801932"
     },
     {
@@ -1094,7 +1094,7 @@
       "argüman": "km",
       "girdi": "null",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "propPhoton: km sonlu bir sayı olmalı (alınan: null)"
     },
     {
@@ -1102,7 +1102,7 @@
       "argüman": "km",
       "girdi": "Infinity",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 0,
+      "elapsedMs": 2,
       "detay": "propPhoton: km sonlu bir sayı olmalı (alınan: Infinity)"
     },
     {
@@ -1110,7 +1110,7 @@
       "argüman": "km",
       "girdi": "-Infinity",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 0,
+      "elapsedMs": 1,
       "detay": "propPhoton: km sonlu bir sayı olmalı (alınan: -Infinity)"
     },
     {
@@ -1150,7 +1150,7 @@
       "argüman": "reps",
       "girdi": "NaN",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "propPhoton: reps sonlu bir sayı olmalı (alınan: NaN)"
     },
     {
@@ -1174,7 +1174,7 @@
       "argüman": "reps",
       "girdi": "Infinity",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 0,
+      "elapsedMs": 1,
       "detay": "propPhoton: reps sonlu bir sayı olmalı (alınan: Infinity)"
     },
     {
@@ -1190,7 +1190,7 @@
       "argüman": "reps",
       "girdi": "negatif (-1)",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 0,
+      "elapsedMs": 1,
       "detay": "propPhoton: reps=-1 geçerli aralığın [0, 100000] dışında"
     },
     {
@@ -1222,16 +1222,16 @@
       "argüman": "rng",
       "girdi": "undefined",
       "verdict": "HANDLED",
-      "elapsedMs": 0,
-      "detay": "{\"ok\":true,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"},{\"type\":\"PHASE\",\"km\":41.5931340856595}],\"flip\":true}"
+      "elapsedMs": 1,
+      "detay": "{\"ok\":false,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"},{\"type\":\"ABSORB\",\"km\":46.63816381323605}]}"
     },
     {
       "hedef": "propPhoton",
       "argüman": "rng",
       "girdi": "null",
       "verdict": "HANDLED",
-      "elapsedMs": 1,
-      "detay": "{\"ok\":true,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"}]}"
+      "elapsedMs": 0,
+      "detay": "{\"ok\":false,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"},{\"type\":\"ABSORB\",\"km\":8.367060121298554}]}"
     },
     {
       "hedef": "propPhoton",
@@ -1246,7 +1246,7 @@
       "argüman": "rng",
       "girdi": "fırlatan rng",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "rng kasıtlı olarak patlatıldı (fuzz)"
     },
     {
@@ -1255,7 +1255,7 @@
       "girdi": "undefined",
       "verdict": "HANDLED",
       "elapsedMs": 1,
-      "detay": "{\"ok\":false,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"},{\"type\":\"ABSORB\",\"km\":28.959656444807976}]}"
+      "detay": "{\"ok\":true,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"}]}"
     },
     {
       "hedef": "propPhoton",
@@ -1263,7 +1263,7 @@
       "girdi": "obje değil (metin)",
       "verdict": "HANDLED",
       "elapsedMs": 1,
-      "detay": "{\"ok\":false,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"},{\"type\":\"ABSORB\",\"km\":3.696058532217898}]}"
+      "detay": "{\"ok\":true,\"evs\":[{\"type\":\"AMPLIFY\",\"km\":0,\"gainDb\":\"2.7\"}]}"
     },
     {
       "hedef": "propPhoton",
@@ -1350,7 +1350,7 @@
       "argüman": "bits",
       "girdi": "undefined",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "hEnc: bits bir dizi olmalı"
     },
     {
@@ -1374,7 +1374,7 @@
       "argüman": "bits",
       "girdi": "dizi değil (metin)",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "hEnc: bits bir dizi olmalı"
     },
     {
@@ -1414,7 +1414,7 @@
       "argüman": "bits",
       "girdi": "boş dizi ([])",
       "verdict": "HANDLED",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "[]"
     },
     {
@@ -1438,7 +1438,7 @@
       "argüman": "bits",
       "girdi": "aşırı uzun dizi (50000 eleman)",
       "verdict": "HANDLED",
-      "elapsedMs": 6,
+      "elapsedMs": 5,
       "detay": "[1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1…"
     },
     {
@@ -1486,7 +1486,7 @@
       "argüman": "t",
       "girdi": "aşırı uzun metin (200000 karakter)",
       "verdict": "HANDLED",
-      "elapsedMs": 55,
+      "elapsedMs": 42,
       "detay": "[0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0,0,1,1,1,1,0,0,0…"
     },
     {
@@ -1502,7 +1502,7 @@
       "argüman": "b",
       "girdi": "null",
       "verdict": "KONTROLLÜ_HATA",
-      "elapsedMs": 1,
+      "elapsedMs": 0,
       "detay": "b2t: bit dizisi bekleniyor"
     },
     {
@@ -1534,7 +1534,7 @@
       "argüman": "b",
       "girdi": "aşırı uzun dizi (50000 eleman)",
       "verdict": "HANDLED",
-      "elapsedMs": 3,
+      "elapsedMs": 4,
       "detay": "\"�����������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������������…"
     },
     {

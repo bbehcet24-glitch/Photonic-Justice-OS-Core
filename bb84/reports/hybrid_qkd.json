@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:18:34.118Z",
+  "generatedAt": "2026-11-17T21:11:37.468Z",
   "checks": [
     {
       "name": "Y1 Geçiş geometrisi: periyot ~95,5 dk, görünürlük ≥ 0,1 penceresi ±285 s, kenarda Doppler 20–25 ppm (yaklaşma +), TCA'da 0",
@@ -7,14 +7,14 @@
       "detail": "periyot 95.50 dk, pencere ±284.7 s, kenar 23.13 ppm (yükselti 5.8°), Δλ -35.8 pm"
     },
     {
-      "name": "Y2 Aşağı-bağlantı kaybı: 645 km ve 1200 km'de 20–40 dB (Micius ~22–35 dB ile kaba uyum), tepe noktası en düşük, mesafeyle artıyor",
+      "name": "Y2 Aşağı-bağlantı kaybı: 645 km ve 1200 km'de 20–40 dB makullük aralığında (dış doğrulama değil; Micius 850 nm, model 1550 nm), tepe noktası en düşük, mesafeyle artıyor",
       "ok": true,
       "detail": "tepe (568 km) 25.9 dB · 645 km 27.2 dB · 1200 km 34.2 dB (geometrik 28.1, atmosfer 2.5, izleme 0.5, optik 3,0)"
     },
     {
       "name": "Y3 Gece, tepe noktası: hibrit oturum (uydu + 3×60 km fiber) teslim; 0. atlama serbest uzay; KEY_DELIVERED olayı",
       "ok": true,
-      "detail": "DELIVERED, ℓ 298 bit, 0. atlama QBER %1.58 (kayıp 25.9 dB, yükselti 75.0°), 4.456.448 darbe/link; olaylar HOP_CHECK, KEY_DELIVERED"
+      "detail": "DELIVERED, ℓ 252 bit, 0. atlama QBER %2.01 (kayıp 25.9 dB, yükselti 75.0°), 11.337.728 darbe/link; olaylar HOP_CHECK, KEY_DELIVERED"
     },
     {
       "name": "Y4 Görünürlük < 0,1 (t = +400 s): SAT_NOT_VISIBLE ilk turda, anahtar ve mesaj yok",
@@ -24,12 +24,12 @@
     {
       "name": "Y5 Gündüz: gökyüzü arka planı → HOP_QBER (0. atlama); beklenen QBER ve uyarı bandı yükseldi, iptal eşiği %11 değişmedi",
       "ok": true,
-      "detail": "0. atlama QBER %48.56, beklenen %48.42, uyarı bandı %56.01 — iptal %11'de (bant iptali gevşetmez)"
+      "detail": "0. atlama QBER %48.92, beklenen %48.44, uyarı bandı %56.12 — iptal %11'de (bant iptali gevşetmez)"
     },
     {
       "name": "Y6 Dinleme yalnız uydu atlamasında: HOP_QBER 0. atlamada, gerekçe 'uydu aşağı-bağlantısı', fiber atlamaları dinlenmiyor",
       "ok": true,
-      "detail": "%27.43 — hop #0 (uydu aşağı-bağlantısı) QBER_test %27.4 ≥ %11 (k=412 test biti) — dinleme ya da aşırı gürültü; anahtar "
+      "detail": "%22.82 — hop #0 (uydu aşağı-bağlantısı) QBER_test %22.8 ≥ %11 (k=412 test biti) — dinleme ya da aşırı gürültü; anahtar "
     },
     {
       "name": "Y7 computeDynamicAlpha: DCR arttıkça bant genişliyor (SNSPD < InGaAs < 100× InGaAs), abortAt hep %11; tam binom kuantiliyle yanlış uyarı ≤ α (Monte Carlo payıyla 1,5α)",
@@ -39,12 +39,12 @@
     {
       "name": "Y8 Geriye uyum: hopChannels yokken ve açık fiber atlamalarıyla aynı tohumlarda birebir aynı sonuç (v4.4 davranışı korunuyor)",
       "ok": true,
-      "detail": "DELIVERED/DELIVERED, darbe 196608/196608, QBER %1.93/%1.93, OTP anahtarı aynı"
+      "detail": "DELIVERED/DELIVERED, darbe 196608/196608, QBER %1.70/%1.70, OTP anahtarı aynı"
     },
     {
       "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
       "ok": true,
-      "detail": "11bf00156cf2efea…"
+      "detail": "6a5effd30eb0be09…"
     }
   ],
   "passed": 9,

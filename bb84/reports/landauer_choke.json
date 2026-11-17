@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:24:27.287Z",
+  "generatedAt": "2026-11-17T21:18:45.348Z",
   "checks": [
     {
       "name": "(A) LANDAUER TABANI BAĞLAYICI DEĞİL: gerçek dağılım ondan ~10 kat büyük",
@@ -34,7 +34,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 11bf00156cf2efea… öncesi = sonrası — tatbikat çekirdeği yalnızca çağırdı"
+      "detail": "SHA-256 6a5effd30eb0be09… öncesi = sonrası — tatbikat çekirdeği yalnızca çağırdı"
     }
   ],
   "engine": {
@@ -168,7 +168,7 @@
   "baselinePurity": 0.9094,
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "11bf00156cf2efea"
+    "sha256": "6a5effd30eb0be09"
   },
   "params": {
     "kB": 1.380649e-23,

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:17:04.948Z",
+  "generatedAt": "2026-11-17T21:09:45.553Z",
   "checks": [
     {
       "name": "(A) KÜÇÜK ÖLÇEKTE EŞLEŞME: gerçekçi (i,periodPs) çiftlerinde BigInt == Number formülü — mevcut davranış BOZULMADI",
@@ -29,7 +29,7 @@
     {
       "name": "ÇEKİRDEĞE VE timetag_acquisition_bridge.js'E DOKUNULMADI: her iki dosyanın SHA-256'sı değişmedi",
       "ok": true,
-      "detail": "core SHA-256 11bf00156cf2efea… öncesi=sonrası; bridge SHA-256 2cfa659cb35871ce… öncesi=sonrası"
+      "detail": "core SHA-256 6a5effd30eb0be09… öncesi=sonrası; bridge SHA-256 2cfa659cb35871ce… öncesi=sonrası"
     }
   ],
   "smallScaleMatch": [

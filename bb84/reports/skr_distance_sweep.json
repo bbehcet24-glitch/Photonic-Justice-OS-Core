@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:21:37.651Z",
+  "generatedAt": "2026-11-17T21:15:44.535Z",
   "assumptions": {
     "pulseRateHz": 1000000000,
     "lossDbPerKm": 0.2,
@@ -55,7 +55,7 @@
     {
       "name": "Çekirdek sabitlenmiş sürümle aynı (photonnet_core.js SHA-256)",
       "ok": true,
-      "detail": "11bf00156cf2efea…"
+      "detail": "6a5effd30eb0be09…"
     }
   ],
   "table": [

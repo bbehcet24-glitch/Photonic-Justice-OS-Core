@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:29:48.728Z",
+  "generatedAt": "2026-11-17T21:24:11.842Z",
   "checks": [
     {
       "name": "(A) A1 QuKayDee TOPOLOJİSİ: master kme-1'de status+enc, slave kme-2'de dec; §6 + key-match",
@@ -9,7 +9,7 @@
     {
       "name": "(B) ÇAPRAZ-KME SENKRON: kme-1'de üretilen anahtar kme-2'den birebir çekiliyor",
       "ok": true,
-      "detail": "key_ID 24178e7b… kme-1'de (9701) üretildi, kme-2'den (9702) çekildi · master.key === slave.key ✓ — gerçek QuKayDee'nin KME'ler arası senkronizasyonu"
+      "detail": "key_ID 94ec6ac6… kme-1'de (9701) üretildi, kme-2'den (9702) çekildi · master.key === slave.key ✓ — gerçek QuKayDee'nin KME'ler arası senkronizasyonu"
     },
     {
       "name": "(C) A2 QKD-TLS: QuKayDee-yolundan gelen anahtar gerçek TLS oturumunun kökü",
@@ -19,12 +19,12 @@
     {
       "name": "(D) mTLS DAYATMASI: istemci sertifikası sunmayan bağlantı reddedilir",
       "ok": true,
-      "detail": "sertifikasız istemci → bağlantı REDDEDİLDİ (\"80E8672C857F0000:error:0A00045C:SSL rout…\"). QuKayDee gibi, SAE kimliği mTLS istemci sertifikasıyla zorunlu"
+      "detail": "sertifikasız istemci → bağlantı REDDEDİLDİ (\"8088E822847F0000:error:0A00045C:SSL rout…\"). QuKayDee gibi, SAE kimliği mTLS istemci sertifikasıyla zorunlu"
     },
     {
       "name": "(E) GERÇEKÇİ GECİKME: her isteğe ağ gecikmesi enjekte edildi (anlık loopback değil)",
       "ok": true,
-      "detail": "5 istek · ortalama gecikme 52.7 ms (46.7–60.7 ms) — bulut ucu gibi; sistem sıfır-gecikme loopback'te değil gerçekçi koşulda sınandı"
+      "detail": "5 istek · ortalama gecikme 57.1 ms (48.2–64.9 ms) — bulut ucu gibi; sistem sıfır-gecikme loopback'te değil gerçekçi koşulda sınandı"
     },
     {
       "name": "(F) TEK-SEFERLİK (çapraz-KME): kme-2'den çekilen anahtar tekrar çekilemez",
@@ -34,7 +34,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 11bf00156cf2efea… — emülatör çekirdeği require ETMEZ"
+      "detail": "SHA-256 6a5effd30eb0be09… — emülatör çekirdeği require ETMEZ"
     }
   ],
   "a1": {
@@ -49,7 +49,7 @@
     }
   },
   "crossKme": {
-    "key_ID": "24178e7b",
+    "key_ID": "94ec6ac6",
     "mintedAt": "kme-1",
     "fetchedAt": "kme-2",
     "synced": true
@@ -62,20 +62,20 @@
   },
   "mtls": {
     "rejected": true,
-    "error": "80E8672C857F0000:error:0A00045C:SSL routines:ssl3_read_bytes:tlsv13 alert certificate required:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL alert number 116\n"
+    "error": "8088E822847F0000:error:0A00045C:SSL routines:ssl3_read_bytes:tlsv13 alert certificate required:../deps/openssl/openssl/ssl/record/rec_layer_s3.c:918:SSL alert number 116\n"
   },
   "latency": {
     "samples": 5,
-    "meanMs": 52.7,
-    "minMs": 46.7,
-    "maxMs": 60.7
+    "meanMs": 57.1,
+    "minMs": 48.2,
+    "maxMs": 64.9
   },
   "oneTime": {
     "status": 400
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "11bf00156cf2efea"
+    "sha256": "6a5effd30eb0be09"
   },
   "allChecksPassed": true
 }

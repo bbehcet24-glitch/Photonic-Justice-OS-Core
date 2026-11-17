@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:16:36.119Z",
+  "generatedAt": "2026-11-17T21:09:13.460Z",
   "checks": [
     {
       "name": "E1 Metin ↔ bit UTF-8: Türkçe ve emoji kayıpsız gidiş-dönüş, \"Merhaba Dünya\" = 112 bit",
@@ -9,12 +9,12 @@
     {
       "name": "E2 Toeplitz tohumu: her atlamada n + ℓ − 1 bit (tam 2-evrensel aile), entropiden; anahtarlar eşleşti, mesaj çözüldü",
       "ok": true,
-      "detail": "#0: n 3295 + ℓ 398 − 1 = 3692 bit · #1: n 3539 + ℓ 314 − 1 = 3852 bit · #2: n 6701 + ℓ 1568 − 1 = 8268 bit · çözülen \"Teşekkürler, İğdır\""
+      "detail": "#0: n 3356 + ℓ 234 − 1 = 3589 bit · #1: n 3374 + ℓ 272 − 1 = 3645 bit · #2: n 3578 + ℓ 427 − 1 = 4004 bit · çözülen \"Teşekkürler, İğdır\""
     },
     {
       "name": "E3 PE alt kümesi: tam k, tekrarsız, düzgün (her indis ≈ k/N); aynı akış aynı, farklı akış farklı alt küme",
       "ok": true,
-      "detail": "N=50, k=10, 20000 çekiliş: sıklık 0.193–0.206 (beklenen 0.200, en büyük sapma 0.0072)"
+      "detail": "N=50, k=10, 20000 çekiliş: sıklık 0.192–0.208 (beklenen 0.200, en büyük sapma 0.0081)"
     },
     {
       "name": "E4 QKDSecurityProof.run: aynı entanglementSeed ile iki çağrı farklı anahtar (tohum oturum tohumundan değil); PE süzgeci rng fonksiyonu kabul ediyor",
@@ -29,12 +29,12 @@
     {
       "name": "E6 Aynı entropi akışıyla iki oturum birebir aynı (QRNG kaydıyla yeniden oynatılabilir)",
       "ok": true,
-      "detail": "DELIVERED/DELIVERED, QBER 1.93%/1.93%, OTP anahtarı aynı"
+      "detail": "DELIVERED/DELIVERED, QBER 1.70%/1.70%, OTP anahtarı aynı"
     },
     {
       "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
       "ok": true,
-      "detail": "11bf00156cf2efea…"
+      "detail": "6a5effd30eb0be09…"
     }
   ],
   "passed": 7,

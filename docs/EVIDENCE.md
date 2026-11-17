@@ -2,10 +2,49 @@
 
 Every full `npm test` run since core v5.1 records, at the start of the run, the git commit, whether the working
 tree was clean and the SHA-256 of `bb84/photonnet_core.js` (`ci-reports/npm_test_summary.json`; the 📈 SONUÇLAR tab
-shows the commit). This file lists the runs behind the v5.1 revision. The `npm test` and UI runs are local (Linux, Node
+shows the commit). This file lists the runs behind the v5.1 and v5.2 revisions, newest first. The `npm test` and UI runs are local (Linux, Node
 22.23.4, Python 3.13.18); the GitHub Actions run is listed in its own section.
 
-## Full suite (`npm test`)
+## Core v5.2 (referee report 2)
+
+### Full suite (`npm test`)
+
+| Commit | What it is | Tree | Core SHA-256 | Result | Run (UTC) |
+|---|---|---|---|---|---|
+| `24d010d` | core v5.2 + test fixes, final code | clean | `6a5effd3…e91c6b` | **110/110** | 2026-11-17 21:07:37 → 21:28:09 |
+| `3d615e2` | core v5.2, first commit | clean | `6a5effd3…e91c6b` | 108/110 — `k3_qber_validation_test`, `hal/test_qrng_health_tests.py` failed (see below) | 2026-11-17, ≈ 21 min |
+| `603cb1d` | core v5.2 before the budget-end fix (amended, never pushed) | clean | `4af9ec35…af2199` | 110/110; the UI scenario then failed S2 at t = −60 s (see below) | 2026-11-17 20:12:28 → 20:33:13 |
+
+`603cb1d` → `3d615e2`: with ε split over 32 hops, the t = −60 s satellite hop of the hybrid session sometimes ended
+in `KEY_BUDGET` (TS-HYBRID-QKD-04 S2 failed; 3 of 3 probe sessions). The doubling target left the last part of the
+pulse budget unevaluated. `3d615e2` evaluates every unfinished hop once more with all its bits when the budget runs
+out; 16 of 16 probe sessions then delivered, 4 of them through that final evaluation. `603cb1d` was amended into
+`3d615e2` before any push.
+
+`3d615e2` → `24d010d`: both failures were test-design faults, not code faults. K3 required the 95 % CI of the mean z
+to contain 0, which fails 5 % of runs of a correct model (that run: mean z +0.30, CI 0.04…0.56, KS p 0.007); 1,500
+single-hop first evaluations give mean z 0.02 ± 0.03, so the model is unbiased. K3 now uses a fixed-seed generator
+(seed 20261117, chosen once) and 3σ gates, with the 95 % CI reported. The QRNG health check "good source passes"
+used `os.urandom`; the repetition-count test's α = 2⁻²⁰ per sample gives ≈ 0.2 % false alarms on 4,096 bits
+(measured 3 of 2,000). It now uses a fixed-seed stream.
+
+What `24d010d` counts is reconciled in [`docs/TEST_INVENTORY.md`](TEST_INVENTORY.md): 110 runner items, 630/630
+checks in 71 reports, 91 report files; the 19 ETSI-014/mTLS tests of CI gate 3b are outside `npm test`.
+
+### UI scenarios and tools on the `24d010d` build (Playwright, Chromium 153)
+
+| Scenario / tool | Result |
+|---|---|
+| `bb84/tools/ts_hybrid_qkd_04.js` | 17/17; S2 at t = −60 s delivered (ℓ 114); S1 spec band observation: inside (1.50 % / 1.33 %) |
+| `bb84/tools/ui_abort_drill.js` | 9/9 |
+| `bb84/tools/ell_audit.js` | terms sum to the core's ℓ in every row → [`docs/ELL_AUDIT.md`](ELL_AUDIT.md) |
+| `bb84/tools/capture_screenshots.js` | `docs/screenshots/*.png` regenerated |
+
+The report files committed after `24d010d` are the outputs of these runs; the commit that adds them changes no code.
+
+## Core v5.1 (referee report 1)
+
+### Full suite (`npm test`)
 
 | Commit | What it is | Tree | Core SHA-256 | Result | Run (UTC) |
 |---|---|---|---|---|---|
@@ -22,7 +61,7 @@ seed from the CSPRNG, the two paths drew different randomness. `9a07e62` makes t
 (`KeyPoolBuffer.randomSource`, default CSPRNG), moves the offload layer to it, and gives both compared instances the
 same seeded source in the test.
 
-## UI scenarios on the `9a07e62` build (Playwright, Chromium 153)
+### UI scenarios on the `9a07e62` build (Playwright, Chromium 153)
 
 | Scenario | Result |
 |---|---|
@@ -32,7 +71,7 @@ same seeded source in the test.
 Reports: `bb84/reports/ts_hybrid_qkd_04.json`, `bb84/reports/ui_abort_drill.json`. The report files committed after
 `9a07e62` are the outputs of these runs; the commit that adds them changes no code.
 
-## GitHub Actions (`production-pipeline.yml`, push of `0611390`)
+### GitHub Actions (`production-pipeline.yml`, push of `0611390`)
 
 Read from a screenshot of the run page; this environment has no GitHub API access, so the run number is not recorded.
 

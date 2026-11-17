@@ -1,0 +1,32 @@
+{
+  "generatedAt": "2026-11-17T21:17:35.432Z",
+  "checks": [
+    {
+      "name": "E1 Çekirdek QKD hattı bir blok üretti ve KME deposuna kaydetti (PE + Cascade + sonlu-anahtar + Toeplitz)",
+      "ok": true,
+      "detail": "32.768 darbe, n 3187, k 813, QBER_test %1.85, Cascade sızıntısı 478 bit, ℓ 248 bit → key_ID 7e1904f7…"
+    },
+    {
+      "name": "E2 KME teslimi: master ve slave aynı anahtarı aldı ve anahtar QKD bloğunun anahtarıyla bit bit aynı",
+      "ok": true,
+      "detail": "key_ID 7e1904f7…, 31 bayt (248 bit); master = slave true, = QKD bloğu true"
+    },
+    {
+      "name": "E3 Tek kullanım: aynı key_ID ikinci kez çekilemiyor (replay reddi), anahtar depodan silindi",
+      "ok": true,
+      "detail": "ikinci dec_keys → HTTP 400 (key_ID bulunamadı (rota=ANK-MASTER): 7e1904f7-196d-411f-abfb-9ba942bf3); depoda kalan 0"
+    },
+    {
+      "name": "E4 TLS: QKD anahtarı PSK, ECDHE-PSK şifre takımı (ECDHE sırrı VE PSK birlikte), mesaj yankılandı; yanlış PSK reddedildi",
+      "ok": true,
+      "detail": "TLSv1.2 · ECDHE-PSK-CHACHA20-POLY1305 · yankı true; yanlış PSK: el sıkışma kurulamadı"
+    },
+    {
+      "name": "E5 Mesaj UTF-8 baytları bozulmadan yankılandı ve hatta (kaydedilen TLS baytlarında) açık metin geçmiyor",
+      "ok": true,
+      "detail": "\"Merhaba Dünya — foton → QKD → KME → TLS\" (48 bayt UTF-8); hatta kaydedilen 783 bayt, açık metin yok"
+    }
+  ],
+  "passed": 5,
+  "total": 5
+}

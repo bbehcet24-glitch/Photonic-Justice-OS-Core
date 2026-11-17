@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:26:30.014Z",
+  "generatedAt": "2026-11-17T21:20:55.436Z",
   "checks": [
     {
       "name": "O1 (R3) Yanıtlayıcı (yeniden) başladıktan hemen sonraki iptal görülüyor: sorgu good → iptal → 1 s boşta → sorgu REVOKED (eski izleyicide bu durumda iptal edilmiş sertifikaya 'good' veriliyordu — S5'in ~60 s'si)",
@@ -19,7 +19,7 @@
     {
       "name": "O4 (K1) Bayat yanıtlayıcı yeni sertifikaya 'unknown' dediğinde KME fail-CLOSED reddediyor (401); yanıtlayıcı tazelenince sertifika ~2 s içinde KABUL ediliyor. Eski davranışla (--ocsp-indeterminate-ttl-ms=30000) 6 s sonra hâlâ RED",
       "ok": true,
-      "detail": "ilk istek 401: OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; ye · tazelendikten 1525 ms sonra kabul · 30 s TTL ile: 6 s sonra hâlâ 401"
+      "detail": "ilk istek 401: OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; ye · tazelendikten 1523 ms sonra kabul · 30 s TTL ile: 6 s sonra hâlâ 401"
     },
     {
       "name": "O5 Güvenlik gevşemedi: iptal edilen sertifika 401 'İPTAL' ve 2,5 s sonra da RED (revoked 30 s önbellekte); yanıtlayıcı çökükken GEÇERLİ sertifika RED (fail-closed) ve 2,5 s sonraki yeniden sorguda da RED",
@@ -39,24 +39,24 @@
         "msg": "OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; yeni imzalanmışsa yanıtlayıcı CA veritabanını henüz okumamış olabilir, 2000 ms sonra yeniden sorulur",
         "ms": 32
       },
-      "acceptedAfterFixMs": 1525,
+      "acceptedAfterFixMs": 1523,
       "last": {
         "status": 200,
         "msg": "",
-        "ms": 26
+        "ms": 24
       }
     },
     "eskiDavranis": {
       "first": {
         "status": 401,
         "msg": "OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; yeni imzalanmışsa yanıtlayıcı CA veritabanını henüz okumamış olabilir, 30000 ms sonra yeniden sorulur",
-        "ms": 32
+        "ms": 31
       },
       "acceptedAfterFixMs": null,
       "last": {
         "status": 401,
         "msg": "OCSP: yanıtlayıcı bu sertifikayı TANIMIYOR (unknown) — fail-CLOSED; yeni imzalanmışsa yanıtlayıcı CA veritabanını henüz okumamış olabilir, 30000 ms sonra yeniden sorulur",
-        "ms": 11
+        "ms": 13
       }
     }
   },

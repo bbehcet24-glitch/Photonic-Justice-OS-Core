@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T18:21:32.980Z",
+  "generatedAt": "2026-11-17T21:15:38.983Z",
   "part": "1/3 fiziksel senaryolar + uçtan uca",
   "checks": [
     {
@@ -38,9 +38,9 @@
       "detail": "ilk BLOCK @5800 ms · kapı süresince karantina: false · karantina @30950 ms (komşu alıcıda açıklanamayan Y0 (×5.1)) · karantinadaki düğümler: KDK · bakım örneği geçerli: true"
     },
     {
-      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = 11bf0015…651f79), qkd_network_scale.js değişmedi",
+      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = 6a5effd3…e91c6b), qkd_network_scale.js değişmedi",
       "ok": true,
-      "detail": "photonnet_core.js 11bf00156cf2… · qkd_network_scale.js b5bdf72ef541…"
+      "detail": "photonnet_core.js 6a5effd30eb0… · qkd_network_scale.js b5bdf72ef541…"
     }
   ],
   "passed": 8,

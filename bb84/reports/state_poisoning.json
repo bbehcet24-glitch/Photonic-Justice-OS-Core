@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-17T18:31:31.510Z",
+  "generatedAt": "2026-11-17T21:26:03.603Z",
   "checks": [
     {
       "name": "SIZINTI YENİDEN ÜRETİLDİ: geçmiş kaydı doğrusal, SINIRSIZ büyüyor",
       "ok": true,
-      "detail": "düzeltmesiz: mevduat başına +1 kayıt (≈1, yani hiç temizlenmiyor), 120000 mevduatta 114001 canlı kayıt, heap +59.0 MB. Oysa envanter DÜZ: son levelBits 0 — sağlık göstergesi hiç kıpırdamıyor"
+      "detail": "düzeltmesiz: mevduat başına +1 kayıt (≈1, yani hiç temizlenmiyor), 120000 mevduatta 114001 canlı kayıt, heap +59.3 MB. Oysa envanter DÜZ: son levelBits 0 — sağlık göstergesi hiç kıpırdamıyor"
     },
     {
       "name": "SAĞLIK GÖSTERGESİ YANILTIYOR: levelBits düz ama geçmiş şişiyor",
@@ -14,7 +14,7 @@
     {
       "name": "DÜZELTME: geçmiş kaydı SINIRLI — eğim ≈ 0, kararlı çizgi",
       "ok": true,
-      "detail": "düzeltmeli: mevduat başına +0 kayıt (≈0), en yüksek canlı kayıt 1 (kapasite sınırı ≈ 667), heap +-3.0 MB. Aynı 120000 mevduat, aynı iş — durum yükü SIKIŞTIRILDI, kilitlenme yok"
+      "detail": "düzeltmeli: mevduat başına +0 kayıt (≈0), en yüksek canlı kayıt 1 (kapasite sınırı ≈ 667), heap +-2.7 MB. Aynı 120000 mevduat, aynı iş — durum yükü SIKIŞTIRILDI, kilitlenme yok"
     },
     {
       "name": "DENETİM İZİ KORUNDU: monoton sayaç kalıyor, silinen bellek",
@@ -24,12 +24,12 @@
     {
       "name": "ESKİ KME dec maliyeti O(n): depo büyüdükçe GEÇERLİ istek yavaşlıyor",
       "ok": true,
-      "detail": "n=1000: 20 μs · n=5000: 93.59 μs · n=20000: 240.38 μs · n=60000: 791.97 μs — depo 60× büyüyünce dec 39.6× yavaşlıyor (doğrusal). Saldırgan O(1) enc gönderip sunucuya O(n) iş yaptırıyor"
+      "detail": "n=1000: 33.68 μs · n=5000: 156.46 μs · n=20000: 257.51 μs · n=60000: 842.23 μs — depo 60× büyüyünce dec 25.0× yavaşlıyor (doğrusal). Saldırgan O(1) enc gönderip sunucuya O(n) iş yaptırıyor"
     },
     {
       "name": "YENİ KME dec maliyeti O(1): depo boyutundan bağımsız (Map indeksi)",
       "ok": true,
-      "detail": "n=1000: 1.974 μs · n=5000: 2.933 μs · n=20000: 2.958 μs · n=60000: 2.797 μs — en büyük/en küçük oranı ×1.5 (düz). En büyük depoda 791.97 μs → 2.797 μs (×283 hızlanma)"
+      "detail": "n=1000: 1.897 μs · n=5000: 3.068 μs · n=20000: 2.907 μs · n=60000: 2.882 μs — en büyük/en küçük oranı ×1.6 (düz). En büyük depoda 842.23 μs → 2.882 μs (×292 hızlanma)"
     },
     {
       "name": "YARI-AÇIK EL SIKIŞMA SINIRLI: saldırgan kayıt üretemez, yalnız tüketir",
@@ -44,7 +44,7 @@
     "leak": {
       "slopePerDeposit": 1,
       "finalLiveEntries": 114001,
-      "heapGrowthMB": 59,
+      "heapGrowthMB": 59.3,
       "keyIdsIssued": 120000,
       "finalLevelBits": 0
     },
@@ -52,7 +52,7 @@
       "slopePerDeposit": 0,
       "finalLiveEntries": 0,
       "highWaterEntries": 1,
-      "heapGrowthMB": -3,
+      "heapGrowthMB": -2.7,
       "keyIdsIssued": 120000
     },
     "series": {
@@ -124,47 +124,47 @@
       ],
       "leakHeap": [
         8,
-        12.8,
+        12.9,
         17.9,
-        17.8,
+        17.9,
         28.8,
-        30.2,
-        33.7,
-        39,
-        32.9,
-        38.4,
-        43.4,
+        30.4,
+        33.9,
+        39.2,
+        33.1,
+        38.6,
+        43.6,
+        48.6,
+        53.5,
         48.4,
         53.4,
-        48.2,
-        53.1,
-        58.1,
-        63.1,
-        68.1,
-        62.1,
-        67
+        58.4,
+        63.4,
+        68.3,
+        62.3,
+        67.3
       ],
       "fixedHeap": [
-        73.4,
-        79.3,
-        82,
+        73.6,
+        79.6,
+        82.4,
+        67.9,
+        69,
+        70.2,
+        71.4,
+        72.5,
+        73.7,
+        74.9,
+        76.1,
+        77.2,
+        78.4,
+        79.6,
+        80.7,
+        81.9,
         83.1,
-        68.6,
-        69.8,
-        70.9,
-        72.1,
-        73.3,
-        74.4,
-        75.6,
-        76.8,
-        78,
-        79.1,
-        80.3,
-        81.5,
-        82.6,
-        68.1,
-        69.3,
-        70.4
+        68.5,
+        69.7,
+        70.9
       ]
     }
   },
@@ -179,23 +179,23 @@
     "rows": [
       {
         "n": 1000,
-        "oldUsPerDec": 20,
-        "newUsPerDec": 1.974
+        "oldUsPerDec": 33.68,
+        "newUsPerDec": 1.897
       },
       {
         "n": 5000,
-        "oldUsPerDec": 93.59,
-        "newUsPerDec": 2.933
+        "oldUsPerDec": 156.46,
+        "newUsPerDec": 3.068
       },
       {
         "n": 20000,
-        "oldUsPerDec": 240.38,
-        "newUsPerDec": 2.958
+        "oldUsPerDec": 257.51,
+        "newUsPerDec": 2.907
       },
       {
         "n": 60000,
-        "oldUsPerDec": 791.97,
-        "newUsPerDec": 2.797
+        "oldUsPerDec": 842.23,
+        "newUsPerDec": 2.882
       }
     ]
   },

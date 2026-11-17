@@ -1,0 +1,49 @@
+{
+  "generatedAt": "2026-11-17T21:09:17.196Z",
+  "checks": [
+    {
+      "name": "G1 ε birleştirme: 31 atlamada atlama başına ε = hedef/31, uçtan uca ε tek atlamayla aynı; bölmeden 31 katı",
+      "ok": true,
+      "detail": "hedef 2.000e-10; 1 atlama 2.000e-10; 31 atlama 2.000e-10 (atlama başına ε_PE 3.23e-12); bölmeden 6.200e-9"
+    },
+    {
+      "name": "G2 Her atlama Q + μ'yü raporluyor; μ, atlamanın ε_PE'sinin en çok M değerlendirmeye bölünmüş payıyla (birleşim sınırı); değerlendirme sayısı ≤ M",
+      "ok": true,
+      "detail": "M = 16, değerlendirme başına ε_PE 2.02e-13; atlama başına değerlendirme 2–3; en büyük Q_test %1.97, en büyük Q + μ %22.7, en küçük ℓ 121 bit"
+    },
+    {
+      "name": "G3 Gerçek QBER %12, ölçüm %11'in altına düşse bile ℓ = 0 (5 × 20 000 binom çekilişi)",
+      "ok": true,
+      "detail": "k=100: %11 altı 6600, anahtar 0 · k=200: %11 altı 5886, anahtar 0 · k=400: %11 altı 4884, anahtar 0 · k=850: %11 altı 3741, anahtar 0 · k=2000: %11 altı 1554, anahtar 0"
+    },
+    {
+      "name": "G4 Etkin sonlu-anahtar eşiği (ℓ > 112 için en büyük Q_test) %11'in çok altında ve örneklem büyüdükçe yükseliyor",
+      "ok": true,
+      "detail": "n 3 400 / k 850: %2.47 · n 13 897 / k 3 474: %5.88 · n 78 779 / k 19 695: %8.09 (ε_PE 1e-10)"
+    },
+    {
+      "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
+      "ok": true,
+      "detail": "6a5effd30eb0be09…"
+    }
+  ],
+  "effectiveThreshold": [
+    {
+      "n": 3400,
+      "k": 850,
+      "qMax": 0.02467904348003685
+    },
+    {
+      "n": 13897,
+      "k": 3474,
+      "qMax": 0.05878023585126356
+    },
+    {
+      "n": 78779,
+      "k": 19695,
+      "qMax": 0.08090751484740394
+    }
+  ],
+  "passed": 5,
+  "total": 5
+}
