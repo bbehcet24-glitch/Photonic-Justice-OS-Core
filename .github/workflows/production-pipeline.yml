@@ -569,6 +569,9 @@ jobs:
     steps:
       - name: Depoyu çek
         uses: actions/checkout@v4
+        with:
+          # tam geçmiş: protocol_fingerprint_test F5, CORE_CHANGELOG'daki sürüm ↔ commit tablosunu git'ten denetler
+          fetch-depth: 0
 
       - name: Node.js kur
         uses: actions/setup-node@v4

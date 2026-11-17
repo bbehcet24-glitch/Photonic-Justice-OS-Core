@@ -9,7 +9,7 @@
  *   1) /tmp/pki test CA'sını ve sertifikalarını (localhost, SAE-MASTER, SAE-ANK, SAE-IBM-QNET) yoksa ya da
  *      süresi 1 saat içinde doluyorsa depodaki pki_tools betikleriyle üretir,
  *   2) Python HAL köprü sunucusunu (127.0.0.1:8765) başlatır, sonda kapatır,
- *   3) senkron denetimlerini (extract_core --check, build_photonnet_html --check) koşturur,
+ *   3) senkron denetimlerini (extract_core --check, build_photonnet_html --check, protocol_fingerprint --check) koşturur,
  *   4) bb84/*_test.js + drill/kampanya dosyalarını koşturur: sabit port kullananlar SIRAYLA, diğerleri paralel,
  *   5) havuz tükenmesi testini kendi betiğiyle, Python HAL testlerini python3 -m ile koşturur,
  *   6) özet yazar; herhangi biri başarısızsa çıkış kodu 1.
@@ -34,11 +34,11 @@ const SEQUENTIAL = new Set([
   "chaos_client_lib_timeout_test.js", "chaos_kme_ocsp_tmpdir_leak_test.js", "chaos_kme_oversized_body_test.js",
   "chaos_mtls_handshake_qrng_sync_test.js", "chaos_qrng_hardware_bridge_test.js", "etsi014_client_lib_test.js",
   "etsi014_interop_test.js", "qkd_secure_channel_test.js", "qukaydee_realistic_test.js", "multinode_shielding_testbed.js",
-  "kme_half_open_gate_test.js", "ocsp_cache_staleness_test.js",
+  "kme_half_open_gate_test.js", "ocsp_cache_staleness_test.js", "e2e_qkd_kme_tls_test.js",
   "async_sync_drill.js", "fidelity_collapse_drill.js", "landauer_choke_drill.js", "layer_stress_campaign.js",
   "odls_optimization_drill.js", "resonance_drill.js", "safety_margin_drill.js", "state_poisoning_drill.js",
 ]);
-const SLOW = new Set(["ocsp_cache_staleness_test.js", "multinode_shielding_testbed.js", "chaos_concurrent_privacy_amplification_test.js", "backpressure_test.js"]);
+const SLOW = new Set(["ocsp_cache_staleness_test.js", "multinode_shielding_testbed.js", "chaos_concurrent_privacy_amplification_test.js", "backpressure_test.js", "k3_qber_validation_test.js"]);
 const VIA_SCRIPT = { "buffer_starvation_test.js": "run_buffer_starvation_test.sh" };
 
 function run(cmd, argv, { cwd = ROOT, env = process.env, timeoutMs = TIMEOUT_MS } = {}) {
@@ -102,7 +102,7 @@ async function main() {
   const bridge = await startBridge();
   console.log("[npm test] HAL köprüsü başlatıldı (127.0.0.1:8765)");
   try {
-    for (const [name, argv] of [["extract_core --check", [path.join(BB84, "tools/extract_core.js"), "--check"]], ["build_photonnet_html --check", [path.join(BB84, "tools/build_photonnet_html.js"), "--check"]]]) {
+    for (const [name, argv] of [["extract_core --check", [path.join(BB84, "tools/extract_core.js"), "--check"]], ["build_photonnet_html --check", [path.join(BB84, "tools/build_photonnet_html.js"), "--check"]], ["protocol_fingerprint --check", [path.join(BB84, "tools/protocol_fingerprint.js"), "--check"]]]) {
       if (!ONLY || ONLY.test(name)) rec(name, await run(process.execPath, argv));
     }
     const files = fs.readdirSync(BB84).filter((f) => /(_test|_drill|_campaign)\.js$/.test(f) || f === "multinode_shielding_testbed.js")

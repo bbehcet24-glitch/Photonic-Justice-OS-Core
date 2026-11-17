@@ -95,7 +95,7 @@ function measureAbortLatency() {
       const g = (re) => (re.exec(t) || [])[1];
       return { alarm: g(/ALARM — OTURUM İPTAL EDİLDİ \(([A-Z_]+)\)/), safe: /GÜVENLİ — anahtar kanıtlandı/.test(t),
         failClosed: /OTP anahtarı 0 bit, mesaj gönderilmedi/.test(t), ell: g(/Sonlu-anahtar ℓ ≥ mesaj biti[^\n]*\n\s*ℓ = (\d+) bit \(en zayıf atlama\)/) || null,
-        worst: g(/QBER_TEST[^\n]*\n\s*%([\d.]+)/), pooled: g(/birleşik %([\d.]+)/), hops: g(/birleşik %[\d.]+ · (\d+) atlama/),
+        worst: g(/QBER_TEST[^\n]*\n\s*%([\d.]+)/), pooled: g(/birleşik %([\d.]+)/), hops: g(/birleşik %[\d.]+ \(ilk test\) · (\d+) atlama/),
         route: g(/ROTA\s*\n?\s*([\d.]+km\/\d+hop)/), detector: g(/DEDEKTÖR PROFİLİ\s*\n\s*(\S+)/),
         minK: g(/en küçük k = ([\d.]+)/), expected: g(/Erken uyarı bandı[^\n]*\n[^\n]*\(beklenen %([\d.]+)\)/) };
     });
@@ -166,11 +166,13 @@ function measureAbortLatency() {
         `${hs.checks.filter((c) => c.ok).length}/${hs.checks.length} — ${hs.checks.find((c) => /senkron kipi: geçişin/.test(c.name))?.detail.slice(0, 120) || ""} — kaynak: bb84/reports/hal_hybrid_sync.json`);
     } catch (e) { chk("S2 Doppler altında saat izleme (HAL raporu)", false, "bb84/reports/hal_hybrid_sync.json okunamadı"); }
     await tab("🔬 GÜRÜLTÜ");
+    // panel tam sayı Hz gösterir; kalibrasyon turunda oran birkaç Hz oynar ve 5 s'lik tek karşılaştırmada aynı tam sayıya
+    // düşebiliyordu (603cb1d koşusunda 56 → 56 Hz). En çok 5 × 2,5 s örneklenir; herhangi bir değişiklik yeterli.
     const rate1 = await panelRow(/HAM KARANLIK ORANI\s*\n\s*(\d+)Hz/);
-    await page.waitForTimeout(5000);
-    const rate2 = await panelRow(/HAM KARANLIK ORANI\s*\n\s*(\d+)Hz/);
+    let rate2 = rate1;
+    for (let i = 0; i < 5 && rate2 === rate1; i++) { await page.waitForTimeout(2500); rate2 = await panelRow(/HAM KARANLIK ORANI\s*\n\s*(\d+)Hz/); }
     chk("S2 🔬 GÜRÜLTÜ sekmesi: ham karanlık sayım oranı canlı güncelleniyor (2,2 s'lik kalibrasyon turu)", rate1 != null && rate2 != null && rate1 !== rate2,
-      `${rate1} Hz → 5 s sonra ${rate2} Hz`);
+      `${rate1} Hz → ${rate2} Hz (en çok 12,5 s içinde)`);
     await setPass(0);
     await shot("02_s2_hibrit_gecis.png");
 

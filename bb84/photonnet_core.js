@@ -98,7 +98,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v5.1";
+const PHOTONNET_CORE_VERSION = "v5.2";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -422,7 +422,7 @@ const scintillationEngine = new ScintillationEngine();
 // σ_χ'yi yeniden kullanır (aynı rüzgar/türbülans kaynağından geldiği için
 // ayrı bir rastgele süreç kurmaya gerek yok — ucuz ve fiziksel olarak tutarlı).
 // ══════════════════════════════════════════════════════════════
-const BEAM_DIVERGENCE_RAD = 15e-6; // tipik uydu-lazer ışın ıraksama açısı (~15µrad), didaktik sabit
+const BEAM_DIVERGENCE_RAD = 15e-6; // ışın ıraksama YARI açısı θ (1/e² yarıçapı w = θ·ρ, Gauss ışın), 15 µrad; varsayım, dalga boyuyla ölçeklenmez
 class PointingBudget {
     /**
      * @param {number} rangeKm bağlantı mesafesi
@@ -1439,10 +1439,13 @@ const QKD_MISALIGNMENT_E_D = 0.015;
 //   η_atm  = T_zenit^(1/sin el) (hava kütlesi)
 //   η_point= PointingBudget.lossFactor (mekanik izleme + ışın kayması, UI "izleme hassasiyeti")
 //   fade   = ortalama-koruyan log-normal sönüm, σ_I² = ScintillationModel (UI "türbülans"); tur başına AR(1)
-//   Varsayımlar (ölçülmedi): θ 15 µrad, açıklık 1,0 m, T_zenit 0,8 (1550 nm, açık hava), η_opt 0,5.
-//   Kaba uyum kontrolü: Micius aşağı-bağlantı QKD'sinde 645–1200 km eğik mesafede yaklaşık 22–35 dB kanal kaybı
-//   bildirilmiştir (Liao ve ark., Nature 549, 43, 2017; 850 nm). Bu model aynı aralıkta ~26–33 dB verir
-//   (bb84/hybrid_qkd_test.js). Açıklık ortalaması (aperture averaging) modellenmez: sönüm varyansı temkinli (fazla).
+//   Varsayımlar (ölçülmedi): θ 15 µrad YARI açı (1/e² yarıçapı; tam açı 30 µrad), açıklık 1,0 m, T_zenit 0,8
+//   (1550 nm, açık hava), η_opt 0,5. 550 km'de w = 8,25 m → η_geo 21,4 dB (Gauss); aynı w ile düz (top-hat) ışın
+//   varsayımı (a/w)² 24,4 dB verir — fark 2 çarpanı, 3,0 dB. θ sabittir, dalga boyuyla ölçeklenmez (kırınım sınırlı
+//   bir ışında θ ∝ λ/D olurdu).
+//   Dış karşılaştırma YOKTUR: Micius aşağı-bağlantısı (Liao ve ark., Nature 549, 43, 2017) 850 nm'de ve farklı
+//   ıraksama/teleskopla çalıştı; bu model 1550 nm'yi varsayar. Bildirilen 22–35 dB aralığıyla sayısal benzerlik
+//   bir doğrulama değildir. Açıklık ortalaması (aperture averaging) modellenmez: sönüm varyansı temkinli (fazla).
 //   Gökyüzü arka planı DetectorNoiseModel sabitlerinden gelir (gündüz 5 MHz, gece 200 Hz); gündüz serbest-uzay
 //   atlaması bu dedektör penceresiyle QBER eşiğini aşar — gerçek uydu QKD'sinin gece çalışmasıyla tutarlı.
 //
@@ -1718,6 +1721,19 @@ class SecureMessageSession {
         this.detectorCtx = p.detectorCtx;
         this.eveHops = Array.isArray(p.evesdrop) ? new Set(p.evesdrop.map((x) => Math.round(x))) : null; // null → tüm atlamalar (p.evesdrop)
         this.onEvent = typeof p.onEvent === "function" ? p.onEvent : null;
+        // ÇEKİRDEK v5.2 (hakem P0-4): ε bütçesi atlamalar arasında birleştirilir. Uçtan uca anahtar her atlamanın
+        // anahtarından röleyle türetildiği için başarısızlık olayları birleşim sınırıyla toplanır:
+        //   ε_e2e ≤ Σ_atlama (ε_cor + ε_PE + ε_PA).
+        // Varsayılan: hedef ε'lar (DEFAULTS) atlama sayısına bölünür, böylece uçtan uca toplam tek atlamalı oturumla aynı
+        // kalır. epsSplitAcrossHops:false eski davranıştır (her atlama hedef ε'la; toplam nHops katı).
+        const split = this.o.epsSplitAcrossHops !== false ? this.nHops : 1;
+        this.hopEps = { epsPE: this.o.epsPE / split, epsPA: this.o.epsPA / split, epsCor: this.o.epsCor / split };
+        const perHop = this.hopEps.epsCor + this.hopEps.epsPE + this.hopEps.epsPA;
+        // Bir atlama ℓ < mesaj biti çıkınca daha çok bit toplayıp YENİDEN test edilir (erken durdurma). Her değerlendirme ayrı bir
+        // PE olayıdır; birleşim sınırı için atlamanın ε_PE'si en çok maxPeEvaluations değerlendirmeye bölünür (aşılırsa PE_BUDGET).
+        this.epsTotal = { perHop: { ...this.hopEps, sum: perHop }, nHops: this.nHops, split: split > 1, endToEnd: perHop * this.nHops,
+            maxPeEvaluations: this.o.maxPeEvaluations, epsPEPerEvaluation: this.hopEps.epsPE / this.o.maxPeEvaluations,
+            rule: "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)" };
         if (p.hopChannels != null && (!Array.isArray(p.hopChannels) || p.hopChannels.length !== this.nHops))
             throw new TypeError(`SecureMessageSession: hopChannels ${this.nHops} elemanlı bir dizi olmalı`);
         if (typeof p.entropyBits !== "function")
@@ -1771,7 +1787,7 @@ class SecureMessageSession {
     _stats() {
         return { pulses: this.pulses, totalPulsesAllHops: this.pulses * this.nHops, nHops: this.nHops, rounds: this.rounds, siftedTotal: this.siftedTotal, testedTotal: this.testedTotal,
             matchRate: this.rounds ? this.matchSum / (this.rounds * this.nHops) : 0, lost: this.lost, darkClicks: this.dark,
-            worstHopQber: this.worstHopQber, lastCheck: this.lastCheck, needBits: this.needBits, ecDiscardedBlocks: this.ecDiscards,
+            worstHopQber: this.worstHopQber, lastCheck: this.lastCheck, needBits: this.needBits, ecDiscardedBlocks: this.ecDiscards, epsTotal: this.epsTotal,
             hopChecks: this.hops.map((h) => ({ hop: h.hop, kind: h.kind, km: h.km, sat: h.fs ? h.fs.last : null, eve: this._eveOn(h.hop),
                 sifted: h.sifted, tested: h.tested, lost: h.lost, dark: h.dark, ...(h.lastCheck || {}), done: !!h.result })) };
     }
@@ -1837,6 +1853,18 @@ class SecureMessageSession {
         if (this.hops.every((h) => h.result))
             return this._deliver();
         if (this.pulses >= o.maxPulses) {
+            // v5.2: bütçe bitince eksik her atlama, son değerlendirmeden sonra biriken bitler dahil TÜM birikimiyle bir kez
+            // daha değerlendirilir (M sınırı içinde). v5.1'e kadar hedef ikiye katlandığı için bütçenin son kısmında toplanan
+            // bitler hiç değerlendirilmeden KEY_BUDGET veriliyordu; artık KEY_BUDGET "toplanan bitlerin tamamı yetmedi" demektir.
+            for (const h of this.hops) {
+                if (h.result || (h.evals || 0) >= o.maxPeEvaluations || h.A.length < o.firstCheckSifted || h.A.length <= (h.lastEvalN || 0))
+                    continue;
+                const res = this._evaluateHop(h);
+                if (res)
+                    return res;
+            }
+            if (this.hops.every((h) => h.result))
+                return this._deliver();
             const slow = this.hops.filter((h) => !h.result).map((h) => h.hop);
             // v5.1: yavaş atlama uydu atlamasıysa bu bir SİMÜLASYON bütçesi sınırıdır (geçişin küçük bir kesri), fiziksel sınır değil
             const fsSlow = this.hops.find((h) => !h.result && h.kind === "free-space");
@@ -1869,9 +1897,18 @@ class SecureMessageSession {
         const A = keep.map((i) => h.A[i]), B = keep.map((i) => h.B[i]); // test bitleri AÇIKLANDI → atıldı
         h.A = A;
         h.B = B;
-        const n = A.length, mu = QKDSecurityProof.statisticalFluctuation2(n, k, o.epsPE);
-        const pre = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: o.epsCor, epsPA: o.epsPA, fEC: o.fEC });
-        h.lastCheck = { n, k, qTest: q, ellEstimate: pre.ell, ...this._warnBand(h, k, q) };
+        h.lastEvalN = A.length;
+        const he = this.hopEps;
+        const n = A.length, mu = QKDSecurityProof.statisticalFluctuation2(n, k, he.epsPE / o.maxPeEvaluations);
+        const pre = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: he.epsCor, epsPA: he.epsPA, fEC: o.fEC });
+        // v5.2: değerlendirme sayısı (ε_PE birleşim sınırı) ve İLK değerlendirmenin QBER'i. Kabul edilen değerlendirmenin
+        // QBER'i erken durdurma yüzünden aşağı yanlıdır (yüksek ölçülen atlama yeniden test edilir); ilk değerlendirme yansızdır.
+        h.evals = (h.evals || 0) + 1;
+        if (!h.first)
+            h.first = { qTest: q, k };
+        // v5.2 (hakem P1-1): faz-hata üst güven sınırı Q + μ açıkça raporlanır. Güvenlik kararı (ℓ) bu üst sınırla verilir;
+        // QBER_test ≥ %11 ayrıca erken (operasyonel) iptaldir.
+        h.lastCheck = { n, k, qTest: q, mu, qPhUpper: Math.min(0.5, q + mu), ellEstimate: pre.ell, evals: h.evals, firstQ: h.first.qTest, firstK: h.first.k, ...this._warnBand(h, k, q) };
         this.worstHopQber = Math.max(this.worstHopQber, q);
         this.lastCheck = chain ? { hop: h.hop, ...h.lastCheck } : h.lastCheck;
         this._emit({ type: "HOP_CHECK", hop: h.hop, kind: h.kind, qTest: q, k, warnAt: h.lastCheck.warnAt, expectedQ: h.lastCheck.expectedQ });
@@ -1882,6 +1919,8 @@ class SecureMessageSession {
                 ? this._abort("HOP_QBER", `hop #${h.hop}${h.kind === "free-space" ? " (uydu aşağı-bağlantısı)" : ""} QBER_test %${(q * 100).toFixed(1)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} (k=${k} test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`, { qTest: q })
                 : this._abort("QBER_LIMIT", `QBER_test %${(q * 100).toFixed(2)} ≥ %${(o.theoreticalQberLimit * 100).toFixed(0)} (k=${k} test biti) — dinleme ya da aşırı gürültü; anahtar kullanılmadı, mesaj gönderilmedi`, { qTest: q });
         }
+        if (pre.ell < this.needBits && h.evals >= o.maxPeEvaluations)
+            return this._abort("PE_BUDGET", `${chain ? `hop #${h.hop}: ` : ""}${h.evals} parametre kestirimi değerlendirmesinde ℓ ≥ ${this.needBits} bit sağlanamadı — ε_PE bütçesi (en çok ${o.maxPeEvaluations} değerlendirme) tükendi; anahtar kullanılmadı`, { qTest: q });
         if (pre.ell < this.needBits) {
             h.target = Math.max(h.target * 2, n + 1);
             return null;
@@ -1900,7 +1939,7 @@ class SecureMessageSession {
             h.lastCheck = { ...h.lastCheck, ecDiscarded: h.ecFailures };
             return null;
         }
-        const proof = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: o.epsCor, epsPA: o.epsPA, fEC: o.fEC, realLeakEC: casc.leakedBits });
+        const proof = QKDSecurityProof.secureKeyLengthWithMu(n, q, mu, { epsCor: he.epsCor, epsPA: he.epsPA, fEC: o.fEC, realLeakEC: casc.leakedBits });
         h.lastCheck = { ...h.lastCheck, ell: proof.ell, leakEC: casc.leakedBits };
         this.lastCheck = chain ? { hop: h.hop, ...h.lastCheck } : h.lastCheck;
         if (proof.ell < this.needBits) {
@@ -1967,7 +2006,7 @@ class SecureMessageSession {
 SecureMessageSession.DEFAULTS = Object.freeze({
     roundPulses: 16384, maxPulses: 4194304, firstCheckSifted: 2048, testFraction: 0.2, minTestBits: 64,
     theoreticalQberLimit: 0.11, epsPE: 1e-10, epsCor: 1e-15, epsPA: 1e-10, fEC: 1.16,
-    pulseRateHz: SAT_PULSE_RATE_HZ, warnAlpha: 1e-3,
+    pulseRateHz: SAT_PULSE_RATE_HZ, warnAlpha: 1e-3, epsSplitAcrossHops: true, maxPeEvaluations: 16,
 });
 // ══════════════════════════════════════════════════════════
 // YOL HARİTASI MADDE 3 — BİÇİMSEL SONLU-ANAHTAR (FINITE-KEY) GÜVENLİK
@@ -9785,7 +9824,9 @@ function ResSecurityCriteria({ result }) {
             v: worstQ != null ? `en yüksek %${(worstQ * 100).toFixed(2)}${worstHop && s.nHops > 1 ? ` (atlama #${worstHop.hop})` : ""}` : "—" },
         { c: "Test örneklemi k ≥ 64 — Serfling sınırı için", ok: minK != null ? minK >= 64 : null, v: minK != null ? `en küçük k = ${minK.toLocaleString("tr-TR")}` : "—" },
         { c: "Sonlu-anahtar ℓ ≥ mesaj biti — Serfling μ + GLLP, her atlamada", ok: delivered ? s.ell > 0 : false,
-            v: delivered ? `ℓ = ${s.ell} bit (en zayıf atlama)` : "ℓ = 0 — kanıtlı anahtar yok" },
+            v: (delivered ? `ℓ = ${s.ell} bit (en zayıf atlama)` : "ℓ = 0 — kanıtlı anahtar yok") +
+                (() => { const qs = hops.map((h) => h.qPhUpper).filter((v) => typeof v === "number"); return qs.length ? ` · faz hatası üst sınırı Q+μ ≤ %${(Math.max(...qs) * 100).toFixed(1)}` : ""; })() +
+                (s.epsTotal ? ` · ε uçtan uca ≤ ${s.epsTotal.endToEnd.toExponential(1)}` : "") + " · simülasyon metriği; oturum ℓ ≥ mesaj biti olunca durur" },
         { c: "Hata düzeltme (Cascade) yakınsadı", ok: s.code === "EC_FAIL" ? false : delivered ? true : null,
             v: s.code === "EC_FAIL" ? "yakınsamadı" : delivered ? `sızıntı ${s.leakEC != null ? s.leakEC.toLocaleString("tr-TR") : "—"} bit ölçüldü` : "çalıştırılmadı (önceki kriter)" },
         { c: "Klasik kanal kimlik doğrulaması (Wegman–Carter)", ok: auth ? auth.ok : null, v: auth ? (auth.ok ? `havuz ${auth.poolRemaining} bit` : auth.reason || "başarısız") : "—" },
@@ -9889,10 +9930,12 @@ function ResultsDashboard({ traffic, result, log, detectorState }) {
     // ±0,5 puan olduğundan 31 atlamanın en kötüsü birleşik değerden belirgin yüksek çıkar (ölçüldü: 1842 km'de en kötü
     // %2,08, birleşik %1,49). Birleşik değer: tüm atlamaların açıklanan test bitlerindeki toplam hata / toplam test biti.
     const hq = hops ? hops.filter((h) => Number.isFinite(h.qTest) && h.k > 0) : [];
-    const pooledQ = hq.length > 1 ? hq.reduce((a, h) => a + h.qTest * h.k, 0) / hq.reduce((a, h) => a + h.k, 0) : null;
+    // v5.2: birleşik değer her atlamanın İLK değerlendirmesinden (firstQ/firstK) — kabul edilen değerlendirme erken durdurma
+    // yüzünden aşağı yanlıdır (60 oturumda ölçüldü: ilk %1,53, kabul edilen %1,46, beklenen %1,50).
+    const pooledQ = hq.length > 1 ? hq.reduce((a, h) => { var _a, _b; return a + ((_a = h.firstQ) !== null && _a !== void 0 ? _a : h.qTest) * ((_b = h.firstK) !== null && _b !== void 0 ? _b : h.k); }, 0) / hq.reduce((a, h) => { var _a; return a + ((_a = h.firstK) !== null && _a !== void 0 ? _a : h.k); }, 0) : null;
     const kpis = [
         { l: hq.length > 1 ? "QBER_test — en kötü atlama (son)" : "QBER_test (son)", v: s && s.qTest != null ? `%${(s.qTest * 100).toFixed(2)}` : "—", st: s && s.qTest != null ? s.qTest < 0.11 : null,
-            note: pooledQ != null ? `birleşik %${(pooledQ * 100).toFixed(2)} · ${hq.length} atlama · eşik %11` : "iptal eşiği %11" },
+            note: pooledQ != null ? `birleşik %${(pooledQ * 100).toFixed(2)} (ilk test) · ${hq.length} atlama · eşik %11` : "iptal eşiği %11" },
         { l: s && s.nHops > 1 ? "ℓ — en zayıf atlama (son)" : "ℓ — kanıtlı anahtar (son)", v: s ? `${s.ell.toLocaleString("tr-TR")} bit` : "—", st: s ? s.ell > 0 : null, note: s ? `${s.nHops} atlama` : "" },
         { l: "Teslim edilen iletim", v: hist.length ? `${delivered}/${hist.length}` : "—", st: hist.length ? delivered === hist.length : null, note: "bu oturumda" },
         { l: "Klasik kanal kimlik doğrulama", v: auth ? (auth.ok ? "doğrulandı" : "BAŞARISIZ") : "—", st: auth ? auth.ok : null, note: auth ? `Wegman–Carter · havuz ${auth.poolRemaining} bit` : "" },
@@ -10008,7 +10051,7 @@ function HybridPassControl({ hybridOn, setHybridOn, passTimeS, setPassTimeS, run
                 passTimeS,
                 " s")),
         React.createElement("input", { type: "range", min: -320, max: 320, step: 10, value: passTimeS, disabled: running, "data-testid": "pass-time", onChange: e => setPassTimeS(+e.target.value), style: { width: "100%", accentColor: "#10b981", cursor: "pointer", height: 3 } }),
-        React.createElement("div", { style: { fontSize: 6, color: "#64748b", fontFamily: "monospace", lineHeight: 1.5, marginTop: 3 }, title: `550 km dairesel yörünge, tepe yükseltisi 75°, Dünya dönüşü ihmal. Görünürlük = sin(yükselti) ≥ ${SAT_VISIBILITY_MIN} penceresi ${win ? `±${win.toS.toFixed(0)} s` : "yok"}. Kanal: Gauss ışın (15 µrad) · 1 m alıcı · hava kütlesi · izleme · sönüm. Doppler zamanlamada HAL Kalman izleyicisiyle izlenir (hal/test_hybrid_sync.py).` },
+        React.createElement("div", { style: { fontSize: 6, color: "#64748b", fontFamily: "monospace", lineHeight: 1.5, marginTop: 3 }, title: `550 km dairesel yörünge, tepe yükseltisi 75°, Dünya dönüşü ihmal. Görünürlük = sin(yükselti) ≥ ${SAT_VISIBILITY_MIN} penceresi ${win ? `±${win.toS.toFixed(0)} s` : "yok"}. Kanal: Gauss ışın (yarı açı 15 µrad, 1/e²) · 1 m alıcı · hava kütlesi · izleme · sönüm. Doppler zamanlamada HAL Kalman izleyicisiyle izlenir (hal/test_hybrid_sync.py).` },
             React.createElement("span", { style: { color: c } },
                 "y\u00FCkselti ",
                 st.elevationDeg.toFixed(1),
@@ -12234,7 +12277,7 @@ function PhotonNet() {
                 endToEndKeyBits: delivered ? sres.endToEndKeyBits : 0, relayPublicBits: delivered ? sres.relayPublicBits : 0,
                 ecDiscardedBlocks: sres.ecDiscardedBlocks, totalKm,
                 // 🔬 GÜRÜLTÜ sekmesinin "anahtar oturumuna etkisi" paneli için (çekirdek v4.4): ölçülen kanal sayımları
-                lostCount: sres.lost, darkClicks: sres.darkClicks, hopKm: totalKm / nHopsQkd },
+                lostCount: sres.lost, darkClicks: sres.darkClicks, hopKm: totalKm / nHopsQkd, epsTotal: sres.epsTotal },
             bits, recv,
             lostCount: totalLost, // DÜZELTME: 'lost' değil 'lostCount'
             flipCount: totalFlip,

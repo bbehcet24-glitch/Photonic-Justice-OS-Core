@@ -202,7 +202,7 @@ function testCombinedSecurityEpsilon() {
 function testCoreAndDecoyProtocolUntouched() {
   console.log("\n── Test 7: çekirdek VE decoy_state_protocol.js bu çalışma boyunca DEĞİŞMEDİ ──");
   const coreHash = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
-  const expectedCoreHash = "11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79";
+  const expectedCoreHash = "6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b";
   check("bb84/photonnet_core.js SHA-256 beklenen değerle eşleşiyor", coreHash === expectedCoreHash, `hash=${coreHash}`);
 
   const decoyHashAfter = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "decoy_state_protocol.js"))).digest("hex");

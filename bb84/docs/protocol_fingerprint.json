@@ -1,0 +1,21 @@
+{
+  "sha256": "f8cfe1b55728fc238ea6f6f567d5e63f783040d49810629c3eb07efe5203788c",
+  "symbols": 96,
+  "skipped": [
+    "classicalAuthChannel",
+    "defaultWeightPolicy",
+    "keyDeliveryStore",
+    "keyPoolBuffer",
+    "lega",
+    "linkOutageController",
+    "linkRiskReputationEngine",
+    "metricTrendInjector",
+    "networkTopology",
+    "nodeWatchdog",
+    "noiseGateMiddleware",
+    "noiseMatrixCalibration",
+    "predictiveEngine",
+    "scintillationEngine"
+  ],
+  "note": "SHA-256 over the source of the symbols exported by bb84/photonnet_core.js (functions/classes by source text, data as JSON). UI components are not exported and do not enter it."
+}

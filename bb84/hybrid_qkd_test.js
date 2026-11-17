@@ -4,7 +4,7 @@
  * hybrid_qkd_test.js — çekirdek v5: hibrit uydu + fiber anahtar oturumu ve QBER erken uyarı bandı (TS-HYBRID-QKD-04)
  * ═══════════════════════════════════════════════════════════════════
  *   Y1 Geçiş geometrisi: periyot, görünürlük ≥ 0,1 penceresi, Doppler büyüklüğü ve işareti
- *   Y2 Aşağı-bağlantı kaybı: 645 ve 1200 km eğik mesafede Micius'un bildirdiği aralıkla (yaklaşık 22–35 dB) kaba uyum,
+ *   Y2 Aşağı-bağlantı kaybı: 645 ve 1200 km eğik mesafede 20–40 dB makullük aralığı (Micius 850 nm'de çalıştı; bu model 1550 nm — dış doğrulama değildir),
  *      mesafeyle monoton artış
  *   Y3 Gece, tepe noktası: hibrit oturum (uydu + 3 fiber atlaması) teslim; 0. atlama serbest uzay; KEY_DELIVERED olayı
  *   Y4 Görünürlük < 0,1: SAT_NOT_VISIBLE iptali ilk turda, anahtar ve mesaj yok
@@ -58,7 +58,7 @@ function hybrid({ passTimeS = 0, night = true, eve = false, fiberHops = 3, seed 
   // eğik mesafeyi 645 ve 1200 km yapan anlar (ikiye bölme)
   const tAt = (km) => { let lo = 0, hi = 280; for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if (pass.state(m).rangeKm < km) lo = m; else hi = m; } return (lo + hi) / 2; };
   const l645 = ch.link(pass.state(tAt(645)), env), l1200 = ch.link(pass.state(tAt(1200)), env), l0 = ch.link(pass.state(0), env);
-  chk("Y2 Aşağı-bağlantı kaybı: 645 km ve 1200 km'de 20–40 dB (Micius ~22–35 dB ile kaba uyum), tepe noktası en düşük, mesafeyle artıyor",
+  chk("Y2 Aşağı-bağlantı kaybı: 645 km ve 1200 km'de 20–40 dB makullük aralığında (dış doğrulama değil; Micius 850 nm, model 1550 nm), tepe noktası en düşük, mesafeyle artıyor",
     l645.lossDb > 20 && l645.lossDb < 40 && l1200.lossDb > 20 && l1200.lossDb < 40 && l0.lossDb < l645.lossDb && l645.lossDb < l1200.lossDb,
     `tepe (568 km) ${l0.lossDb.toFixed(1)} dB · 645 km ${l645.lossDb.toFixed(1)} dB · 1200 km ${l1200.lossDb.toFixed(1)} dB (geometrik ${(-10 * Math.log10(l1200.etaGeo)).toFixed(1)}, atmosfer ${(-10 * Math.log10(l1200.etaAtm)).toFixed(1)}, izleme ${(-10 * Math.log10(l1200.etaPoint)).toFixed(1)}, optik 3,0)`);
 }

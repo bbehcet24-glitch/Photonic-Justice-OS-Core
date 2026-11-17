@@ -143,7 +143,7 @@ function testCoreUntouched() {
   const fs = require("fs");
   const path = require("path");
   const hash = crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
-  const expected = "11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79";
+  const expected = "6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b";
   check("bb84/photonnet_core.js SHA-256 beklenen değerle eşleşiyor", hash === expected, `hash=${hash}`);
 }
 

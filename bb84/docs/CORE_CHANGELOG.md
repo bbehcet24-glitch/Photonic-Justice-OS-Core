@@ -15,8 +15,69 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v4.2 | `b7b6b2437ecdd037cff301b2441ac522244018294a4755b8b3d36876c3a4a560` | `b7b6b243…a4a560` |
 | v4.3 | `5b7521ab4157de7491fcbc98dd134a84b26b881814d3aa3dc5726c3aa4f342c2` | `5b7521ab…f342c2` |
 | v4.4 | `e8de863c426936e0398c9848b9cdea5441ec846ec5dad9854f8976201343815c` | `e8de863c…43815c` |
-| v5 | `528321cb930b3266c602f42a0ab304128e839ba663b1dbb4bdaad02de1130cc1` | `528321cb…130cc1` |
+| v5 (5fe76eb) | `f34e3c7b75bcac86aa06c192f3cec9c64931a14bef661b050792825249b3cc7f` | `f34e3c7b…b3cc7f` |
+| v5 (f391152, yalnız arayüz) | `528321cb930b3266c602f42a0ab304128e839ba663b1dbb4bdaad02de1130cc1` | `528321cb…130cc1` |
 | v5.1 | `11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79` | `11bf0015…651f79` |
+| v5.2 | `6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b` | `6a5effd3…e91c6b` |
+
+### Sürüm ↔ commit ↔ hash eşlemesi (hakem bulgusu P1-2)
+
+Dosya SHA-256'sı `bb84/photonnet_core.js`'nin tamamını kapsar; çekirdek PhotonNet2.jsx'ten çıkarıldığı için yalnız
+arayüz metni ya da yorum değişikliği de onu değiştirir. **Protokol parmak izi** (`bb84/tools/protocol_fingerprint.js`)
+yalnız dışa aktarılan sembollerin (algoritma sınıfları, fonksiyonlar, sabitler) kaynağından hesaplanır; arayüz
+bileşenleri dışa aktarılmadığı için ona girmez. Bir sürümün protokolü değiştirip değiştirmediğini parmak izi söyler.
+Her satır `git show <commit>:bb84/photonnet_core.js | sha256sum` ile yeniden üretilebilir; `bb84/protocol_fingerprint_test.js`
+(F5) tablodaki her commit için dosya hash'ini git geçmişinden denetler.
+
+| Sürüm | Commit | Tarih | Dosya SHA-256 | Protokol parmak izi | Değişiklik türü |
+|---|---|---|---|---|---|
+| v4 | 444f42f | 2026-10-25 | `af1f56a1…1a12c3` | `6d122ae0…f2c0e4` | algoritma |
+| v4.1 | 01457d9 | 2026-10-25 | `5c12cde3…676313` | `6d122ae0…f2c0e4` | yalnız arayüz (parmak izi v4 ile aynı) |
+| v4.2 | 593ae9f | 2026-11-01 | `b7b6b243…a4a560` | `6d122ae0…f2c0e4` | yalnız arayüz (parmak izi v4 ile aynı) |
+| v4.3 | 77101a5 | 2026-11-01 | `5b7521ab…f342c2` | `6d122ae0…f2c0e4` | yalnız arayüz (parmak izi v4 ile aynı) |
+| v4.4 | 48c5251 | 2026-11-01 | `e8de863c…43815c` | `c553d0bb…1b2f9d` | algoritma |
+| v5 | 5fe76eb | 2026-11-01 | `f34e3c7b…b3cc7f` | `a0cc15f1…82dc1d` | algoritma |
+| v5 | f391152 | 2026-11-01 | `528321cb…130cc1` | `a0cc15f1…82dc1d` | yalnız arayüz (sürüm adı değişmedi) |
+| v5.1 | 6aa3efe | 2026-11-17 | `905987d7…9650e4` | `1637b661…21b64c` | algoritma (bu commit'te 1 test kaldı) |
+| v5.1 | 9a07e62 | 2026-11-17 | `11bf0015…651f79` | `01a8dbc8…0078c8` | algoritma (havuz rastgeleliği enjekte edilebilir) |
+| v5.2 | bu tablonun eklendiği commit | 2026-11-17 | `6a5effd3…e91c6b` | `f8cfe1b5…03788c` | algoritma |
+
+Bulgu: v4.1, v4.2 ve v4.3 "çekirdek sürümü" olarak numaralandı ama protokolleri v4 ile aynıdır; o dönemde sürüm
+numarası arayüz değişikliğinde de artırıldı. v5 adı altında iki farklı dosya hash'i vardır (5fe76eb ve f391152);
+protokol aynıdır. v5.1 adı altında iki farklı protokol vardır (6aa3efe ve 9a07e62). Bundan sonra sürüm numarası
+yalnız parmak izi değişince artar; yalnız dosya hash'i değişirse sürüm aynı kalır ve tabloya yeni bir satır eklenir.
+
+## v5.2 (2026-11) — ε atlamalar arasında birleştirildi, değerlendirme başına ε_PE, ilk-test QBER'i, protokol parmak izi (hakem raporu 2: P0-4, P1-1, P1-2, P0-3)
+
+**Algoritma değişti.**
+
+- **ε birleştirme (P0-4):** v5.1'e kadar her atlama ε_PE, ε_PA ve ε_cor'un TAMAMINI kullanıyordu; 31 atlamalı bir
+  oturumun uçtan uca güvenlik parametresi birleşim sınırıyla 31 kat büyüktü ve bu hiçbir yerde yazmıyordu. Şimdi hedef
+  atlama sayısına bölünür (`epsSplitAcrossHops`, varsayılan açık): ε_e2e ≤ Σ_atlama (ε_cor + ε_PE + ε_PA) = hedef.
+  Oturum sonucu `epsTotal` taşır (atlama başına, uçtan uca, kural metni). Bölme kapatılırsa (`false`) ε_e2e = 31 × hedef
+  ve bu da `epsTotal`'da görünür.
+- **Değerlendirme başına ε_PE (P1-1):** bir atlamada ℓ mesaj bitine yetmezse oturum daha çok bit toplayıp parametre
+  kestirimini YENİDEN yapar. Her değerlendirme ayrı bir test olduğundan atlamanın ε_PE'si en çok M = `maxPeEvaluations`
+  (16) değerlendirmeye bölünür ve μ bu payla hesaplanır. M değerlendirmede ℓ yetmezse yeni `PE_BUDGET` iptali.
+- **Faz hatası üst sınırı raporlanıyor (P1-1):** her atlama kontrolü Q_test, μ, Q + μ ve değerlendirme sayısını taşır.
+  Güvenlik kararı zaten Q + μ'den veriliyordu (v2'den beri); %11 nokta tahmini yalnız erken operasyonel iptaldir.
+  Gerçek QBER %12 iken ölçüm şansla %11'in altına düşse bile ℓ = 0 (`core_v52_finite_key_test.js` G3).
+- **Erken durdurma yanlılığı (P0-3):** kabul edilen değerlendirme, reddedilenlerin yeniden test edilmesi yüzünden aşağı
+  yanlıdır (60 oturumda kabul edilen birleşik QBER %1,43, ilk testlerinki %1,48). Atlama kontrolü artık ilk
+  değerlendirmeyi de taşır (`firstQ`, `firstK`); 📈 SONUÇLAR sekmesi ve K3 doğrulaması bunu kullanır.
+- **Bütçe sonunda son değerlendirme:** v5.1'e kadar hedef ikiye katlandığı için darbe bütçesinin son kısmında biriken
+  bitler hiç değerlendirilmeden `KEY_BUDGET` veriliyordu. Bütçe bitince eksik her atlama tüm birikimiyle bir kez daha
+  değerlendirilir (M sınırı içinde, en az `firstCheckSifted` bit). Bulgu: ε bölündükten sonra 32 atlamalı hibrit oturumun
+  t = −60 s uydu atlaması bazı koşularda `KEY_BUDGET` ile kalıyordu (TS-HYBRID-QKD-04 S2, 3 denemede 3); düzeltmeden sonra
+  16 oturumun 16'sı teslim, 4'ü bu son değerlendirmeyle.
+- **Işın modeli yorumu (m1, m2):** 15 µrad'ın 1/e² YARI açısı olduğu ve dalga boyuyla ölçeklenmediği yazıldı; Micius
+  karşılaştırması "kaba uyum" olarak değil, 850 nm / 1550 nm farkıyla birlikte dış doğrulama olmadığı belirtilerek
+  anılıyor. Sayısal model değişmedi.
+- Yeni araçlar ve testler: `bb84/tools/ell_audit.js` (→ `docs/ELL_AUDIT.md`), `bb84/tools/protocol_fingerprint.js`,
+  `bb84/protocol_fingerprint_test.js`, `bb84/core_v52_finite_key_test.js`, `bb84/k3_qber_validation_test.js`,
+  `bb84/e2e_qkd_kme_tls_test.js`. `PHOTONNET_CORE_VERSION` "v5.2".
+- Dosya SHA-256 `6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b`, protokol parmak izi
+  `f8cfe1b55728fc238ea6f6f567d5e63f783040d49810629c3eb07efe5203788c` (96 sembol).
 
 ## v5.1 (2026-11) — PE alt kümesi ve Toeplitz tohumu entropiden, UTF-8 metin kodlaması (hakem bulguları B3, C4, C5)
 
