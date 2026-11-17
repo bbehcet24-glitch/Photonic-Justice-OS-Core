@@ -15,7 +15,11 @@
  *      o atlamanın qTest'i ~%8 ve ℓ'si buna göre küçük; v3'te bu atlama ℓ'ye hiç girmiyordu
  *   T4 Tek bir atlamada dinleme (%25) → HOP_QBER, iptal mesajı DOĞRU atlama numarasını veriyor; anahtar/mesaj yok
  *   T5 Uzlaşma (Cascade) doğrulaması başarısız olursa blok atılır, oturum devam eder; 3 ardışık başarısızlıkta EC_FAIL
- *   T6 Varsayılan demo rotası (1842 km / 31 atlama): SNSPD 10/10 ve InGaAs 6/6 teslim, mesaj birebir
+ *   T6 Varsayılan demo rotası (1842 km / 31 atlama): SNSPD 10/10 ve InGaAs 6/6 teslim, mesaj birebir. v5.2'den beri
+ *      ε atlamalara bölündüğü için InGaAs oturumlarının bir kısmı bütçenin son değerlendirmesinde teslim edilir
+ *      (20 oturumda 1; bu değerlendirme olmasaydı KEY_BUDGET olurdu). Kapı: hepsi teslim ve ortanca darbe bütçenin
+ *      %90'ının altında; bütçe sonunda teslim edilenlerin sayısı raporlanır. (24d010d'nin CI koşusunda eski "en çok
+ *      darbe < bütçe" kapısı 4 194 304 = bütçe ile kaldı.)
  *   + çekirdek hash'i CORE_CHANGELOG.md'de kayıtlı
  */
 const fs = require("fs");
@@ -106,12 +110,15 @@ function injectHop(session, hopIdx, flipProb) {
       const r = new core.SecureMessageSession({ msg: "Merhaba Dünya", totalKm: 1842, nHops: 31, evesdrop: false, detectorCtx: ctx(prof), entropyBits: rb, publicSeed: 1000 + i }).run();
       if (r.status === "DELIVERED" && r.decoded === "Merhaba Dünya") { ok++; ps.push(r.pulses); }
     }
-    res[prof] = { ok, N, maxPulses: ps.length ? Math.max(...ps) : null };
+    const sorted = ps.slice().sort((a, b) => a - b), B = core.SecureMessageSession.DEFAULTS.maxPulses;
+    res[prof] = { ok, N, maxPulses: ps.length ? sorted[sorted.length - 1] : null, medianPulses: ps.length ? sorted[Math.floor((sorted.length - 1) / 2)] : null,
+      atBudgetEnd: ps.filter((p) => p >= B).length };
   }
   out.demo = res;
-  chk("T6 Varsayılan demo rotası (1842 km, 31 güvenilir atlama): SNSPD 10/10, InGaAs 6/6 teslim (v3'te InGaAs 12'de 5 KEY_BUDGET), en çok darbe bütçenin altında",
-    res.snspd.ok === 10 && res.ingaas.ok === 6 && res.ingaas.maxPulses < core.SecureMessageSession.DEFAULTS.maxPulses,
-    `SNSPD ${res.snspd.ok}/10 (en çok ${res.snspd.maxPulses} darbe/link) · InGaAs ${res.ingaas.ok}/6 (en çok ${res.ingaas.maxPulses}; bütçe ${core.SecureMessageSession.DEFAULTS.maxPulses})`);
+  const B = core.SecureMessageSession.DEFAULTS.maxPulses;
+  chk("T6 Varsayılan demo rotası (1842 km, 31 güvenilir atlama): SNSPD 10/10, InGaAs 6/6 teslim (v3'te InGaAs 12'de 5 KEY_BUDGET), ortanca darbe bütçenin %90'ının altında",
+    res.snspd.ok === 10 && res.ingaas.ok === 6 && res.snspd.maxPulses <= B && res.ingaas.maxPulses <= B && res.ingaas.medianPulses < 0.9 * B,
+    `SNSPD ${res.snspd.ok}/10 (en çok ${res.snspd.maxPulses} darbe/link) · InGaAs ${res.ingaas.ok}/6 (ortanca ${res.ingaas.medianPulses}, en çok ${res.ingaas.maxPulses}; bütçe ${B}; bütçe sonundaki son değerlendirmeyle teslim: ${res.ingaas.atBudgetEnd})`);
 }
 
 const changelog = fs.readFileSync(path.join(__dirname, "docs", "CORE_CHANGELOG.md"), "utf8");

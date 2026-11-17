@@ -31,6 +31,24 @@ used `os.urandom`; the repetition-count test's α = 2⁻²⁰ per sample gives �
 What `24d010d` counts is reconciled in [`docs/TEST_INVENTORY.md`](TEST_INVENTORY.md): 110 runner items, 630/630
 checks in 71 reports, 91 report files; the 19 ETSI-014/mTLS tests of CI gate 3b are outside `npm test`.
 
+### GitHub Actions (`production-pipeline.yml`, push of `e8fb0e7`)
+
+Read from a screenshot of the run page (no GitHub API access here).
+
+| Job | Result |
+|---|---|
+| Kapı 1, 2, 3a, 3b (ephemeral), 3c, 3d, Mock IBM client | passed |
+| Kapı 3b (external, real certificates), Kapı 4 (milestone seal) | skipped: manual `workflow_dispatch` only |
+| Kapı 5 — `npm test` | **failed, 109/110** (20.9 min): `core_v4_session_test` T6 |
+
+T6 required the InGaAs sessions on the 31-hop default route to finish *below* the 4,194,304-pulse budget. Since v5.2
+splits ε across hops, about 1 InGaAs session in 20 delivers at the budget end, through the final evaluation added
+in `3d615e2` (20 local sessions: 20 delivered, 1 at the budget end; before that evaluation existed such a session
+would have ended in `KEY_BUDGET`). The CI run hit one of those (6/6 delivered, max 4,194,304). The gate now asks for
+all sessions delivered, no session above the budget and a median below 90 % of it, and reports how many delivered at
+the budget end. Test-only change; `core_v4_session_test` re-run locally 7/7 (median 3,162,112 pulses, 0 at the budget
+end). `protocol_fingerprint_test` passed in CI with full git history, so the version ↔ commit table check ran there.
+
 ### UI scenarios and tools on the `24d010d` build (Playwright, Chromium 153)
 
 | Scenario / tool | Result |
