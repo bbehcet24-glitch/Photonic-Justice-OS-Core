@@ -133,9 +133,13 @@ def test_von_neumann_debias_removes_stationary_bias() -> None:
 
 def test_run_health_tests_composes() -> None:
     print("── F: run_health_tests() iki testi doğru birleştiriyor (overall_pass = RCT ∧ APT) ──")
-    good = good_source_bits(4096)
+    # Sabit tohumlu akış: os.urandom ile bu kontrol yaklaşık %0,2 olasılıkla kalıyordu — RCT'nin örnek başına
+    # α = 2⁻²⁰'si 4096 bitte ~4096·2⁻²¹ ≈ 0,002 yanlış alarm verir (beklenen davranış; A bölümü bu oranı ölçüyor).
+    # Burada ölçülen şey birleştirme mantığı olduğu için akış tekrarlanabilir olmalı (3d615e2 koşusunda kaldı).
+    good = bytes_to_bits(random.Random(20261117).randbytes(512))
     res_good = run_health_tests(good, min_entropy_bits=1.0)
-    check("iyi kaynak → overall_pass True", res_good["overall_pass"] is True, str(res_good))
+    check("iyi kaynak (sabit tohumlu 4096 bit) → overall_pass True", res_good["overall_pass"] is True, str(res_good))
+    check("overall_pass = RCT ∧ APT", res_good["overall_pass"] == (res_good["rct"]["passed"] and res_good["apt"]["passed"]))
     stuck = [0] * 5000
     res_bad = run_health_tests(stuck, min_entropy_bits=1.0)
     check("sıkışmış kaynak → overall_pass False", res_bad["overall_pass"] is False, str(res_bad["rct"]))
