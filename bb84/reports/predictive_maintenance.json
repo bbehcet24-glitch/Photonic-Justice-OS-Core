@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T11:53:26.468Z",
+  "generatedAt": "2026-11-20T13:53:59.947Z",
   "thresholdDb": 39.01,
   "checks": [
     {
@@ -65,7 +65,7 @@
     {
       "name": "P12 Belirlenimcilik ve bütünlük: aynı birim aynı olayları üretiyor; çekirdek + yeniden kullanılan modüllerin SHA-256'sı değişmedi; yeni modüller çekirdeği import etmiyor",
       "ok": true,
-      "detail": "olaylar birebir · 5 dosya SHA-256 değişmedi · core import yok · süre 15.9 s"
+      "detail": "olaylar birebir · 5 dosya SHA-256 değişmedi · core import yok · süre 19.9 s"
     }
   ],
   "fleet": {

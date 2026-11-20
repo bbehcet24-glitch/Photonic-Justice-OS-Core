@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T11:47:08.047Z",
+  "generatedAt": "2026-11-20T13:47:03.966Z",
   "checks": [
     {
       "name": "(A) TAHRİFAT TESPİTİ: WC kanalı ~%0 kaçırır (v5.2'ye kadarki çekirdek MAC %41)",
@@ -34,7 +34,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 f8c93cbba99124b5… öncesi = sonrası — düzeltme KATMANDA (authenticated_channel), çekirdek sabit"
+      "detail": "SHA-256 4f664688da958752… öncesi = sonrası — düzeltme KATMANDA (authenticated_channel), çekirdek sabit"
     }
   ],
   "tamper": {
@@ -69,7 +69,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "f8c93cbba99124b5"
+    "sha256": "4f664688da958752"
   },
   "allChecksPassed": true
 }

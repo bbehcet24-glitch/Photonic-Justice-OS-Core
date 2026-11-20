@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T11:56:25.107Z",
+  "generatedAt": "2026-11-20T13:57:27.346Z",
   "checks": [
     {
       "name": "L1 İki tarafa teslim edilen anahtarın deposundaki baytlar sıfırlandı, kayıt silindi; teslim edilen anahtar doğru",
@@ -14,7 +14,7 @@
     {
       "name": "L3 Gerçek süreç (mTLS, TTL 1 s): hemen çekilen anahtar 200, 1,6 s sonra istenen 400; sayaçlar durum uç noktasında",
       "ok": true,
-      "detail": "dec #1 → 200; dec #2 (1,6 s sonra) → 400 (key_ID bulunamadı ya da yarı-açık süresi (1 s) doldu (rota=ANK-MASTER): e0124f6d); destroyed 1, expired 1, TTL 1 s"
+      "detail": "dec #1 → 200; dec #2 (1,6 s sonra) → 400 (key_ID bulunamadı ya da yarı-açık süresi (1 s) doldu (rota=ANK-MASTER): 52a97800); destroyed 1, expired 1, TTL 1 s"
     },
     {
       "name": "L4 Geçersiz TTL (0) ile sunucu başlamıyor (fail-closed)",

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T11:53:42.440Z",
+  "generatedAt": "2026-11-20T13:54:19.922Z",
   "checks": [
     {
       "name": "(A) FİZİK ANAHTAR HIZLARI: link hızı mesafeyle düşüyor (fiber geçirgenliği, L1)",
@@ -29,7 +29,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 f8c93cbba99124b5… — fizik L1 motorundan (fiberTransmittance), çekirdek sabit"
+      "detail": "SHA-256 4f664688da958752… — fizik L1 motorundan (fiberTransmittance), çekirdek sabit"
     }
   ],
   "topology": {
@@ -372,7 +372,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "f8c93cbba99124b5"
+    "sha256": "4f664688da958752"
   },
   "allChecksPassed": true
 }

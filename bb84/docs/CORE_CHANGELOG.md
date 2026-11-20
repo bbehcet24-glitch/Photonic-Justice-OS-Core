@@ -44,7 +44,7 @@ Her satır `git show <commit>:bb84/photonnet_core.js | sha256sum` ile yeniden ü
 | v5.1 | 9a07e62 | 2026-11-17 | `11bf0015…651f79` | `01a8dbc8…0078c8` | algoritma (havuz rastgeleliği enjekte edilebilir) |
 | v5.2 | 3d615e2 | 2026-11-17 | `6a5effd3…e91c6b` | `f8cfe1b5…03788c` | algoritma |
 | v5.3 | 2325e7a | 2026-11-20 | `f8c93cbb…f0008f` | `b5b0a321…a8ed1d` | algoritma |
-| v5.4 | bu tablonun eklendiği commit | 2026-11-20 | `4f664688…492b39` | `6b874b6c…197cfc` | algoritma |
+| v5.4 | 7218829 | 2026-11-20 | `4f664688…492b39` | `6b874b6c…197cfc` | algoritma |
 
 Bulgu: v4.1, v4.2 ve v4.3 "çekirdek sürümü" olarak numaralandı ama protokolleri v4 ile aynıdır; o dönemde sürüm
 numarası arayüz değişikliğinde de artırıldı. v5 adı altında iki farklı dosya hash'i vardır (5fe76eb ve f391152);

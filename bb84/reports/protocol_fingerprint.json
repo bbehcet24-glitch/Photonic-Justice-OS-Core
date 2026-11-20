@@ -1,30 +1,30 @@
 {
-  "generatedAt": "2026-11-20T12:09:51.171Z",
+  "generatedAt": "2026-11-20T14:11:49.307Z",
   "checks": [
     {
       "name": "F1 Kayıtlı protokol parmak izi güncel",
       "ok": true,
-      "detail": "b5b0a32178473139… (97 sembol; atlanan sınıf örnekleri: 13)"
+      "detail": "6b874b6c91ea20ff… (97 sembol; atlanan sınıf örnekleri: 13)"
     },
     {
       "name": "F2 Yalnız arayüz metni değişince dosya hash'i değişiyor, protokol parmak izi değişmiyor",
       "ok": true,
-      "detail": "dosya f8c93cbba991 → fc7db9339c0d; parmak izi b5b0a3217847 → b5b0a3217847"
+      "detail": "dosya 4f664688da95 → cbd15be0383f; parmak izi 6b874b6c91ea → 6b874b6c91ea"
     },
     {
       "name": "F3 Fizik sabiti (e_d) değişince protokol parmak izi değişiyor",
       "ok": true,
-      "detail": "b5b0a3217847 → 37ae2e035d0e"
+      "detail": "6b874b6c91ea → 5f57980c12f3"
     },
     {
       "name": "F5 Sürüm ↔ commit tablosu git geçmişiyle tutarlı (dosya hash'i ve protokol parmak izi)",
       "ok": true,
-      "detail": "11 satır, 11 denetlendi"
+      "detail": "12 satır, 12 denetlendi"
     },
     {
       "name": "F4 Protokol parmak izi CORE_CHANGELOG.md'de kayıtlı",
       "ok": true,
-      "detail": "b5b0a32178473139…"
+      "detail": "6b874b6c91ea20ff…"
     }
   ],
   "passed": 5,

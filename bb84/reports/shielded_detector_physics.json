@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T11:53:52.257Z",
+  "generatedAt": "2026-11-20T13:54:30.184Z",
   "checks": [
     {
       "name": "(A) TERMAL/EM AYRIŞTIRMASI: yer-tabanlı ve uydu-kalibreli referanslar AÇIKÇA farklı (~2000×) — biri diğerinin yerine zorla KONULMUYOR",
@@ -24,7 +24,7 @@
     {
       "name": "ÇEKİRDEĞE DOKUNULMADI: photonnet_core.js SHA-256 değişmedi (bu dosya QKDSecurityProof/DetectorNoiseModel'i SALT OKUNUR çağırır)",
       "ok": true,
-      "detail": "SHA-256 f8c93cbba99124b5… öncesi = sonrası — production_gate.js ile AYNI, zaten kabul edilmiş salt-okunur core çağrı deseni"
+      "detail": "SHA-256 4f664688da958752… öncesi = sonrası — production_gate.js ile AYNI, zaten kabul edilmiş salt-okunur core çağrı deseni"
     }
   ],
   "thermalCrossCheck": {
@@ -162,7 +162,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "f8c93cbba99124b5"
+    "sha256": "4f664688da958752"
   },
   "allChecksPassed": true
 }

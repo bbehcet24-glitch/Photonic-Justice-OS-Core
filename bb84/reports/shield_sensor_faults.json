@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T11:53:46.471Z",
+  "generatedAt": "2026-11-20T13:54:24.236Z",
   "part": "2/3 sensör arızaları",
   "checks": [
     {
@@ -43,9 +43,9 @@
       "detail": "driverError: \"USB sensör bağlantısı koptu\" · çerçeve: 0"
     },
     {
-      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = f8c93cbb…f0008f)",
+      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = 4f664688…492b39)",
       "ok": true,
-      "detail": "f8c93cbba99124b5…"
+      "detail": "4f664688da958752…"
     }
   ],
   "passed": 9,

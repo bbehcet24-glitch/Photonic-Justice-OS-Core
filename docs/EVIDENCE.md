@@ -2,10 +2,32 @@
 
 Every full `npm test` run since core v5.1 records, at the start of the run, the git commit, whether the working
 tree was clean and the SHA-256 of `bb84/photonnet_core.js` (`ci-reports/npm_test_summary.json`; the 📈 SONUÇLAR tab
-shows the commit). This file lists the runs behind the v5.1, v5.2 and v5.3 revisions, newest first. Since core v5.3 every run also
+shows the commit). This file lists the runs behind the v5.1–v5.4 revisions, newest first. Since core v5.3 every run also
 records the SHA-256 of each test file and an aggregate (`testFilesSha256`), so "only the tests changed" can be
 checked by comparing the core hash and the test-file hash of two runs. The `npm test` and UI runs are local (Linux, Node
 22.23.4, Python 3.13.18); the GitHub Actions run is listed in its own section.
+
+## Core v5.4 (reviewer, after v5.3: encrypt-then-MAC, ε of the MAC, inventory arithmetic)
+
+### Full suite (`npm test`)
+
+| Commit | What it is | Tree | Core SHA-256 | Test files SHA-256 | Result | Run (UTC) |
+|---|---|---|---|---|---|---|
+| `7218829` | core v5.4: delivery stage (OTP ciphertext + relays) authenticated hop by hop; MAC forgery bound in ε | clean | `4f664688…492b39` | `cdee455f…868649` (110 files) | **112/112** | 2026-11-20 13:47:00 → 14:06:04 |
+
+### UI scenarios and tools on the `7218829` build (Playwright, Chromium 153)
+
+| Scenario / tool | Result |
+|---|---|
+| `bb84/tools/ts_hybrid_qkd_04.js` | 17/17; S2 at t = −60 s delivered (ℓ 139); S1 spec band observation: outside (1.46 % / 1.59 %) |
+| `bb84/tools/ui_abort_drill.js` | 9/9 |
+| Security criteria panel | "31/31 atlama · 93 etiket doğrulandı"; ℓ row "ε uçtan uca ≤ 2.0e-10 (kimlik doğrulama dahil)" (`docs/screenshots/06_results.png`) |
+| `ell_audit.js`, `test_inventory.js`, `capture_screenshots.js` | regenerated; 641/641 checks in 73 reports |
+
+### GitHub Actions
+
+`432d84f` (core v5.3) was pushed; its Actions result has not been seen here (no API access). The CI result that
+closes the reviewer's condition is the one for the newest pushed commit.
 
 ## Core v5.3 (reviewer rubric: authentication, key lifecycle, evidence chain)
 
@@ -36,7 +58,7 @@ Test pass-condition changes and their reasons: [`docs/TEST_CHANGELOG.md`](TEST_C
 
 ### GitHub Actions on `400a907`
 
-Not seen yet (no API access here; the result comes from the user's screenshot).
+Not seen (superseded: `432d84f` contains it).
 
 ## Core v5.2 (referee report 2)
 

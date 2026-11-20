@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T11:47:07.500Z",
+  "generatedAt": "2026-11-20T13:47:03.334Z",
   "checks": [
     {
       "name": "(A) SE_gerekli tersi emissionDetectabilityCheck ile birebir tutarlı (tespit ⟺ SE < SE_gerekli)",
@@ -84,7 +84,7 @@
     {
       "name": "ÇEKİRDEĞE VE YENİDEN KULLANILAN MODÜLLERE DOKUNULMADI",
       "ok": true,
-      "detail": "8 dosyanın SHA-256'sı öncesi=sonrası ✓ · doğrudan core import yok ✓ · core=f8c93cbba99124b5… ✓"
+      "detail": "8 dosyanın SHA-256'sı öncesi=sonrası ✓ · doğrudan core import yok ✓ · core=4f664688da958752… ✓"
     }
   ],
   "seRequired": {
@@ -231,7 +231,7 @@
   "integrity": {
     "unchanged": true,
     "noCoreImport": true,
-    "coreSha256": "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f"
+    "coreSha256": "4f664688da958752abb7ede77890f1d94640250aca988c6d2e7fadf46f492b39"
   },
   "allChecksPassed": true
 }

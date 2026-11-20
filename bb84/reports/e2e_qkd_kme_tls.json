@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-20T11:55:29.427Z",
+  "generatedAt": "2026-11-20T13:56:21.510Z",
   "checks": [
     {
       "name": "E1 Çekirdek QKD hattı bir blok üretti ve KME deposuna kaydetti (PE + Cascade + sonlu-anahtar + Toeplitz)",
       "ok": true,
-      "detail": "32.768 darbe, n 3256, k 744, QBER_test %2.15, Cascade sızıntısı 436 bit, ℓ 249 bit → key_ID 7e1904f7…"
+      "detail": "32.768 darbe, n 3206, k 794, QBER_test %1.01, Cascade sızıntısı 417 bit, ℓ 356 bit → key_ID 7e1904f7…"
     },
     {
       "name": "E2 KME teslimi: master ve slave aynı anahtarı aldı ve anahtar QKD bloğunun anahtarıyla bit bit aynı",
       "ok": true,
-      "detail": "key_ID 7e1904f7…, 32 bayt (249 bit); master = slave true, = QKD bloğu true"
+      "detail": "key_ID 7e1904f7…, 45 bayt (356 bit); master = slave true, = QKD bloğu true"
     },
     {
       "name": "E3 Tek kullanım: aynı key_ID ikinci kez çekilemiyor (replay reddi), anahtar depodan silindi",

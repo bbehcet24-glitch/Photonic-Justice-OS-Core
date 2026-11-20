@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-11-20T12:08:52.647Z",
-  "coreSha256": "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f",
+  "generatedAt": "2026-11-20T14:10:51.186Z",
+  "coreSha256": "4f664688da958752abb7ede77890f1d94640250aca988c6d2e7fadf46f492b39",
   "message": {
     "text": "Merhaba Dünya",
     "bits": 112
@@ -38,7 +38,10 @@
         "endToEnd": 2.00001e-10,
         "maxPeEvaluations": 16,
         "epsPEPerEvaluation": 6.25e-12,
-        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)"
+        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)",
+        "authForge": 5.923646989591802e-15,
+        "endToEndWithAuth": 2.0000692364698958e-10,
+        "ruleWithAuth": "ε_toplam ≤ Σ_atlama (ε_cor + ε_PE + ε_PA) + Σ_etiket L_etiket / (2⁶¹ − 1)"
       },
       "eps": {
         "epsPE": 1e-10,
@@ -48,19 +51,19 @@
       "hop": {
         "hop": 0,
         "kind": "fiber",
-        "n": 3309,
-        "k": 827,
-        "qTest": 0.018137847642079808,
+        "n": 3294,
+        "k": 823,
+        "qTest": 0.015795868772782502,
         "epsPEUsed": 6.25e-12,
-        "mu": 0.19758240168219882,
-        "qPhUpper": 0.21572024932427863,
-        "main": 819.720547913621,
-        "leakEC": 426,
+        "mu": 0.19805651208187303,
+        "qPhUpper": 0.21385238085465552,
+        "main": 827.5114917638091,
+        "leakEC": 577,
         "corTerm": 50.82892142331043,
         "paTerm": 64.43856189774725,
-        "ellRaw": 278.4530645925633,
-        "ell": 278,
-        "coreEll": 278,
+        "ellRaw": 135.2440084427514,
+        "ell": 135,
+        "coreEll": 135,
         "evals": 2
       }
     },
@@ -69,22 +72,22 @@
       "mode": "capacity",
       "pulses": 4194304,
       "sourceSeconds": 0.04194304,
-      "sifted": 98900,
+      "sifted": 99172,
       "cascadeConverged": true,
       "hop": {
-        "n": 79120,
-        "k": 19780,
-        "qTest": 0.016076845298281094,
+        "n": 79338,
+        "k": 19834,
+        "qTest": 0.014520520318644752,
         "epsPEUsed": 1e-10,
-        "mu": 0.038147025974779133,
-        "qPhUpper": 0.05422387127306023,
-        "main": 55061.53433341387,
-        "leakEC": 10828,
+        "mu": 0.03809496242680355,
+        "qPhUpper": 0.0526154827454483,
+        "main": 55742.47217562211,
+        "leakEC": 10977,
         "corTerm": 50.82892142331043,
         "paTerm": 64.43856189774725,
-        "ellRaw": 44118.26685009281,
-        "ell": 44118,
-        "coreEll": 44118
+        "ellRaw": 44650.20469230106,
+        "ell": 44650,
+        "coreEll": 44650
       }
     },
     {
@@ -92,7 +95,7 @@
       "mode": "stop",
       "status": "DELIVERED",
       "code": "OK",
-      "pulsesPerLink": 3604480,
+      "pulsesPerLink": 4456448,
       "needBits": 112,
       "nHops": 1,
       "epsTotal": {
@@ -107,7 +110,10 @@
         "endToEnd": 2.00001e-10,
         "maxPeEvaluations": 16,
         "epsPEPerEvaluation": 6.25e-12,
-        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)"
+        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)",
+        "authForge": 1.2972132049093865e-13,
+        "endToEndWithAuth": 2.0013072132049093e-10,
+        "ruleWithAuth": "ε_toplam ≤ Σ_atlama (ε_cor + ε_PE + ε_PA) + Σ_etiket L_etiket / (2⁶¹ − 1)"
       },
       "eps": {
         "epsPE": 1e-10,
@@ -117,19 +123,19 @@
       "hop": {
         "hop": 0,
         "kind": "free-space",
-        "n": 3280,
+        "n": 3279,
         "k": 820,
-        "qTest": 0.014634146341463415,
+        "qTest": 0.01707317073170732,
         "epsPEUsed": 6.25e-12,
-        "mu": 0.19843096869010002,
-        "qPhUpper": 0.21306511503156345,
-        "main": 828.8530818098928,
-        "leakEC": 549,
+        "mu": 0.19843702016747108,
+        "qPhUpper": 0.2155101908991784,
+        "main": 813.5720820323144,
+        "leakEC": 414,
         "corTerm": 50.82892142331043,
         "paTerm": 64.43856189774725,
-        "ellRaw": 164.58559848883516,
-        "ell": 164,
-        "coreEll": 164,
+        "ellRaw": 284.3045987112567,
+        "ell": 284,
+        "coreEll": 284,
         "evals": 2
       }
     },
@@ -138,22 +144,22 @@
       "mode": "capacity",
       "pulses": 16777216,
       "sourceSeconds": 0.16777216,
-      "sifted": 17338,
+      "sifted": 17298,
       "cascadeConverged": true,
       "hop": {
-        "n": 13870,
-        "k": 3468,
-        "qTest": 0.015859284890426758,
+        "n": 13838,
+        "k": 3460,
+        "qTest": 0.012138728323699421,
         "epsPEUsed": 1e-10,
-        "mu": 0.09111548143556683,
-        "qPhUpper": 0.10697476632599359,
-        "main": 7063.672590092735,
-        "leakEC": 2073,
+        "mu": 0.09122078987642698,
+        "qPhUpper": 0.1033595182001264,
+        "main": 7201.911823278356,
+        "leakEC": 2001,
         "corTerm": 50.82892142331043,
         "paTerm": 64.43856189774725,
-        "ellRaw": 4875.405106771677,
-        "ell": 4875,
-        "coreEll": 4875
+        "ellRaw": 5085.644339957298,
+        "ell": 5085,
+        "coreEll": 5085
       }
     },
     {
@@ -161,7 +167,7 @@
       "mode": "stop",
       "status": "DELIVERED",
       "code": "OK",
-      "pulsesPerLink": 7684096,
+      "pulsesPerLink": 7946240,
       "needBits": 112,
       "nHops": 1,
       "epsTotal": {
@@ -176,7 +182,10 @@
         "endToEnd": 2.00001e-10,
         "maxPeEvaluations": 16,
         "epsPEPerEvaluation": 6.25e-12,
-        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)"
+        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)",
+        "authForge": 2.3115016845043357e-13,
+        "endToEndWithAuth": 2.0023215016845042e-10,
+        "ruleWithAuth": "ε_toplam ≤ Σ_atlama (ε_cor + ε_PE + ε_PA) + Σ_etiket L_etiket / (2⁶¹ − 1)"
       },
       "eps": {
         "epsPE": 1e-10,
@@ -186,19 +195,19 @@
       "hop": {
         "hop": 0,
         "kind": "free-space",
-        "n": 3278,
-        "k": 819,
-        "qTest": 0.019536019536019536,
+        "n": 3279,
+        "k": 820,
+        "qTest": 0.018292682926829267,
         "epsPEUsed": 6.25e-12,
-        "mu": 0.19854010700687263,
-        "qPhUpper": 0.21807612654289216,
-        "main": 797.7374402095014,
-        "leakEC": 533,
+        "mu": 0.19843702016747108,
+        "qPhUpper": 0.21672970309430034,
+        "main": 806.1391390662002,
+        "leakEC": 558,
         "corTerm": 50.82892142331043,
         "paTerm": 64.43856189774725,
-        "ellRaw": 149.46995688844373,
-        "ell": 149,
-        "coreEll": 149,
+        "ellRaw": 132.8716557451425,
+        "ell": 132,
+        "coreEll": 132,
         "evals": 2
       }
     },
@@ -207,22 +216,22 @@
       "mode": "capacity",
       "pulses": 16777216,
       "sourceSeconds": 0.16777216,
-      "sifted": 10094,
+      "sifted": 10209,
       "cascadeConverged": true,
       "hop": {
-        "n": 8075,
-        "k": 2019,
-        "qTest": 0.022288261515601784,
+        "n": 8167,
+        "k": 2042,
+        "qTest": 0.01811949069539667,
         "epsPEUsed": 1e-10,
-        "mu": 0.11942839471779439,
-        "qPhUpper": 0.14171665623339616,
-        "main": 3321.1103551911146,
-        "leakEC": 1213,
+        "mu": 0.11875355350179925,
+        "qPhUpper": 0.13687304419719593,
+        "main": 3462.884399905993,
+        "leakEC": 1351,
         "corTerm": 50.82892142331043,
         "paTerm": 64.43856189774725,
-        "ellRaw": 1992.842871870057,
-        "ell": 1992,
-        "coreEll": 1992
+        "ellRaw": 1996.6169165849356,
+        "ell": 1996,
+        "coreEll": 1996
       }
     },
     {
@@ -245,7 +254,10 @@
         "endToEnd": 2.00001e-10,
         "maxPeEvaluations": 16,
         "epsPEPerEvaluation": 6.25e-12,
-        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)"
+        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)",
+        "authForge": 0,
+        "endToEndWithAuth": 2.00001e-10,
+        "ruleWithAuth": "ε_toplam ≤ Σ_atlama (ε_cor + ε_PE + ε_PA) + Σ_etiket L_etiket / (2⁶¹ − 1)"
       },
       "eps": {
         "epsPE": 1e-10,
@@ -259,20 +271,20 @@
       "mode": "capacity",
       "pulses": 4194304,
       "sourceSeconds": 0.04194304,
-      "sifted": 1665,
+      "sifted": 1617,
       "cascadeConverged": true,
       "hop": {
-        "n": 1332,
-        "k": 333,
-        "qTest": 0.012012012012012012,
+        "n": 1294,
+        "k": 323,
+        "qTest": 0.021671826625386997,
         "epsPEUsed": 1e-10,
-        "mu": 0.29443663842057094,
-        "qPhUpper": 0.30644865043258296,
-        "main": 147.81015789317075,
-        "leakEC": 166,
+        "mu": 0.2989273822113107,
+        "qPhUpper": 0.3205992088366977,
+        "main": 122.88874055028084,
+        "leakEC": 180,
         "corTerm": 50.82892142331043,
         "paTerm": 64.43856189774725,
-        "ellRaw": -133.45732542788693,
+        "ellRaw": -172.37874277077685,
         "ell": 0,
         "coreEll": 0
       }
@@ -297,7 +309,10 @@
         "endToEnd": 2.0000100000000002e-10,
         "maxPeEvaluations": 16,
         "epsPEPerEvaluation": 2.0161290322580645e-13,
-        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)"
+        "rule": "birleşim sınırı: ε_e2e ≤ Σ_atlama (ε_cor + Σ_değerlendirme ε_PE/M + ε_PA)",
+        "authForge": 2.2338988298065132e-13,
+        "endToEndWithAuth": 2.0022438988298067e-10,
+        "ruleWithAuth": "ε_toplam ≤ Σ_atlama (ε_cor + ε_PE + ε_PA) + Σ_etiket L_etiket / (2⁶¹ − 1)"
       },
       "eps": {
         "epsPE": 3.225806451612903e-12,
@@ -305,25 +320,25 @@
         "epsCor": 3.2258064516129037e-17
       },
       "hop": {
-        "hop": 16,
+        "hop": 23,
         "kind": "fiber",
-        "n": 3410,
-        "k": 853,
-        "qTest": 0.015240328253223915,
+        "n": 3447,
+        "k": 862,
+        "qTest": 0.01740139211136891,
         "epsPEUsed": 2.0161290322580645e-13,
-        "mu": 0.20710606484242167,
-        "qPhUpper": 0.22234639309564558,
-        "main": 803.2975771442357,
-        "leakEC": 554,
+        "mu": 0.20601468246720267,
+        "qPhUpper": 0.22341607457857157,
+        "main": 805.3699008010151,
+        "leakEC": 553,
         "corTerm": 55.78311773369731,
         "paTerm": 74.346954518521,
-        "ellRaw": 119.16750489201736,
-        "ell": 119,
-        "coreEll": 119,
+        "ellRaw": 122.23982854879678,
+        "ell": 122,
+        "coreEll": 122,
         "evals": 2
       }
     }
   ],
-  "elapsedS": 13.253,
+  "elapsedS": 15.127,
   "consistent": true
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-20T11:53:49.331Z",
+  "generatedAt": "2026-11-20T13:54:27.179Z",
   "part": "3/3 kayıt/oynatma + HTTP cihaz",
   "checks": [
     {
@@ -20,7 +20,7 @@
     {
       "name": "R4 Gerçek zamanlı oynatma ×50: 5 s'lik kayıt ~100 ms duvar saatinde (80–400 ms), tüm zaman grupları sırası korunarak ve hiçbir çerçeve kaybolmadan teslim",
       "ok": true,
-      "detail": "duvar saati 100 ms · grup 101 · çerçeve 599/599 · sıralı: true"
+      "detail": "duvar saati 101 ms · grup 101 · çerçeve 599/599 · sıralı: true"
     },
     {
       "name": "H1 HTTP cihaz (127.0.0.1, gerçek soket): GET /v1/frames üzerinden okunan 101 adım, süreç-içi mock sürücüyle BİREBİR aynı ölçümleri veriyor",
@@ -38,9 +38,9 @@
       "detail": "askı adımında KDK kullanılabilir: false (zaman aşımı (100 ms)) · debounce sonrası hepsi BLOCK: true · kapalı sunucu hatası: \"fetch failed\" · yeniden açılınca çerçeve: true"
     },
     {
-      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = f8c93cbb…f0008f)",
+      "name": "Çekirdek değişmedi (photonnet_core.js SHA-256 = 4f664688…492b39)",
       "ok": true,
-      "detail": "f8c93cbba99124b5…"
+      "detail": "4f664688da958752…"
     }
   ],
   "passed": 8,
