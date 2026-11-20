@@ -665,7 +665,7 @@ async function main() {
   if (STAGE === "live" || STAGE === "all") await runLiveStage(out, chk);
   const after = coreHash();
   chk("ÇEKİRDEĞE DOKUNULMADI (photonnet_core.js SHA-256 öncesi = sonrası = mühürlü değer)",
-    before === after && after === "6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b", `${after.slice(0, 16)}…`);
+    before === after && after === "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f", `${after.slice(0, 16)}…`);
   out.allChecksPassed = out.checks.every((c) => c.ok);
   const rep = path.join(__dirname, "reports", `multinode_shielding_testbed${STAGE === "all" ? "" : "_" + STAGE}.json`);
   fs.writeFileSync(rep, JSON.stringify(out, null, 2));

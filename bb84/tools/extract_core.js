@@ -160,7 +160,7 @@ const EXPORT_MANIFEST = [
   "ToeplitzAsyncEngine", "toeplitzParity32", "toeplitzPackBits", "toeplitzRowsFromPackedWords",
   // ── Katman 6: anahtar havuzu / ETSI 014 teslim katmanı ──
   "KeyPoolBuffer", "keyPoolBuffer", "KeyDeliveryStore", "keyDeliveryStore",
-  "deterministicKeyId", "ClassicalAuthChannel", "classicalAuthChannel",
+  "deterministicKeyId", "ClassicalAuthChannel", "AuthTranscriptHash",
   // ── İşletimsel/dayanıklılık katmanları (izleme, kesinti, telemetri) ──
   "NodeWatchdog", "nodeWatchdog", "LinkOutageController", "linkOutageController",
   "MetricTrendInjector", "metricTrendInjector", "PredictiveTelemetryEngine", "predictiveEngine",

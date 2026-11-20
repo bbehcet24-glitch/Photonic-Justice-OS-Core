@@ -34,7 +34,7 @@ const SEQUENTIAL = new Set([
   "chaos_client_lib_timeout_test.js", "chaos_kme_ocsp_tmpdir_leak_test.js", "chaos_kme_oversized_body_test.js",
   "chaos_mtls_handshake_qrng_sync_test.js", "chaos_qrng_hardware_bridge_test.js", "etsi014_client_lib_test.js",
   "etsi014_interop_test.js", "qkd_secure_channel_test.js", "qukaydee_realistic_test.js", "multinode_shielding_testbed.js",
-  "kme_half_open_gate_test.js", "ocsp_cache_staleness_test.js", "e2e_qkd_kme_tls_test.js",
+  "kme_half_open_gate_test.js", "ocsp_cache_staleness_test.js", "e2e_qkd_kme_tls_test.js", "kme_lifecycle_test.js",
   "async_sync_drill.js", "fidelity_collapse_drill.js", "landauer_choke_drill.js", "layer_stress_campaign.js",
   "odls_optimization_drill.js", "resonance_drill.js", "safety_margin_drill.js", "state_poisoning_drill.js",
 ]);
@@ -93,9 +93,22 @@ async function main() {
     const dirty = git(["status", "--porcelain", "--untracked-files=no"]);
     return { startedAt: new Date().toISOString(), gitHead: git(["rev-parse", "HEAD"]), gitClean: dirty === "",
       dirtyFiles: dirty ? dirty.split("\n").length : 0,
-      coreSha256: require("crypto").createHash("sha256").update(fs.readFileSync(path.join(ROOT, "bb84", "photonnet_core.js"))).digest("hex") };
+      coreSha256: require("crypto").createHash("sha256").update(fs.readFileSync(path.join(ROOT, "bb84", "photonnet_core.js"))).digest("hex"),
+      // Test kodunun kendisi de kanıta bağlanır: koşu başında her test/drill dosyasının ve koşucunun SHA-256'sı, ve
+      // hepsinin (ad + hash, sıralı) tek bir özeti. "Test değişti, çekirdek değişmedi" iddiası bu iki hash'le denetlenir.
+      ...(() => {
+        const sha = (p) => require("crypto").createHash("sha256").update(fs.readFileSync(p)).digest("hex");
+        const files = fs.readdirSync(BB84).filter((f) => /(_test|_drill|_campaign)\.js$/.test(f) || f === "multinode_shielding_testbed.js").sort()
+          .map((f) => [`bb84/${f}`, path.join(BB84, f)])
+          .concat(fs.readdirSync(path.join(ROOT, "hal")).filter((f) => /^test_.*\.py$/.test(f)).sort().map((f) => [`hal/${f}`, path.join(ROOT, "hal", f)]))
+          .concat([["bb84/tools/run_all_tests.js", __filename]]);
+        const testFiles = Object.fromEntries(files.map(([n, p]) => [n, sha(p)]));
+        const agg = require("crypto").createHash("sha256");
+        for (const n of Object.keys(testFiles)) agg.update(`${n}\u0000${testFiles[n]}\n`);
+        return { testFilesSha256: agg.digest("hex"), testFileCount: files.length, testFiles };
+      })() };
   })();
-  console.log(`[npm test] commit ${provenance.gitHead ? provenance.gitHead.slice(0, 7) : "—"} (${provenance.gitClean ? "temiz ağaç" : `${provenance.dirtyFiles} değişmiş dosya`}), çekirdek ${provenance.coreSha256.slice(0, 8)}…`);
+  console.log(`[npm test] commit ${provenance.gitHead ? provenance.gitHead.slice(0, 7) : "—"} (${provenance.gitClean ? "temiz ağaç" : `${provenance.dirtyFiles} değişmiş dosya`}), çekirdek ${provenance.coreSha256.slice(0, 8)}…, test dosyaları (${provenance.testFileCount}) ${provenance.testFilesSha256.slice(0, 8)}…`);
   const rec = (name, r) => { results.push({ name, ok: r.code === 0, code: r.code, ms: r.ms, tail: r.code === 0 ? "" : r.out.trim().split("\n").slice(-8).join("\n") }); console.log(`${r.code === 0 ? "✓" : "✗"} ${name} (${(r.ms / 1000).toFixed(1)} s)`); };
 
   console.log(`[npm test] test PKI'sı: ${ensureTestPki()}`);

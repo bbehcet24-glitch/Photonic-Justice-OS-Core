@@ -21,7 +21,7 @@ const crypto = require("crypto");
 const { execFileSync, spawnSync } = require("child_process");
 
 const ROOT = path.join(__dirname, "..");
-const CORE_SHA = "6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b";
+const CORE_SHA = "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f";
 const coreSha = () => crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
 const sha0 = coreSha();
 

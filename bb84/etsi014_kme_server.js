@@ -180,6 +180,14 @@ const PORT = parseInt(args.port || "8443", 10);
 const AUTH_TOKEN = args["sae-token"] || "demo-token"; // İKAZ: gerçek üretimde mTLS kullanın, bu bir demo temsilcisidir
 // PROD-STRIP-END: demo-auth-token
 const DEFAULT_KEY_SIZE_BITS = 256; // ETSI 014 varsayılan anahtar boyutu alanı (status.key_size) — demo değeri
+// ANAHTAR YAŞAM DÖNGÜSÜ (hakem raporu: bellek sıfırlama ve yarı-açık anahtar TTL'i).
+// Master'a verilip slave'in hiç çekmediği "yarı-açık" anahtar bu süreden sonra sıfırlanıp silinir; slave'in geç
+// gelen dec_keys isteği 400 alır. ETSI GS QKD 014 bir süre tanımlamaz; varsayılan 300 s, --half-open-ttl-s ile 1–86400.
+const HALF_OPEN_TTL_MS = (() => {
+  const v = args["half-open-ttl-s"] == null ? 300 : Number(args["half-open-ttl-s"]);
+  if (!Number.isFinite(v) || v < 1 || v > 86400) throw new Error(`--half-open-ttl-s 1–86400 aralığında olmalı (alınan: ${args["half-open-ttl-s"]})`);
+  return Math.round(v * 1000);
+})();
 let MTLS_ENABLED = false; // --cert/--key/--ca üçü birlikte verildiğinde true olur (bkz. sunucu başlatma bloğu, aşağıda)
 
 // ── Anahtar Deposu (KME'nin yerel belleği) ────────────────────────
@@ -211,6 +219,30 @@ class KMEKeyStore {
     this.head = {};             // routeKey -> tüketilmiş ön-ek işaretçisi
     this.deliveredCount = 0;
     this.destroyedCount = 0; // her iki SAE'ye de teslim edilip bellekten SİLİNEN anahtar sayısı (denetim istatistiği)
+    this.expiredCount = 0;   // TTL'i dolan yarı-açık anahtar sayısı
+    this.halfOpen = [];      // [{routeKey, key_ID, t}] master'a veriliş sırasıyla (zaman monoton → baştan süpürülür)
+    this.halfOpenHead = 0;
+  }
+  // Anahtar baytları bir Buffer'da tutulur ve silinirken sıfırlanır (fill(0)). Sınır: yanıt için üretilen base64
+  // dizgisi ve içe aktarılan JSON'un dizgileri JavaScript'te yerinde silinemez; çöp toplanana kadar bellekte kalır.
+  _zeroizeAndDelete(map, entry) {
+    if (entry.keyBuf) entry.keyBuf.fill(0);
+    entry.keyBuf = null;
+    map.delete(entry.key_ID);
+  }
+  /** TTL'i dolan yarı-açık anahtarları sıfırlar ve siler. Döner: bu çağrıda süresi dolan sayı. */
+  expireHalfOpen(now = Date.now()) {
+    let n = 0;
+    while (this.halfOpenHead < this.halfOpen.length) {
+      const h = this.halfOpen[this.halfOpenHead];
+      if (h.t + HALF_OPEN_TTL_MS > now) break;
+      this.halfOpenHead++;
+      const map = this.routes[h.routeKey];
+      const e = map && map.get(h.key_ID);
+      if (e && e.issuedToMaster && !e.issuedToSlave) { this._zeroizeAndDelete(map, e); this.expiredCount++; n++; }
+    }
+    if (this.halfOpenHead > 4096 && this.halfOpenHead * 2 >= this.halfOpen.length) { this.halfOpen = this.halfOpen.slice(this.halfOpenHead); this.halfOpenHead = 0; }
+    return n;
   }
 
   _ensure(routeKey) {
@@ -218,6 +250,11 @@ class KMEKeyStore {
     return this.routes[routeKey];
   }
   _add(routeKey, entry) {
+    if (typeof entry.key !== "string") throw new KMEError(400, `içe aktarılan anahtar kaydı geçersiz (key base64 dizgi olmalı): ${entry.key_ID}`);
+    entry.keyBuf = Buffer.from(entry.key, "base64"); delete entry.key;
+    // Uyumluluk: depoyu içeriden okuyan araçlar (ör. async_sync_drill) entry.key'i base64 olarak görmeye devam eder;
+    // her okuma Buffer'dan yeni bir dizgi üretir, sıfırlandıktan sonra null döner.
+    Object.defineProperty(entry, "key", { enumerable: false, configurable: true, get() { return this.keyBuf ? this.keyBuf.toString("base64") : null; } });
     this._ensure(routeKey).set(entry.key_ID, entry);
     this.unissued[routeKey].push(entry.key_ID);
   }
@@ -323,9 +360,10 @@ class KMEKeyStore {
     }
     const ids = this._dequeue(routeKey, n);     // O(n_taken), depo boyutundan bağımsız
     const chosen = ids.map(id => map.get(id));
-    for (const e of chosen) e.issuedToMaster = true;
+    const t = Date.now();
+    for (const e of chosen) { e.issuedToMaster = true; e.issuedAt = t; this.halfOpen.push({ routeKey, key_ID: e.key_ID, t }); }
     this.deliveredCount += chosen.length;
-    return chosen;
+    return chosen.map((e) => ({ key_ID: e.key_ID, key: e.keyBuf.toString("base64") }));
   }
 
   // Slave SAE çağırır (dec_keys) — master'a ZATEN verilmiş ama slave'e
@@ -333,21 +371,22 @@ class KMEKeyStore {
   // teslim edilen anahtar, GÜVENLİK GEREĞİ depodan SİLİNİR (bir daha asla
   // servis edilemez — replay/çift-kullanım engellenir).
   takeForSlave(routeKey, keyIds) {
+    this.expireHalfOpen();                     // süresi dolanlar önce sıfırlanıp silinir
     const map = this.routes[routeKey] || new Map();
     const results = [];
     for (const id of keyIds) {
       const entry = map.get(id);               // O(1) — eskiden O(n) findIndex
-      if (!entry) throw new KMEError(400, `key_ID bulunamadı (rota=${routeKey}): ${id}`);
+      if (!entry) throw new KMEError(400, `key_ID bulunamadı ya da yarı-açık süresi (${HALF_OPEN_TTL_MS / 1000} s) doldu (rota=${routeKey}): ${id}`);
       if (!entry.issuedToMaster) throw new KMEError(400, `key_ID henüz master SAE'ye teslim edilmemiş, slave tarafından çekilemez: ${id}`);
       if (entry.issuedToSlave) throw new KMEError(400, `key_ID DAHA ÖNCE slave SAE'ye teslim edilmiş — TEKRAR KULLANIM (replay) reddedildi: ${id}`);
       entry.issuedToSlave = true;
-      results.push(entry);
+      results.push({ key_ID: entry.key_ID, key: entry.keyBuf.toString("base64") });
     }
-    // Her iki tarafa da teslim edilenleri depodan kalıcı olarak sil (zeroize).
+    // Her iki tarafa da teslim edilenleri depodan kalıcı olarak sil; anahtar baytları sıfırlanır.
     for (const id of keyIds) {
       const entry = map.get(id);
       if (entry && entry.issuedToSlave) {
-        map.delete(id);                        // O(1) — eskiden O(n) splice
+        this._zeroizeAndDelete(map, entry);    // O(1)
         this.destroyedCount++;
       }
     }
@@ -360,6 +399,8 @@ class KMEError extends Error {
 }
 
 const store = new KMEKeyStore();
+// Yarı-açık TTL süpürmesi: isteklerden bağımsız da çalışır (unref: süreci açık tutmaz).
+setInterval(() => store.expireHalfOpen(), Math.max(250, Math.min(5000, HALF_OPEN_TTL_MS / 4))).unref();
 
 if (args["seed-demo"]) {
   store.seedDemo("ANK-IST", 5, DEFAULT_KEY_SIZE_BITS);
@@ -662,6 +703,9 @@ async function handleStatus(req, res, counterpartSaeId) {
     max_SAE_ID_count: 0, // çoklu-yayın (multicast) desteklenmiyor
     status_extension: {
       photonnet_note: "Bu KME yalnızca CascadeReconciliation.reconcile() ile residualErrors=0 doğrulanmış VE QKDSecurityProof.secureKeyLengthWithMu() ile ℓ>0 finite-key-kanıtlı bloklardan üretilmiş anahtarları servis eder.",
+      half_open_ttl_s: HALF_OPEN_TTL_MS / 1000,
+      destroyed_count: store.destroyedCount,
+      expired_half_open_count: store.expiredCount,
     },
   });
 }

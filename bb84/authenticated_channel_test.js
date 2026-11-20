@@ -42,11 +42,11 @@ function main() {
     if (bob.receive(mt, seq, tag).ok) miss++;         // tahrifat KAÇTI
   }
   const wcMissPct = +(100 * miss / TR).toFixed(4);
-  const coreMissPct = G.macMissRate(G.coreAuthKey, G.coreTag, { trials: 20000 });
+  const coreMissPct = G.macMissRate(G.legacyCoreAuthKey, G.legacyCoreTag, { trials: 20000 }); // v5.2'ye kadarki çekirdek primitifi
   out.tamper = { wcMissPct, coreMissPct, trials: TR };
-  chk("(A) TAHRİFAT TESPİTİ: WC kanalı ~%0 kaçırır (çekirdek MAC %41)",
+  chk("(A) TAHRİFAT TESPİTİ: WC kanalı ~%0 kaçırır (v5.2'ye kadarki çekirdek MAC %41)",
     wcMissPct < 0.01 && coreMissPct > 20,
-    `${TR} denemede WC tahrifat kaçırma %${wcMissPct} (gerçek MAC ~2⁻⁶¹) vs çekirdek _computeTag %${coreMissPct}. ` +
+    `${TR} denemede WC tahrifat kaçırma %${wcMissPct} (gerçek MAC ~2⁻⁶¹) vs v5.2'ye kadarki çekirdek primitifi (legacyTagV52) %${coreMissPct}; v5.3 çekirdeği Wegman–Carter'a geçti. ` +
     `Aktif MITM artık uzlaşma mesajını fark edilmeden değiştiremiyor`);
 
   // ══ (B) SAHTECİLİK DİRENCİ ══

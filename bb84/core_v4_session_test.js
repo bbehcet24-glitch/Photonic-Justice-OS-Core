@@ -18,7 +18,7 @@
  *   T6 Varsayılan demo rotası (1842 km / 31 atlama): SNSPD 10/10 ve InGaAs 6/6 teslim, mesaj birebir. v5.2'den beri
  *      ε atlamalara bölündüğü için InGaAs oturumlarının bir kısmı bütçenin son değerlendirmesinde teslim edilir
  *      (20 oturumda 1; bu değerlendirme olmasaydı KEY_BUDGET olurdu). Kapı: hepsi teslim ve ortanca darbe bütçenin
- *      %90'ının altında; bütçe sonunda teslim edilenlerin sayısı raporlanır. (24d010d'nin CI koşusunda eski "en çok
+ *      %90'ının altında ve en çok 1 oturum bütçe sonunda teslim; oturumlar sabit tohumlu üreteçle (tekrarlanabilir). (24d010d'nin CI koşusunda eski "en çok
  *      darbe < bütçe" kapısı 4 194 304 = bütçe ile kaldı.)
  *   + çekirdek hash'i CORE_CHANGELOG.md'de kayıtlı
  */
@@ -102,12 +102,16 @@ function injectHop(session, hopIdx, flipProb) {
 }
 
 // ══ T6 ══
+// Tekrarlanabilirlik: T6'nın oturumları sabit tohumlu bir SHA-256 sayaç üretecinden entropi alır (tohum "t6:20261120",
+// ilk ve tek seçim). 400a907'deki CI koşusu, kriptografik rastgelelikle 6 InGaAs oturumundan birinin bütçe sonunda
+// teslim edildiği bir örneğe denk gelmişti; tohumla sonuç her koşuda aynıdır.
+const t6Bits = (() => { let ctr = 0; return (n) => { const out = []; while (out.length < n) { const b = crypto.createHash("sha256").update(`t6:20261120:${ctr++}`).digest(); for (const x of b) for (let i = 7; i >= 0 && out.length < n; i--) out.push((x >> i) & 1); } return out; }; })();
 {
   const res = {};
   for (const [prof, N] of [["snspd", 10], ["ingaas", 6]]) {
     let ok = 0; const ps = [];
     for (let i = 0; i < N; i++) {
-      const r = new core.SecureMessageSession({ msg: "Merhaba Dünya", totalKm: 1842, nHops: 31, evesdrop: false, detectorCtx: ctx(prof), entropyBits: rb, publicSeed: 1000 + i }).run();
+      const r = new core.SecureMessageSession({ msg: "Merhaba Dünya", totalKm: 1842, nHops: 31, evesdrop: false, detectorCtx: ctx(prof), entropyBits: t6Bits, publicSeed: 1000 + i }).run();
       if (r.status === "DELIVERED" && r.decoded === "Merhaba Dünya") { ok++; ps.push(r.pulses); }
     }
     const sorted = ps.slice().sort((a, b) => a - b), B = core.SecureMessageSession.DEFAULTS.maxPulses;
@@ -116,8 +120,8 @@ function injectHop(session, hopIdx, flipProb) {
   }
   out.demo = res;
   const B = core.SecureMessageSession.DEFAULTS.maxPulses;
-  chk("T6 Varsayılan demo rotası (1842 km, 31 güvenilir atlama): SNSPD 10/10, InGaAs 6/6 teslim (v3'te InGaAs 12'de 5 KEY_BUDGET), ortanca darbe bütçenin %90'ının altında",
-    res.snspd.ok === 10 && res.ingaas.ok === 6 && res.snspd.maxPulses <= B && res.ingaas.maxPulses <= B && res.ingaas.medianPulses < 0.9 * B,
+  chk("T6 Varsayılan demo rotası (1842 km, 31 güvenilir atlama): SNSPD 10/10, InGaAs 6/6 teslim (v3'te InGaAs 12'de 5 KEY_BUDGET), ortanca darbe bütçenin %90'ının altında, en çok 1 oturum bütçe sonunda (sabit tohum)",
+    res.snspd.ok === 10 && res.ingaas.ok === 6 && res.snspd.maxPulses <= B && res.ingaas.maxPulses <= B && res.ingaas.medianPulses < 0.9 * B && res.ingaas.atBudgetEnd <= 1,
     `SNSPD ${res.snspd.ok}/10 (en çok ${res.snspd.maxPulses} darbe/link) · InGaAs ${res.ingaas.ok}/6 (ortanca ${res.ingaas.medianPulses}, en çok ${res.ingaas.maxPulses}; bütçe ${B}; bütçe sonundaki son değerlendirmeyle teslim: ${res.ingaas.atBudgetEnd})`);
 }
 

@@ -17348,7 +17348,7 @@ window.__PHOTONNET_CONFIG__ = {"schemaVersion":1,"detector":{"active":"snspd","p
 <script>
 /* ===== PhotonNet bileşeni — önceden derlenmiş (Babel/CDN gerektirmez) =====
    OTOMATİK ÜRETİLDİ — bb84/tools/build_photonnet_html.js tarafından
-   PhotonNet2.jsx kaynağından (16051 satır) TypeScript
+   PhotonNet2.jsx kaynağından (16202 satır) TypeScript
    transpileModule (JSX→React.createElement) ile yeniden derlendi.
    ELLE DÜZENLEMEYİN — değişiklikler PhotonNet2.jsx'te yapılıp bu script
    yeniden çalıştırılmalı (bkz. dosya başlığı). ===== */
@@ -17444,7 +17444,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v5.2";
+const PHOTONNET_CORE_VERSION = "v5.3";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -19054,6 +19054,11 @@ class SecureMessageSession {
      *   passTimeS, env: {turbulenceStrength, pointingPrecision}, channel?: SatelliteDownlinkChannel}. Uzunluk = nHops.
      * @param p.evesdrop boolean (tüm atlamalar) ya da dinlenen atlama numaraları dizisi (ör. [0] = yalnız uydu atlaması)
      * @param p.onEvent(ev) olay akışı: HOP_CHECK, QBER_WARNING, SESSION_ABORTED, KEY_DELIVERED (arayüz kaydına bağlanır)
+     * ÇEKİRDEK v5.3:
+     * @param p.classicalTamper({hop, dir, kind, bits | tag}) YALNIZ TEST: açık kanaldaki bir saldırganı modeller; dönen değer
+     *   alıcının gördüğü mesajdır (bits ya da {seq, tag}). Protokol hesabı göndericinin değerleriyle sürer; değişiklik alıcının
+     *   transkriptine girer ve Wegman–Carter etiketi tutmadığı için oturum AUTH_FAIL ile iptal edilir. Yani kanca saldırının
+     *   anahtar üzerindeki etkisini değil, TESPİT edildiğini modeller.
      */
     constructor(p) {
         this.o = { ...SecureMessageSession.DEFAULTS, ...(p.opts || {}) };
@@ -19094,6 +19099,20 @@ class SecureMessageSession {
             A: [], B: [], target: this.o.firstCheckSifted, sifted: 0, tested: 0, lastCheck: null, result: null,
             lost: 0, dark: 0, ...SecureMessageSession._hopChannel(p.hopChannels ? p.hopChannels[h] : null, this.hopKm, h),
         }));
+        // ÇEKİRDEK v5.3: klasik kanal kimlik doğrulaması (Wegman–Carter, bkz. ClassicalAuthChannel). Her atlamanın iki ucu
+        // önceden paylaşılmış bir sırla başlar (simülatörde entropi kaynağından; gerçekte bant dışı kurulur). Her yönün
+        // açık mesajları (bazlar, test alt kümesi ve test bitleri, Cascade pariteleri, Toeplitz tohumu) artımlı bir özete
+        // girer; atlamanın anahtarı kabul edilmeden önce iki yön de etiketlenir ve karşı uçta doğrulanır.
+        // Kanca yoksa alıcının gördüğü transkript göndericininkiyle aynıdır ve tek özet iki uçta paylaşılır (aynı girdinin
+        // aynı fonksiyonu; yalnız hesap tasarrufu). Kanca varsa her uç kendi gördüğünü ayrı özetler.
+        this.classicalTamper = typeof p.classicalTamper === "function" ? p.classicalTamper : null;
+        for (const h of this.hops) {
+            h.auth = ClassicalAuthChannel.pair(_requireBits("SecureMessageSession.entropyBits", this.entropyBits(this.o.authPreSharedBits)));
+            const sentAB = new AuthTranscriptHash(h.auth.A.r), sentBA = new AuthTranscriptHash(h.auth.B.r);
+            h.tx = { AB: { sent: sentAB, recv: this.classicalTamper ? new AuthTranscriptHash(h.auth.B.r) : sentAB },
+                BA: { sent: sentBA, recv: this.classicalTamper ? new AuthTranscriptHash(h.auth.A.r) : sentBA } };
+            h.authResult = null;
+        }
         this.pulses = 0;
         this.rounds = 0;
         this.lost = 0;
@@ -19119,6 +19138,67 @@ class SecureMessageSession {
         return { kind: "free-space", km: null, fs: { pass: spec.pass, t0: _requireFiniteNumber("SecureMessageSession.hopChannels", `[${h}].passTimeS`, spec.passTimeS),
                 env: spec.env || {}, channel: spec.channel instanceof SatelliteDownlinkChannel ? spec.channel : new SatelliteDownlinkChannel(), logAmp: 0, last: null } };
     }
+    /** v5.3: bir açık kanal mesajı (dir "AB": sol → sağ düğüm, "BA": tersi) iki ucun transkriptine girer. */
+    _pub(h, dir, kind, bits) {
+        const t = h.tx[dir];
+        t.sent.absorb(kind, bits);
+        if (t.recv !== t.sent) {
+            let got = bits;
+            try {
+                const x = this.classicalTamper({ hop: h.hop, dir, kind, bits: Array.from(bits) });
+                if (x)
+                    got = x;
+            }
+            catch (_) { /* kanca hatası mesajı değiştirmez */ }
+            t.recv.absorb(kind, got);
+        }
+    }
+    /** v5.3: atlamanın iki yönü etiketlenir ve karşı uçta doğrulanır. Başarısızsa iptal nesnesi, aksi hâlde null. */
+    _authenticateHop(h) {
+        const chain = this.nHops > 1, pre = chain ? `hop #${h.hop}: ` : "", res = {};
+        for (const [dir, snd, rcv] of [["AB", h.auth.A, h.auth.B], ["BA", h.auth.B, h.auth.A]]) {
+            const t = h.tx[dir], dirTr = dir === "AB" ? "A→B" : "B→A";
+            let msg = snd.sendTag(t.sent.digest());
+            if (!msg)
+                return this._abort("AUTH_POOL", `${pre}kimlik doğrulama havuzu (${dirTr}) tükendi — etiket üretilmedi (maske yeniden kullanılmaz); anahtar kullanılmadı, mesaj gönderilmedi`);
+            if (this.classicalTamper) {
+                try {
+                    const x = this.classicalTamper({ hop: h.hop, dir, kind: SecureMessageSession.MSG.TAG, tag: { ...msg } });
+                    if (x && x.tag != null)
+                        msg = x;
+                }
+                catch (_) { /* yok say */ }
+            }
+            const ok = rcv.verifyTag(t.recv.digest(), msg);
+            res[dir] = { ok, words: t.sent.words, messages: t.sent.messages, bits: t.sent.bits };
+            if (!ok) {
+                h.authResult = { ok: false, failedDir: dirTr, ...res };
+                return this._abort("AUTH_FAIL", `${pre}klasik kanal kimlik doğrulaması başarısız (${dirTr}): alınan açık mesajların Wegman–Carter etiketi tutmadı — mesajlar yolda değiştirilmiş olabilir; anahtar kullanılmadı, mesaj gönderilmedi`);
+            }
+        }
+        const P = Number(ClassicalAuthChannel.P61);
+        h.authResult = { ok: true, AB: res.AB, BA: res.BA, epsForge: (res.AB.words + res.BA.words) / P,
+            poolRemaining: Math.min(h.auth.A.remaining("AB"), h.auth.B.remaining("BA")) };
+        return null;
+    }
+    _authSummary() {
+        const done = this.hops.filter((h) => h.authResult);
+        const failed = done.find((h) => !h.authResult.ok);
+        const ok = !failed && done.length === this.nHops;
+        let tagsVerified = 0, tagsRejected = 0, words = 0, eps = 0, pool = Infinity;
+        for (const h of this.hops) {
+            tagsVerified += h.auth.A.stats.tagsVerified + h.auth.B.stats.tagsVerified;
+            tagsRejected += h.auth.A.stats.tagsRejected + h.auth.B.stats.tagsRejected;
+            if (h.authResult && h.authResult.ok) {
+                words += h.authResult.AB.words + h.authResult.BA.words;
+                eps += h.authResult.epsForge;
+                pool = Math.min(pool, h.authResult.poolRemaining);
+            }
+        }
+        return { scheme: "Wegman–Carter: GF(2⁶¹−1) polinom özeti + tek seferlik 61 bit maske, iki yön", ok, hopsVerified: done.filter((h) => h.authResult.ok).length,
+            nHops: this.nHops, tagsVerified, tagsRejected, words, epsForgeTotal: eps, minPoolRemaining: Number.isFinite(pool) ? pool : null,
+            failedHop: failed ? failed.hop : null, failedDir: failed ? failed.authResult.failedDir : null };
+    }
     _emit(ev) { if (this.onEvent) {
         try {
             this.onEvent(ev);
@@ -19134,8 +19214,9 @@ class SecureMessageSession {
         return { pulses: this.pulses, totalPulsesAllHops: this.pulses * this.nHops, nHops: this.nHops, rounds: this.rounds, siftedTotal: this.siftedTotal, testedTotal: this.testedTotal,
             matchRate: this.rounds ? this.matchSum / (this.rounds * this.nHops) : 0, lost: this.lost, darkClicks: this.dark,
             worstHopQber: this.worstHopQber, lastCheck: this.lastCheck, needBits: this.needBits, ecDiscardedBlocks: this.ecDiscards, epsTotal: this.epsTotal,
+            auth: this._authSummary(),
             hopChecks: this.hops.map((h) => ({ hop: h.hop, kind: h.kind, km: h.km, sat: h.fs ? h.fs.last : null, eve: this._eveOn(h.hop),
-                sifted: h.sifted, tested: h.tested, lost: h.lost, dark: h.dark, ...(h.lastCheck || {}), done: !!h.result })) };
+                sifted: h.sifted, tested: h.tested, lost: h.lost, dark: h.dark, ...(h.lastCheck || {}), auth: h.authResult, done: !!h.result })) };
     }
     _eveOn(hop) { return this.eveHops ? this.eveHops.has(hop) : this.evesdrop; }
     /** Serbest-uzay atlamasının bu turdaki bağlamı: görünürlük kapısı + kanal geçirgenliği + AR(1) sönüm. null → görünmüyor. */
@@ -19183,6 +19264,9 @@ class SecureMessageSession {
             h.lost += r.lostCount;
             h.dark += r.darkClickCount || 0;
             h.ctx = ctx;
+            // v5.3: baz duyuruları açık kanaldan (kimlik doğrulama transkriptine girer)
+            this._pub(h, "AB", SecureMessageSession.MSG.BASES_A, r.recon.aliceBases.map((x) => (x === "DIAG" ? 1 : 0)));
+            this._pub(h, "BA", SecureMessageSession.MSG.BASES_B, r.recon.bobBases.map((x) => (x === "DIAG" ? 1 : 0)));
             const a = r.siftedKeyBits, b = r.bobKeyBits;
             for (let i = 0; i < a.length; i++) {
                 h.A.push(a[i]);
@@ -19233,6 +19317,10 @@ class SecureMessageSession {
         for (const i of test)
             if (h.A[i] !== h.B[i])
                 e++;
+        // v5.3: test alt kümesi ve iki tarafın test bitleri açık kanaldan
+        this._pub(h, "AB", SecureMessageSession.MSG.TEST_SUBSET, Array.from(isTest));
+        this._pub(h, "AB", SecureMessageSession.MSG.TEST_BITS_A, test.map((i) => h.A[i]));
+        this._pub(h, "BA", SecureMessageSession.MSG.TEST_BITS_B, test.map((i) => h.B[i]));
         const q = e / k;
         h.tested += k;
         this.testedTotal += k;
@@ -19271,7 +19359,10 @@ class SecureMessageSession {
             h.target = Math.max(h.target * 2, n + 1);
             return null;
         }
-        const casc = CascadeReconciliation.reconcile(A, B, Math.max(q, 0.005), mulberry32((this.publicRng() * 4294967296) >>> 0));
+        const parA = [], parB = [];
+        const casc = CascadeReconciliation.reconcile(A, B, Math.max(q, 0.005), mulberry32((this.publicRng() * 4294967296) >>> 0), { onParity: (pa, pb) => { parA.push(pa); parB.push(pb); } });
+        this._pub(h, "AB", SecureMessageSession.MSG.PARITY_A, parA); // v5.3: Cascade pariteleri açık kanaldan
+        this._pub(h, "BA", SecureMessageSession.MSG.PARITY_B, parB);
         if (!casc.converged) {
             // Uzlaşma doğrulaması başarısız: bu blok (bir kısmı açık kanalda sızdırıldı) ATILIR ve atlama yeniden
             // toplar — bir güvenlik olayı değildir (QBER zaten sınandı). Üç ardışık başarısızlıkta oturum iptal edilir.
@@ -19295,6 +19386,11 @@ class SecureMessageSession {
         // v5.1: Toeplitz tohumu tam n+ℓ−1 bit, entropi kaynağından (2-evrensel ailenin tamamı); Alice ve Bob aynı
         // (açıklanan) tohumu kullanır.
         const paSeedBits = _requireBits("SecureMessageSession.entropyBits", this.entropyBits(A.length + proof.ell - 1));
+        this._pub(h, "AB", SecureMessageSession.MSG.PA_SEED, paSeedBits);
+        // v5.3: atlamanın anahtarı ancak iki yönün açık mesajları kimliklendirildikten sonra kabul edilir
+        const authAbort = this._authenticateHop(h);
+        if (authAbort)
+            return authAbort;
         const keyA = QKDSecurityProof.toeplitzHash(A, proof.ell, _bitsAsRng(paSeedBits));
         const keyB = QKDSecurityProof.toeplitzHash(casc.correctedBobBits, proof.ell, _bitsAsRng(paSeedBits));
         h.lastCheck = { ...h.lastCheck, paSeedBits: paSeedBits.length };
@@ -19353,7 +19449,10 @@ SecureMessageSession.DEFAULTS = Object.freeze({
     roundPulses: 16384, maxPulses: 4194304, firstCheckSifted: 2048, testFraction: 0.2, minTestBits: 64,
     theoreticalQberLimit: 0.11, epsPE: 1e-10, epsCor: 1e-15, epsPA: 1e-10, fEC: 1.16,
     pulseRateHz: SAT_PULSE_RATE_HZ, warnAlpha: 1e-3, epsSplitAcrossHops: true, maxPeEvaluations: 16,
+    authPreSharedBits: 61 + 122 * 4, // v5.3: atlama başına önceden paylaşılmış kimlik doğrulama sırrı (r + 4 maske çifti)
 });
+/** v5.3: kimlik doğrulama transkriptine giren açık kanal mesaj türleri. */
+SecureMessageSession.MSG = Object.freeze({ BASES_A: 1, BASES_B: 2, TEST_SUBSET: 3, TEST_BITS_A: 4, TEST_BITS_B: 5, PARITY_A: 6, PARITY_B: 7, PA_SEED: 8, TAG: 9 });
 // ══════════════════════════════════════════════════════════
 // YOL HARİTASI MADDE 3 — BİÇİMSEL SONLU-ANAHTAR (FINITE-KEY) GÜVENLİK
 // KANITI KATMANI (physics_verification_report.html'de "en zayıf halka"
@@ -19382,11 +19481,10 @@ SecureMessageSession.DEFAULTS = Object.freeze({
 //   3) KLASİK KANAL KİMLİK DOĞRULAMASI — baz-uzlaşma/hata-düzeltme
 //      mesajları kimliksiz gönderilirse Eve bir ortadaki-adam (MITM)
 //      saldırısıyla anahtar üzerinde anlaşmayı manipüle edebilir.
-//      Wegman-Carter tipi bir MAC (polinom evrensel hash + OTP maskesi)
-//      ile bu mesajlar kimliklendiriliyor; kullanılan kimlik doğrulama
-//      anahtarı her round'da YENİ üretilen güvenli anahtardan geri
-//      beslenir ("authentication key recycling" — Wegman-Carter, 1981;
-//      bkz. ClassicalAuthChannel sınıfı, aşağıda).
+//      v5.3'ten beri her atlamanın iki yönü Wegman–Carter MAC'iyle (GF(2⁶¹−1)
+//      polinom özeti + tek seferlik maske) kimliklendirilir ve karşı uçta
+//      doğrulanır (SecureMessageSession._authenticateHop, ClassicalAuthChannel).
+//      v5.2'ye kadarki primitif kırıktı (bkz. CORE_CHANGELOG v5.3).
 //
 // KAYNAK / FORMÜL: Scarani, V., Bechmann-Pasquinucci, H., Cerf, N.J.,
 // Dušek, M., Lütkenhaus, N., Peev, M., "The security of practical
@@ -20011,7 +20109,7 @@ class CascadeReconciliation {
     // Bir blok içinde pariteler UYUŞMUYORSA, hatalı biti ikili aramayla
     // (her adımda alt-bloğu ikiye bölüp parite kontrol ederek) bulur.
     // Her karşılaştırma 1 bit klasik-kanal sızıntısı sayılır (standart muhasebe).
-    static _binarySearchCorrect(aliceBits, bobBits, indices) {
+    static _binarySearchCorrect(aliceBits, bobBits, indices, onParity) {
         let leak = 0;
         let cur = indices.slice();
         while (cur.length > 1) {
@@ -20023,6 +20121,8 @@ class CascadeReconciliation {
                 bP ^= bobBits[idx];
             }
             leak += 1;
+            if (onParity)
+                onParity(aP, bP);
             cur = (aP !== bP) ? left : cur.slice(mid);
         }
         return { fixedIndex: cur[0], leak };
@@ -20040,6 +20140,8 @@ class CascadeReconciliation {
         const bob = bobBits.slice();
         let leakedBits = 0;
         const numPasses = (_a = opts.numPasses) !== null && _a !== void 0 ? _a : 4;
+        // v5.3: açık kanalda değiş tokuş edilen her parite çifti (Alice'in, Bob'un) kimlik doğrulama transkriptine girer.
+        const onParity = typeof opts.onParity === "function" ? opts.onParity : null;
         // Blok boyutu (standart Cascade sezgiseli): 0.73/QBER — düşük QBER'de
         // büyük bloklar (az parite maliyeti), yüksek QBER'de küçük bloklar
         // (her blokta ~1 hata bekleyecek şekilde) kullanılır.
@@ -20056,8 +20158,10 @@ class CascadeReconciliation {
                 bP ^= bob[idx];
             }
             leakedBits += 1;
+            if (onParity)
+                onParity(aP, bP);
             if (aP !== bP) {
-                const { fixedIndex, leak } = this._binarySearchCorrect(aliceBits, bob, indices);
+                const { fixedIndex, leak } = this._binarySearchCorrect(aliceBits, bob, indices, onParity);
                 leakedBits += leak;
                 bob[fixedIndex] ^= 1;
                 queue.push(fixedIndex);
@@ -20082,8 +20186,10 @@ class CascadeReconciliation {
                     bP ^= bob[idx];
                 }
                 leakedBits += 1;
+                if (onParity)
+                    onParity(aP, bP);
                 if (aP !== bP) {
-                    const { fixedIndex, leak } = this._binarySearchCorrect(aliceBits, bob, indices);
+                    const { fixedIndex, leak } = this._binarySearchCorrect(aliceBits, bob, indices, onParity);
                     leakedBits += leak;
                     bob[fixedIndex] ^= 1;
                     // CASCADE-BACK: düzeltilen bitin önceki geçişlerdeki tüm
@@ -20722,43 +20828,149 @@ class KeyDeliveryStore {
 }
 const keyDeliveryStore = new KeyDeliveryStore();
 // ══════════════════════════════════════════════════════════
-// ClassicalAuthChannel — Wegman-Carter tipi klasik kanal kimlik
-// doğrulaması (MADDE 3'ün 3. bileşeni).
+// ClassicalAuthChannel — Wegman–Carter klasik kanal kimlik doğrulaması (ÇEKİRDEK v5.3)
 //
-// Gerçek bir QKD sisteminde baz-uzlaşma/hata-düzeltme mesajları AÇIK
-// (herkese görünür) bir klasik kanaldan gider — bu mesajların GİZLİ
-// olması gerekmez, ama KİMLİKLENDİRİLMİŞ olmaları şarttır; aksi halde
-// Eve mesajları değiştirip ortadaki-adam (MITM) saldırısı yapabilir ve
-// QBER testi bile güvenilmez hâle gelir. Wegman-Carter MAC şeması
-// (polinom evrensel hash + tek-kullanımlık-pad maskesi) bilgi-teorik
-// güvenli (kriptografik varsayıma değil, yalnızca paylaşılan gizli
-// anahtara dayanan) bir kimlik doğrulama sağlar.
+// Gerçek bir QKD sisteminde baz duyuruları, test bitleri, Cascade pariteleri ve gizlilik yükseltme tohumu AÇIK
+// kanaldan gider. Bu mesajların gizli olması gerekmez, ama kimliklendirilmeleri şarttır; aksi hâlde ortadaki bir
+// saldırgan iki tarafla ayrı ayrı oturum açar ve BB84'ün güvenlik kanıtı geçersiz olur.
 //
-// ANAHTAR TÜKETİM MODELİ ("authentication key recycling", Wegman-Carter
-// 1981): sistem küçük bir "tohum" kimlik doğrulama anahtar havuzuyla
-// başlar (gerçek sistemlerde fiziksel olarak önceden paylaşılır — burada
-// deterministik bir başlangıç tohumundan türetiliyor, didaktik amaçlı).
-// HER round'da bir MAC etiketi için havuzdan 64 bit harcanır; ardından
-// o round'da SIFT SONRASI üretilen finalKeyBits'ten (privacy
-// amplification çıktısından) havuz YENİDEN BESLENİR — böylece başlangıç
-// tohumu asla tükenmez (gerçek sistemlerin de yaptığı budur).
+// v5.2'ye kadarki primitif KIRIKTI: bit bit imul ile mod 2³² "polinom hash" çift katsayıda yüksek bitleri
+// kaybediyordu; tek bit tahrifatın ~%41'i fark edilmeden geçiyordu (bb84/production_gate_test.js). Başlangıç
+// havuzu sabit, bilinen bir tohumdan türetiliyordu, yalnız QBER + n duyurusu etiketleniyordu ve etiketi doğrulayan
+// bir alıcı yoktu. Eski fonksiyon yalnız bu bulgunun regresyon testleri için `legacyTagV52` adıyla duruyor; hiçbir
+// oturum onu kullanmaz.
+//
+// v5.3 yapısı (Wegman–Carter / Carter–Wegman, ε-Δ-evrensel polinom hash + tek seferlik maske):
+//   tag = (H_r(transcript) + s) mod P,   P = 2⁶¹ − 1 (Mersenne asalı)
+//   • H_r: GF(P) üzerinde Horner ile polinom değerlendirme, 30 bitlik kelimeler. Her mesaj (tür kodu + 1, bit
+//     uzunluğu) ile çerçevelenir; ilk kelime hiçbir zaman 0 olmadığı için iki farklı transkript farklı
+//     polinomlardır. Çarpışma olasılığı ≤ L / P (L = kelime sayısı); 10⁶ kelimede ≈ 4,3·10⁻¹³.
+//   • r: bağlantı başına sabit ve gizli 61 bit; s: her etiket için TAZE 61 bit, bir kez kullanılır ve silinir.
+//   • İki yön ayrı maske akışı kullanır (A→B, B→A); dizi numarası sırayla ilerler, tekrar (replay) reddedilir.
+//   • Havuz tükenirse etiket üretilmez (fail-closed); maske ASLA yeniden kullanılmaz.
+//   • Başlangıç anahtarı önceden paylaşılmış sırdır. Simülatör bunu oturumun entropi kaynağından çeker; gerçek
+//     sistemde bant dışı kurulur ve sonra QKD anahtarıyla beslenir (`replenish`).
+// Her uç kendi gördüğü transkripti kendi özetler: gönderen gönderdiğini, alıcı aldığını. Özetler aynı
+// değilse alıcı etiketi reddeder.
 // ══════════════════════════════════════════════════════════
-class ClassicalAuthChannel {
-    constructor(bootstrapSeed = 0xACE55ACE) {
-        const rng = mulberry32(bootstrapSeed >>> 0);
-        this.pool = [];
-        for (let i = 0; i < ClassicalAuthChannel.MIN_POOL_BITS; i++)
-            this.pool.push(rng() < 0.5 ? 0 : 1);
-        this.stats = { tagsComputed: 0, poolReplenishedBits: 0, poolStarvedCount: 0 };
+const _AUTH_P61 = BigInt("2305843009213693951"); // 2^61 − 1
+const _AUTH_WORD_BITS = 30;
+function _authField61(bits, off) {
+    let v = BigInt(0);
+    const two = BigInt(2);
+    for (let i = 0; i < 61; i++)
+        v = v * two + BigInt(bits[off + i] ? 1 : 0);
+    return v % _AUTH_P61;
+}
+/** Artımlı Horner özeti: h ← (h + w)·r mod P. Mesajlar (tür, uzunluk) ile çerçevelenir. */
+class AuthTranscriptHash {
+    constructor(r) { this.r = r; this.h = BigInt(0); this.words = 0; this.messages = 0; this.bits = 0; }
+    _word(w) { this.h = ((this.h + BigInt(w)) * this.r) % _AUTH_P61; this.words++; }
+    absorb(kind, bits) {
+        if (!Number.isInteger(kind) || kind < 0 || kind > 1e6)
+            throw new TypeError(`AuthTranscriptHash: geçersiz tür ${kind}`);
+        if (!bits || typeof bits.length !== "number" || bits.length >= 2 ** _AUTH_WORD_BITS)
+            throw new RangeError("AuthTranscriptHash: mesaj uzunluğu geçersiz");
+        this._word(kind + 1);
+        this._word(bits.length);
+        for (let i = 0; i < bits.length; i += _AUTH_WORD_BITS) {
+            let w = 0;
+            for (let j = 0; j < _AUTH_WORD_BITS && i + j < bits.length; j++)
+                w = w * 2 + (bits[i + j] ? 1 : 0);
+            this._word(w);
+        }
+        this.messages++;
+        this.bits += bits.length;
+        return this;
     }
-    // Polinom evrensel hash + OTP maskesi (64 bit anahtar tüketir: 32 bit
-    // polinom katsayısı + 32 bit maske).
-    static _computeTag(messageBits, authKeyBits64) {
+    digest() { return this.h; }
+}
+class ClassicalAuthChannel {
+    /**
+     * Bir uç nokta. `pair()` iki ucu aynı önceden paylaşılmış bitlerden kurar; her uç kendi kopyasını tutar.
+     * @param {number[]} preSharedBits ilk 61 bit r (sıfırsa sonraki 61 bit), kalan 122'lik bloklar maske çiftleri
+     * @param {"A"|"B"} role A = atlamanın sol düğümü (Alice tarafı), B = sağ düğüm
+     */
+    constructor(preSharedBits, role) {
+        if (role !== "A" && role !== "B")
+            throw new TypeError("ClassicalAuthChannel: role 'A' ya da 'B' olmalı");
+        const bits = Array.from(preSharedBits || [], (b) => (b ? 1 : 0));
+        let off = 0, r = BigInt(0);
+        while (r === BigInt(0) && off + 61 <= bits.length) {
+            r = _authField61(bits, off);
+            off += 61;
+        }
+        if (r === BigInt(0))
+            throw new RangeError(`ClassicalAuthChannel: önceden paylaşılmış anahtar en az ${ClassicalAuthChannel.MIN_PRESHARED_BITS} bit olmalı (alınan ${bits.length})`);
+        this.role = role;
+        this.r = r;
+        this.masks = { AB: [], BA: [] };
+        this.sendSeq = 0;
+        this.recvSeq = 0;
+        this.stats = { tagsSent: 0, tagsVerified: 0, tagsRejected: 0, replenishedBits: 0, starved: 0 };
+        this.replenish(bits.slice(off));
+        this.stats.replenishedBits = 0;
+    }
+    static pair(preSharedBits) {
+        return { A: new ClassicalAuthChannel(preSharedBits, "A"), B: new ClassicalAuthChannel(preSharedBits, "B") };
+    }
+    get sendDir() { return this.role === "A" ? "AB" : "BA"; }
+    get recvDir() { return this.role === "A" ? "BA" : "AB"; }
+    /** Yeni gizli bitlerle (ör. QKD anahtarının kullanılmayan kısmı) maske havuzunu besler; 122 bitlik her blok bir çift. */
+    replenish(bits) {
+        for (let i = 0; i + 122 <= bits.length; i += 122) {
+            this.masks.AB.push(_authField61(bits, i));
+            this.masks.BA.push(_authField61(bits, i + 61));
+        }
+        this.stats.replenishedBits += Math.floor(bits.length / 122) * 122;
+    }
+    remaining(dir) { const d = dir || this.sendDir; return this.masks[d].length - (d === this.sendDir ? this.sendSeq : this.recvSeq); }
+    /** Gönderen: kendi gönderdiği transkriptin özeti → {seq, tag}; havuz boşsa null (fail-closed). */
+    sendTag(digest) {
+        const m = this.masks[this.sendDir], seq = this.sendSeq;
+        if (seq >= m.length || m[seq] == null) {
+            this.stats.starved++;
+            return null;
+        }
+        const tag = ((digest % _AUTH_P61) + m[seq]) % _AUTH_P61;
+        m[seq] = null;
+        this.sendSeq++;
+        this.stats.tagsSent++;
+        return { seq, tag: tag.toString() };
+    }
+    /** Alıcı: kendi aldığı transkriptin özeti + gelen {seq, tag}. Sırası bozuk, tekrar ya da yanlış → false. */
+    verifyTag(digest, msg) {
+        const m = this.masks[this.recvDir], seq = this.recvSeq;
+        if (!msg || msg.seq !== seq || seq >= m.length || m[seq] == null) {
+            this.stats.tagsRejected++;
+            return false;
+        }
+        const expected = ((digest % _AUTH_P61) + m[seq]) % _AUTH_P61;
+        m[seq] = null;
+        this.recvSeq++; // maske kullanıldı: sonuç ne olursa olsun bir daha kullanılmaz
+        const ok = expected.toString() === String(msg.tag);
+        if (ok)
+            this.stats.tagsVerified++;
+        else
+            this.stats.tagsRejected++;
+        return ok;
+    }
+    /** Tek mesajlık etiket (testler ve üretim kapısı için): anahtar = 61 bit r + 61 bit maske. */
+    static _computeTag(messageBits, keyBits122) {
+        const r = _authField61(keyBits122, 0) || BigInt(1), s = _authField61(keyBits122, 61);
+        const h = new AuthTranscriptHash(r).absorb(0, messageBits).digest();
+        return ((h + s) % _AUTH_P61).toString();
+    }
+    /**
+     * v5.2'ye kadarki KIRIK primitif — yalnız regresyon testleri (production_gate, authenticated_channel) bulguyu
+     * göstermeye devam etsin diye. Hiçbir oturum kullanmaz.
+     */
+    static legacyTagV52(messageBits, authKeyBits64) {
         let coeff = 0;
         for (let i = 0; i < 32; i++)
             coeff = ((coeff << 1) | (authKeyBits64[i] || 0)) >>> 0;
         if (coeff === 0)
-            coeff = 1; // 0 katsayı dejenere hash üretir — kaçın
+            coeff = 1;
         let hash = 0;
         for (const b of messageBits)
             hash = (Math.imul(hash ^ b, coeff) >>> 0);
@@ -20767,30 +20979,10 @@ class ClassicalAuthChannel {
             mask = ((mask << 1) | (authKeyBits64[32 + i] || 0)) >>> 0;
         return (hash ^ mask) >>> 0;
     }
-    // Bir "round"un baz-uzlaşma mesajını kimliklendirir; havuzdan 64 bit
-    // tüketir, ardından bu round'un privacy-amplified finalKeyBits'inden
-    // havuzu yeniden besler (recycling).
-    authenticateRound(messageBits, finalKeyBitsToRecycle) {
-        if (this.pool.length < ClassicalAuthChannel.AUTH_TAG_BITS * 2) {
-            this.stats.poolStarvedCount++;
-            return { tag: null, ok: false, reason: "kimlik doğrulama anahtar havuzu tükendi (privacy amplification başarısız oldu, geri besleme yapılamadı)" };
-        }
-        const authKeyBits64 = this.pool.splice(0, 64);
-        const tag = ClassicalAuthChannel._computeTag(messageBits, authKeyBits64);
-        this.stats.tagsComputed++;
-        if (finalKeyBitsToRecycle && finalKeyBitsToRecycle.length) {
-            this.pool.push(...finalKeyBitsToRecycle);
-            this.stats.poolReplenishedBits += finalKeyBitsToRecycle.length;
-        }
-        return { tag, ok: true, poolRemaining: this.pool.length };
-    }
 }
-ClassicalAuthChannel.AUTH_TAG_BITS = 32; // MAC etiketi uzunluğu (bit) — pratik sistemlerde tipik 32-128bit
-ClassicalAuthChannel.MIN_POOL_BITS = 4096; // başlangıç "tohum" kimlik doğrulama anahtar havuzu
-// Modül-seviyesi tekil örnek — kimlik doğrulama anahtar havuzu tüm
-// oturum boyunca (sayfa yenilenene kadar) canlı kalır, tıpkı gerçek bir
-// QKD sisteminin kalıcı authentication key store'u gibi.
-const classicalAuthChannel = new ClassicalAuthChannel();
+ClassicalAuthChannel.P61 = _AUTH_P61;
+ClassicalAuthChannel.TAG_BITS = 61;
+ClassicalAuthChannel.MIN_PRESHARED_BITS = 61 + 2 * 61; // r + bir maske çifti
 // transmit() ve replayTimeline() algoritmasına dokunmadan, sonuçları
 // kalıcı olarak saklar. Ağ olmadan da tam çalışır; bağlantı geldiğinde
 // zaman damgalı "pending sync" kayıtları BroadcastChannel'a yayınlanır.
@@ -27175,7 +27367,7 @@ function ResSecurityCriteria({ result }) {
                 (s.epsTotal ? ` · ε uçtan uca ≤ ${s.epsTotal.endToEnd.toExponential(1)}` : "") + " · simülasyon metriği; oturum ℓ ≥ mesaj biti olunca durur" },
         { c: "Hata düzeltme (Cascade) yakınsadı", ok: s.code === "EC_FAIL" ? false : delivered ? true : null,
             v: s.code === "EC_FAIL" ? "yakınsamadı" : delivered ? `sızıntı ${s.leakEC != null ? s.leakEC.toLocaleString("tr-TR") : "—"} bit ölçüldü` : "çalıştırılmadı (önceki kriter)" },
-        { c: "Klasik kanal kimlik doğrulaması (Wegman–Carter)", ok: auth ? auth.ok : null, v: auth ? (auth.ok ? `havuz ${auth.poolRemaining} bit` : auth.reason || "başarısız") : "—" },
+        { c: "Klasik kanal kimlik doğrulaması (Wegman–Carter, iki yön)", ok: auth ? auth.ok : null, v: auth ? (auth.ok ? `${auth.hopsVerified}/${auth.nHops} atlama · ${auth.tags} etiket doğrulandı` : auth.reason || "başarısız") : "—" },
         { c: delivered ? "Mesaj kanıtlı anahtarla OTP şifreli gönderildi" : "Fail-closed: anahtar ve mesaj serbest bırakılmadı",
             ok: delivered ? !!result.success : !released,
             v: delivered ? (result.success ? "Bob mesajı çözdü" : "bütünlük hatası") : released ? "SIZINTI — anahtar/mesaj çıktı" : "OTP anahtarı 0 bit, mesaj gönderilmedi" },
@@ -27284,7 +27476,7 @@ function ResultsDashboard({ traffic, result, log, detectorState }) {
             note: pooledQ != null ? `birleşik %${(pooledQ * 100).toFixed(2)} (ilk test) · ${hq.length} atlama · eşik %11` : "iptal eşiği %11" },
         { l: s && s.nHops > 1 ? "ℓ — en zayıf atlama (son)" : "ℓ — kanıtlı anahtar (son)", v: s ? `${s.ell.toLocaleString("tr-TR")} bit` : "—", st: s ? s.ell > 0 : null, note: s ? `${s.nHops} atlama` : "" },
         { l: "Teslim edilen iletim", v: hist.length ? `${delivered}/${hist.length}` : "—", st: hist.length ? delivered === hist.length : null, note: "bu oturumda" },
-        { l: "Klasik kanal kimlik doğrulama", v: auth ? (auth.ok ? "doğrulandı" : "BAŞARISIZ") : "—", st: auth ? auth.ok : null, note: auth ? `Wegman–Carter · havuz ${auth.poolRemaining} bit` : "" },
+        { l: "Klasik kanal kimlik doğrulama", v: auth ? (auth.ok ? "doğrulandı" : auth.ok === false ? "BAŞARISIZ" : "—") : "—", st: auth ? auth.ok : null, note: auth && auth.ok ? `Wegman–Carter · ${auth.hopsVerified}/${auth.nHops} atlama, iki yön` : "" },
         { l: "Dedektör profili", v: detectorState && detectorState.profile ? detectorState.profile.label.split(" ")[0] : "—", st: null, note: detectorState && detectorState.profile ? `η %${(detectorState.profile.efficiency * 100).toFixed(0)}` : "" },
         snap && snap.npmTest
             ? { l: "Son npm test koşusu", v: `${snap.npmTest.passed}/${snap.npmTest.total}`, st: snap.npmTest.passed === snap.npmTest.total, note: `${(snap.npmTest.at || "").slice(0, 10)}${snap.npmTest.gitHead ? ` · commit ${snap.npmTest.gitHead.slice(0, 7)}${snap.npmTest.gitClean === false ? " (değişmiş ağaç)" : ""}` : ""} · ${verdicts.length} hükümlü rapor` }
@@ -27786,9 +27978,9 @@ function LeoPanel({ sats, activeSat, setActiveSat, onSend, running, msg, setMsg,
                         "(",
                         result.securityProof.reason,
                         ")")),
-                    result.classicalAuth && (React.createElement("span", { title: "Wegman-Carter MAC ile kimliklendirilen parametre-kestirim duyurusu + anahtar havuzu geri besleme durumu", style: { color: result.classicalAuth.ok ? "#a78bfa" : "#f43f5e" } },
+                    result.classicalAuth && (React.createElement("span", { title: "Wegman\u2013Carter: her atlamada iki y\u00F6n\u00FCn a\u00E7\u0131k mesajlar\u0131 (bazlar, test bitleri, Cascade pariteleri, Toeplitz tohumu) etiketlenip kar\u015F\u0131 u\u00E7ta do\u011Frulan\u0131r", style: { color: result.classicalAuth.ok ? "#a78bfa" : "#f43f5e" } },
                         "\uD83D\uDD0F klasik-kanal auth: ",
-                        result.classicalAuth.ok ? `✓ (havuz ${result.classicalAuth.poolRemaining}bit)` : `✗ ${result.classicalAuth.reason}`)))),
+                        result.classicalAuth.ok ? `✓ ${result.classicalAuth.hopsVerified}/${result.classicalAuth.nHops} atlama, ${result.classicalAuth.tags} etiket` : result.classicalAuth.ok === false ? `✗ ${result.classicalAuth.reason}` : "— (oturum doğrulamaya ulaşmadı)")))),
                 result.keyPoolStatus && !result.keyPoolStatus.finalized && (React.createElement("div", { style: { marginTop: 6, display: "flex", alignItems: "center", gap: 8, fontSize: 8, color: "#64748b", fontFamily: "monospace" }, title: "Bu rotadan (kaynak-hedef \u00E7ifti) biriken sifted-key havuzu \u2014 e\u015Fi\u011Fe ula\u015F\u0131nca GER\u00C7EK n/k (Parametre Kestirimi) ayr\u0131m\u0131yla yeniden, daha s\u0131k\u0131 bir sonlu-anahtar kan\u0131t\u0131 \u00FCretilir" },
                     React.createElement("span", { style: { color: "#94a3b8", fontWeight: 700 } }, "\uD83E\uDEA3 ASENKRON HAVUZ:"),
                     React.createElement("span", null,
@@ -29159,7 +29351,7 @@ function PhotonNet() {
     }
     // Ana iletim fonksiyonu
     async function transmit() {
-        var _a, _b, _c, _d;
+        var _a, _b;
         if (running || src === dst || !msg.trim())
             return;
         if (detectorState.error) { // fail-closed: geçersiz dedektör yapılandırmasıyla anahtar üretilmez
@@ -29417,15 +29609,19 @@ function PhotonNet() {
         else {
             addLog(`🔓 SONLU-ANAHTAR KANITI: GÜVENLİ ANAHTAR ÜRETİLEMEDİ — ${secProof.proof.reason} (n=${secProof.proof.n}bit, QBER=${qber != null ? (qber * 100).toFixed(1) + "%" : "—"})`, "ERR");
         }
-        // Klasik kanal kimlik doğrulaması: bu round'un parametre-kestirim/
-        // baz-uzlaşma duyurusunu (QBER + n) Wegman-Carter MAC ile kimliklendirir,
-        // ardından havuzu bu round'un privacy-amplified anahtarından besler.
-        const announcementBits = t2b(JSON.stringify({ qber: qber != null ? Math.round(qber * 1000) : null, n: sres.siftedTotal }));
-        const authResult = classicalAuthChannel.authenticateRound(announcementBits, secProof.finalKeyBits);
+        // ÇEKİRDEK v5.3: klasik kanal kimlik doğrulaması oturumun İÇİNDE yapılır (her atlamada iki yön, Wegman–Carter;
+        // bkz. SecureMessageSession._authenticateHop). Burada yalnız sonucu raporlanır. v5.2'ye kadar bu satır ayrı ve
+        // kırık bir MAC'le yalnız QBER + n duyurusunu imzalıyor, doğrulayan bir alıcı olmadan "doğrulandı" gösteriyordu.
+        const au = sres.auth || null;
+        const authFailed = sres.code === "AUTH_FAIL" || sres.code === "AUTH_POOL";
+        const authResult = au && au.ok
+            ? { ok: true, hopsVerified: au.hopsVerified, nHops: au.nHops, tags: au.tagsVerified, epsForge: au.epsForgeTotal, poolRemaining: au.minPoolRemaining, reason: null }
+            : { ok: authFailed ? false : null, hopsVerified: au ? au.hopsVerified : 0, nHops: au ? au.nHops : 0, tags: au ? au.tagsVerified : 0, epsForge: null, poolRemaining: null,
+                reason: authFailed ? sres.reason : `oturum kimlik doğrulama adımına ulaşmadı (${au ? au.hopsVerified : 0}/${au ? au.nHops : 0} atlama doğrulandı)` };
         if (authResult.ok) {
-            addLog(`🔏 KLASİK KANAL KİMLİK DOĞRULAMA: parametre-kestirim duyurusu Wegman-Carter MAC ile imzalandı (etiket=0x${authResult.tag.toString(16).padStart(8, "0")}) — havuz: ${authResult.poolRemaining}bit${secProof.finalKeyBits.length ? ` (+${secProof.finalKeyBits.length}bit geri beslendi)` : ""}`, "OK");
+            addLog(`🔏 KLASİK KANAL KİMLİK DOĞRULAMA: ${authResult.nHops} atlamanın iki yönü Wegman–Carter etiketiyle doğrulandı (${authResult.tags} etiket; bazlar, test bitleri, Cascade pariteleri, Toeplitz tohumu) — sahtecilik olasılığı ≤ ${authResult.epsForge.toExponential(1)}`, "OK");
         }
-        else {
+        else if (authResult.ok === false) {
             addLog(`⚠ KLASİK KANAL KİMLİK DOĞRULAMA BAŞARISIZ: ${authResult.reason}`, "ERR");
         }
         // ══════════════════════════════════════════════════════════
@@ -29652,7 +29848,7 @@ function PhotonNet() {
             securityProof: secProof.proof, // MADDE 3: sonlu-anahtar (finite-key) GLLP/Serfling kanıtı — ℓ, Q_ph_upper, secure vb.
             finalSecureKeyLen: delivered ? sres.proof.ell : 0, // gizlilik yükseltme (Toeplitz/leftover-hash) sonrası üretilen kanıtlanmış anahtar ℓ (zincirde en zayıf atlama) — OTP öncesi
             spareKeyLen: secProof.finalKeyBits.length, // OTP mesajı şifreledikten SONRA artan kanıtlı anahtar (ℓ − mesaj bitleri)
-            classicalAuth: { ok: authResult.ok, tag: authResult.tag, poolRemaining: (_c = authResult.poolRemaining) !== null && _c !== void 0 ? _c : classicalAuthChannel.pool.length, reason: (_d = authResult.reason) !== null && _d !== void 0 ? _d : null }, // Wegman-Carter kimlik doğrulama sonucu
+            classicalAuth: authResult, // v5.3: oturum içi Wegman–Carter doğrulamasının sonucu
             keyPoolStatus: keyPoolResult, // ASENKRON HAVUZ: bu rotanın biriken sifted-key havuzu durumu — blok tamamlandıysa gerçek n/k ayrımlı kanıt (keyPoolResult.finalized), tamamlanmadıysa yalnızca ilerleme (poolProgress/poolThreshold)
         };
         setResult(res);

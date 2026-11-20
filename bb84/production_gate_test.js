@@ -34,14 +34,17 @@ function main() {
   const hashBefore = coreHash();
 
   // ══ (A) KLASİK KANAL MAC ══
-  const coreMiss = G.macMissRate(G.coreAuthKey, G.coreTag, { trials: 20000 });
+  // Çekirdek v5.3 MAC'i Wegman–Carter'a geçirdi. v5.2'ye kadarki primitif (legacyTagV52) bulgunun regresyonu için ölçülür:
+  // kapı onu BLOKLAMAYA devam etmeli, v5.3 çekirdeğini ise geçirmeli.
+  const coreMiss = G.macMissRate(G.legacyCoreAuthKey, G.legacyCoreTag, { trials: 20000 });
+  const coreV53Miss = G.macMissRate(G.coreAuthKey, G.coreTag, { trials: 20000 });
   const strongMiss = G.macMissRate(G.strongKey, G.strongTag, { trials: 20000 });
-  out.mac = { coreMissPct: coreMiss, strongMissPct: strongMiss };
-  chk("(A) KLASİK KANAL MAC: çekirdek primitifi ZAYIF (tahrifat ~%41 kaçar), standart MAC ~%0",
-    coreMiss > 20 && strongMiss < 0.01,
-    `çekirdek ClassicalAuthChannel._computeTag: tahrifat kaçırma %${coreMiss} (bit-bit imul polinom hash, çift-katsayıda ` +
-    `yüksek-konum çevirmeleri mod 2³² kaybolur) — aktif MITM uzlaşma mesajını %${coreMiss} fark edilmeden değiştirir. ` +
-    `Katman-içi GF(2⁶¹−1) polinom MAC: kaçırma %${strongMiss} (gerçek Wegman-Carter). Kapı çekirdek primitifini BLOKLAR, standart MAC ister`);
+  out.mac = { coreMissPct: coreMiss, coreV53MissPct: coreV53Miss, strongMissPct: strongMiss };
+  chk("(A) KLASİK KANAL MAC: v5.2'ye kadarki çekirdek primitifi ZAYIF (tahrifat ~%41 kaçar); v5.3 çekirdeği ve katman MAC'i ~%0",
+    coreMiss > 20 && coreV53Miss < 0.01 && strongMiss < 0.01,
+    `v5.2'ye kadarki ClassicalAuthChannel (legacyTagV52): tahrifat kaçırma %${coreMiss} (bit-bit imul polinom hash, çift-katsayıda ` +
+    `yüksek-konum çevirmeleri mod 2³² kaybolur). v5.3 çekirdeği (_computeTag, GF(2⁶¹−1) Wegman–Carter): %${coreV53Miss}. ` +
+    `Katman-içi GF(2⁶¹−1) MAC: %${strongMiss}. Kapı eski primitifi BLOKLAR`);
 
   // ══ (B) YAN-KANAL MONİTÖRÜ ══
   const mon = new G.SideChannelMonitor();
@@ -107,7 +110,7 @@ function main() {
   const hashAfter = coreHash();
   out.coreIntegrity = { unchanged: hashBefore === hashAfter, sha256: hashBefore.slice(0, 16) };
   chk("ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
-    hashBefore === hashAfter, `SHA-256 ${hashBefore.slice(0, 16)}… öncesi = sonrası — MAC düzeltmesi KATMANDA (strongTag), çekirdek sabit`);
+    hashBefore === hashAfter, `SHA-256 ${hashBefore.slice(0, 16)}… öncesi = sonrası — test çekirdeği değiştirmedi (MAC düzeltmesi v5.3'te çekirdeğe de taşındı)`);
 
   out.allChecksPassed = out.checks.every(c => c.ok);
   const rep = path.join(__dirname, "reports", "production_gate.json");

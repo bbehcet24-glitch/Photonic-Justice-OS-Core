@@ -14,7 +14,8 @@
  * çevirmeleri mod 2³² kaybolur → tahrifat KAÇIRMA oranı ~%41 (gerçek MAC:
  * ~2⁻³²). Aktif bir MITM, uzlaşma mesajlarını ~%41 olasılıkla fark
  * edilmeden değiştirir. Kapı bunu BLOKLAR ve standart bir MAC ister.
- * (Çekirdek DEĞİŞTİRİLMEZ — düzeltme KATMANDA: strongTag.)
+ * (Bu fazda düzeltme KATMANDAYDI: strongTag. Çekirdek v5.3 MAC'i Wegman–Carter'a geçirdi;
+ * eski primitif legacyTagV52 adıyla yalnız bu bulgunun regresyonu için duruyor.)
  */
 const core = require("./photonnet_core.js");
 const { ClassicalAuthChannel, QKDSecurityProof, mulberry32 } = core;
@@ -61,8 +62,12 @@ function macMissRate(makeKey, tagWithKey, { trials = 20000, n = 128, seed = 999 
   return +(100 * miss / trials).toFixed(2);
 }
 /** Anahtar fabrikaları. */
-function coreAuthKey(rng) { return Array.from({ length: 64 }, () => rng() < 0.5 ? 0 : 1); }
+// Çekirdek v5.3: ClassicalAuthChannel._computeTag artık Wegman–Carter (GF(2⁶¹−1) polinom + tek seferlik maske);
+// anahtar 61 bit r + 61 bit maske. v5.2'ye kadarki kırık primitif legacyTagV52 adıyla, bulgunun regresyonu için.
+function coreAuthKey(rng) { return Array.from({ length: 122 }, () => rng() < 0.5 ? 0 : 1); }
 const coreTag = (msg, key) => ClassicalAuthChannel._computeTag(msg, key);
+function legacyCoreAuthKey(rng) { return Array.from({ length: 64 }, () => rng() < 0.5 ? 0 : 1); }
+const legacyCoreTag = (msg, key) => ClassicalAuthChannel.legacyTagV52(msg, key);
 
 // ── Yan-kanal monitörü (Faz 3 gözlemlerini canlı alarma çevirir) ────
 class SideChannelMonitor {
@@ -173,6 +178,6 @@ function productionGate(state) {
       : `BLOKLANDI (${blockers.length} engel): ${blockers.map(b => b.name).join(", ")}` };
 }
 
-module.exports = { strongKey, strongTag, macMissRate, coreAuthKey, coreTag,
+module.exports = { strongKey, strongTag, macMissRate, coreAuthKey, coreTag, legacyCoreAuthKey, legacyCoreTag,
   SideChannelMonitor, qrngHealth, productionGate, ClassicalAuthChannel,
   evaluateFaradayCage, emissionDetectabilityCheck, mtlsHandshakePrecondition };

@@ -1,8 +1,7 @@
 {
-  "sha256": "f8cfe1b55728fc238ea6f6f567d5e63f783040d49810629c3eb07efe5203788c",
-  "symbols": 96,
+  "sha256": "b5b0a32178473139b8e87c683b4b9661f39cb36e476dc2d4647c51cbaba8ed1d",
+  "symbols": 97,
   "skipped": [
-    "classicalAuthChannel",
     "defaultWeightPolicy",
     "keyDeliveryStore",
     "keyPoolBuffer",

@@ -19,6 +19,7 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v5 (f391152, yalnız arayüz) | `528321cb930b3266c602f42a0ab304128e839ba663b1dbb4bdaad02de1130cc1` | `528321cb…130cc1` |
 | v5.1 | `11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79` | `11bf0015…651f79` |
 | v5.2 | `6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b` | `6a5effd3…e91c6b` |
+| v5.3 | `f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f` | `f8c93cbb…f0008f` |
 
 ### Sürüm ↔ commit ↔ hash eşlemesi (hakem bulgusu P1-2)
 
@@ -41,11 +42,47 @@ Her satır `git show <commit>:bb84/photonnet_core.js | sha256sum` ile yeniden ü
 | v5.1 | 6aa3efe | 2026-11-17 | `905987d7…9650e4` | `1637b661…21b64c` | algoritma (bu commit'te 1 test kaldı) |
 | v5.1 | 9a07e62 | 2026-11-17 | `11bf0015…651f79` | `01a8dbc8…0078c8` | algoritma (havuz rastgeleliği enjekte edilebilir) |
 | v5.2 | 3d615e2 | 2026-11-17 | `6a5effd3…e91c6b` | `f8cfe1b5…03788c` | algoritma |
+| v5.3 | bu tablonun eklendiği commit | 2026-11-20 | `f8c93cbb…f0008f` | `b5b0a321…a8ed1d` | algoritma |
 
 Bulgu: v4.1, v4.2 ve v4.3 "çekirdek sürümü" olarak numaralandı ama protokolleri v4 ile aynıdır; o dönemde sürüm
 numarası arayüz değişikliğinde de artırıldı. v5 adı altında iki farklı dosya hash'i vardır (5fe76eb ve f391152);
 protokol aynıdır. v5.1 adı altında iki farklı protokol vardır (6aa3efe ve 9a07e62). Bundan sonra sürüm numarası
 yalnız parmak izi değişince artar; yalnız dosya hash'i değişirse sürüm aynı kalır ve tabloya yeni bir satır eklenir.
+
+## v5.3 (2026-11) — klasik kanal kimlik doğrulaması gerçekten yapılıyor (Wegman–Carter, iki yön, oturumun içinde)
+
+**Algoritma değişti.** Hakem değerlendirmesi (sıkı rubrik): "MAC açıkken hiçbir 'güvenli' iddiası taşınamaz."
+
+- **Bulgu (v5.2'ye kadar):** `ClassicalAuthChannel._computeTag` bit bit `Math.imul` ile mod 2³² bir "polinom hash"
+  hesaplıyordu; çift katsayıda yüksek bitler kayboluyor, tek bit tahrifatın ~%41'i fark edilmeden geçiyordu
+  (`bb84/production_gate_test.js`, Faz 4'ten beri belgeli). Başlangıç havuzu sabit, bilinen bir tohumdan (0xACE55ACE)
+  türetiliyordu; yalnız QBER + n duyurusu etiketleniyordu; etiketi doğrulayan bir alıcı yoktu. Arayüzün güvenlik
+  kriterleri paneli buna rağmen "Klasik kanal kimlik doğrulaması — GEÇTİ" gösteriyordu. Katmanda doğru bir
+  Wegman–Carter kanalı (`bb84/authenticated_channel.js`) vardı ama oturum onu kullanmıyordu.
+- **Yeni MAC:** tag = (H_r(transkript) + s) mod P, P = 2⁶¹ − 1. H_r GF(P) üzerinde Horner polinom özeti (30 bitlik
+  kelimeler; her mesaj tür + uzunlukla çerçevelenir, ilk kelime asla 0 değildir). r bağlantı başına gizli ve sabit;
+  s her etiket için taze 61 bit, bir kez kullanılır ve silinir. İki yön ayrı maske akışı; sıra numarası, tekrar
+  reddedilir; havuz boşsa etiket yok (`AUTH_POOL`). Sahtecilik olasılığı etiket başına ≤ L / P (L = kelime sayısı).
+- **Oturuma bağlandı:** her atlamanın iki ucu önceden paylaşılmış bir sırla başlar (`authPreSharedBits`, varsayılan
+  61 + 4 × 122 bit; simülatör bunu oturumun entropi kaynağından çeker, gerçek sistemde bant dışı kurulur). Açık kanaldaki
+  her mesaj — Alice'in ve Bob'un bazları, test alt kümesi, iki tarafın test bitleri, Cascade pariteleri (yeni
+  `opts.onParity`), Toeplitz tohumu — iki ucun transkriptine girer. Atlamanın anahtarı kabul edilmeden önce iki yön
+  etiketlenir ve karşı uçta doğrulanır; tutmazsa `AUTH_FAIL`, anahtar ve mesaj yok. Oturum sonucu `auth` taşır.
+  `classicalTamper` kancası (yalnız test) açık kanaldaki bir saldırganın alıcıya gösterdiğini değiştirir.
+- **Kapsam dışı (belgeli):** röle değerleri ve şifreli metin MAC'lenmez. Röle değişikliği röle tutarlılık denetimiyle
+  (`EC_FAIL`) yakalanır; OTP şifreli metnine bütünlük sağlanmaz (OTP değiştirilebilir). Kimlik doğrulama havuzu
+  oturumlar arasında taşınmaz (her oturum taze bir önceden paylaşılmış sırla başlar); `replenish` API'si var.
+- **Arayüz:** güvenlik kriterleri satırı, sonuç kartı ve kayıt artık oturumun doğrulama sonucunu gösterir
+  (`N/N atlama · 2N etiket doğrulandı`); oturum doğrulamaya ulaşmadıysa "—". Eski modül tekil örneği
+  `classicalAuthChannel` kaldırıldı. Eski primitif `ClassicalAuthChannel.legacyTagV52` adıyla yalnız
+  regresyon testleri için durur.
+- Ölçülen: 31 atlamalı oturumda 62 etiket doğrulandı, 0 red; transkript ≈ 6·10⁵ kelime, toplam sahtecilik sınırı
+  ≈ 2,6·10⁻¹³. Sekiz mesaj türünün ve etiketin her birinde tek bit değişiklik `AUTH_FAIL` verdi. MAC primitifi: 20 000
+  tek bit tahrifatta kaçırma 0, 20 000 rastgele etikette kabul 0; eski primitif aynı ölçümde %41.
+- Test: `bb84/core_v53_auth_test.js` (W1–W6). `production_gate_test` ve `authenticated_channel_test` eski primitifi
+  `legacyTagV52` üzerinden ölçmeye devam ediyor. `PHOTONNET_CORE_VERSION` "v5.3".
+- Dosya SHA-256 `f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f`, protokol parmak izi
+  `b5b0a32178473139b8e87c683b4b9661f39cb36e476dc2d4647c51cbaba8ed1d`.
 
 ## v5.2 (2026-11) — ε atlamalar arasında birleştirildi, değerlendirme başına ε_PE, ilk-test QBER'i, protokol parmak izi (hakem raporu 2: P0-4, P1-1, P1-2, P0-3)
 

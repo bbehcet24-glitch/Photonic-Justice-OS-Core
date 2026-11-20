@@ -22,7 +22,7 @@ const NET = require("./multinode_shielding_network.js");
 const TB = require("./multinode_shielding_testbed.js");
 const S = require("./shield_sensor_hal.js");
 
-const CORE_SHA = "6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b";
+const CORE_SHA = "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f";
 const coreSha = () => crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, "photonnet_core.js"))).digest("hex");
 const DT = TB.DT;
 const topo = TB.TOPOLOGY;
@@ -144,7 +144,7 @@ async function main() {
   }
   await server.stop();
 
-  chk("Çekirdek değişmedi (photonnet_core.js SHA-256 = 6a5effd3…e91c6b)", sha0 === CORE_SHA && coreSha() === CORE_SHA, `${coreSha().slice(0, 16)}…`);
+  chk("Çekirdek değişmedi (photonnet_core.js SHA-256 = f8c93cbb…f0008f)", sha0 === CORE_SHA && coreSha() === CORE_SHA, `${coreSha().slice(0, 16)}…`);
 
   out.passed = out.checks.filter((c) => c.ok).length; out.total = out.checks.length;
   fs.mkdirSync(path.join(__dirname, "reports"), { recursive: true });
