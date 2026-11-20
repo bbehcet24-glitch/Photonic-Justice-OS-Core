@@ -1,0 +1,48 @@
+{
+  "generatedAt": "2026-11-20T11:48:36.166Z",
+  "checks": [
+    {
+      "name": "W1 Teslim edilen 31 atlamalı oturumda her atlamanın iki yönü etiketlendi ve doğrulandı; sahtecilik sınırı ε_e2e'nin çok altında",
+      "ok": true,
+      "detail": "DELIVERED; 31/31 atlama, 62 etiket doğrulandı, 0 red; transkript 568.864 kelime; sahtecilik ≤ 2.47e-13 (ε_e2e 2.0e-10)"
+    },
+    {
+      "name": "W2 Her açık mesaj türünde ve etikette tek bit değişiklik → AUTH_FAIL; anahtar ve mesaj yok",
+      "ok": true,
+      "detail": "BASES_A: AUTH_FAIL · BASES_B: AUTH_FAIL · TEST_SUBSET: AUTH_FAIL · TEST_BITS_A: AUTH_FAIL · TEST_BITS_B: AUTH_FAIL · PARITY_A: AUTH_FAIL · PARITY_B: AUTH_FAIL · PA_SEED: AUTH_FAIL · etiket (B→A): AUTH_FAIL"
+    },
+    {
+      "name": "W3 MAC primitifi: tek bit tahrifatta kaçırma 0, rastgele etiket sahteciliğinde kabul 0 (20 000'er); v5.2'ye kadarki primitif ~%41 kaçırıyor",
+      "ok": true,
+      "detail": "v5.3: kaçırma 0/20000, sahtecilik 0/20000 · legacyTagV52: kaçırma %41.8"
+    },
+    {
+      "name": "W4 Maske tek kullanımlık ve sıralı: tekrar ve sıra dışı etiket reddedilir; maskesiz havuzla AUTH_POOL",
+      "ok": true,
+      "detail": "sıradaki etiket kabul, tekrar red, sıra dışı red; maskesiz havuz → AUTH_POOL"
+    },
+    {
+      "name": "W5 Çerçeveleme: aynı bitler farklı mesaj sınırlarıyla farklı özet verir (öndeki sıfır da ayırt edilir)",
+      "ok": true,
+      "detail": "[1011] ≠ [10][11]: true; [01] ≠ [1]: true"
+    },
+    {
+      "name": "W6 Arayüz oturumun kendi doğrulama sonucunu raporluyor; eski tek-yönlü 'authenticateRound' yolu kaynakta yok",
+      "ok": true,
+      "detail": "eski yol kaldırıldı: true; oturum sonucuna bağlı: true"
+    },
+    {
+      "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
+      "ok": true,
+      "detail": "f8c93cbba99124b5…"
+    }
+  ],
+  "mac": {
+    "trials": 20000,
+    "missV53": 0,
+    "forgeV53": 0,
+    "missLegacyPct": 41.8
+  },
+  "passed": 7,
+  "total": 7
+}

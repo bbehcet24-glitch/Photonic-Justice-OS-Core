@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T21:24:11.400Z",
+  "generatedAt": "2026-11-20T12:01:10.308Z",
   "checks": [
     {
       "name": "(İZ 1) PJA agresifleştirme: 5-6 adım ULAŞILABİLİR, taban ~yarıya iner, uçurum payı ×2+",
@@ -34,7 +34,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 6a5effd30eb0be09… öncesi = sonrası"
+      "detail": "SHA-256 f8c93cbba99124b5… öncesi = sonrası"
     }
   ],
   "track1": {
@@ -199,7 +199,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "6a5effd30eb0be09"
+    "sha256": "f8c93cbba99124b5"
   },
   "allChecksPassed": true
 }

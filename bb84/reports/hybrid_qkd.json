@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T21:11:37.468Z",
+  "generatedAt": "2026-11-20T11:50:13.530Z",
   "checks": [
     {
       "name": "Y1 Geçiş geometrisi: periyot ~95,5 dk, görünürlük ≥ 0,1 penceresi ±285 s, kenarda Doppler 20–25 ppm (yaklaşma +), TCA'da 0",
@@ -14,7 +14,7 @@
     {
       "name": "Y3 Gece, tepe noktası: hibrit oturum (uydu + 3×60 km fiber) teslim; 0. atlama serbest uzay; KEY_DELIVERED olayı",
       "ok": true,
-      "detail": "DELIVERED, ℓ 252 bit, 0. atlama QBER %2.01 (kayıp 25.9 dB, yükselti 75.0°), 11.337.728 darbe/link; olaylar HOP_CHECK, KEY_DELIVERED"
+      "detail": "DELIVERED, ℓ 243 bit, 0. atlama QBER %1.53 (kayıp 25.9 dB, yükselti 75.0°), 8.749.056 darbe/link; olaylar HOP_CHECK, KEY_DELIVERED"
     },
     {
       "name": "Y4 Görünürlük < 0,1 (t = +400 s): SAT_NOT_VISIBLE ilk turda, anahtar ve mesaj yok",
@@ -24,12 +24,12 @@
     {
       "name": "Y5 Gündüz: gökyüzü arka planı → HOP_QBER (0. atlama); beklenen QBER ve uyarı bandı yükseldi, iptal eşiği %11 değişmedi",
       "ok": true,
-      "detail": "0. atlama QBER %48.92, beklenen %48.44, uyarı bandı %56.12 — iptal %11'de (bant iptali gevşetmez)"
+      "detail": "0. atlama QBER %44.73, beklenen %48.56, uyarı bandı %55.47 — iptal %11'de (bant iptali gevşetmez)"
     },
     {
       "name": "Y6 Dinleme yalnız uydu atlamasında: HOP_QBER 0. atlamada, gerekçe 'uydu aşağı-bağlantısı', fiber atlamaları dinlenmiyor",
       "ok": true,
-      "detail": "%22.82 — hop #0 (uydu aşağı-bağlantısı) QBER_test %22.8 ≥ %11 (k=412 test biti) — dinleme ya da aşırı gürültü; anahtar "
+      "detail": "%25.00 — hop #0 (uydu aşağı-bağlantısı) QBER_test %25.0 ≥ %11 (k=412 test biti) — dinleme ya da aşırı gürültü; anahtar "
     },
     {
       "name": "Y7 computeDynamicAlpha: DCR arttıkça bant genişliyor (SNSPD < InGaAs < 100× InGaAs), abortAt hep %11; tam binom kuantiliyle yanlış uyarı ≤ α (Monte Carlo payıyla 1,5α)",
@@ -39,12 +39,12 @@
     {
       "name": "Y8 Geriye uyum: hopChannels yokken ve açık fiber atlamalarıyla aynı tohumlarda birebir aynı sonuç (v4.4 davranışı korunuyor)",
       "ok": true,
-      "detail": "DELIVERED/DELIVERED, darbe 196608/196608, QBER %1.70/%1.70, OTP anahtarı aynı"
+      "detail": "DELIVERED/DELIVERED, darbe 196608/196608, QBER %1.93/%1.93, OTP anahtarı aynı"
     },
     {
       "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
       "ok": true,
-      "detail": "6a5effd30eb0be09…"
+      "detail": "f8c93cbba99124b5…"
     }
   ],
   "passed": 9,

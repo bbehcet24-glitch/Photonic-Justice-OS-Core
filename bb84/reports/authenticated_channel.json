@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-17T21:07:41.266Z",
+  "generatedAt": "2026-11-20T11:47:08.047Z",
   "checks": [
     {
-      "name": "(A) TAHRİFAT TESPİTİ: WC kanalı ~%0 kaçırır (çekirdek MAC %41)",
+      "name": "(A) TAHRİFAT TESPİTİ: WC kanalı ~%0 kaçırır (v5.2'ye kadarki çekirdek MAC %41)",
       "ok": true,
-      "detail": "20000 denemede WC tahrifat kaçırma %0 (gerçek MAC ~2⁻⁶¹) vs çekirdek _computeTag %41.46. Aktif MITM artık uzlaşma mesajını fark edilmeden değiştiremiyor"
+      "detail": "20000 denemede WC tahrifat kaçırma %0 (gerçek MAC ~2⁻⁶¹) vs v5.2'ye kadarki çekirdek primitifi (legacyTagV52) %41.46; v5.3 çekirdeği Wegman–Carter'a geçti. Aktif MITM artık uzlaşma mesajını fark edilmeden değiştiremiyor"
     },
     {
       "name": "(B) SAHTECİLİK DİRENCİ: anahtarsız saldırgan geçerli tag üretemez",
@@ -34,7 +34,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 6a5effd30eb0be09… öncesi = sonrası — düzeltme KATMANDA (authenticated_channel), çekirdek sabit"
+      "detail": "SHA-256 f8c93cbba99124b5… öncesi = sonrası — düzeltme KATMANDA (authenticated_channel), çekirdek sabit"
     }
   ],
   "tamper": {
@@ -69,7 +69,7 @@
   },
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "6a5effd30eb0be09"
+    "sha256": "f8c93cbba99124b5"
   },
   "allChecksPassed": true
 }

@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T21:07:43.747Z",
+  "generatedAt": "2026-11-20T11:47:10.570Z",
   "checks": [
     {
       "name": "H1 Ed25519 açma yetkisi: geçerli belge kabul; kurcalanmış, sahte anahtar, başka düğüm, zaman dışı, aşırı ömür, boşaltma beyanı yok/bayat, çözülemeyen ve TEKRAR kullanılan belgelerin hepsi reddediliyor ve kilit KİLİTLİ kalıyor",
@@ -14,12 +14,12 @@
     {
       "name": "H3 Fail-secure: eyleyici sıkışınca KİLİTLİ kalıyor (UNLOCK_FAILED) ve kapı açılamıyor; açılıp kapısı açılmayan kilit 30 s sonra kendiliğinden kilitleniyor; kilit API'si yanıt vermezse istemci zaman aşımında 'KİLİTLİ varsayılır' dönüyor ve kilit gerçekten kilitli",
       "ok": true,
-      "detail": "sıkışık eyleyici → eyleyici arızası, kapı açıldı mı: false · onarım sonrası: açıldı → 30 s içinde kapı açılmadı → LOCKED · API yanıtsız → 406 ms sonra \"zaman aşımı (400 ms) — kilit KİLİTLİ varsayılır (fail-secure)\", kilit LOCKED"
+      "detail": "sıkışık eyleyici → eyleyici arızası, kapı açıldı mı: false · onarım sonrası: açıldı → 30 s içinde kapı açılmadı → LOCKED · API yanıtsız → 408 ms sonra \"zaman aşımı (400 ms) — kilit KİLİTLİ varsayılır (fail-secure)\", kilit LOCKED"
     },
     {
       "name": "H4 Gerçek HTTP kilit API'si (127.0.0.1): yetki → POST unlock 200 → yetkili giriş → kapanış → yeniden kilit; olaylar HTTP ile alınıyor; aynı belgenin tekrarı ve sahte imzalı belge 403",
       "ok": true,
-      "detail": "http://127.0.0.1:37173 · durum LOCKED → unlock HTTP 200 (UNLOCKED) → olaylar [UNLOCKED, DOOR_OPENED, DOOR_CLOSED, RELOCKED] · tekrar HTTP 403 \"belge daha önce kullanılmış (tekrar)\" · sahte HTTP 403 \"imza geçersiz\" · son durum LOCKED"
+      "detail": "http://127.0.0.1:43837 · durum LOCKED → unlock HTTP 200 (UNLOCKED) → olaylar [UNLOCKED, DOOR_OPENED, DOOR_CLOSED, RELOCKED] · tekrar HTTP 403 \"belge daha önce kullanılmış (tekrar)\" · sahte HTTP 403 \"imza geçersiz\" · son durum LOCKED"
     },
     {
       "name": "H5 Zorla açma (40 deneme, açılış fazı rastgele): yalnız SE izleyicisiyle maruziyet bir sonraki 50 ms örneğine kadar sürüyor; kapı sensörü + olay-tetikli yeniden planlamayla sensör gecikmesine (5 ms) iniyor; her denemede INCIDENT",

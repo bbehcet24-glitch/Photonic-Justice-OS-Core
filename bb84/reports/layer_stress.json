@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T21:18:54.196Z",
+  "generatedAt": "2026-11-20T11:56:33.612Z",
   "checks": [
     {
       "name": "L1 fiber: mesafe arttıkça verim ZARİFÇE sıfıra iniyor (çökme yok)",
@@ -34,12 +34,12 @@
     {
       "name": "L7 KME: ölçekte churn O(1) (depo boyutundan bağımsız), bellek sınırlı, replay reddi tam",
       "ok": true,
-      "detail": "n=5000: 8.99μs/op, kalan 1000, replay 4000/4000 · n=20000: 8.92μs/op, kalan 16000, replay 4000/4000 · n=80000: 6.44μs/op, kalan 76000, replay 4000/4000 — churn süresi depo boyutundan bağımsız (en büyük/küçük ×1.40), her replay reddedildi, tüketilen anahtar bellekten silindi (depo sınırlı)"
+      "detail": "n=5000: 7.96μs/op, kalan 1000, replay 4000/4000 · n=20000: 6.19μs/op, kalan 16000, replay 4000/4000 · n=80000: 6.29μs/op, kalan 76000, replay 4000/4000 — churn süresi depo boyutundan bağımsız (en büyük/küçük ×1.29), her replay reddedildi, tüketilen anahtar bellekten silindi (depo sınırlı)"
     },
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 kampanya boyunca değişmedi",
       "ok": true,
-      "detail": "SHA-256 6a5effd30eb0be09… kampanya öncesi = sonrası. Yedi katman da çekirdeği yalnızca ÇAĞIRDI, hiçbiri değiştirmedi — stres uçtan uca koştu, çekirdek bit düzeyinde aynı"
+      "detail": "SHA-256 f8c93cbba99124b5… kampanya öncesi = sonrası. Yedi katman da çekirdeği yalnızca ÇAĞIRDI, hiçbiri değiştirmedi — stres uçtan uca koştu, çekirdek bit düzeyinde aynı"
     }
   ],
   "L1": {
@@ -308,7 +308,7 @@
       {
         "seeded": 5000,
         "churnOps": 4000,
-        "usPerChurn": 8.99,
+        "usPerChurn": 7.96,
         "finalStoreSize": 1000,
         "destroyed": 4000,
         "replayRejected": 4000
@@ -316,7 +316,7 @@
       {
         "seeded": 20000,
         "churnOps": 4000,
-        "usPerChurn": 8.92,
+        "usPerChurn": 6.19,
         "finalStoreSize": 16000,
         "destroyed": 4000,
         "replayRejected": 4000
@@ -324,17 +324,17 @@
       {
         "seeded": 80000,
         "churnOps": 4000,
-        "usPerChurn": 6.44,
+        "usPerChurn": 6.29,
         "finalStoreSize": 76000,
         "destroyed": 4000,
         "replayRejected": 4000
       }
     ],
-    "usSpread": 1.4
+    "usSpread": 1.29
   },
   "coreIntegrity": {
-    "sha256Before": "6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b",
-    "sha256After": "6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b",
+    "sha256Before": "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f",
+    "sha256After": "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f",
     "unchanged": true
   },
   "allChecksPassed": true

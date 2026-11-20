@@ -1,10 +1,10 @@
 {
-  "generatedAt": "2026-11-17T21:15:04.629Z",
+  "generatedAt": "2026-11-20T11:53:27.582Z",
   "checks": [
     {
-      "name": "(A) KLASİK KANAL MAC: çekirdek primitifi ZAYIF (tahrifat ~%41 kaçar), standart MAC ~%0",
+      "name": "(A) KLASİK KANAL MAC: v5.2'ye kadarki çekirdek primitifi ZAYIF (tahrifat ~%41 kaçar); v5.3 çekirdeği ve katman MAC'i ~%0",
       "ok": true,
-      "detail": "çekirdek ClassicalAuthChannel._computeTag: tahrifat kaçırma %41.46 (bit-bit imul polinom hash, çift-katsayıda yüksek-konum çevirmeleri mod 2³² kaybolur) — aktif MITM uzlaşma mesajını %41.46 fark edilmeden değiştirir. Katman-içi GF(2⁶¹−1) polinom MAC: kaçırma %0 (gerçek Wegman-Carter). Kapı çekirdek primitifini BLOKLAR, standart MAC ister"
+      "detail": "v5.2'ye kadarki ClassicalAuthChannel (legacyTagV52): tahrifat kaçırma %41.46 (bit-bit imul polinom hash, çift-katsayıda yüksek-konum çevirmeleri mod 2³² kaybolur). v5.3 çekirdeği (_computeTag, GF(2⁶¹−1) Wegman–Carter): %0. Katman-içi GF(2⁶¹−1) MAC: %0. Kapı eski primitifi BLOKLAR"
     },
     {
       "name": "(B) YAN-KANAL MONİTÖRÜ: uyumsuzluk (QBER-görünmez) + casus alarmı; temiz hatta sessiz",
@@ -39,11 +39,12 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 6a5effd30eb0be09… öncesi = sonrası — MAC düzeltmesi KATMANDA (strongTag), çekirdek sabit"
+      "detail": "SHA-256 f8c93cbba99124b5… öncesi = sonrası — test çekirdeği değiştirmedi (MAC düzeltmesi v5.3'te çekirdeğe de taşındı)"
     }
   ],
   "mac": {
     "coreMissPct": 41.46,
+    "coreV53MissPct": 0,
     "strongMissPct": 0
   },
   "monitor": {
@@ -130,7 +131,7 @@
   ],
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "6a5effd30eb0be09"
+    "sha256": "f8c93cbba99124b5"
   },
   "allChecksPassed": true
 }

@@ -2,8 +2,41 @@
 
 Every full `npm test` run since core v5.1 records, at the start of the run, the git commit, whether the working
 tree was clean and the SHA-256 of `bb84/photonnet_core.js` (`ci-reports/npm_test_summary.json`; the 📈 SONUÇLAR tab
-shows the commit). This file lists the runs behind the v5.1 and v5.2 revisions, newest first. The `npm test` and UI runs are local (Linux, Node
+shows the commit). This file lists the runs behind the v5.1, v5.2 and v5.3 revisions, newest first. Since core v5.3 every run also
+records the SHA-256 of each test file and an aggregate (`testFilesSha256`), so "only the tests changed" can be
+checked by comparing the core hash and the test-file hash of two runs. The `npm test` and UI runs are local (Linux, Node
 22.23.4, Python 3.13.18); the GitHub Actions run is listed in its own section.
+
+## Core v5.3 (reviewer rubric: authentication, key lifecycle, evidence chain)
+
+### Full suite (`npm test`)
+
+| Commit | What it is | Tree | Core SHA-256 | Test files SHA-256 | Result | Run (UTC) |
+|---|---|---|---|---|---|---|
+| `2325e7a` | core v5.3: Wegman–Carter authentication in the session, KME zeroization + half-open TTL | clean | `f8c93cbb…f0008f` | `5b35dd45…abd163` (110 files) | **112/112** | 2026-11-20 11:47:04 → 12:04:17 |
+
+### Which core each v5.2 run tested
+
+`git show <commit>:bb84/photonnet_core.js | sha256sum` for every v5.2 commit gives the same core: `3d615e2`, `24d010d`,
+`e8fb0e7` and `400a907` all have `6a5effd3…e91c6b`. `git diff --stat 3d615e2 24d010d` lists only
+`bb84/k3_qber_validation_test.js`, `bb84/tools/test_inventory.js` and `hal/test_qrng_health_tests.py`, so the
+110/110 run on `24d010d` tested the same core as the 108/110 run on `3d615e2`. Test-file hashes were not recorded
+before v5.3; from `2325e7a` on they are.
+
+### UI scenarios and tools on the `2325e7a` build (Playwright, Chromium 153)
+
+| Scenario / tool | Result |
+|---|---|
+| `bb84/tools/ts_hybrid_qkd_04.js` | 17/17; S2 at t = −60 s delivered (ℓ 113); S1 spec band observation: outside (1.53 % / 1.47 %) |
+| `bb84/tools/ui_abort_drill.js` | 9/9 |
+| Security criteria panel | "Klasik kanal kimlik doğrulaması (Wegman–Carter, iki yön) — 31/31 atlama · 62 etiket doğrulandı" (`docs/screenshots/06_results.png`) |
+| `bb84/tools/ell_audit.js`, `test_inventory.js`, `capture_screenshots.js` | regenerated; 641/641 checks in 73 reports |
+
+Test pass-condition changes and their reasons: [`docs/TEST_CHANGELOG.md`](TEST_CHANGELOG.md).
+
+### GitHub Actions on `400a907`
+
+Not seen yet (no API access here; the result comes from the user's screenshot).
 
 ## Core v5.2 (referee report 2)
 

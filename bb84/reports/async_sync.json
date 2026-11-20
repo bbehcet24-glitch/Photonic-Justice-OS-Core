@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T21:16:17.386Z",
+  "generatedAt": "2026-11-20T11:54:16.538Z",
   "checks": [
     {
       "name": "STATİK SKEW: naif tasarım pencereyi aşınca geçerli paket düşürür, sonra resync toparlar",

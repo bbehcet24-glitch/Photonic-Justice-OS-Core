@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T21:15:05.904Z",
+  "generatedAt": "2026-11-20T11:53:28.706Z",
   "checks": [
     {
       "name": "Q1 ℓ = 0 uçurumu çekirdeğin formülünden: çekirdeğin tek-parametreli n=k kısayolu (secureKeyLength) n = 10⁶'da %9,59 veriyor (detector_recalibration raporuyla aynı); politika iki-parametreli Serfling μ kullanıyor, aynı n = k'da %9,50 (daha muhafazakâr); blok boyuyla tekdüze artıyor; hepsi %11'in altında",
@@ -39,7 +39,7 @@
     {
       "name": "Çekirdek değişmedi (photonnet_core.js SHA-256)",
       "ok": true,
-      "detail": "6a5effd30eb0be09…"
+      "detail": "f8c93cbba99124b5…"
     }
   ],
   "passed": 8,

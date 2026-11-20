@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T21:09:17.196Z",
+  "generatedAt": "2026-11-20T11:48:32.918Z",
   "checks": [
     {
       "name": "G1 ε birleştirme: 31 atlamada atlama başına ε = hedef/31, uçtan uca ε tek atlamayla aynı; bölmeden 31 katı",
@@ -9,7 +9,7 @@
     {
       "name": "G2 Her atlama Q + μ'yü raporluyor; μ, atlamanın ε_PE'sinin en çok M değerlendirmeye bölünmüş payıyla (birleşim sınırı); değerlendirme sayısı ≤ M",
       "ok": true,
-      "detail": "M = 16, değerlendirme başına ε_PE 2.02e-13; atlama başına değerlendirme 2–3; en büyük Q_test %1.97, en büyük Q + μ %22.7, en küçük ℓ 121 bit"
+      "detail": "M = 16, değerlendirme başına ε_PE 2.02e-13; atlama başına değerlendirme 2–3; en büyük Q_test %1.90, en büyük Q + μ %22.7, en küçük ℓ 140 bit"
     },
     {
       "name": "G3 Gerçek QBER %12, ölçüm %11'in altına düşse bile ℓ = 0 (5 × 20 000 binom çekilişi)",
@@ -24,7 +24,7 @@
     {
       "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
       "ok": true,
-      "detail": "6a5effd30eb0be09…"
+      "detail": "f8c93cbba99124b5…"
     }
   ],
   "effectiveThreshold": [

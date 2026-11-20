@@ -1,15 +1,15 @@
 {
-  "generatedAt": "2026-11-17T21:09:10.123Z",
+  "generatedAt": "2026-11-20T11:48:28.163Z",
   "checks": [
     {
       "name": "T1 (K1) Turlar bağımsız: 3 turun hata konumları en çok %25 örtüşüyor (v3 yolu aynı koşulda birebir tekrar ediyor)",
       "ok": true,
-      "detail": "v4 tur başı hata sayıları 11/3/9, en büyük örtüşme %0 · v3 yolu: 3 turda AYNI konumlar"
+      "detail": "v4 tur başı hata sayıları 10/11/14, en büyük örtüşme %0 · v3 yolu: 3 turda AYNI konumlar"
     },
     {
       "name": "T2 (K2) Zincirde her atlamanın KENDİ kanıtı: 31 atlamanın hepsinde test alt kümesi, ℓ ≥ mesaj biti; uçtan uca anahtar 30 açık röle yayınıyla taşındı ve Bob mesajı çözdü",
       "ok": true,
-      "detail": "DELIVERED · atlama ℓ min/maks 112/1482 · qTest maks %2.16 · uçtan uca 112 bit, röle 3360 bit · 409.600 darbe/link"
+      "detail": "DELIVERED · atlama ℓ min/maks 119/1456 · qTest maks %1.93 · uçtan uca 119 bit, röle 3570 bit · 409.600 darbe/link"
     },
     {
       "name": "T3 (K2) %11'in ALTINDAKİ gürültülü tek atlama (#3, +%6,5 hata) kendi sonlu-anahtar hesabına giriyor: qTest'i yüksek, ℓ'si en küçük ve zincirin ℓ'sini o belirliyor (ya da bütçe o atlamada bitiyor)",
@@ -19,7 +19,7 @@
     {
       "name": "T4 Tek atlamada dinleme imzası (%25) → HOP_QBER, iptal mesajı atlama #2'yi gösteriyor; mesaj ve anahtar dönmüyor",
       "ok": true,
-      "detail": "HOP_QBER: hop #2 QBER_test %26.8 ≥ %11 (k=452 test biti) — dinleme ya da aşırı gürültü; an"
+      "detail": "HOP_QBER: hop #2 QBER_test %24.9 ≥ %11 (k=461 test biti) — dinleme ya da aşırı gürültü; an"
     },
     {
       "name": "T5 Tek bir Cascade doğrulama başarısızlığında blok atılıp yeniden toplanıyor ve mesaj teslim ediliyor; sürekli başarısızlıkta 3. denemede EC_FAIL (anahtar yok)",
@@ -27,26 +27,30 @@
       "detail": "tek hata: DELIVERED, atılan blok 1 · sürekli hata: EC_FAIL — Cascade uzlaşması 3 kez yakınsamadı (son: 3 kalıntı hata) — "
     },
     {
-      "name": "T6 Varsayılan demo rotası (1842 km, 31 güvenilir atlama): SNSPD 10/10, InGaAs 6/6 teslim (v3'te InGaAs 12'de 5 KEY_BUDGET), en çok darbe bütçenin altında",
+      "name": "T6 Varsayılan demo rotası (1842 km, 31 güvenilir atlama): SNSPD 10/10, InGaAs 6/6 teslim (v3'te InGaAs 12'de 5 KEY_BUDGET), ortanca darbe bütçenin %90'ının altında, en çok 1 oturum bütçe sonunda (sabit tohum)",
       "ok": true,
-      "detail": "SNSPD 10/10 (en çok 409600 darbe/link) · InGaAs 6/6 (en çok 3194880; bütçe 4194304)"
+      "detail": "SNSPD 10/10 (en çok 409600 darbe/link) · InGaAs 6/6 (ortanca 3162112, en çok 3194880; bütçe 4194304; bütçe sonundaki son değerlendirmeyle teslim: 0)"
     },
     {
       "name": "Çekirdek hash'i docs/CORE_CHANGELOG.md'de kayıtlı",
       "ok": true,
-      "detail": "6a5effd30eb0be09…"
+      "detail": "f8c93cbba99124b5…"
     }
   ],
   "demo": {
     "snspd": {
       "ok": 10,
       "N": 10,
-      "maxPulses": 409600
+      "maxPulses": 409600,
+      "medianPulses": 409600,
+      "atBudgetEnd": 0
     },
     "ingaas": {
       "ok": 6,
       "N": 6,
-      "maxPulses": 3194880
+      "maxPulses": 3194880,
+      "medianPulses": 3162112,
+      "atBudgetEnd": 0
     }
   },
   "passed": 7,

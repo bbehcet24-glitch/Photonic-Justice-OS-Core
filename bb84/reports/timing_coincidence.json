@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-17T21:16:16.473Z",
+  "generatedAt": "2026-11-20T11:54:14.592Z",
   "checks": [
     {
       "name": "(A) MÜKEMMEL SAAT: taban QBER fizik zemininde, verim tam (Faz 1 birebir)",
@@ -29,7 +29,7 @@
     {
       "name": "ÇEKİRDEK DOKUNULMADI: photonnet_core.js SHA-256 değişmedi",
       "ok": true,
-      "detail": "SHA-256 6a5effd30eb0be09… öncesi = sonrası — L5.5+L5.6 acquisition'a bağlandı, çekirdek sabit"
+      "detail": "SHA-256 f8c93cbba99124b5… öncesi = sonrası — L5.5+L5.6 acquisition'a bağlandı, çekirdek sabit"
     }
   ],
   "clean": {
@@ -301,7 +301,7 @@
   ],
   "coreIntegrity": {
     "unchanged": true,
-    "sha256": "6a5effd30eb0be09"
+    "sha256": "f8c93cbba99124b5"
   },
   "params": {
     "pulses": 120000,
