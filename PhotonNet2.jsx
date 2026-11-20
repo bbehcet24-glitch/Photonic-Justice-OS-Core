@@ -92,7 +92,7 @@ const WL = {
 // ── SÜRÜM (tek kaynak) ── Sayfa başlığı (<title>) build_photonnet_html.js tarafından buradan eşitlenir;
 // önceden başlık "v8.0", uygulama başlığı "v2.5" diyordu. Çekirdek sürümü docs/CORE_CHANGELOG.md ile aynı olmalı.
 const PHOTONNET_VERSION = "8.0";
-const PHOTONNET_CORE_VERSION = "v5.3";
+const PHOTONNET_CORE_VERSION = "v5.4";
 const MAX_LINK_KM = 1e6; // fiziksel üst sınır (~25 × Dünya çevresi) — üstü ölçüm/yapılandırma hatasıdır
 const MAX_REPEATERS = 100000; // bir rota için tekrarlayıcı üst sınırı (1e308 gibi değerler döngüyü sonsuza kilitlerdi)
 const MAX_RECONCILE_BITS = 1 << 24; // bb84Reconcile tek çağrıda en fazla ~16,7 M bit (bellek/zaman sınırı)
@@ -1644,7 +1644,8 @@ class SecureMessageSession {
     authPreSharedBits: 61 + 122 * 4, // v5.3: atlama başına önceden paylaşılmış kimlik doğrulama sırrı (r + 4 maske çifti)
   });
   /** v5.3: kimlik doğrulama transkriptine giren açık kanal mesaj türleri. */
-  static MSG = Object.freeze({ BASES_A: 1, BASES_B: 2, TEST_SUBSET: 3, TEST_BITS_A: 4, TEST_BITS_B: 5, PARITY_A: 6, PARITY_B: 7, PA_SEED: 8, TAG: 9 });
+  static MSG = Object.freeze({ BASES_A: 1, BASES_B: 2, TEST_SUBSET: 3, TEST_BITS_A: 4, TEST_BITS_B: 5, PARITY_A: 6, PARITY_B: 7, PA_SEED: 8, TAG: 9,
+    RELAY: 10, CIPHERTEXT: 11 }); // v5.4: teslim aşaması (röle değerleri ve OTP şifreli metni, atlama atlama)
   /**
    * ÇEKİRDEK v4 (docs/CORE_CHANGELOG.md):
    *  • Kanal rastgeleliği her TUR ve her ATLAMA için bağımsızdır. v2/v3'te oturum her turda aynı
@@ -1765,6 +1766,41 @@ class SecureMessageSession {
       poolRemaining: Math.min(h.auth.A.remaining("AB"), h.auth.B.remaining("BA")) };
     return null;
   }
+  /** v5.4: şifreli metin ve röle değerleri atlama atlama iletilir ve her atlamada (A→B) etiketlenip doğrulanır. */
+  _authenticateDelivery(cipherBits, relays) {
+    const H = this.hops, n = H.length, M = SecureMessageSession.MSG;
+    const tx = H.map((h) => {
+      const sent = new AuthTranscriptHash(h.auth.A.r);
+      return { sent, recv: this.classicalTamper ? new AuthTranscriptHash(h.auth.B.r) : sent };
+    });
+    const carry = (kind, bits, fromHop) => { // fromHop'tan son atlamaya kadar; her atlama aldığını iletir
+      let v = bits;
+      for (let j = fromHop; j < n; j++) {
+        tx[j].sent.absorb(kind, v);
+        if (tx[j].recv !== tx[j].sent) {
+          let got = v;
+          try { const x = this.classicalTamper({ hop: j, dir: "AB", kind, bits: Array.from(v), phase: "delivery" }); if (x) got = x; } catch (_) { /* yok say */ }
+          tx[j].recv.absorb(kind, got); v = got;
+        }
+      }
+      return v;
+    };
+    const cipher = carry(M.CIPHERTEXT, cipherBits, 0);
+    const got = relays.map((R, idx) => carry(M.RELAY, R, idx + 1)); // R_i düğüm i'den (i = idx+1) çıkar
+    const P = Number(ClassicalAuthChannel.P61);
+    for (let j = 0; j < n; j++) {
+      const h = H[j], pre = n > 1 ? `hop #${j}: ` : "";
+      let msg = h.auth.A.sendTag(tx[j].sent.digest());
+      if (!msg) return { abort: this._abort("AUTH_POOL", `${pre}teslim aşamasında kimlik doğrulama havuzu (A→B) tükendi — mesaj gönderilmedi`) };
+      if (this.classicalTamper) {
+        try { const x = this.classicalTamper({ hop: j, dir: "AB", kind: M.TAG, tag: { ...msg }, phase: "delivery" }); if (x && x.tag != null) msg = x; } catch (_) { /* yok say */ }
+      }
+      const ok = h.auth.B.verifyTag(tx[j].recv.digest(), msg);
+      h.deliveryAuth = { ok, words: tx[j].sent.words, messages: tx[j].sent.messages, epsForge: tx[j].sent.words / P };
+      if (!ok) return { abort: this._abort("AUTH_FAIL", `${pre}teslim aşamasında kimlik doğrulaması başarısız (şifreli metin ya da röle değeri yolda değişmiş olabilir) — mesaj Bob'a teslim edilmedi`) };
+    }
+    return { cipher, relays: got };
+  }
   _authSummary() {
     const done = this.hops.filter((h) => h.authResult);
     const failed = done.find((h) => !h.authResult.ok);
@@ -1773,10 +1809,13 @@ class SecureMessageSession {
     for (const h of this.hops) {
       tagsVerified += h.auth.A.stats.tagsVerified + h.auth.B.stats.tagsVerified;
       tagsRejected += h.auth.A.stats.tagsRejected + h.auth.B.stats.tagsRejected;
-      if (h.authResult && h.authResult.ok) { words += h.authResult.AB.words + h.authResult.BA.words; eps += h.authResult.epsForge; pool = Math.min(pool, h.authResult.poolRemaining); }
+      if (h.authResult && h.authResult.ok) { words += h.authResult.AB.words + h.authResult.BA.words; eps += h.authResult.epsForge; pool = Math.min(pool, h.auth.A.remaining("AB"), h.auth.B.remaining("BA")); }
+      if (h.deliveryAuth && h.deliveryAuth.ok) { words += h.deliveryAuth.words; eps += h.deliveryAuth.epsForge; }
     }
+    const deliveryVerified = this.hops.filter((h) => h.deliveryAuth && h.deliveryAuth.ok).length;
     return { scheme: "Wegman–Carter: GF(2⁶¹−1) polinom özeti + tek seferlik 61 bit maske, iki yön", ok, hopsVerified: done.filter((h) => h.authResult.ok).length,
       nHops: this.nHops, tagsVerified, tagsRejected, words, epsForgeTotal: eps, minPoolRemaining: Number.isFinite(pool) ? pool : null,
+      deliveryVerified, // v5.4: teslim aşaması (şifreli metin + röleler) doğrulanan atlama sayısı
       failedHop: failed ? failed.hop : null, failedDir: failed ? failed.authResult.failedDir : null };
   }
   _emit(ev) { if (this.onEvent) { try { this.onEvent(ev); } catch (_) { /* gözlemci hatası oturumu etkilemez */ } } }
@@ -1788,8 +1827,12 @@ class SecureMessageSession {
   _stats() {
     return { pulses: this.pulses, totalPulsesAllHops: this.pulses * this.nHops, nHops: this.nHops, rounds: this.rounds, siftedTotal: this.siftedTotal, testedTotal: this.testedTotal,
       matchRate: this.rounds ? this.matchSum / (this.rounds * this.nHops) : 0, lost: this.lost, darkClicks: this.dark,
-      worstHopQber: this.worstHopQber, lastCheck: this.lastCheck, needBits: this.needBits, ecDiscardedBlocks: this.ecDiscards, epsTotal: this.epsTotal,
-      auth: this._authSummary(),
+      worstHopQber: this.worstHopQber, lastCheck: this.lastCheck, needBits: this.needBits, ecDiscardedBlocks: this.ecDiscards,
+      ...(() => { // v5.4: kimlik doğrulamanın sahtecilik olasılığı ε birleşimine girer (birleşim sınırı)
+        const a = this._authSummary();
+        return { auth: a, epsTotal: { ...this.epsTotal, authForge: a.epsForgeTotal, endToEndWithAuth: this.epsTotal.endToEnd + a.epsForgeTotal,
+          ruleWithAuth: "ε_toplam ≤ Σ_atlama (ε_cor + ε_PE + ε_PA) + Σ_etiket L_etiket / (2⁶¹ − 1)" } };
+      })(),
       hopChecks: this.hops.map((h) => ({ hop: h.hop, kind: h.kind, km: h.km, sat: h.fs ? h.fs.last : null, eve: this._eveOn(h.hop),
         sifted: h.sifted, tested: h.tested, lost: h.lost, dark: h.dark, ...(h.lastCheck || {}), auth: h.authResult, done: !!h.result })) };
   }
@@ -1952,14 +1995,21 @@ class SecureMessageSession {
     // Düğüm i (1..n-1) sol atlamanın b'sini ve sağ atlamanın a'sını bilir; AÇIK kanaldan R_i = b_{i-1} ⊕ a_i yayınlar.
     const relays = [];
     for (let i = 1; i < H.length; i++) relays.push(K[i - 1].b.map((x, j) => x ^ K[i].a[j]));
+    const aliceKey = K[0].a;
+    const cipherBits = this.msgBits.map((m, i) => m ^ aliceKey[i]);       // OTP şifreli metni
+    // ÇEKİRDEK v5.4: teslim aşaması da kimliklendirilir (encrypt-then-MAC, atlama atlama). Şifreli metin Alice'ten
+    // (düğüm 0), her röle değeri R_i kendi düğümünden (i) Bob'a atlamalar boyunca iletilir; her atlama kendinden geçen
+    // mesajları yeni bir teslim transkriptine alır, sol uç etiketler, sağ uç doğrular. Bob yalnız kendisine ULAŞAN
+    // değerlerle çözer. OTP gizlilik verir ama bütünlük vermez; bütünlüğü bu etiketler sağlar.
+    const dl = this._authenticateDelivery(cipherBits, relays);
+    if (dl.abort) return dl.abort;
     // Bob (son düğüm): K_A = b_{n-1} ⊕ R_{n-1} ⊕ … ⊕ R_1  (a_i ⊕ b_i = 0 her atlamada EC + PA sonrası)
     let bobKey = K[H.length - 1].b.slice();
-    for (let r = relays.length - 1; r >= 0; r--) bobKey = bobKey.map((x, j) => x ^ relays[r][j]);
-    const aliceKey = K[0].a;
+    for (let r = dl.relays.length - 1; r >= 0; r--) bobKey = bobKey.map((x, j) => x ^ dl.relays[r][j]);
+    // Simülatör kısayolu: Bob'un anahtarı Alice'inkiyle doğrudan karşılaştırılır (gerçek sistemde anahtar onay özeti).
     const relayOk = bobKey.every((x, j) => x === aliceKey[j]);
     if (!relayOk) return this._abort("EC_FAIL", "röle sonrası Bob'un anahtarı Alice'inkiyle uyuşmuyor (bir atlamada kalıntı hata) — mesaj gönderilmedi");
-    const cipherBits = this.msgBits.map((m, i) => m ^ aliceKey[i]);       // klasik kanaldan giden tek şey
-    const decoded = b2t(cipherBits.map((c, i) => c ^ bobKey[i]));        // Bob (röle ile ulaştığı) anahtarıyla çözer
+    const decoded = b2t(dl.cipher.map((c, i) => c ^ bobKey[i]));         // Bob, kendisine ulaşan şifreli metni çözer
     const worst = H.reduce((w, h) => (h.result.proof.ell < w.result.proof.ell ? h : w), H[0]);
     const q = Math.max(...H.map((h) => h.result.q));
     this.done = { done: true, status: "DELIVERED", code: "OK", reason: null, decoded, cipherBits, otpKeyBits: aliceKey.slice(0, L),
@@ -9942,7 +9992,7 @@ function ResSecurityCriteria({ result }) {
     { c: "Sonlu-anahtar ℓ ≥ mesaj biti — Serfling μ + GLLP, her atlamada", ok: delivered ? s.ell > 0 : false,
       v: (delivered ? `ℓ = ${s.ell} bit (en zayıf atlama)` : "ℓ = 0 — kanıtlı anahtar yok") +
         (() => { const qs = hops.map((h) => h.qPhUpper).filter((v) => typeof v === "number"); return qs.length ? ` · faz hatası üst sınırı Q+μ ≤ %${(Math.max(...qs) * 100).toFixed(1)}` : ""; })() +
-        (s.epsTotal ? ` · ε uçtan uca ≤ ${s.epsTotal.endToEnd.toExponential(1)}` : "") + " · simülasyon metriği; oturum ℓ ≥ mesaj biti olunca durur" },
+        (s.epsTotal ? ` · ε uçtan uca ≤ ${(s.epsTotal.endToEndWithAuth ?? s.epsTotal.endToEnd).toExponential(1)}${s.epsTotal.authForge ? " (kimlik doğrulama dahil)" : ""}` : "") + " · simülasyon metriği; oturum ℓ ≥ mesaj biti olunca durur" },
     { c: "Hata düzeltme (Cascade) yakınsadı", ok: s.code === "EC_FAIL" ? false : delivered ? true : null,
       v: s.code === "EC_FAIL" ? "yakınsamadı" : delivered ? `sızıntı ${s.leakEC != null ? s.leakEC.toLocaleString("tr-TR") : "—"} bit ölçüldü` : "çalıştırılmadı (önceki kriter)" },
     { c: "Klasik kanal kimlik doğrulaması (Wegman–Carter, iki yön)", ok: auth ? auth.ok : null, v: auth ? (auth.ok ? `${auth.hopsVerified}/${auth.nHops} atlama · ${auth.tags} etiket doğrulandı` : auth.reason || "başarısız") : "—" },
@@ -12373,11 +12423,11 @@ function PhotonNet() {
     const au = sres.auth || null;
     const authFailed = sres.code === "AUTH_FAIL" || sres.code === "AUTH_POOL";
     const authResult = au && au.ok
-      ? { ok: true, hopsVerified: au.hopsVerified, nHops: au.nHops, tags: au.tagsVerified, epsForge: au.epsForgeTotal, poolRemaining: au.minPoolRemaining, reason: null }
+      ? { ok: true, hopsVerified: au.hopsVerified, nHops: au.nHops, tags: au.tagsVerified, epsForge: au.epsForgeTotal, poolRemaining: au.minPoolRemaining, deliveryVerified: au.deliveryVerified, reason: null }
       : { ok: authFailed ? false : null, hopsVerified: au ? au.hopsVerified : 0, nHops: au ? au.nHops : 0, tags: au ? au.tagsVerified : 0, epsForge: null, poolRemaining: null,
           reason: authFailed ? sres.reason : `oturum kimlik doğrulama adımına ulaşmadı (${au ? au.hopsVerified : 0}/${au ? au.nHops : 0} atlama doğrulandı)` };
     if (authResult.ok) {
-      addLog(`🔏 KLASİK KANAL KİMLİK DOĞRULAMA: ${authResult.nHops} atlamanın iki yönü Wegman–Carter etiketiyle doğrulandı (${authResult.tags} etiket; bazlar, test bitleri, Cascade pariteleri, Toeplitz tohumu) — sahtecilik olasılığı ≤ ${authResult.epsForge.toExponential(1)}`,"OK");
+      addLog(`🔏 KLASİK KANAL KİMLİK DOĞRULAMA: ${authResult.nHops} atlamanın iki yönü Wegman–Carter etiketiyle doğrulandı (bazlar, test bitleri, Cascade pariteleri, Toeplitz tohumu) ve teslim aşamasında şifreli metin + röle değerleri ${authResult.deliveryVerified}/${authResult.nHops} atlamada doğrulandı — ${authResult.tags} etiket, sahtecilik olasılığı ≤ ${authResult.epsForge.toExponential(1)}`,"OK");
     } else if (authResult.ok === false) {
       addLog(`⚠ KLASİK KANAL KİMLİK DOĞRULAMA BAŞARISIZ: ${authResult.reason}`,"ERR");
     }

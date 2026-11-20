@@ -24,7 +24,7 @@ const NET = require("./multinode_shielding_network.js");
 const TB = require("./multinode_shielding_testbed.js");
 const M = require("./mesh_isolation.js");
 
-const CORE_SHA = "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f";
+const CORE_SHA = "4f664688da958752abb7ede77890f1d94640250aca988c6d2e7fadf46f492b39";
 const GUARDED = ["photonnet_core.js", "adaptive_shielding_mitigation.js", "qkd_network_scale.js"];
 const hashes = () => Object.fromEntries(GUARDED.map((f) => [f, crypto.createHash("sha256").update(fs.readFileSync(path.join(__dirname, f))).digest("hex")]));
 const DT = TB.DT;
@@ -138,7 +138,7 @@ function main() {
     `kapalı: ceza ${off.penalty}, BKR↔ATS ${off.bkrAtsPaths.join(" | ")}, KDK'dan geçen transit ${Math.round(off.transitViaKdkBits)} bit`);
 
   const after = hashes();
-  chk("Çekirdek ve yeniden kullanılan modüller değişmedi (photonnet_core.js SHA-256 = f8c93cbb…f0008f)",
+  chk("Çekirdek ve yeniden kullanılan modüller değişmedi (photonnet_core.js SHA-256 = 4f664688…492b39)",
     after["photonnet_core.js"] === CORE_SHA && JSON.stringify(before) === JSON.stringify(after),
     GUARDED.map((f) => `${f} ${after[f].slice(0, 12)}…`).join(" · "));
 

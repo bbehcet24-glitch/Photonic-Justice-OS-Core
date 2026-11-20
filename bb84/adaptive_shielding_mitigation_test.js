@@ -294,7 +294,7 @@ function main() {
   const unchanged = GUARDED.every((f) => before[f] === after[f]);
   const src = fs.readFileSync(path.join(__dirname, "adaptive_shielding_mitigation.js"), "utf8");
   const noCoreImport = !/require\(["']\.\/photonnet_core\.js["']\)/.test(src);
-  const coreOk = after["photonnet_core.js"] === "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f";
+  const coreOk = after["photonnet_core.js"] === "4f664688da958752abb7ede77890f1d94640250aca988c6d2e7fadf46f492b39";
   out.integrity = { unchanged, noCoreImport, coreSha256: after["photonnet_core.js"] };
   chk("ÇEKİRDEĞE VE YENİDEN KULLANILAN MODÜLLERE DOKUNULMADI",
     unchanged && noCoreImport && coreOk,

@@ -1,16 +1,18 @@
 #!/usr/bin/env node
 "use strict";
 /**
- * core_v53_auth_test.js — çekirdek v5.3 kabul testi: klasik kanal kimlik doğrulaması (Wegman–Carter)
+ * core_v53_auth_test.js — çekirdek v5.3/v5.4 kabul testi: klasik kanal kimlik doğrulaması (Wegman–Carter, encrypt-then-MAC)
  * ═══════════════════════════════════════════════════════════════════
  * v5.2'ye kadar çekirdeğin MAC'i kırıktı (tek bit tahrifatın ~%41'i geçiyordu), başlangıç havuzu sabit bir tohumdan
  * geliyordu, yalnız QBER + n duyurusu etiketleniyordu ve etiketi doğrulayan bir alıcı yoktu; arayüz yine de
  * "doğrulandı" gösteriyordu. v5.3 bunu oturumun içine taşıdı.
  *
- *   W1 Teslim edilen 31 atlamalı oturumda her atlamanın İKİ yönü etiketlenip karşı uçta doğrulandı (62 etiket,
- *      0 red); sahtecilik olasılığı sınırı Σ L/P ≪ ε_e2e.
+ *   W1 Teslim edilen 31 atlamalı oturumda her atlamanın İKİ yönü etiketlenip karşı uçta doğrulandı ve (v5.4) teslim
+ *      aşamasında şifreli metin + röle değerleri her atlamada doğrulandı (31 × 3 = 93 etiket, 0 red); sahtecilik
+ *      olasılığı ε birleşimine eklendi: ε_toplam = ε_e2e + Σ L/P.
  *   W2 Açık kanaldaki her mesaj türü (bazlar A/B, test alt kümesi, test bitleri A/B, Cascade pariteleri A/B, Toeplitz
- *      tohumu) ve etiketin kendisi tek bit değiştirildiğinde oturum AUTH_FAIL ile iptal: anahtar ve mesaj yok.
+ *      tohumu, röle değeri, OTP şifreli metni) ve etiketin kendisi tek bit değiştirildiğinde oturum AUTH_FAIL ile iptal:
+ *      anahtar ve mesaj yok (teslim aşamasında da Bob'a hiçbir metin teslim edilmez).
  *   W3 MAC primitifi: 20 000 tek bit tahrifatta kaçırma 0, 20 000 rastgele etiket sahteciliğinde kabul 0; aynı
  *      ölçümde v5.2'ye kadarki primitif (legacyTagV52) ~%41 kaçırıyor.
  *   W4 Maske tek kullanımlık ve sıralı: tekrar (aynı seq) ve sıra dışı etiket reddedilir; maskesi olmayan havuzla
@@ -40,9 +42,10 @@ const session = (extra = {}) => new S({ msg: "Merhaba Dünya", totalKm: 120, nHo
   const r = new S({ msg: "Merhaba Dünya", totalKm: 1842, nHops: 31, evesdrop: false, detectorCtx: ctx, entropyBits: rb, publicSeed: 3 }).run();
   const a = r.auth;
   const perHop = r.hopChecks.every((h) => h.auth && h.auth.ok && h.auth.AB.ok && h.auth.BA.ok && h.auth.AB.messages > 0 && h.auth.BA.messages > 0);
-  chk("W1 Teslim edilen 31 atlamalı oturumda her atlamanın iki yönü etiketlendi ve doğrulandı; sahtecilik sınırı ε_e2e'nin çok altında",
-    r.status === "DELIVERED" && a.ok && a.hopsVerified === 31 && a.tagsVerified === 62 && a.tagsRejected === 0 && perHop && a.epsForgeTotal < 1e-11,
-    `${r.status}; ${a.hopsVerified}/31 atlama, ${a.tagsVerified} etiket doğrulandı, ${a.tagsRejected} red; transkript ${a.words.toLocaleString("tr-TR")} kelime; sahtecilik ≤ ${a.epsForgeTotal.toExponential(2)} (ε_e2e ${r.epsTotal.endToEnd.toExponential(1)})`);
+  const epsOk = Math.abs(r.epsTotal.endToEndWithAuth - (r.epsTotal.endToEnd + a.epsForgeTotal)) < 1e-24 && r.epsTotal.authForge === a.epsForgeTotal;
+  chk("W1 31 atlamalı oturumda her atlamanın iki yönü ve teslim aşaması doğrulandı (93 etiket); sahtecilik olasılığı ε birleşiminde",
+    r.status === "DELIVERED" && a.ok && a.hopsVerified === 31 && a.deliveryVerified === 31 && a.tagsVerified === 93 && a.tagsRejected === 0 && perHop && a.epsForgeTotal < 1e-11 && epsOk,
+    `${r.status}; ${a.hopsVerified}/31 atlama + teslim ${a.deliveryVerified}/31, ${a.tagsVerified} etiket doğrulandı, ${a.tagsRejected} red; transkript ${a.words.toLocaleString("tr-TR")} kelime; ε_e2e ${r.epsTotal.endToEnd.toExponential(3)} + sahtecilik ${a.epsForgeTotal.toExponential(2)} = ${r.epsTotal.endToEndWithAuth.toExponential(3)}`);
 }
 
 // ══ W2 ══
@@ -56,13 +59,13 @@ const session = (extra = {}) => new S({ msg: "Merhaba Dünya", totalKm: 120, nHo
       if (m.hop !== 1 || m.kind !== kind || !m.bits || !m.bits.length || hit) return undefined;
       hit = true; m.bits[m.bits.length >> 1] ^= 1; return m.bits;
     } }).run();
-    const ok = hit && r.status === "ABORTED" && r.code === "AUTH_FAIL" && !r.otpKeyBits && r.decoded == null;
+    const ok = hit && r.status === "ABORTED" && r.code === "AUTH_FAIL" && !r.otpKeyBits && r.decoded == null && r.cipherBits == null;
     allCaught = allCaught && ok;
     rows.push(`${name}: ${hit ? r.code : "mesaj yok"}`);
   }
   const tagT = session({ classicalTamper: (m) => (m.kind === S.MSG.TAG && m.hop === 0 && m.dir === "BA" ? { seq: m.tag.seq, tag: String((BigInt(m.tag.tag) + 1n) % C.P61) } : undefined) }).run();
   const tagOk = tagT.status === "ABORTED" && tagT.code === "AUTH_FAIL" && /B→A/.test(tagT.reason);
-  chk("W2 Her açık mesaj türünde ve etikette tek bit değişiklik → AUTH_FAIL; anahtar ve mesaj yok",
+  chk("W2 Her açık mesaj türünde (röle ve OTP şifreli metni dahil) ve etikette tek bit değişiklik → AUTH_FAIL; anahtar ve mesaj yok",
     allCaught && tagOk, `${rows.join(" · ")} · etiket (B→A): ${tagT.code}`);
 }
 

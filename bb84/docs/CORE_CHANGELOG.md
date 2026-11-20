@@ -20,6 +20,7 @@ EIC test raporu) **v1** hash'ine atıf yapar — bu beklenen bir durumdur, o bel
 | v5.1 | `11bf00156cf2efea1d6f077636762a921a89be5607466e859590596178651f79` | `11bf0015…651f79` |
 | v5.2 | `6a5effd30eb0be09d1e8bcc9701ddbeba236a0db38818edafc90adac16e91c6b` | `6a5effd3…e91c6b` |
 | v5.3 | `f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f` | `f8c93cbb…f0008f` |
+| v5.4 | `4f664688da958752abb7ede77890f1d94640250aca988c6d2e7fadf46f492b39` | `4f664688…492b39` |
 
 ### Sürüm ↔ commit ↔ hash eşlemesi (hakem bulgusu P1-2)
 
@@ -43,11 +44,35 @@ Her satır `git show <commit>:bb84/photonnet_core.js | sha256sum` ile yeniden ü
 | v5.1 | 9a07e62 | 2026-11-17 | `11bf0015…651f79` | `01a8dbc8…0078c8` | algoritma (havuz rastgeleliği enjekte edilebilir) |
 | v5.2 | 3d615e2 | 2026-11-17 | `6a5effd3…e91c6b` | `f8cfe1b5…03788c` | algoritma |
 | v5.3 | 2325e7a | 2026-11-20 | `f8c93cbb…f0008f` | `b5b0a321…a8ed1d` | algoritma |
+| v5.4 | bu tablonun eklendiği commit | 2026-11-20 | `4f664688…492b39` | `6b874b6c…197cfc` | algoritma |
 
 Bulgu: v4.1, v4.2 ve v4.3 "çekirdek sürümü" olarak numaralandı ama protokolleri v4 ile aynıdır; o dönemde sürüm
 numarası arayüz değişikliğinde de artırıldı. v5 adı altında iki farklı dosya hash'i vardır (5fe76eb ve f391152);
 protokol aynıdır. v5.1 adı altında iki farklı protokol vardır (6aa3efe ve 9a07e62). Bundan sonra sürüm numarası
 yalnız parmak izi değişince artar; yalnız dosya hash'i değişirse sürüm aynı kalır ve tabloya yeni bir satır eklenir.
+
+## v5.4 (2026-11) — teslim aşamasında encrypt-then-MAC, kimlik doğrulamanın ε katkısı birleşimde
+
+**Algoritma değişti.** Hakem değerlendirmesi (v5.3 sonrası): "OTP şifreli metni MAC'sizse uçtan uca bütünlük neye
+dayanıyor?" ve "ε birleşiminde ε_MAC nerede?"
+
+- **Teslim aşaması kimliklendirildi:** v5.3'te röle değerleri ve OTP şifreli metni MAC'lenmiyordu; OTP gizlilik verir,
+  bütünlük vermez (şifreli metindeki bir bit değişikliği açık metinde aynı biti çevirir). Şimdi şifreli metin Alice'ten,
+  her röle değeri R_i kendi düğümünden Bob'a atlama atlama iletilir; her atlama kendinden geçenleri yeni bir teslim
+  transkriptine alır, sol uç etiketler (A→B), sağ uç doğrular. Tutmazsa `AUTH_FAIL`, Bob'a metin teslim edilmez. Bob
+  yalnız kendisine ULAŞAN değerlerle çözer. 31 atlamalı oturumda etiket sayısı 62'den 93'e çıktı.
+- **ε birleşimi:** oturum sonucu `epsTotal.authForge` (tüm etiketlerin sahtecilik olasılığı sınırı, Σ L / (2⁶¹ − 1))
+  ve `epsTotal.endToEndWithAuth = endToEnd + authForge` taşır; arayüzün ℓ satırı bu toplamı gösterir. 31 atlamada
+  ≈ 2·10⁻¹⁰ + 2,3·10⁻¹³.
+- **Anahtar tüketimi:** etiket maskeleri atlama başına önceden paylaşılmış havuzdan gelir (`authPreSharedBits`, 4 maske
+  çifti; bir oturum A→B'de 2, B→A'da 1 maske kullanır), QKD anahtarından (ℓ) düşülmez. Havuzun QKD anahtarıyla beslenmesi
+  (`replenish`) oturumlar arasında kullanılmıyor; bu yüzden ℓ bütçesi değişmedi.
+- **Kalan kısayol:** Bob'un röle sonrası anahtarı Alice'inkiyle doğrudan karşılaştırılıyor (`EC_FAIL`); gerçek sistemde
+  bu bir anahtar onay özetidir.
+- Test: `bb84/core_v53_auth_test.js` W1 (93 etiket, ε toplamı) ve W2 (röle ve şifreli metin dahil 10 mesaj türü).
+  `PHOTONNET_CORE_VERSION` "v5.4".
+- Dosya SHA-256 `4f664688da958752abb7ede77890f1d94640250aca988c6d2e7fadf46f492b39`, protokol parmak izi
+  `6b874b6c91ea20ffbb9a1b9d9642189a4fd47b348ef3fd4904463c38ed197cfc`.
 
 ## v5.3 (2026-11) — klasik kanal kimlik doğrulaması gerçekten yapılıyor (Wegman–Carter, iki yön, oturumun içinde)
 

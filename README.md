@@ -1,6 +1,6 @@
 # PhotonNet — BB84 Quantum Key Distribution (QKD) Simulator and Production Layers
 
-**photonicquantumcore** · core engine v5.3 · `npm test`: 112 runner items (JavaScript + Python HAL) in CI — what that number counts is in [`docs/TEST_INVENTORY.md`](docs/TEST_INVENTORY.md)
+**photonicquantumcore** · core engine v5.4 · `npm test`: 112 runner items (JavaScript + Python HAL) in CI — what that number counts is in [`docs/TEST_INVENTORY.md`](docs/TEST_INVENTORY.md)
 
 PhotonNet simulates an end-to-end QKD network on a classical computer and wraps the simulation in the
 software a real deployment needs. It consists of:
@@ -47,8 +47,11 @@ inside the session: on every hop both directions' public messages (bases, test s
 parities, Toeplitz seed) are tagged with a Wegman–Carter MAC (polynomial hash over GF(2⁶¹−1) + one-time 61-bit mask)
 and verified at the other end, or the session aborts with `AUTH_FAIL`. Up to v5.2 the core's MAC was broken (≈ 41 %
 of single-bit tampering went undetected), only one announcement was tagged and nothing verified it, while the UI
-showed "authenticated". The pre-shared authentication secret is drawn from the session's entropy source (a real
-system installs it out of band); relay values and the OTP ciphertext are not MAC-protected.
+showed "authenticated". Since v5.4 the delivery stage is authenticated too (encrypt-then-MAC): the OTP ciphertext and
+every relay value are tagged on each hop they cross, and Bob decrypts only what reached him; the forgery probability of
+all tags is added to the ε composition (`epsTotal.endToEndWithAuth`). Replay is prevented by in-order sequence numbers
+and single-use masks. The pre-shared authentication secret is drawn from the session's entropy source, **not** from
+QKD key (a real system installs it out of band and refills it from QKD key); its masks are not taken from ℓ.
 
 **What it is not.** It is a simulation and an integration stack, not a QKD device. There is no photonic
 hardware and no certified QRNG; entropy comes from the platform CSPRNG, so security is computational, not
@@ -170,7 +173,7 @@ Concrete mechanisms that enforce this pattern:
   of `photonnet_core.js` (and, where relevant, of other read-only bridge files such as
   `timetag_acquisition_bridge.js`) before and after running — the claim "the core was not touched" is
   re-proven on every run, not assumed once. When the core deliberately moves to a new version (currently
-  **v5.3**, SHA-256 `f8c93cbb…f0008f`), the old/new hash and every changed function are documented in
+  **v5.4**, SHA-256 `4f664688…492b39`), the old/new hash and every changed function are documented in
   [`bb84/docs/CORE_CHANGELOG.md`](bb84/docs/CORE_CHANGELOG.md), and all pinned tests are updated to the new
   hash and re-run. The file hash also changes when only UI text changes (the core is extracted from the UI
   source), so a second anchor, the **protocol fingerprint** (`bb84/tools/protocol_fingerprint.js`, SHA-256 over
@@ -238,7 +241,7 @@ the top of the file).
 | File | What it does |
 |---|---|
 | `core_v51_seed_encoding_test.js` | **Core v5.1** — 7/7: UTF-8 text encoding (Turkish characters and emoji round-trip; "Merhaba Dünya" = 112 bits, the old 8-bit conversion cut "ğ" to 0x1F); the Toeplitz seed is the full n+ℓ−1 bits from the entropy source on every hop; the parameter-estimation subset is uniform and drawn at evaluation time; `QKDSecurityProof.run` no longer derives its seed from the session seed; satellite `KEY_BUDGET` is labelled as a simulation pulse budget; seeded entropy replays exactly. |
-| `core_v53_auth_test.js` | **Core v5.3** — 7/7: a delivered 31-hop session verifies both directions of every hop (62 tags, 0 rejected, forgery bound ≈ 2.6·10⁻¹³); a single-bit change in any of the eight public message kinds or in a tag aborts with `AUTH_FAIL` (no key, no message); the MAC misses 0 of 20,000 single-bit tamperings and accepts 0 of 20,000 random tags, while the pre-v5.3 primitive misses ≈ 41 %; masks are single-use and in order (replay and out-of-order rejected, empty pool → `AUTH_POOL`); framing separates message boundaries; the UI reports the session's verification. |
+| `core_v53_auth_test.js` | **Core v5.3/v5.4** — 7/7: a delivered 31-hop session verifies both directions of every hop and, since v5.4, the delivery stage (ciphertext + relays) on every hop (93 tags, 0 rejected; forgery bound ≈ 2.3·10⁻¹³, added to ε); a single-bit change in any of the ten public message kinds (relay and OTP ciphertext included) or in a tag aborts with `AUTH_FAIL` (no key, no message); the MAC misses 0 of 20,000 single-bit tamperings and accepts 0 of 20,000 random tags, while the pre-v5.3 primitive misses ≈ 41 %; masks are single-use and in order (replay and out-of-order rejected, empty pool → `AUTH_POOL`); framing separates message boundaries; the UI reports the session's verification. |
 | `kme_lifecycle_test.js` | 4/4: stored key bytes are zero-filled on deletion; half-open keys expire after the TTL and are zero-filled; a real KME process (mTLS, TTL 1 s) serves an immediate `dec_keys` and rejects one 1.6 s later; an invalid TTL stops the server. |
 | `core_v52_finite_key_test.js` | **Core v5.2** — 5/5: ε is split across hops (31 hops: end-to-end ε equals the single-hop target; without the split it is 31×); every hop reports Q_test, μ and the phase-error bound Q + μ, with ε_PE divided over at most M = 16 re-evaluations; with a true QBER of 12 % no key is produced even when the measured QBER falls below 11 % (5 × 20,000 binomial draws); effective finite-key threshold for a 112-bit message 2.5 % / 5.9 % / 8.1 % at n ≈ 3,400 / 13,900 / 78,800. |
 | `k3_qber_validation_test.js` | **Core v5.2, slow (~2.5 min)** — 60 sessions on the 31-hop route: z-scores of the pooled first-evaluation QBER against the model's expectation pass Kolmogorov–Smirnov (p > 0.01) and the 95 % CI of the mean z contains 0 (internal consistency, not model validity); mean pooled QBER inside the published fiber-QKD envelope 0.4–4 % (Boaron et al. 2018; Rosenberg et al. 2007). Reports the optional-stopping bias of accepted evaluations and the share in the fixed 1.17–1.50 % band as observations. |

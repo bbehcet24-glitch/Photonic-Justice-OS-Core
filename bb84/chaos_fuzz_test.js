@@ -33,7 +33,7 @@ const { spawnSync } = require("child_process");
 const CORE_PATH = path.join(__dirname, "photonnet_core.js");
 const WORKER_PATH = path.join(__dirname, "chaos_fuzz_worker.js");
 const CORE_SHA_EXPECTED =
-  "f8c93cbba99124b5c35e0d0b01601b2bf5982689a9ebf08dc2b0c709cef0008f";
+  "4f664688da958752abb7ede77890f1d94640250aca988c6d2e7fadf46f492b39";
 const CALL_TIMEOUT_MS = 2500;
 
 function verifyCoreHash() {
